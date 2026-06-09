@@ -520,10 +520,13 @@ function ViewingChecklist({ propertyId, viewings, setViewing }: { propertyId: st
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="rounded-xl border bg-card p-5">
-      <h3 className="font-semibold mb-3">{title}</h3>
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h3 className="font-semibold">{title}</h3>
+        {actions}
+      </div>
       {children}
     </div>
   );
