@@ -169,9 +169,9 @@ function Detail() {
         <div className="lg:col-span-2 space-y-6">
           <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
-              <F label="Titel"><T value={p.title} edit={editMode} on={(v) => u({ title: v })} /></F>
+              <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
-                <T value={p.link} edit={editMode} on={(v) => u({ link: v })} />
+                <T value={p.link} edit={true} on={(v) => u({ link: v })} />
                 {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
               </F>
               <F label="Projekt">
@@ -181,17 +181,17 @@ function Detail() {
                   </select>
                 ) : <Ro>{project?.name ?? "—"}</Ro>}
               </F>
-              <F label="Bezirk"><T value={p.bezirk} edit={editMode} on={(v) => u({ bezirk: v })} /></F>
-              <F label="Stadt"><T value={p.city ?? ""} edit={editMode} on={(v) => u({ city: v })} /></F>
-              <F label="Adresse / Gegend"><T value={p.adresse} edit={editMode} on={(v) => u({ adresse: v })} /></F>
-              <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={editMode} on={(v) => u({ wohnflaecheM2: v })} /></F>
-              <F label="Zimmer"><N value={p.zimmer} edit={editMode} on={(v) => u({ zimmer: v })} /></F>
-              <F label="Baujahr"><N value={p.baujahr} edit={editMode} on={(v) => u({ baujahr: v })} /></F>
-              <F label="Zustand"><T value={p.zustand} edit={editMode} on={(v) => u({ zustand: v })} /></F>
-              <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit={editMode} on={(v) => u({ stockwerk: v })} /></F>
-              <F label="Energieklasse"><T value={p.energyClass ?? ""} edit={editMode} on={(v) => u({ energyClass: v })} /></F>
-              <F label="HWB"><N value={p.hwb ?? null} edit={editMode} on={(v) => u({ hwb: v })} /></F>
-              <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={editMode} on={(v) => u({ verfuegbarkeit: v })} /></F>
+              <F label="Bezirk"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
+              <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
+              <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
+              <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
+              <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
+              <F label="Baujahr"><N value={p.baujahr} edit={true} on={(v) => u({ baujahr: v })} /></F>
+              <F label="Zustand"><T value={p.zustand} edit={true} on={(v) => u({ zustand: v })} /></F>
+              <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit={true} on={(v) => u({ stockwerk: v })} /></F>
+              <F label="Energieklasse"><T value={p.energyClass ?? ""} edit={true} on={(v) => u({ energyClass: v })} /></F>
+              <F label="HWB"><N value={p.hwb ?? null} edit={true} on={(v) => u({ hwb: v })} /></F>
+              <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={true} on={(v) => u({ verfuegbarkeit: v })} /></F>
               <F label="Status">
                 {editMode ? (
                   <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
@@ -211,17 +211,17 @@ function Detail() {
 
           <Section title="Kauf, Miete & Nebenkosten">
             <div className="grid md:grid-cols-3 gap-3">
-              <F label="Kaufpreis €"><N value={p.kaufpreis} edit={editMode} on={(v) => u({ kaufpreis: v })} /></F>
-              <F label="Sanierung €"><N value={p.sanierung} edit={editMode} on={(v) => u({ sanierung: v ?? 0 })} /></F>
-              <F label="Einrichtung €"><N value={p.einrichtung} edit={editMode} on={(v) => u({ einrichtung: v ?? 0 })} /></F>
-              <F label="Reserve €"><N value={p.reserve} edit={editMode} on={(v) => u({ reserve: v ?? 0 })} /></F>
-              <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit={editMode} on={(v) => u({ betriebskostenMtl: v })} /></F>
-              <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit={editMode} on={(v) => u({ heizkostenMtl: v })} /></F>
-              <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit={editMode} on={(v) => u({ ruecklageFonds: v })} /></F>
-              <F label="Nettomiete mtl. €"><N value={p.nettomieteMtl} edit={editMode} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+              <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
+              <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
+              <F label="Einrichtung €"><N value={p.einrichtung} edit={true} on={(v) => u({ einrichtung: v ?? 0 })} /></F>
+              <F label="Reserve €"><N value={p.reserve} edit={true} on={(v) => u({ reserve: v ?? 0 })} /></F>
+              <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit={true} on={(v) => u({ betriebskostenMtl: v })} /></F>
+              <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit={true} on={(v) => u({ heizkostenMtl: v })} /></F>
+              <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit={true} on={(v) => u({ ruecklageFonds: v })} /></F>
+              <F label="Nettomiete mtl. €"><N value={p.nettomieteMtl} edit={true} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
               <F label="Miete geschätzt?">
                 <label className="flex items-center gap-2 px-3 py-2 border rounded-md bg-background text-sm">
-                  <input type="checkbox" disabled={!editMode} checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} />
+                  <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} />
                   Schätzwert
                 </label>
               </F>
@@ -231,19 +231,19 @@ function Detail() {
           <Section title="Maklerkosten & Kaufnebenkosten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Maklerprovision %">
-                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={editMode} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
+                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
               </F>
               <F label="Maklerprovision netto €">
                 {editMode ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
               </F>
               <F label="USt auf Provision %">
-                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={editMode} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
+                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={true} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
               </F>
               <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
               <F label="Maklerprovision brutto €"><Ro>{fmtEUR(c.maklerProvisionBrutto)}</Ro></F>
               <F label="Maklerkosten zahlbar?">
                 <select
-                  disabled={!editMode}
+                 
                   value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
                   onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -253,11 +253,11 @@ function Detail() {
                   <option value="nein">Nein</option>
                 </select>
               </F>
-              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={editMode} on={(v) => u({ grunderwerbsteuer: v })} /></F>
-              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={editMode} on={(v) => u({ grundbuchkosten: v })} /></F>
-              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={editMode} on={(v) => u({ vertragskosten: v })} /></F>
-              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={editMode} on={(v) => u({ finanzierungskosten: v })} /></F>
-              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={editMode} on={(v) => u({ sonstigeNK: v })} /></F>
+              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={true} on={(v) => u({ grunderwerbsteuer: v })} /></F>
+              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={true} on={(v) => u({ grundbuchkosten: v })} /></F>
+              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={true} on={(v) => u({ vertragskosten: v })} /></F>
+              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={true} on={(v) => u({ finanzierungskosten: v })} /></F>
+              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={true} on={(v) => u({ sonstigeNK: v })} /></F>
               <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
             </div>
             <p className="text-[11px] text-muted-foreground mt-3">
@@ -275,7 +275,7 @@ function Detail() {
                 ) : <Ro>{p.mietrecht}</Ro>}
               </F>
               <F label="Fehlende Daten (komma-getrennt)">
-                <T value={p.missingData.join(", ")} edit={editMode} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
               </F>
             </div>
             <div className="grid md:grid-cols-3 gap-3 mt-4">
@@ -289,7 +289,7 @@ function Detail() {
           <Section title="Beschreibung & Notizen">
             <textarea
               value={p.beschreibung ?? ""}
-              disabled={!editMode}
+             
               onChange={(e) => u({ beschreibung: e.target.value })}
               rows={3}
               placeholder="Beschreibung aus dem Inserat…"
@@ -297,7 +297,7 @@ function Detail() {
             />
             <textarea
               value={p.notizen}
-              disabled={!editMode}
+             
               onChange={(e) => u({ notizen: e.target.value })}
               rows={4}
               placeholder="Eigene Notizen…"
@@ -306,7 +306,7 @@ function Detail() {
           </Section>
 
           <Section title="CRM · Verkäufer & Follow-up">
-            <CrmPanel p={p} edit={editMode} u={u} />
+            <CrmPanel p={p} edit={true} u={u} />
           </Section>
 
           <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
@@ -339,12 +339,12 @@ function Detail() {
 
         <div className="space-y-6">
           <Section title={`Score ${s.total} / 100`}>
-            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => editMode && u({ scoreLage: v })} disabled={!editMode} />
+            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => editMode && u({ scoreLage: v })} />
             <ScoreRow label="Zahlen / Rendite" max={25} value={s.zahlen} readonly />
-            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => editMode && u({ scoreVermietbarkeit: v })} disabled={!editMode} />
-            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => editMode && u({ scoreZustand: v })} disabled={!editMode} />
-            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => editMode && u({ scoreRecht: v })} disabled={!editMode} />
-            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => editMode && u({ scoreWiederverkauf: v })} disabled={!editMode} />
+            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => editMode && u({ scoreVermietbarkeit: v })} />
+            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => editMode && u({ scoreZustand: v })} />
+            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => editMode && u({ scoreRecht: v })} />
+            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => editMode && u({ scoreWiederverkauf: v })} />
             <div className="border-t mt-3 pt-3 flex justify-between text-sm">
               <span className="font-medium">Entscheidung</span>
               <AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge>
@@ -376,7 +376,7 @@ function Detail() {
               <label key={key as string} className="flex items-center justify-between text-sm py-1.5">
                 <span>{label}</span>
                 <select
-                  disabled={!editMode}
+                 
                   value={(p as any)[key as string] === true ? "ja" : (p as any)[key as string] === false ? "nein" : ""}
                   onChange={(e) => u({ [key as string]: e.target.value === "ja" ? true : e.target.value === "nein" ? false : null } as any)}
                   className="rounded border bg-background px-2 py-1 text-xs"
