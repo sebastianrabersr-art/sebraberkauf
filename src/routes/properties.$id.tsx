@@ -515,6 +515,16 @@ function Stat({ label, value, hint, tone, tip }: { label: string; value: string;
     </div>
   );
 }
+function QuickFact({ label, value, hint, actions }: { label: string; value: string; hint?: string; actions?: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium mt-0.5 truncate" title={value}>{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5 truncate" title={hint}>{hint}</div>}
+      {actions && <div className="mt-1.5 flex items-center gap-3">{actions}</div>}
+    </div>
+  );
+}
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block"><div className="text-xs text-muted-foreground mb-1">{label}</div>{children}</label>;
 }
