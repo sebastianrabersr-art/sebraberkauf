@@ -37,6 +37,8 @@ function Detail() {
 
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
+  const mapsUrl = googleMapsUrl(p);
+  const mietrecht = inferMietrecht(p);
 
   const openOriginal = () => {
     if (!linkValid) {
@@ -81,6 +83,11 @@ function Detail() {
             >
               Original-Inserat öffnen <ExternalLink className="size-3.5" />
             </button>
+            {mapsUrl && (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
+                <MapPin className="size-3.5" /> Google Maps
+              </a>
+            )}
             <button onClick={() => setEditMode((v) => !v)} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
               <Pencil className="size-3.5" /> {editMode ? "Fertig" : "Bearbeiten"}
             </button>
