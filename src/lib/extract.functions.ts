@@ -101,19 +101,41 @@ export type PdfExtracted = z.infer<typeof pdfExtractedSchema>;
 export function detectPlatform(url: string): string {
   const u = (url || "").toLowerCase();
   if (!u) return "";
+  // Österreich
   if (u.includes("willhaben.at")) return "willhaben";
-  if (u.includes("immobilienscout24") || u.includes("immoscout")) return "ImmoScout24";
+  if (u.includes("immobilienscout24.at") || u.includes("immoscout24.at")) return "ImmoScout24 AT";
   if (u.includes("derstandard.at")) return "derStandard";
-  if (u.includes("immowelt")) return "immowelt";
+  if (u.includes("immowelt.at")) return "immowelt AT";
+  if (u.includes("immobazar")) return "immobazar";
   if (u.includes("immodirekt")) return "ImmoDirekt";
   if (u.includes("findmyhome")) return "FindMyHome";
-  if (u.includes("remax")) return "RE/MAX";
-  if (u.includes("engelvoelkers") || u.includes("engel-voelkers")) return "Engel & Völkers";
+  if (u.includes("ehl.at")) return "EHL";
   if (u.includes("otto-immobilien")) return "Otto Immobilien";
   if (u.includes("jp-immobilien")) return "JP Immobilien";
-  if (u.includes("ehl.at")) return "EHL";
+  // Deutschland
+  if (u.includes("immobilienscout24.de") || u.includes("immoscout24.de")) return "ImmoScout24 DE";
+  if (u.includes("immowelt.de")) return "immowelt DE";
+  if (u.includes("immonet")) return "immonet";
+  if (u.includes("kleinanzeigen.de") || u.includes("ebay-kleinanzeigen")) return "kleinanzeigen";
+  if (u.includes("meinestadt.de")) return "meinestadt";
+  if (u.includes("immobilien.de")) return "immobilien.de";
+  if (u.includes("ohne-makler.net")) return "ohne-makler";
+  if (u.includes("homeday")) return "Homeday";
+  if (u.includes("mcmakler")) return "McMakler";
+  // International / Makler
+  if (u.includes("remax")) return "RE/MAX";
+  if (u.includes("engelvoelkers") || u.includes("engel-voelkers")) return "Engel & Völkers";
+  if (u.includes("sothebys")) return "Sotheby's";
   if (u.includes("bauträger") || u.includes("bautraeger") || u.includes("neubau")) return "Bauträger";
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return "Sonstige"; }
+}
+
+export function detectCountry(url: string): "Österreich" | "Deutschland" | "" {
+  const u = (url || "").toLowerCase();
+  if (!u) return "";
+  if (/\.at(\/|$|\?)/.test(u) || u.includes("willhaben") || u.includes("derstandard") || u.includes("immobazar") || u.includes("ehl.at")) return "Österreich";
+  if (/\.de(\/|$|\?)/.test(u) || u.includes("kleinanzeigen") || u.includes("immonet") || u.includes("meinestadt")) return "Deutschland";
+  return "";
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -126,7 +148,10 @@ async function fetchPage(url: string): Promise<string> {
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000), redirect: "follow" });
     if (!res.ok) return "";
     const html = await res.text();
-    return html
+    // Try to capture JSON-LD blocks first for better structured data
+    const ldMatches = Array.from(html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
+      .map((m) => m[1]).join("\n").slice(0, 6000);
+    const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
@@ -135,6 +160,7 @@ async function fetchPage(url: string): Promise<string> {
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 22000);
+    return ldMatches ? `JSON-LD:\n${ldMatches}\n\nText:\n${text}` : text;
   } catch { return ""; }
 }
 
