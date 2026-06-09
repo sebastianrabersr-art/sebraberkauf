@@ -231,8 +231,25 @@ function Detail() {
                     {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
                   </select>
               </F>
-              <F label="Bezirk"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
+              <F label="Land">
+                <select value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                  <option value="">—</option>
+                  <option value="Österreich">Österreich</option>
+                  <option value="Deutschland">Deutschland</option>
+                </select>
+              </F>
+              <F label="Bundesland / Region">
+                {regions.length > 0 ? (
+                  <select value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                    <option value="">—</option>
+                    {regions.map((r) => <option key={r.code} value={r.name}>{r.name}</option>)}
+                  </select>
+                ) : (
+                  <T value={p.bundesland ?? ""} edit={true} on={(v) => u({ bundesland: v })} />
+                )}
+              </F>
               <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
+              <F label="Bezirk / Landkreis"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
               <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
               <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
               <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
