@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
-import { useStore, VIEWING_CHECKLIST } from "@/lib/store";
+import { useActiveProject, useStore, VIEWING_CHECKLIST } from "@/lib/store";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/viewing")({
@@ -10,7 +10,9 @@ export const Route = createFileRoute("/viewing")({
 
 function ViewingPage() {
   const { properties, viewings, setViewing } = useStore();
-  const [selected, setSelected] = useState<string>(properties[0]?.id ?? "");
+  const project = useActiveProject();
+  const inProject = properties.filter((p) => p.projectId === project.id);
+  const [selected, setSelected] = useState<string>(inProject[0]?.id ?? "");
 
   const groups = useMemo(() => {
     const g: Record<string, typeof VIEWING_CHECKLIST> = {};
@@ -23,29 +25,22 @@ function ViewingPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Besichtigungs-Checkliste" description="Punkte abhaken und Notizen ergänzen – pro Objekt." />
+      <PageHeader title="Besichtigungs-Checkliste" description={`Projekt: ${project.name}. Tipp: Die Checkliste ist auch direkt auf jeder Immobilien-Detailseite.`} />
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="rounded-md border bg-background px-3 py-2 text-sm min-w-64"
-        >
+        <select value={selected} onChange={(e) => setSelected(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm min-w-64">
           <option value="">Objekt wählen…</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>{p.title || p.link || p.id}</option>
-          ))}
+          {inProject.map((p) => (<option key={p.id} value={p.id}>{p.title || p.link || p.id}</option>))}
         </select>
         {selected && (
-          <span className="text-sm text-muted-foreground">
-            {done} / {VIEWING_CHECKLIST.length} erledigt
-          </span>
+          <>
+            <span className="text-sm text-muted-foreground">{done} / {VIEWING_CHECKLIST.length} erledigt</span>
+            <Link to="/properties/$id" params={{ id: selected }} className="text-sm text-primary hover:underline">Zur Immobilie →</Link>
+          </>
         )}
       </div>
 
       {!selected ? (
-        <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
-          Bitte zuerst ein Objekt wählen.
-        </div>
+        <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">Bitte zuerst ein Objekt wählen.</div>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           {Object.entries(groups).map(([group, items]) => (
@@ -57,20 +52,10 @@ function ViewingPage() {
                   return (
                     <div key={item.key} className="border-b last:border-0 pb-3 last:pb-0">
                       <label className="flex items-center gap-2 text-sm font-medium">
-                        <input
-                          type="checkbox"
-                          checked={v.done}
-                          onChange={(e) => setViewing(selected, item.key, { done: e.target.checked })}
-                        />
+                        <input type="checkbox" checked={v.done} onChange={(e) => setViewing(selected, item.key, { done: e.target.checked })} />
                         {item.label}
                       </label>
-                      <input
-                        type="text"
-                        placeholder="Notiz…"
-                        value={v.note}
-                        onChange={(e) => setViewing(selected, item.key, { note: e.target.value })}
-                        className="mt-2 w-full rounded border bg-background px-2 py-1.5 text-sm"
-                      />
+                      <input type="text" placeholder="Notiz…" value={v.note} onChange={(e) => setViewing(selected, item.key, { note: e.target.value })} className="mt-2 w-full rounded border bg-background px-2 py-1.5 text-sm" />
                     </div>
                   );
                 })}

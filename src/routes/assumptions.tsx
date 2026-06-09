@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
-import { useStore } from "@/lib/store";
+import { useActiveProject, useStore } from "@/lib/store";
 import { DEFAULT_ASSUMPTIONS } from "@/lib/calc";
 import type { Assumptions } from "@/lib/types";
 import { toast } from "sonner";
@@ -10,61 +10,50 @@ export const Route = createFileRoute("/assumptions")({
   component: AssumptionsPage,
 });
 
-const GROUPS: { title: string; fields: { key: keyof Assumptions; label: string; hint?: string; type: "eur" | "pct" | "num"; step?: number }[] }[] = [
-  {
-    title: "Kapital & Finanzierung",
-    fields: [
-      { key: "eigenkapital", label: "Verfügbares Eigenkapital", type: "eur" },
-      { key: "zinssatz", label: "Zinssatz p.a.", type: "pct", step: 0.001 },
-      { key: "laufzeit", label: "Laufzeit (Jahre)", type: "num" },
-    ],
-  },
-  {
-    title: "Kaufnebenkosten",
-    fields: [
-      { key: "nkOhneMakler", label: "Ohne Makler", type: "pct", step: 0.005 },
-      { key: "nkMitMakler", label: "Mit Makler", type: "pct", step: 0.005 },
-      { key: "nkKonservativ", label: "Konservativ (unklar)", type: "pct", step: 0.005 },
-    ],
-  },
-  {
-    title: "Betriebskosten & Puffer",
-    fields: [
-      { key: "leerstandPuffer", label: "Leerstandspuffer (% der Miete)", type: "pct", step: 0.005 },
-      { key: "ruecklagePerM2", label: "Rücklage intern €/m²/Monat", type: "num", step: 0.05 },
-      { key: "nichtUmlPerM2", label: "Nicht umlagefähig €/m²/Monat", type: "num", step: 0.05 },
-    ],
-  },
-  {
-    title: "Ziele",
-    fields: [
-      { key: "mindestScore", label: "Mindest-Score", type: "num" },
-      { key: "zielBrutto", label: "Ziel-Bruttorendite", type: "pct", step: 0.001 },
-      { key: "zielNetto", label: "Ziel-Nettorendite", type: "pct", step: 0.001 },
-    ],
-  },
-  {
-    title: "Stress-Test",
-    fields: [
-      { key: "zinsStress", label: "Zinsaufschlag Stress", type: "pct", step: 0.005 },
-      { key: "leerstandStressMonate", label: "Leerstand Stress (Monate/Jahr)", type: "num" },
-      { key: "reparaturStress", label: "Einmal-Reparatur Stress", type: "eur" },
-    ],
-  },
+const GROUPS: { title: string; fields: { key: keyof Assumptions; label: string; type: "eur" | "pct" | "num"; step?: number }[] }[] = [
+  { title: "Kapital & Finanzierung", fields: [
+    { key: "eigenkapital", label: "Verfügbares Eigenkapital", type: "eur" },
+    { key: "zinssatz", label: "Zinssatz p.a.", type: "pct", step: 0.001 },
+    { key: "laufzeit", label: "Laufzeit (Jahre)", type: "num" },
+  ]},
+  { title: "Kaufnebenkosten", fields: [
+    { key: "nkOhneMakler", label: "Ohne Makler", type: "pct", step: 0.005 },
+    { key: "nkMitMakler", label: "Mit Makler", type: "pct", step: 0.005 },
+    { key: "nkKonservativ", label: "Konservativ (unklar)", type: "pct", step: 0.005 },
+  ]},
+  { title: "Betriebskosten & Puffer", fields: [
+    { key: "leerstandPuffer", label: "Leerstandspuffer (% der Miete)", type: "pct", step: 0.005 },
+    { key: "ruecklagePerM2", label: "Rücklage intern €/m²/Monat", type: "num", step: 0.05 },
+    { key: "nichtUmlPerM2", label: "Nicht umlagefähig €/m²/Monat", type: "num", step: 0.05 },
+  ]},
+  { title: "Ziele", fields: [
+    { key: "mindestScore", label: "Mindest-Score", type: "num" },
+    { key: "zielBrutto", label: "Ziel-Bruttorendite", type: "pct", step: 0.001 },
+    { key: "zielNetto", label: "Ziel-Nettorendite", type: "pct", step: 0.001 },
+  ]},
+  { title: "Stress-Test", fields: [
+    { key: "zinsStress", label: "Zinsaufschlag Stress", type: "pct", step: 0.005 },
+    { key: "leerstandStressMonate", label: "Leerstand Stress (Monate/Jahr)", type: "num" },
+    { key: "reparaturStress", label: "Einmal-Reparatur Stress", type: "eur" },
+  ]},
 ];
 
 function AssumptionsPage() {
-  const { assumptions, setAssumptions, resetAssumptions } = useStore();
-  const a = assumptions;
+  const project = useActiveProject();
+  const { updateProjectAssumptions, resetProjectAssumptions } = useStore();
+  const a = project.assumptions;
   return (
     <AppShell>
       <PageHeader
         title="Annahmen"
-        description="Diese Werte fließen automatisch in alle Kalkulationen und Scores ein."
+        description={`Diese Werte gelten für das Projekt „${project.name}" und fließen in alle seine Berechnungen ein.`}
         actions={
-          <button onClick={() => { resetAssumptions(); toast.success("Annahmen zurückgesetzt."); }} className="border rounded-md px-3 py-2 text-sm hover:bg-accent">
-            Auf Standard zurücksetzen
-          </button>
+          <div className="flex gap-2">
+            <Link to="/projects" className="border rounded-md px-3 py-2 text-sm hover:bg-accent">Projekt-Übersicht</Link>
+            <button onClick={() => { resetProjectAssumptions(project.id); toast.success("Annahmen zurückgesetzt."); }} className="border rounded-md px-3 py-2 text-sm hover:bg-accent">
+              Auf Standard zurücksetzen
+            </button>
+          </div>
         }
       />
       <div className="grid md:grid-cols-2 gap-6">
@@ -85,13 +74,11 @@ function AssumptionsPage() {
                         value={display}
                         onChange={(e) => {
                           const n = Number(e.target.value);
-                          setAssumptions({ [f.key]: f.type === "pct" ? n / 100 : n } as Partial<Assumptions>);
+                          updateProjectAssumptions(project.id, { [f.key]: f.type === "pct" ? n / 100 : n } as Partial<Assumptions>);
                         }}
                         className="w-28 rounded-md border bg-background px-3 py-1.5 text-sm text-right"
                       />
-                      <span className="text-xs text-muted-foreground w-6">
-                        {f.type === "eur" ? "€" : f.type === "pct" ? "%" : ""}
-                      </span>
+                      <span className="text-xs text-muted-foreground w-6">{f.type === "eur" ? "€" : f.type === "pct" ? "%" : ""}</span>
                     </div>
                   </label>
                 );
@@ -101,7 +88,7 @@ function AssumptionsPage() {
         ))}
       </div>
       <p className="text-xs text-muted-foreground mt-6">
-        Defaults aus deiner Excel: EK {DEFAULT_ASSUMPTIONS.eigenkapital.toLocaleString("de-AT")} €, Zins {(DEFAULT_ASSUMPTIONS.zinssatz * 100).toFixed(2)} %, Laufzeit {DEFAULT_ASSUMPTIONS.laufzeit} J.
+        Standard-Defaults aus deiner Excel: EK {DEFAULT_ASSUMPTIONS.eigenkapital.toLocaleString("de-AT")} €, Zins {(DEFAULT_ASSUMPTIONS.zinssatz * 100).toFixed(2)} %, Laufzeit {DEFAULT_ASSUMPTIONS.laufzeit} J.
       </p>
     </AppShell>
   );

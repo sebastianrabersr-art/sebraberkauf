@@ -1,22 +1,44 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Building2, ClipboardCheck, Database, LinkIcon, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, Building2, ClipboardCheck, Database, FolderKanban, LinkIcon, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useStore } from "@/lib/store";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
+  { to: "/projects", label: "Projekte", icon: FolderKanban },
   { to: "/analyze", label: "Link analysieren", icon: LinkIcon },
   { to: "/properties", label: "Immobilien", icon: Database },
   { to: "/viewing", label: "Besichtigung", icon: ClipboardCheck },
   { to: "/assumptions", label: "Annahmen", icon: Settings },
 ];
 
+function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
+  const { projects, activeProjectId, setActiveProject } = useStore();
+  return (
+    <div className={cn("flex items-center gap-2", compact ? "" : "w-full")}>
+      {!compact && <span className="text-[10px] uppercase tracking-wide text-sidebar-foreground/60">Aktives Projekt</span>}
+      <select
+        value={activeProjectId}
+        onChange={(e) => setActiveProject(e.target.value)}
+        className="w-full rounded-md bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border px-2 py-1.5 text-sm"
+      >
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}{p.status !== "Aktiv" ? ` (${p.status})` : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="px-6 py-6 flex items-center gap-3 border-b border-sidebar-border">
+        <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
           <div className="size-9 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center">
             <Building2 className="size-5" />
           </div>
@@ -24,6 +46,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="font-semibold tracking-tight">Immo Invest</div>
             <div className="text-xs text-sidebar-foreground/60">Bewertung & Analyse</div>
           </div>
+        </div>
+        <div className="px-3 pt-3 pb-2 space-y-1.5">
+          <ProjectSwitcher />
+          <Link to="/projects" className="block text-[11px] text-sidebar-foreground/60 hover:text-sidebar-foreground px-1">
+            Projekte verwalten →
+          </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
@@ -50,22 +78,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <main className="flex-1 min-w-0">
-        <div className="md:hidden sticky top-0 z-10 bg-sidebar text-sidebar-foreground px-4 py-3 flex gap-3 overflow-x-auto">
-          {NAV.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cn(
-                  "text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
-                  active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "bg-sidebar-accent",
-                )}
-              >
-                {n.label}
-              </Link>
-            );
-          })}
+        <div className="md:hidden sticky top-0 z-10 bg-sidebar text-sidebar-foreground px-3 py-2 space-y-2">
+          <ProjectSwitcher compact />
+          <div className="flex gap-2 overflow-x-auto">
+            {NAV.map((n) => {
+              const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className={cn(
+                    "text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
+                    active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "bg-sidebar-accent",
+                  )}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
         <div className="p-6 md:p-8 max-w-[1400px] mx-auto">{children}</div>
       </main>
