@@ -481,3 +481,145 @@ export function summarizeScenario(p: Property, a: Assumptions, scn: FinanceScena
     breakEvenMiete: c.requiredBreakEvenRent,
   };
 }
+
+/** Yearly remaining-debt series for charting comparisons. */
+export function calcBalanceSeries(scn: FinanceScenario): { year: number; balance: number }[] {
+  const sched = calcAmortizationSchedule(scn);
+  if (sched.length === 0) return [];
+  const out: { year: number; balance: number }[] = [{ year: sched[0].year - 1, balance: scn.kreditBetrag ?? 0 }];
+  sched.forEach((y) => out.push({ year: y.year, balance: y.balanceEnd }));
+  return out;
+}
+
+export interface AfaResult {
+  basis: number;
+  grundAnteilPct: number;
+  gebaeudeAnteilPct: number;
+  gebaeudewert: number;
+  satzPct: number;
+  jahresAfa: number;
+  methode: "linear" | "manuell";
+  hinweis: string;
+}
+
+export function calcAfa(p: Property): AfaResult {
+  const a = p.afa ?? {};
+  const land: "AT" | "DE" = a.land ?? "AT";
+  const methode = a.methode ?? "linear";
+  const basis = a.basis ?? p.kaufpreis ?? 0;
+  let grundPct = a.grundAnteilPct ?? (p.objektartDetail === "Haus" ? 30 : p.objektartDetail === "Grundstück" ? 100 : 20);
+  let gebPct = a.gebaeudeAnteilPct ?? Math.max(0, 100 - grundPct);
+  // normalize
+  if (grundPct + gebPct === 0) { grundPct = 20; gebPct = 80; }
+  const gebaeudewert = basis * (gebPct / 100);
+  const defaultSatz = land === "DE" ? 2 : 1.5;
+  const satzPct = a.satzPct ?? defaultSatz;
+  const jahresAfa = methode === "manuell" && a.jahresBetrag != null
+    ? a.jahresBetrag
+    : gebaeudewert * (satzPct / 100);
+  const hinweis = land === "DE"
+    ? "DE: Lineare AfA Wohngebäude i.d.R. 2 % p.a. (bzw. 2,5 % bei Bauantrag vor 1925, 3 % bei Fertigstellung ab 01.01.2023). Keine Steuerberatung."
+    : "AT: Lineare AfA für vermietete Wohngebäude i.d.R. 1,5 % p.a. Sonderregeln bei Sanierung/Denkmalschutz möglich. Keine Steuerberatung.";
+  return { basis, grundAnteilPct: grundPct, gebaeudeAnteilPct: gebPct, gebaeudewert, satzPct, jahresAfa, methode, hinweis };
+}
+
+export interface ProjectionYear {
+  year: number;
+  miete: number;
+  betriebskosten: number;
+  instandhaltung: number;
+  rate: number;
+  cashflow: number;
+  immoWert: number;
+  restschuld: number;
+}
+
+export function calcLongTermProjection(p: Property, a: Assumptions, c: Calc): ProjectionYear[] {
+  const proj = p.projections ?? {};
+  const horizon = Math.max(1, Math.min(40, proj.horizonJahre ?? 10));
+  const mSteig = (proj.mietsteigerungPct ?? 2) / 100;
+  const kSteig = (proj.kostensteigerungPct ?? 2) / 100;
+  const wSteig = (proj.wertsteigerungPct ?? 1.5) / 100;
+  const leer = (proj.leerstandPct ?? (p.leerstandPufferPct != null ? p.leerstandPufferPct * 100 : a.leerstandPuffer * 100)) / 100;
+  const instand = proj.instandhaltungProJahr ?? 0;
+  const baseMiete = (p.nettomieteMtl ?? 0) * 12 * (1 - leer);
+  const baseBK = (c.nichtUmlMtl + c.ruecklageMtl) * 12;
+  const baseWert = p.kaufpreis ?? 0;
+  const rateAnnual = c.kreditRateMtl * 12;
+  const balanceSeries = (() => {
+    const scn = getActiveFinance(p);
+    if (!scn) return null;
+    return calcBalanceSeries(scn);
+  })();
+  const out: ProjectionYear[] = [];
+  for (let i = 1; i <= horizon; i++) {
+    const miete = baseMiete * Math.pow(1 + mSteig, i - 1);
+    const bk = baseBK * Math.pow(1 + kSteig, i - 1);
+    const inst = instand * Math.pow(1 + kSteig, i - 1);
+    const wert = baseWert * Math.pow(1 + wSteig, i);
+    const cf = miete - rateAnnual - bk - inst;
+    const restschuld = balanceSeries
+      ? (balanceSeries[i]?.balance ?? balanceSeries[balanceSeries.length - 1]?.balance ?? 0)
+      : Math.max(0, (c.kreditBetrag) - (rateAnnual - (c.kreditBetrag * (a.zinssatz))) * i);
+    out.push({ year: i, miete, betriebskosten: bk, instandhaltung: inst, rate: rateAnnual, cashflow: cf, immoWert: wert, restschuld });
+  }
+  return out;
+}
+
+export interface FollowUpResult {
+  aktiv: boolean;
+  restschuldNachPhase1: number;
+  phase1Years: number;
+  ratePhase1: number;
+  ratePhase2: number;
+  zinssatz2: number;
+  restlaufzeit2: number;
+  totalInterestPhase1: number;
+  totalInterestPhase2: number;
+  totalInterestKombiniert: number;
+  cashflowVeraenderung: number;
+}
+
+export function calcFollowUpFinance(p: Property, a: Assumptions, c: Calc): FollowUpResult | null {
+  const f = p.followUpFinance;
+  if (!f || !f.aktiv) return null;
+  const scn = getActiveFinance(p);
+  if (!scn) return null;
+  const phase1Years = Math.max(1, scn.zinsbindungJahre ?? 10);
+  const sched = calcAmortizationSchedule(scn);
+  const startYear = sched[0]?.year ?? new Date().getFullYear();
+  const endRow = sched.find((r) => r.year === startYear + phase1Years - 1);
+  const restschuldNachPhase1 = endRow ? endRow.balanceEnd : (scn.kreditBetrag ?? 0);
+  const totalInterestPhase1 = sched.filter((r) => r.year <= startYear + phase1Years - 1).reduce((s, y) => s + y.interest, 0);
+  const zinssatz2 = f.zinssatz ?? scn.zinssatz;
+  const restlaufzeit2 = Math.max(1, f.restlaufzeitJahre ?? Math.max(1, scn.laufzeitJahre - phase1Years));
+  const ratePhase2 = pmt(zinssatz2 / 12, restlaufzeit2 * 12, restschuldNachPhase1);
+  const totalPaymentPhase2 = ratePhase2 * restlaufzeit2 * 12;
+  const totalInterestPhase2 = Math.max(0, totalPaymentPhase2 - restschuldNachPhase1);
+  return {
+    aktiv: true,
+    restschuldNachPhase1,
+    phase1Years,
+    ratePhase1: c.kreditRateMtl,
+    ratePhase2,
+    zinssatz2,
+    restlaufzeit2,
+    totalInterestPhase1,
+    totalInterestPhase2,
+    totalInterestKombiniert: totalInterestPhase1 + totalInterestPhase2,
+    cashflowVeraenderung: c.kreditRateMtl - ratePhase2,
+  };
+}
+
+export const DEFAULT_OPEN_QUESTIONS: { text: string; category: import("./types").OpenQuestionCategory; important?: boolean }[] = [
+  { text: "Ist die Wohnung aktuell vermietet?", category: "Mietrecht", important: true },
+  { text: "Welche Mietzinsregelung gilt?", category: "Mietrecht", important: true },
+  { text: "Gibt es geplante Sanierungen im Haus?", category: "Zustand" },
+  { text: "Wie hoch ist die Rücklage?", category: "Finanzierung", important: true },
+  { text: "Gibt es Protokolle der Eigentümerversammlung?", category: "Unterlagen" },
+  { text: "Sind Betriebskosten vollständig angegeben?", category: "Finanzierung" },
+  { text: "Gibt es offene Schäden oder Mängel?", category: "Zustand" },
+  { text: "Ist die angegebene Wohnfläche offiziell bestätigt?", category: "Unterlagen" },
+  { text: "Gibt es Einschränkungen bei Vermietung oder Kurzzeitvermietung?", category: "Mietrecht", important: true },
+  { text: "Welche Unterlagen fehlen noch?", category: "Unterlagen" },
+];
