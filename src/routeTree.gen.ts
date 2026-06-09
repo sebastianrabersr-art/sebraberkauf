@@ -28,6 +28,7 @@ import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
+import { Route as PortfolioIndexRouteImport } from './routes/portfolio.index'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
@@ -127,6 +128,11 @@ const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   path: '/properties/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortfolioIndexRoute = PortfolioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortfolioRoute,
+} as any)
 const PropertiesNewRoute = PropertiesNewRouteImport.update({
   id: '/properties/new',
   path: '/properties/new',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -178,7 +185,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
-  '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -189,6 +195,7 @@ export interface FileRoutesByTo {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/portfolio': typeof PortfolioIndexRoute
   '/properties': typeof PropertiesIndexRoute
 }
 export interface FileRoutesById {
@@ -214,6 +221,7 @@ export interface FileRoutesById {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +248,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/portfolio/'
     | '/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -253,7 +262,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/pipeline'
-    | '/portfolio'
     | '/pricing'
     | '/projects'
     | '/rechner'
@@ -264,6 +272,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/portfolio'
     | '/properties'
   id:
     | '__root__'
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/portfolio/'
     | '/properties/'
   fileRoutesById: FileRoutesById
 }
@@ -450,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portfolio/': {
+      id: '/portfolio/'
+      path: '/'
+      fullPath: '/portfolio/'
+      preLoaderRoute: typeof PortfolioIndexRouteImport
+      parentRoute: typeof PortfolioRoute
+    }
     '/properties/new': {
       id: '/properties/new'
       path: '/properties/new'
@@ -476,10 +493,12 @@ declare module '@tanstack/react-router' {
 
 interface PortfolioRouteChildren {
   PortfolioNewRoute: typeof PortfolioNewRoute
+  PortfolioIndexRoute: typeof PortfolioIndexRoute
 }
 
 const PortfolioRouteChildren: PortfolioRouteChildren = {
   PortfolioNewRoute: PortfolioNewRoute,
+  PortfolioIndexRoute: PortfolioIndexRoute,
 }
 
 const PortfolioRouteWithChildren = PortfolioRoute._addFileChildren(
@@ -512,3 +531,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
