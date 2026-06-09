@@ -90,9 +90,8 @@ function Detail() {
                 <MapPin className="size-3.5" /> Google Maps
               </a>
             )}
-            <button onClick={() => setEditMode((v) => !v)} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
-              <Pencil className="size-3.5" /> {editMode ? "Fertig" : "Bearbeiten"}
-            </button>
+            <span className="text-[11px] text-muted-foreground italic px-2">Felder sind inline editierbar</span>
+
             <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
               <Copy className="size-3.5" /> Duplizieren
             </button>
