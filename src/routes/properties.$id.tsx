@@ -209,8 +209,8 @@ function Detail() {
           />
           <QuickFact label="Google Maps" value={[p.adresse, p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
             actions={mapsUrl ? (
-              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Karte öffnen <MapPin className="size-3" /></a>
-            ) : null}
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">In Maps öffnen <MapPin className="size-3" /></a>
+            ) : <span className="text-xs text-muted-foreground">Adresse fehlt</span>}
           />
           <QuickFact label="Nächste Aktion" value={p.nextAction || "—"}
             hint={p.nextActionDate ? `bis ${new Date(p.nextActionDate).toLocaleDateString("de-AT")}` : undefined}
