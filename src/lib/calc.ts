@@ -295,3 +295,116 @@ export function inferMietrecht(p: Property): MietrechtInference {
     pruefen: ["Baujahr/Baubewilligungsdatum","Widmung","bestehende Mietverträge"],
   };
 }
+
+export function getActiveFinance(p: Property): FinanceScenario | undefined {
+  const list = p.financeScenarios ?? [];
+  if (list.length === 0) return undefined;
+  return list.find((s) => s.id === p.activeFinanceId) ?? list[0];
+}
+
+export interface AmortYear {
+  year: number;
+  payment: number;
+  interest: number;
+  principal: number;
+  extraPayment: number;
+  balanceEnd: number;
+  cumulativeInterest: number;
+}
+
+export function calcAmortizationSchedule(scn: FinanceScenario): AmortYear[] {
+  const periodsPerYear = scn.intervall === "monatlich" ? 12 : scn.intervall === "quartalsweise" ? 4 : 1;
+  const totalPeriods = Math.max(1, Math.round(scn.laufzeitJahre * periodsPerYear));
+  const periodRate = (scn.zinssatz || 0) / periodsPerYear;
+  const principal = scn.kreditBetrag ?? 0;
+  if (principal <= 0) return [];
+
+  let payment = 0;
+  if (scn.tilgungsart === "annuitaet") {
+    payment = periodRate === 0 ? principal / totalPeriods : (principal * periodRate) / (1 - Math.pow(1 + periodRate, -totalPeriods));
+  } else if (scn.tilgungsart === "endfaellig") {
+    payment = principal * periodRate; // interest only
+  }
+
+  const start = scn.startDate ? new Date(scn.startDate) : new Date();
+  const startYear = start.getFullYear();
+  const sondertilgungenByYear: Record<number, number> = {};
+  (scn.sondertilgungen ?? []).forEach((s) => {
+    const y = new Date(s.date).getFullYear();
+    sondertilgungenByYear[y] = (sondertilgungenByYear[y] ?? 0) + (s.amount || 0);
+  });
+
+  let balance = principal;
+  let cumInterest = 0;
+  const yearAgg: Record<number, AmortYear> = {};
+
+  for (let i = 0; i < totalPeriods && balance > 0.01; i++) {
+    const periodDate = new Date(start);
+    if (scn.intervall === "monatlich") periodDate.setMonth(start.getMonth() + i);
+    else if (scn.intervall === "quartalsweise") periodDate.setMonth(start.getMonth() + i * 3);
+    else periodDate.setFullYear(start.getFullYear() + i);
+    const y = periodDate.getFullYear();
+
+    let interest = balance * periodRate;
+    let principalPay = 0;
+    if (scn.tilgungsart === "annuitaet") {
+      principalPay = Math.min(balance, payment - interest);
+    } else if (scn.tilgungsart === "endfaellig") {
+      principalPay = i === totalPeriods - 1 ? balance : 0;
+    } else if (scn.tilgungsart === "manuell") {
+      const m = (scn.manualSchedule ?? []).find((x) => x.year === y);
+      const yearPay = m?.payment ?? 0;
+      const perPeriodPay = yearPay / periodsPerYear;
+      principalPay = Math.max(0, perPeriodPay - interest);
+      if (principalPay > balance) principalPay = balance;
+    }
+
+    balance -= principalPay;
+    cumInterest += interest;
+    const totalPay = principalPay + interest;
+
+    if (!yearAgg[y]) yearAgg[y] = { year: y, payment: 0, interest: 0, principal: 0, extraPayment: 0, balanceEnd: 0, cumulativeInterest: 0 };
+    yearAgg[y].payment += totalPay;
+    yearAgg[y].interest += interest;
+    yearAgg[y].principal += principalPay;
+  }
+
+  // Sondertilgungen anwenden
+  const years = Object.keys(yearAgg).map(Number).sort((a, b) => a - b);
+  let runningBalance = principal;
+  let runningCum = 0;
+  for (const y of years) {
+    runningBalance -= yearAgg[y].principal;
+    const extra = sondertilgungenByYear[y] ?? 0;
+    const appliedExtra = Math.min(Math.max(0, runningBalance), extra);
+    runningBalance -= appliedExtra;
+    yearAgg[y].extraPayment = appliedExtra;
+    yearAgg[y].payment += appliedExtra;
+    yearAgg[y].balanceEnd = Math.max(0, runningBalance);
+    runningCum += yearAgg[y].interest;
+    yearAgg[y].cumulativeInterest = runningCum;
+  }
+
+  return years.map((y) => yearAgg[y]);
+}
+
+export function makeFinanceScenario(partial: Partial<FinanceScenario> = {}): FinanceScenario {
+  return {
+    id: crypto.randomUUID(),
+    name: partial.name ?? "Bank-Szenario",
+    bankName: "",
+    kreditBetrag: null,
+    eigenkapital: null,
+    zinssatz: 0.038,
+    zinsbindung: "fix",
+    zinsbindungJahre: 10,
+    laufzeitJahre: 30,
+    intervall: "monatlich",
+    tilgungsart: "annuitaet",
+    startDate: new Date().toISOString().slice(0, 10),
+    sondertilgungen: [],
+    manualSchedule: [],
+    notizen: "",
+    ...partial,
+  };
+}
