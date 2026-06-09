@@ -239,6 +239,35 @@ function Detail() {
             />
           </Section>
 
+          <Section title="CRM · Verkäufer & Follow-up">
+            <CrmPanel p={p} edit={editMode} u={u} />
+          </Section>
+
+          <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">Kategorie</span>
+                <AmpelBadge ampel={mietrecht.risiko === "niedrig" ? "green" : mietrecht.risiko === "mittel" ? "yellow" : "red"}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
+              </div>
+              <p className="text-sm text-muted-foreground">{mietrecht.erklaerung}</p>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Vor Kauf prüfen</div>
+                <ul className="list-disc list-inside text-sm">
+                  {mietrecht.pruefen.map((x) => <li key={x}>{x}</li>)}
+                </ul>
+              </div>
+              <p className="text-[11px] text-muted-foreground border-t pt-2">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
+            </div>
+          </Section>
+
+          <Section title="Dokumente / Exposé-PDF">
+            <PdfUploader propertyId={p.id} />
+          </Section>
+
+          <Section title="Aktivitäten / Verlauf">
+            <ActivitiesPanel propertyId={p.id} />
+          </Section>
+
           <ViewingChecklist propertyId={p.id} viewings={viewings} setViewing={setViewing} />
         </div>
 
