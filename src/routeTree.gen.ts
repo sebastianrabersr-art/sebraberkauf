@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
+import { Route as RechnerRouteImport } from './routes/rechner'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,9 +26,24 @@ const ViewingRoute = ViewingRouteImport.update({
   path: '/viewing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RechnerRoute = RechnerRouteImport.update({
+  id: '/rechner',
+  path: '/rechner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipelineRoute = PipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FollowupsRoute = FollowupsRouteImport.update({
+  id: '/followups',
+  path: '/followups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssumptionsRoute = AssumptionsRouteImport.update({
@@ -63,7 +81,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/followups': typeof FollowupsRoute
+  '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
+  '/rechner': typeof RechnerRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -73,7 +94,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/followups': typeof FollowupsRoute
+  '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
+  '/rechner': typeof RechnerRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -84,7 +108,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/followups': typeof FollowupsRoute
+  '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
+  '/rechner': typeof RechnerRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -96,7 +123,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/followups'
+    | '/pipeline'
     | '/projects'
+    | '/rechner'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -106,7 +136,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/followups'
+    | '/pipeline'
     | '/projects'
+    | '/rechner'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -116,7 +149,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/followups'
+    | '/pipeline'
     | '/projects'
+    | '/rechner'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -127,7 +163,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
+  FollowupsRoute: typeof FollowupsRoute
+  PipelineRoute: typeof PipelineRoute
   ProjectsRoute: typeof ProjectsRoute
+  RechnerRoute: typeof RechnerRoute
   ViewingRoute: typeof ViewingRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   PropertiesNewRoute: typeof PropertiesNewRoute
@@ -143,11 +182,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ViewingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rechner': {
+      id: '/rechner'
+      path: '/rechner'
+      fullPath: '/rechner'
+      preLoaderRoute: typeof RechnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects': {
       id: '/projects'
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipeline': {
+      id: '/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/followups': {
+      id: '/followups'
+      path: '/followups'
+      fullPath: '/followups'
+      preLoaderRoute: typeof FollowupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assumptions': {
@@ -199,7 +259,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
+  FollowupsRoute: FollowupsRoute,
+  PipelineRoute: PipelineRoute,
   ProjectsRoute: ProjectsRoute,
+  RechnerRoute: RechnerRoute,
   ViewingRoute: ViewingRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   PropertiesNewRoute: PropertiesNewRoute,
@@ -208,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
