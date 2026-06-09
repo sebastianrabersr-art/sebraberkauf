@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_ASSUMPTIONS } from "./calc";
-import type { Activity, ActivityType, Assumptions, Project, Property, PropertyDocument, ViewingNote } from "./types";
+import type { Activity, ActivityType, Assumptions, Payment, Project, Property, PropertyDocument, ViewingNote } from "./types";
 
 export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] = [
   { key: "fenster", label: "Zustand Fenster", group: "Wohnung" },
