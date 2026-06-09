@@ -157,7 +157,8 @@ export const useStore = create<State>()(
       setViewing: (id, key, patch) =>
         set((s) => {
           const cur = s.viewings[id] ?? { propertyId: id, checks: {} };
-          const checks = { ...cur.checks, [key]: { done: false, note: "", ...cur.checks[key], ...patch } };
+          const existing = cur.checks[key] ?? { done: false, note: "" };
+          const checks = { ...cur.checks, [key]: { ...existing, ...patch } };
           return { viewings: { ...s.viewings, [id]: { ...cur, checks } } };
         }),
       findByLink: (link) => get().properties.find((p) => p.link.trim() === link.trim()),

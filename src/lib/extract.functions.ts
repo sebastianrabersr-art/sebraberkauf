@@ -164,7 +164,7 @@ Niemals raten. Wenn unklar -> null und in missing_data.`;
 
     const parsed = extractedSchema.safeParse({ ...(json as object), url, platform: (json as any)?.platform || detectPlatform(url) });
     if (!parsed.success) {
-      return { ok: false as const, error: "Antwort konnte nicht geparst werden.", raw: json };
+      return { ok: false as const, error: "Antwort konnte nicht geparst werden." };
     }
     return { ok: true as const, data: parsed.data, fetchedFromUrl: fetched };
   });
