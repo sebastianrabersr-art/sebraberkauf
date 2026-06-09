@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-function KpiCard({ label, value, sub, icon: Icon }: { label: string; value: string; sub?: string; icon: any }) {
+function KpiCard({ label, value, sub, icon: Icon, tip }: { label: string; value: string; sub?: string; icon: any; tip?: string }) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
+    <div className="rounded-xl border bg-card p-5 shadow-sm" title={tip}>
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
@@ -51,6 +51,11 @@ function Dashboard() {
   const avgBrutto = total ? rows.reduce((a, r) => a + r.c.bruttorendite, 0) / total : 0;
   const avgNetto = total ? rows.reduce((a, r) => a + r.c.nettorendite, 0) / total : 0;
   const avgCashflow = total ? rows.reduce((a, r) => a + r.c.cashflowMtl, 0) / total : 0;
+  const sumMakler = rows.reduce((a, r) => a + r.c.maklerProvisionBrutto, 0);
+  const sumNK = rows.reduce((a, r) => a + r.c.kaufNebenkosten, 0);
+  const sumKapital = rows.reduce((a, r) => a + r.c.gesamtkosten, 0);
+  const avgMinMiete = total ? rows.reduce((a, r) => a + r.c.requiredBreakEvenRent, 0) / total : 0;
+  const avgErwMiete = total ? rows.reduce((a, r) => a + (r.p.nettomieteMtl ?? 0), 0) / total : 0;
   const interessant = rows.filter((r) => r.s.total >= 70).length;
   const fehlend = rows.filter((r) => r.dq.score < 70).length;
 
@@ -85,12 +90,23 @@ function Dashboard() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard label="Objekte" value={String(total)} icon={Building} />
-        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} />
-        <KpiCard label="Beste" value={best ? `${best.s.total}` : "—"} sub={best?.p.title.slice(0, 24)} icon={TrendingUp} />
-        <KpiCard label="Ø Brutto" value={fmtPct(avgBrutto)} sub={`Ø Netto ${fmtPct(avgNetto)}`} icon={TrendingUp} />
-        <KpiCard label="Ø Cashflow mtl." value={fmtEUR(avgCashflow)} icon={Wallet} />
-        <KpiCard label="Interessant" value={String(interessant)} sub={`${fehlend} mit fehlenden Daten`} icon={AlertTriangle} />
+        <KpiCard label="Objekte" value={String(total)} icon={Building} tip="Anzahl Immobilien im aktiven Projekt" />
+        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} tip="Durchschnittliche Gesamtbewertung" />
+        <KpiCard label="Beste" value={best ? `${best.s.total}` : "—"} sub={best?.p.title.slice(0, 24)} icon={TrendingUp} tip="Höchster Score im Projekt" />
+        <KpiCard label="Ø Brutto" value={fmtPct(avgBrutto)} sub={`Ø Netto ${fmtPct(avgNetto)}`} icon={TrendingUp} tip="Durchschnittliche Renditen" />
+        <KpiCard label="Ø Cashflow mtl." value={fmtEUR(avgCashflow)} icon={Wallet} tip="Durchschnittlicher monatlicher Cashflow" />
+        <KpiCard label="Interessant" value={String(interessant)} sub={`${fehlend} mit fehlenden Daten`} icon={AlertTriangle} tip="Score ≥ 70" />
+        <KpiCard label="Σ Maklerkosten" value={fmtEUR(sumMakler)} icon={Wallet} tip="Summe aller Maklerkosten brutto" />
+        <KpiCard label="Σ Kaufnebenkosten" value={fmtEUR(sumNK)} icon={Wallet} tip="Summe aller Kaufnebenkosten" />
+        <KpiCard label="Σ Gesamtkapital" value={fmtEUR(sumKapital)} icon={Wallet} tip="Summe Gesamtkapitalbedarf aller Objekte" />
+        <KpiCard label="Ø erwartete Miete" value={fmtEUR(avgErwMiete)} icon={Wallet} tip="Durchschnittliche erwartete Nettomiete" />
+        <KpiCard label="Ø Min-Miete CF≥0" value={fmtEUR(avgMinMiete)} icon={Wallet} tip="Durchschnittlich benötigte Mindestmiete für positiven Cashflow" />
+        <KpiCard label="Ø Mietrecht-Risiko" value={(() => {
+          const counts = { niedrig: 0, mittel: 0, hoch: 0 } as Record<string, number>;
+          rows.forEach((r) => { counts[(r.p.mietrechtRisiko as string) || "hoch"] = (counts[(r.p.mietrechtRisiko as string) || "hoch"] ?? 0) + 1; });
+          const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+          return top && total ? `${top[0]} (${top[1]})` : "—";
+        })()} icon={AlertTriangle} tip="Häufigste Mietrecht-Risikostufe" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mt-8">

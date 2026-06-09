@@ -101,40 +101,67 @@ function Detail() {
         }
       />
 
-      {mietrechtWarn && (
-        <Alert>
-          <strong>Mietrecht vor Kauf prüfen.</strong> Bei Altbau / unklarer Einstufung ist rechtliche Prüfung empfohlen.
-        </Alert>
-      )}
-      {dq.score < 50 && (
-        <Alert tone="destructive">
-          <strong>Wichtige Daten fehlen</strong> – bitte Immobilie manuell ergänzen. Fehlend: {dq.missing.join(", ")}.
-        </Alert>
-      )}
+      {/* Investment Summary – die wichtigsten Kennzahlen ganz oben */}
+      <div className="rounded-2xl border bg-card p-5 mb-6">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 className="font-semibold">Investment Summary</h2>
+          <div className="flex items-center gap-2">
+            <AmpelBadge ampel={s.ampel}>Entscheidung: {s.entscheidung}</AmpelBadge>
+            <span className="text-xs text-muted-foreground">Status: {p.status}</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <Stat label="Kaufpreis (brutto)" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis inkl. USt falls relevant. Wird in Renditen und Nebenkosten verwendet." />
+          <Stat label="Kaufpreis netto" value={fmtEUR(p.kaufpreisNetto ?? p.kaufpreis)} tip="Kaufpreis ohne USt (bei gewerblicher Vermietung relevant)." />
+          <Stat label="Gesamtkapitalbedarf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Kaufnebenkosten + Sanierung + Einrichtung + Reserve." />
+          <Stat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} hint={`Anteil ${fmtPct(c.gesamtkosten>0 ? c.kaufNebenkosten/c.gesamtkosten:0,1)}`} tip="Grunderwerbsteuer, Eintragung, Vertrag, Finanzierungskosten, Maklerkosten brutto." />
+          <Stat label="Maklerkosten brutto" value={fmtEUR(c.maklerProvisionBrutto)} hint={c.maklerKostenZahlbar ? `${fmtPct(c.maklerProvisionPct,2)} + USt ${fmtPct(c.maklerProvisionUstPct,0)}` : "nicht zahlbar"} tone={c.maklerProvisionBrutto > 0 ? "neutral" : undefined} tip="Maklerprovision netto + Umsatzsteuer (Standard 3% + 20% USt)." />
+          <Stat label="Eigenkapital" value={fmtEUR(c.eigenkapitalEinsatz)} hint={`Projekt-EK ${fmtEUR(assumptions.eigenkapital)}`} tip="Tatsächlich eingesetztes Eigenkapital." />
+          <Stat label="Kreditbedarf" value={fmtEUR(c.kreditBetrag)} hint={`LTV ${fmtPct(c.ltv, 0)}`} tip="Gesamtkapital minus Eigenkapital." />
+          <Stat label="Monatliche Rate" value={fmtEUR(c.kreditRateMtl)} hint={`${assumptions.laufzeit} J. @ ${fmtPct(assumptions.zinssatz, 2)}`} tip="Annuitätenrate Kredit pro Monat." />
+          <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Erzielbare Nettomiete pro Monat." />
+          <Stat label="Mindestmiete CF≥0" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Benötigte Nettomiete für positiven Cashflow inkl. Leerstandspuffer." />
+          <Stat label="Cashflow mtl." value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Miete – Rate – nicht umlagefähige BK – Rücklage – Leerstand." />
+          <Stat label="Bruttorendite" value={fmtPct(c.bruttorendite)} tip="Jahresmiete / Kaufpreis." />
+          <Stat label="Nettorendite" value={fmtPct(c.nettorendite)} tip="Jahresnettomieten / Gesamtkapitalbedarf." />
+          <Stat label="EK-Rendite" value={fmtPct(c.eigenkapitalrendite)} tip="Jahres-Cashflow / eingesetztes Eigenkapital." />
+          <Stat label="Preis/m²" value={fmtEUR(c.preisProM2)} tip="Kaufpreis / Wohnfläche." />
+          <Stat label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} tip="Nutzbare Wohnfläche laut Inserat." />
+          <Stat label="Außenfläche" value={(() => { const x = (p.aussenflaecheM2 ?? 0) + (p.balkonM2 ?? 0) + (p.terrasseM2 ?? 0) + (p.gartenM2 ?? 0); return x > 0 ? `${x} m²` : "—"; })()} tip="Summe aus Balkon, Terrasse, Garten und sonstigen Außenflächen." />
+          <Stat label="DSCR" value={c.dscr ? c.dscr.toFixed(2) : "—"} tone={c.dscr >= 1.2 ? "good" : c.dscr < 1 ? "bad" : "neutral"} tip="Debt Service Coverage Ratio: Miete / Rate. ≥1.2 = solide." />
+          <Stat label="Score" value={`${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf." />
+          <Stat label="Datenqualität" value={`${dq.score}% · ${dq.level}`} tone={dq.ampel === "green" ? "good" : dq.ampel === "red" ? "bad" : "neutral"} tip="Anteil der ausgefüllten Pflichtfelder." />
+          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung aus Baujahr und Beschreibung. Keine Rechtsberatung." />
+        </div>
+
+        {/* Warnungen direkt unter den KPIs */}
+        {(() => {
+          const warns: string[] = [];
+          if (mietrechtWarn) warns.push("Mietrecht prüfen (Altbau / unklar)");
+          if (dq.score < 70) warns.push(`Daten unvollständig (${dq.missing.slice(0,3).join(", ")}${dq.missing.length>3?", …":""})`);
+          if (c.cashflowMtl < 0) warns.push("Cashflow negativ");
+          if (c.requiredBreakEvenRentPerM2 > 30) warns.push("Benötigte Miete pro m² unrealistisch hoch (> 30 €/m²)");
+          if (c.maklerProvisionBrutto === 0 && p.sellerType !== "Privat" && p.makler !== "Nein") warns.push("Maklerkosten fehlen / nicht erfasst");
+          if (p.betriebskostenMtl == null) warns.push("Betriebskosten fehlen");
+          if (p.ruecklageFonds == null && p.ruecklageMtl == null) warns.push("Rücklage fehlt");
+          if (warns.length === 0) return null;
+          return (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {warns.map((w) => (
+                <span key={w} className="inline-flex items-center gap-1 text-xs rounded-full border border-warning/40 bg-warning/10 text-warning-foreground px-2.5 py-1">
+                  <AlertTriangle className="size-3" /> {w}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
       {!linkValid && (
         <Alert tone="destructive">
           <strong>Original-URL ist ungültig oder fehlt.</strong> Im Bearbeiten-Modus kannst du sie ergänzen.
         </Alert>
       )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-        <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreis)} />
-        <Stat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} hint={`NK ${fmtPct(c.nebenkostenPct, 1)}`} />
-        <Stat label="Gesamtkapital" value={fmtEUR(c.gesamtkosten)} />
-        <Stat label="Eigenkapital" value={fmtEUR(c.eigenkapitalEinsatz)} hint={`Projekt-EK ${fmtEUR(assumptions.eigenkapital)}`} />
-        <Stat label="Kredit" value={fmtEUR(c.kreditBetrag)} hint={`LTV ${fmtPct(c.ltv, 0)}`} />
-        <Stat label="Rate mtl." value={fmtEUR(c.kreditRateMtl)} hint={`${assumptions.laufzeit} J. @ ${fmtPct(assumptions.zinssatz, 2)}`} />
-        <Stat label="Miete mtl." value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "Inserat"} />
-        <Stat label="Jahresmiete" value={fmtEUR((p.nettomieteMtl ?? 0) * 12)} />
-        <Stat label="Cashflow" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} />
-        <Stat label="Bruttorendite" value={fmtPct(c.bruttorendite)} />
-        <Stat label="Nettorendite" value={fmtPct(c.nettorendite)} />
-        <Stat label="EK-Rendite" value={fmtPct(c.eigenkapitalrendite)} />
-        <Stat label="Preis/m²" value={fmtEUR(c.preisProM2)} />
-        <Stat label="DSCR" value={c.dscr ? c.dscr.toFixed(2) : "—"} />
-        <Stat label="Break-even Miete" value={fmtEUR(c.breakEvenMiete)} />
-        <Stat label="Mindestmiete (CF≥0)" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} />
-      </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -197,6 +224,43 @@ function Detail() {
                 </label>
               </F>
             </div>
+          </Section>
+
+          <Section title="Maklerkosten & Kaufnebenkosten">
+            <div className="grid md:grid-cols-3 gap-3">
+              <F label="Maklerprovision %">
+                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={editMode} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
+              </F>
+              <F label="Maklerprovision netto €">
+                {editMode ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
+              </F>
+              <F label="USt auf Provision %">
+                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={editMode} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
+              </F>
+              <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
+              <F label="Maklerprovision brutto €"><Ro>{fmtEUR(c.maklerProvisionBrutto)}</Ro></F>
+              <F label="Maklerkosten zahlbar?">
+                <select
+                  disabled={!editMode}
+                  value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
+                  onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="auto">Automatisch ({c.maklerKostenZahlbar ? "Ja" : "Nein"})</option>
+                  <option value="ja">Ja</option>
+                  <option value="nein">Nein</option>
+                </select>
+              </F>
+              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={editMode} on={(v) => u({ grunderwerbsteuer: v })} /></F>
+              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={editMode} on={(v) => u({ grundbuchkosten: v })} /></F>
+              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={editMode} on={(v) => u({ vertragskosten: v })} /></F>
+              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={editMode} on={(v) => u({ finanzierungskosten: v })} /></F>
+              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={editMode} on={(v) => u({ sonstigeNK: v })} /></F>
+              <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-3">
+              Standard Österreich: bis zu 3 % vom Kaufpreis + 20 % USt. Bei Verkäufer „Privat" wird automatisch keine Maklerprovision angesetzt. Werte können manuell überschrieben werden.
+            </p>
           </Section>
 
           <Section title="Mietrecht & Risiko">
@@ -384,9 +448,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </div>
   );
 }
-function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral" }) {
+function Stat({ label, value, hint, tone, tip }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral"; tip?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-lg border bg-card p-4" title={tip}>
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`text-xl font-semibold mt-1 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
       {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}

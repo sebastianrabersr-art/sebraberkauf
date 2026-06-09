@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { useMemo, useState } from "react";
 import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
@@ -142,8 +142,27 @@ function PropertiesList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr className="border-b">
-                {["Score","Status","Prio","Titel","Bezirk","Kaufpreis","m²","€/m²","Miete","Min-Miete","Brutto","Cashflow","DQ","Nächste Aktion","Verkäufer","Links",""].map((h) => (
-                  <th key={h} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                {[
+                  ["Score","Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf"],
+                  ["Status","Aktueller CRM-Status"],
+                  ["Prio","Priorität für deine Pipeline"],
+                  ["Titel","Inserats-Titel"],
+                  ["Bezirk","Wiener Bezirk / Region"],
+                  ["Kaufpreis","Kaufpreis brutto"],
+                  ["m²","Wohnfläche"],
+                  ["€/m²","Preis pro m²"],
+                  ["Makler€","Maklerkosten brutto (Provision + USt)"],
+                  ["NK gesamt","Kaufnebenkosten gesamt (inkl. Maklerkosten)"],
+                  ["Gesamt­kapital","Gesamtkapitalbedarf = Kaufpreis + NK + Sanierung + Einrichtung + Reserve"],
+                  ["Miete","Erwartete Nettomiete"],
+                  ["Min-Miete","Benötigte Nettomiete für positiven Cashflow"],
+                  ["Brutto","Bruttorendite"],
+                  ["Cashflow","Monatlicher Cashflow"],
+                  ["Mietrecht","Mietrechtliches Risiko (automatisch eingeschätzt)"],
+                  ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder"],
+                  ["Nächste Aktion",""],["Verkäufer",""],["Links",""],["",""],
+                ].map(([h,tip]) => (
+                  <th key={h} title={tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -167,16 +186,22 @@ function PropertiesList() {
                   <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(p.kaufpreis)}</td>
                   <td className="py-2.5 px-3">{p.wohnflaecheM2 ?? "—"}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(c.preisProM2)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Maklerkosten brutto inkl. USt">{fmtEUR(c.maklerProvisionBrutto)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Kaufnebenkosten gesamt inkl. Makler">{fmtEUR(c.kaufNebenkosten)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Gesamtkapitalbedarf">{fmtEUR(c.gesamtkosten)}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">
                     {fmtEUR(p.nettomieteMtl)}
                     {p.nettomieteGeschaetzt && <div className="text-[10px] text-warning-foreground">geschätzt</div>}
                   </td>
-                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`}>
+                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`} title="Mindestmiete für positiven Cashflow">
                     {fmtEUR(c.requiredBreakEvenRent)}
                     <div className="text-[10px] text-muted-foreground">{fmtEUR(c.requiredBreakEvenRentPerM2)}/m²</div>
                   </td>
                   <td className="py-2.5 px-3">{fmtPct(c.bruttorendite)}</td>
                   <td className={`py-2.5 px-3 whitespace-nowrap ${c.cashflowMtl < 0 ? "text-destructive" : "text-success"}`}>{fmtEUR(c.cashflowMtl)}</td>
+                  <td className="py-2.5 px-3 text-xs" title="Mietrechtliches Risiko aus Baujahr/Beschreibung">
+                    {(() => { const m = inferMietrecht(p); return <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>{m.risiko}</AmpelBadge>; })()}
+                  </td>
                   <td className="py-2.5 px-3"><AmpelBadge ampel={dq.ampel}>{dq.score}%</AmpelBadge></td>
                   <td className="py-2.5 px-3 text-xs">
                     {p.nextAction ? (
@@ -213,7 +238,7 @@ function PropertiesList() {
               );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={17} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
+                <tr><td colSpan={22} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
               )}
             </tbody>
           </table>

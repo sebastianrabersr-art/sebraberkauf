@@ -118,6 +118,8 @@ export interface Property {
   kaufpreisBrutto?: number | null;
   provisionPct?: number | null;
   provisionEUR?: number | null;
+  maklerprovisionUstPct?: number | null;
+  maklerkostenZahlbar?: boolean | null;
   grunderwerbsteuer?: number | null;
   grundbuchkosten?: number | null;
   vertragskosten?: number | null;

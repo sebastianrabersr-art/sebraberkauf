@@ -50,6 +50,12 @@ export interface Calc {
   maxKaufpreisZielRendite: number;
   requiredBreakEvenRent: number;
   requiredBreakEvenRentPerM2: number;
+  maklerProvisionPct: number;
+  maklerProvisionNetto: number;
+  maklerProvisionUst: number;
+  maklerProvisionBrutto: number;
+  maklerProvisionUstPct: number;
+  maklerKostenZahlbar: boolean;
 }
 
 export function calcProperty(p: Property, a: Assumptions): Calc {
@@ -59,9 +65,28 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
 
   const nebenkostenPct =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
-  const explicitNK =
+
+  // Maklerkosten
+  const sellerIsPrivat = p.sellerType === "Privat";
+  const maklerKostenZahlbar =
+    p.maklerkostenZahlbar != null
+      ? !!p.maklerkostenZahlbar
+      : sellerIsPrivat
+        ? false
+        : p.makler === "Nein"
+          ? false
+          : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || p.sellerType === "Makler";
+  const maklerProvisionUstPct = p.maklerprovisionUstPct ?? 0.20;
+  const maklerProvisionPct = p.provisionPct ?? (maklerKostenZahlbar ? 0.03 : 0);
+  let maklerProvisionNetto = p.provisionEUR != null ? p.provisionEUR : kaufpreis * maklerProvisionPct;
+  if (!maklerKostenZahlbar) maklerProvisionNetto = 0;
+  const maklerProvisionUst = maklerProvisionNetto * maklerProvisionUstPct;
+  const maklerProvisionBrutto = maklerProvisionNetto + maklerProvisionUst;
+
+  const otherNK =
     (p.grunderwerbsteuer ?? 0) + (p.grundbuchkosten ?? 0) + (p.vertragskosten ?? 0) +
-    (p.finanzierungskosten ?? 0) + (p.sonstigeNK ?? 0) + (p.provisionEUR ?? 0);
+    (p.finanzierungskosten ?? 0) + (p.sonstigeNK ?? 0);
+  const explicitNK = otherNK + maklerProvisionBrutto;
   const kaufNebenkosten = explicitNK > 0 ? explicitNK : kaufpreis * nebenkostenPct;
   const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
   const ekEinsatz = Math.min(a.eigenkapital, gesamtkosten);
@@ -91,8 +116,6 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const breakEvenMiete = kreditRateMtl + nichtUmlMtl + ruecklageMtl;
   const maxKaufpreisZielRendite = a.zielBrutto > 0 ? (miete * 12) / a.zielBrutto : 0;
 
-  // Break-even Mindestmiete für Cashflow >= 0 (Leerstand ist % der Miete)
-  // miete*(1-leerstand) = rate + nichtUml + ruecklage  →  miete = (...) / (1 - leerstand)
   const denom = Math.max(0.0001, 1 - leerstandPct);
   const requiredBreakEvenRent = (kreditRateMtl + nichtUmlMtl + ruecklageMtl) / denom;
   const requiredBreakEvenRentPerM2 = m2 > 0 ? requiredBreakEvenRent / m2 : 0;
@@ -105,6 +128,8 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     cashflowStressZins, cashflowStressLeerstand, cashflowStressReparatur,
     breakEvenMiete, maxKaufpreisZielRendite,
     requiredBreakEvenRent, requiredBreakEvenRentPerM2,
+    maklerProvisionPct, maklerProvisionNetto, maklerProvisionUst, maklerProvisionBrutto,
+    maklerProvisionUstPct, maklerKostenZahlbar,
   };
 }
 
