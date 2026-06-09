@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_ASSUMPTIONS } from "./calc";
-import type { Assumptions, Property, ViewingNote } from "./types";
+import type { Assumptions, Project, Property, ViewingNote } from "./types";
 
 export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] = [
   { key: "fenster", label: "Zustand Fenster", group: "Wohnung" },
@@ -27,133 +27,169 @@ export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] 
   { key: "oeffi", label: "Öffi-Anbindung", group: "Lage" },
 ];
 
-interface State {
-  assumptions: Assumptions;
-  properties: Property[];
-  viewings: Record<string, ViewingNote>;
-  setAssumptions: (a: Partial<Assumptions>) => void;
-  resetAssumptions: () => void;
-  addProperty: (p: Property) => void;
-  updateProperty: (id: string, patch: Partial<Property>) => void;
-  deleteProperty: (id: string) => void;
-  setViewing: (id: string, key: string, patch: Partial<{ done: boolean; note: string }>) => void;
-  findByLink: (link: string) => Property | undefined;
+const now = () => new Date().toISOString();
+
+function makeProject(partial: Partial<Project> = {}): Project {
+  return {
+    id: crypto.randomUUID(),
+    name: "Neues Projekt",
+    description: "",
+    investmentGoal: "",
+    locationFocus: "Wien",
+    budgetMin: null,
+    budgetMax: null,
+    maxNegativeCashflow: null,
+    preferredSizeMin: null,
+    preferredSizeMax: null,
+    preferredDistricts: "",
+    status: "Aktiv",
+    assumptions: { ...DEFAULT_ASSUMPTIONS },
+    createdAt: now(),
+    updatedAt: now(),
+    ...partial,
+  };
 }
+
+const demoProject: Project = makeProject({
+  id: "proj-demo",
+  name: "Demo: Wohnung Wien",
+  description: "Beispielprojekt aus deiner Excel-Datei zur Veranschaulichung.",
+  investmentGoal: "Langfristige Vermietung",
+  locationFocus: "Wien",
+  budgetMin: 200000,
+  budgetMax: 400000,
+  preferredDistricts: "1070, 1150, 1030",
+  isDemo: true,
+});
 
 const seedProperties: Property[] = [
   {
-    id: "seed-1",
-    status: "Prüfen",
-    inseratsdatum: new Date().toISOString(),
-    link: "https://example.com/inserat-1",
-    platform: "willhaben",
-    title: "Neubau Nähe U3, 2 Zimmer",
-    bezirk: "1070",
-    adresse: "Neubau Nähe U3",
-    objekttyp: "Wohnung",
-    baujahr: 2018,
-    mietrecht: "Neubau / freie Miete",
-    zustand: "Sehr gut",
-    wohnflaecheM2: 48,
-    zimmer: 2,
-    kaufpreis: 320000,
-    makler: "Ja",
-    sanierung: 5000,
-    einrichtung: 8000,
-    reserve: 5000,
-    nettomieteMtl: 1100,
-    nettomieteGeschaetzt: false,
-    hasElevator: true,
-    hasBalkon: true,
+    id: "seed-1", projectId: demoProject.id, status: "Prüfen", inseratsdatum: now(),
+    link: "https://www.willhaben.at/iad/immobilien", platform: "willhaben",
+    extractionStatus: "ok",
+    title: "Neubau Nähe U3, 2 Zimmer", bezirk: "1070", adresse: "Neubau Nähe U3", city: "Wien",
+    objekttyp: "Wohnung", baujahr: 2018, mietrecht: "Neubau / freie Miete", zustand: "Sehr gut",
+    wohnflaecheM2: 48, zimmer: 2, kaufpreis: 320000, makler: "Ja",
+    sanierung: 5000, einrichtung: 8000, reserve: 5000,
+    nettomieteMtl: 1100, nettomieteGeschaetzt: false,
+    hasElevator: true, hasBalkon: true, betriebskostenMtl: 140,
+    beschreibung: "Beispiel Neubau-Wohnung in zentraler Lage.",
     missingData: [],
-    scoreLage: 22,
-    scoreVermietbarkeit: 18,
-    scoreZustand: 14,
-    scoreRecht: 9,
-    scoreWiederverkauf: 5,
-    notizen: "Beispielzeile aus Excel",
-    createdAt: new Date().toISOString(),
+    scoreLage: 22, scoreVermietbarkeit: 18, scoreZustand: 14, scoreRecht: 9, scoreWiederverkauf: 5,
+    notizen: "Beispielzeile aus Excel", createdAt: now(), isDemo: true,
   },
   {
-    id: "seed-2",
-    status: "Neu",
-    inseratsdatum: new Date().toISOString(),
-    link: "https://example.com/inserat-2",
-    platform: "ImmoScout24",
-    title: "U-Bahn Nähe, 1150",
-    bezirk: "1150",
-    adresse: "U-Bahn Nähe",
-    objekttyp: "Wohnung",
-    baujahr: 1998,
-    mietrecht: "Teilanwendung MRG",
-    zustand: "Gut",
-    wohnflaecheM2: 42,
-    zimmer: 2,
-    kaufpreis: 250000,
-    makler: "Nein",
-    sanierung: 8000,
-    einrichtung: 7000,
-    reserve: 5000,
-    nettomieteMtl: 850,
-    nettomieteGeschaetzt: false,
+    id: "seed-2", projectId: demoProject.id, status: "Neu", inseratsdatum: now(),
+    link: "https://www.immobilienscout24.at/", platform: "ImmoScout24",
+    extractionStatus: "ok",
+    title: "U-Bahn Nähe, 1150", bezirk: "1150", adresse: "U-Bahn Nähe", city: "Wien",
+    objekttyp: "Wohnung", baujahr: 1998, mietrecht: "Teilanwendung MRG", zustand: "Gut",
+    wohnflaecheM2: 42, zimmer: 2, kaufpreis: 250000, makler: "Nein",
+    sanierung: 8000, einrichtung: 7000, reserve: 5000,
+    nettomieteMtl: 850, nettomieteGeschaetzt: false,
+    betriebskostenMtl: 130,
+    beschreibung: "Beispiel-Bestand mit guter Anbindung.",
     missingData: [],
-    scoreLage: 18,
-    scoreVermietbarkeit: 16,
-    scoreZustand: 12,
-    scoreRecht: 7,
-    scoreWiederverkauf: 4,
-    notizen: "",
-    createdAt: new Date().toISOString(),
+    scoreLage: 18, scoreVermietbarkeit: 16, scoreZustand: 12, scoreRecht: 7, scoreWiederverkauf: 4,
+    notizen: "", createdAt: now(), isDemo: true,
   },
   {
-    id: "seed-3",
-    status: "Neu",
-    inseratsdatum: new Date().toISOString(),
-    link: "https://example.com/inserat-3",
-    platform: "Makler",
-    title: "Altbau gute Lage, 1030",
-    bezirk: "1030",
-    adresse: "gute Lage, Altbau",
-    objekttyp: "Wohnung",
-    baujahr: 1900,
-    mietrecht: "Altbau / Richtwert möglich",
-    zustand: "Okay",
-    wohnflaecheM2: 55,
-    zimmer: 2,
-    kaufpreis: 360000,
-    makler: "Ja",
-    sanierung: 15000,
-    einrichtung: 9000,
-    reserve: 7000,
-    nettomieteMtl: 1050,
-    nettomieteGeschaetzt: true,
-    missingData: ["Energieklasse", "HWB"],
-    scoreLage: 20,
-    scoreVermietbarkeit: 12,
-    scoreZustand: 9,
-    scoreRecht: 3,
-    scoreWiederverkauf: 4,
-    notizen: "Mietrecht genau prüfen",
-    createdAt: new Date().toISOString(),
+    id: "seed-3", projectId: demoProject.id, status: "Neu", inseratsdatum: now(),
+    link: "https://immobilien.derstandard.at/", platform: "derStandard",
+    extractionStatus: "partial",
+    title: "Altbau gute Lage, 1030", bezirk: "1030", adresse: "gute Lage, Altbau", city: "Wien",
+    objekttyp: "Wohnung", baujahr: 1900, mietrecht: "Altbau / Richtwert möglich", zustand: "Okay",
+    wohnflaecheM2: 55, zimmer: 2, kaufpreis: 360000, makler: "Ja",
+    sanierung: 15000, einrichtung: 9000, reserve: 7000,
+    nettomieteMtl: 1050, nettomieteGeschaetzt: true,
+    beschreibung: "Altbau, Mietrecht prüfen.",
+    missingData: ["Energieklasse", "HWB", "Betriebskosten"],
+    scoreLage: 20, scoreVermietbarkeit: 12, scoreZustand: 9, scoreRecht: 3, scoreWiederverkauf: 4,
+    notizen: "Mietrecht genau prüfen", createdAt: now(), isDemo: true,
   },
 ];
+
+interface State {
+  projects: Project[];
+  activeProjectId: string;
+  properties: Property[];
+  viewings: Record<string, ViewingNote>;
+  addProject: (p?: Partial<Project>) => Project;
+  updateProject: (id: string, patch: Partial<Project>) => void;
+  updateProjectAssumptions: (id: string, patch: Partial<Assumptions>) => void;
+  resetProjectAssumptions: (id: string) => void;
+  deleteProject: (id: string) => void;
+  setActiveProject: (id: string) => void;
+  addProperty: (p: Property) => void;
+  updateProperty: (id: string, patch: Partial<Property>) => void;
+  deleteProperty: (id: string) => void;
+  duplicateProperty: (id: string) => string | null;
+  setViewing: (id: string, key: string, patch: Partial<{ done: boolean; note: string }>) => void;
+  findByLink: (link: string, projectId?: string) => Property | undefined;
+  deleteDemoData: () => void;
+}
 
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      assumptions: DEFAULT_ASSUMPTIONS,
+      projects: [demoProject],
+      activeProjectId: demoProject.id,
       properties: seedProperties,
       viewings: {},
-      setAssumptions: (a) => set((s) => ({ assumptions: { ...s.assumptions, ...a } })),
-      resetAssumptions: () => set({ assumptions: DEFAULT_ASSUMPTIONS }),
-      addProperty: (p) => set((s) => ({ properties: [p, ...s.properties] })),
+      addProject: (p) => {
+        const proj = makeProject(p);
+        set((s) => ({ projects: [proj, ...s.projects], activeProjectId: proj.id }));
+        return proj;
+      },
+      updateProject: (id, patch) =>
+        set((s) => ({
+          projects: s.projects.map((x) => (x.id === id ? { ...x, ...patch, updatedAt: now() } : x)),
+        })),
+      updateProjectAssumptions: (id, patch) =>
+        set((s) => ({
+          projects: s.projects.map((x) =>
+            x.id === id ? { ...x, assumptions: { ...x.assumptions, ...patch }, updatedAt: now() } : x,
+          ),
+        })),
+      resetProjectAssumptions: (id) =>
+        set((s) => ({
+          projects: s.projects.map((x) =>
+            x.id === id ? { ...x, assumptions: { ...DEFAULT_ASSUMPTIONS }, updatedAt: now() } : x,
+          ),
+        })),
+      deleteProject: (id) =>
+        set((s) => {
+          const projects = s.projects.filter((x) => x.id !== id);
+          if (projects.length === 0) projects.push(makeProject({ name: "Mein Projekt" }));
+          const activeProjectId = s.activeProjectId === id ? projects[0].id : s.activeProjectId;
+          const properties = s.properties.filter((p) => p.projectId !== id);
+          return { projects, activeProjectId, properties };
+        }),
+      setActiveProject: (id) => set({ activeProjectId: id }),
+      addProperty: (p) => set((s) => ({ properties: [{ ...p, projectId: p.projectId || s.activeProjectId }, ...s.properties] })),
       updateProperty: (id, patch) =>
-        set((s) => ({ properties: s.properties.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
+        set((s) => ({
+          properties: s.properties.map((x) => (x.id === id ? { ...x, ...patch, updatedAt: now() } : x)),
+        })),
       deleteProperty: (id) =>
         set((s) => ({
           properties: s.properties.filter((x) => x.id !== id),
           viewings: Object.fromEntries(Object.entries(s.viewings).filter(([k]) => k !== id)),
         })),
+      duplicateProperty: (id) => {
+        const src = get().properties.find((p) => p.id === id);
+        if (!src) return null;
+        const copy: Property = {
+          ...src,
+          id: crypto.randomUUID(),
+          title: `${src.title} (Kopie)`,
+          createdAt: now(),
+          updatedAt: now(),
+          isDemo: false,
+        };
+        set((s) => ({ properties: [copy, ...s.properties] }));
+        return copy.id;
+      },
       setViewing: (id, key, patch) =>
         set((s) => {
           const cur = s.viewings[id] ?? { propertyId: id, checks: {} };
@@ -161,22 +197,49 @@ export const useStore = create<State>()(
           const checks = { ...cur.checks, [key]: { ...existing, ...patch } };
           return { viewings: { ...s.viewings, [id]: { ...cur, checks } } };
         }),
-      findByLink: (link) => get().properties.find((p) => p.link.trim() === link.trim()),
+      findByLink: (link, projectId) => {
+        const l = link.trim();
+        return get().properties.find((p) => p.link.trim() === l && (!projectId || p.projectId === projectId));
+      },
+      deleteDemoData: () =>
+        set((s) => ({
+          properties: s.properties.filter((p) => !p.isDemo),
+          projects: s.projects.some((x) => !x.isDemo)
+            ? s.projects.filter((p) => !p.isDemo)
+            : [makeProject({ name: "Mein Projekt" })],
+          activeProjectId: (() => {
+            const nonDemo = s.projects.filter((p) => !p.isDemo);
+            return nonDemo[0]?.id ?? s.activeProjectId;
+          })(),
+        })),
     }),
-    { name: "immo-invest-store-v1" },
+    { name: "immo-invest-store-v2" },
   ),
 );
+
+export function useActiveProject(): Project {
+  const { projects, activeProjectId } = useStore();
+  return projects.find((p) => p.id === activeProjectId) ?? projects[0];
+}
+
+export function useActiveAssumptions(): Assumptions {
+  const proj = useActiveProject();
+  return proj?.assumptions ?? DEFAULT_ASSUMPTIONS;
+}
 
 export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
   return {
     id: crypto.randomUUID(),
+    projectId: "",
     status: "Neu",
-    inseratsdatum: new Date().toISOString(),
+    inseratsdatum: now(),
     link: "",
     platform: "",
+    extractionStatus: "manuell",
     title: "",
     bezirk: "",
     adresse: "",
+    city: "",
     objekttyp: "Wohnung",
     baujahr: null,
     mietrecht: "unklar – rechtlich prüfen",
@@ -197,7 +260,7 @@ export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
     scoreRecht: 6,
     scoreWiederverkauf: 3,
     notizen: "",
-    createdAt: new Date().toISOString(),
+    createdAt: now(),
     ...partial,
   };
 }

@@ -9,31 +9,55 @@ export type Mietrecht =
 
 export interface Assumptions {
   eigenkapital: number;
-  zinssatz: number; // 0.038
-  laufzeit: number; // years
-  nkOhneMakler: number; // 0.07
-  nkMitMakler: number; // 0.105
-  nkKonservativ: number; // 0.12
-  leerstandPuffer: number; // 0.04
-  ruecklagePerM2: number; // 0.75
-  nichtUmlPerM2: number; // 0.5
-  mindestScore: number; // 75
-  zielBrutto: number; // 0.035
-  zielNetto: number; // 0.025
-  zinsStress: number; // 0.015
-  leerstandStressMonate: number; // 2
-  reparaturStress: number; // 5000
+  zinssatz: number;
+  laufzeit: number;
+  nkOhneMakler: number;
+  nkMitMakler: number;
+  nkKonservativ: number;
+  leerstandPuffer: number;
+  ruecklagePerM2: number;
+  nichtUmlPerM2: number;
+  mindestScore: number;
+  zielBrutto: number;
+  zielNetto: number;
+  zinsStress: number;
+  leerstandStressMonate: number;
+  reparaturStress: number;
+}
+
+export type ProjectStatus = "Aktiv" | "Pausiert" | "Abgeschlossen";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  investmentGoal: string;
+  locationFocus: string;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  maxNegativeCashflow: number | null;
+  preferredSizeMin: number | null;
+  preferredSizeMax: number | null;
+  preferredDistricts: string;
+  status: ProjectStatus;
+  assumptions: Assumptions;
+  createdAt: string;
+  updatedAt: string;
+  isDemo?: boolean;
 }
 
 export interface Property {
   id: string;
+  projectId: string;
   status: PropertyStatus;
-  inseratsdatum: string; // ISO
-  link: string;
+  inseratsdatum: string;
+  link: string; // ORIGINAL URL – never overwrite
   platform: string;
+  extractionStatus?: "ok" | "partial" | "failed" | "manuell";
   title: string;
   bezirk: string;
   adresse: string;
+  city?: string;
   objekttyp: string;
   baujahr: number | null;
   mietrecht: Mietrecht;
@@ -47,7 +71,6 @@ export interface Property {
   reserve: number;
   nettomieteMtl: number | null;
   nettomieteGeschaetzt: boolean;
-  // Optional extras
   stockwerk?: string;
   hasElevator?: boolean | null;
   hasBalkon?: boolean | null;
@@ -65,14 +88,15 @@ export interface Property {
   beschreibung?: string;
   hinweise?: string;
   missingData: string[];
-  // Score sub-values (manual editable, defaults applied)
-  scoreLage: number; // 0-25
-  scoreVermietbarkeit: number; // 0-20
-  scoreZustand: number; // 0-15
-  scoreRecht: number; // 0-10
-  scoreWiederverkauf: number; // 0-5
+  scoreLage: number;
+  scoreVermietbarkeit: number;
+  scoreZustand: number;
+  scoreRecht: number;
+  scoreWiederverkauf: number;
   notizen: string;
   createdAt: string;
+  updatedAt?: string;
+  isDemo?: boolean;
 }
 
 export interface ViewingNote {

@@ -26,6 +26,7 @@ export function pmt(rateMonthly: number, n: number, pv: number): number {
 
 export interface Calc {
   nebenkostenPct: number;
+  kaufNebenkosten: number;
   gesamtkosten: number;
   eigenkapitalEinsatz: number;
   kreditBetrag: number;
@@ -42,7 +43,6 @@ export interface Calc {
   preisProM2: number;
   ltv: number;
   dscr: number;
-  // Stress
   cashflowStressZins: number;
   cashflowStressLeerstand: number;
   cashflowStressReparatur: number;
@@ -57,9 +57,10 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
 
   const nebenkostenPct =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
-  const gesamtkosten = kaufpreis * (1 + nebenkostenPct) + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
+  const kaufNebenkosten = kaufpreis * nebenkostenPct;
+  const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
   const ekEinsatz = Math.min(a.eigenkapital, gesamtkosten);
-  const kreditBetrag = Math.max(0, kaufpreis - (a.eigenkapital - (gesamtkosten - kaufpreis)));
+  const kreditBetrag = Math.max(0, gesamtkosten - a.eigenkapital);
   const kreditRateMtl = pmt(a.zinssatz / 12, a.laufzeit * 12, kreditBetrag);
   const annuitaet = kreditRateMtl * 12;
 
@@ -74,20 +75,19 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const nettorendite = gesamtkosten > 0 ? nettoJahr / gesamtkosten : 0;
   const eigenkapitalrendite = ekEinsatz > 0 ? cashflowJahr / ekEinsatz : 0;
   const preisProM2 = m2 > 0 ? kaufpreis / m2 : 0;
-  const ltv = kaufpreis > 0 ? kreditBetrag / kaufpreis : 0;
+  const ltv = gesamtkosten > 0 ? kreditBetrag / gesamtkosten : 0;
   const dscr = kreditRateMtl > 0 ? miete / kreditRateMtl : 0;
 
-  // Stress tests
   const rateStress = pmt((a.zinssatz + a.zinsStress) / 12, a.laufzeit * 12, kreditBetrag);
   const cashflowStressZins = miete - rateStress - nichtUmlMtl - ruecklageMtl - leerstandMtl;
   const cashflowStressLeerstand = cashflowMtl - (miete * a.leerstandStressMonate) / 12;
   const cashflowStressReparatur = cashflowMtl - a.reparaturStress / 12;
   const breakEvenMiete = kreditRateMtl + nichtUmlMtl + ruecklageMtl;
-  // Max Kaufpreis bei Ziel-Bruttorendite
   const maxKaufpreisZielRendite = a.zielBrutto > 0 ? (miete * 12) / a.zielBrutto : 0;
 
   return {
     nebenkostenPct,
+    kaufNebenkosten,
     gesamtkosten,
     eigenkapitalEinsatz: ekEinsatz,
     kreditBetrag,
@@ -157,6 +157,41 @@ export function calcScore(p: Property, a: Assumptions, c: Calc): Score {
   };
 }
 
+export interface DataQuality {
+  score: number; // 0-100
+  level: "Sehr gut" | "Gut" | "Unvollständig" | "Manuelle Prüfung nötig";
+  ampel: "green" | "yellow" | "red";
+  missing: string[];
+  filled: number;
+  total: number;
+}
+
+const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boolean }[] = [
+  { key: "kaufpreis", label: "Kaufpreis", check: (p) => !!p.kaufpreis },
+  { key: "wohnflaecheM2", label: "Wohnfläche", check: (p) => !!p.wohnflaecheM2 },
+  { key: "zimmer", label: "Zimmer", check: (p) => !!p.zimmer },
+  { key: "bezirk", label: "Bezirk", check: (p) => !!p.bezirk?.trim() },
+  { key: "betriebskostenMtl", label: "Betriebskosten", check: (p) => p.betriebskostenMtl != null },
+  { key: "baujahr", label: "Baujahr", check: (p) => !!p.baujahr },
+  { key: "zustand", label: "Zustand", check: (p) => !!p.zustand?.trim() },
+  { key: "nettomieteMtl", label: "Geschätzte Miete", check: (p) => !!p.nettomieteMtl },
+  { key: "mietrecht", label: "Mietrecht", check: (p) => p.mietrecht !== "unklar – rechtlich prüfen" },
+  { key: "beschreibung", label: "Beschreibung", check: (p) => !!p.beschreibung?.trim() },
+  { key: "link", label: "Original-Link", check: (p) => !!p.link?.trim() && /^https?:\/\//.test(p.link) },
+];
+
+export function calcDataQuality(p: Property): DataQuality {
+  const missing = REQUIRED_FIELDS.filter((f) => !f.check(p)).map((f) => f.label);
+  const filled = REQUIRED_FIELDS.length - missing.length;
+  const score = Math.round((filled / REQUIRED_FIELDS.length) * 100);
+  let level: DataQuality["level"] = "Manuelle Prüfung nötig";
+  let ampel: DataQuality["ampel"] = "red";
+  if (score >= 90) { level = "Sehr gut"; ampel = "green"; }
+  else if (score >= 70) { level = "Gut"; ampel = "green"; }
+  else if (score >= 50) { level = "Unvollständig"; ampel = "yellow"; }
+  return { score, level, ampel, missing, filled, total: REQUIRED_FIELDS.length };
+}
+
 export const fmtEUR = (n: number | null | undefined, digits = 0) =>
   n == null || !isFinite(n)
     ? "—"
@@ -167,3 +202,11 @@ export const fmtPct = (n: number | null | undefined, digits = 2) =>
 
 export const fmtNum = (n: number | null | undefined, digits = 0) =>
   n == null || !isFinite(n) ? "—" : new Intl.NumberFormat("de-AT", { maximumFractionDigits: digits }).format(n);
+
+export function isValidUrl(s: string | null | undefined): boolean {
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch { return false; }
+}

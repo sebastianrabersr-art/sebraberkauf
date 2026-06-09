@@ -10,15 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
+import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
+import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 
 const ViewingRoute = ViewingRouteImport.update({
   id: '/viewing',
   path: '/viewing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssumptionsRoute = AssumptionsRouteImport.update({
@@ -41,26 +48,35 @@ const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   path: '/properties/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropertiesNewRoute = PropertiesNewRouteImport.update({
+  id: '/properties/new',
+  path: '/properties/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertiesIdRoute = PropertiesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PropertiesRoute,
+  id: '/properties/$id',
+  path: '/properties/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/projects': typeof ProjectsRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/properties/new': typeof PropertiesNewRoute
   '/properties/': typeof PropertiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/projects': typeof ProjectsRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/properties/new': typeof PropertiesNewRoute
   '/properties': typeof PropertiesIndexRoute
 }
 export interface FileRoutesById {
@@ -68,8 +84,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/projects': typeof ProjectsRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/properties/new': typeof PropertiesNewRoute
   '/properties/': typeof PropertiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -78,24 +96,30 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/projects'
     | '/viewing'
     | '/properties/$id'
+    | '/properties/new'
     | '/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/projects'
     | '/viewing'
     | '/properties/$id'
+    | '/properties/new'
     | '/properties'
   id:
     | '__root__'
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/projects'
     | '/viewing'
     | '/properties/$id'
+    | '/properties/new'
     | '/properties/'
   fileRoutesById: FileRoutesById
 }
@@ -103,7 +127,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
+  ProjectsRoute: typeof ProjectsRoute
   ViewingRoute: typeof ViewingRoute
+  PropertiesIdRoute: typeof PropertiesIdRoute
+  PropertiesNewRoute: typeof PropertiesNewRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
 }
 
@@ -114,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/viewing'
       fullPath: '/viewing'
       preLoaderRoute: typeof ViewingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assumptions': {
@@ -144,12 +178,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/properties/new': {
+      id: '/properties/new'
+      path: '/properties/new'
+      fullPath: '/properties/new'
+      preLoaderRoute: typeof PropertiesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/properties/$id': {
       id: '/properties/$id'
-      path: '/$id'
+      path: '/properties/$id'
       fullPath: '/properties/$id'
       preLoaderRoute: typeof PropertiesIdRouteImport
-      parentRoute: typeof PropertiesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -158,7 +199,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
+  ProjectsRoute: ProjectsRoute,
   ViewingRoute: ViewingRoute,
+  PropertiesIdRoute: PropertiesIdRoute,
+  PropertiesNewRoute: PropertiesNewRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
 }
 export const routeTree = rootRouteImport
