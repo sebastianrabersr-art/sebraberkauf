@@ -8,6 +8,8 @@ import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
+import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
+import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
