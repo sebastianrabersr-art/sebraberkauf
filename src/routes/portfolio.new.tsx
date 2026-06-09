@@ -145,7 +145,7 @@ function NewPortfolioProperty() {
     <AppShell>
       <PageHeader
         title="Gekaufte Immobilie hinzufügen"
-        description="Trage hier eine bereits gekaufte Immobilie ein. Status wird automatisch auf „Gekauft" gesetzt."
+        description='Trage hier eine bereits gekaufte Immobilie ein. Status wird automatisch auf „Gekauft“ gesetzt.'
         actions={
           <button onClick={() => navigate({ to: "/portfolio" })} className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
             Abbrechen
