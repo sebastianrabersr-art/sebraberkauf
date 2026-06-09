@@ -5,12 +5,18 @@ const extractedSchema = z.object({
   title: z.string().default(""),
   url: z.string().default(""),
   platform: z.string().default(""),
+  country: z.string().default(""),
   purchase_price: z.number().nullable().default(null),
   living_area_m2: z.number().nullable().default(null),
+  plot_area_m2: z.number().nullable().default(null),
+  outdoor_area_m2: z.number().nullable().default(null),
   rooms: z.number().nullable().default(null),
+  address: z.string().default(""),
   district: z.string().default(""),
   location: z.string().default(""),
   city: z.string().default(""),
+  region: z.string().default(""),
+  property_type: z.string().default(""),
   year_built: z.number().nullable().default(null),
   condition: z.string().default(""),
   floor: z.string().default(""),
@@ -23,11 +29,15 @@ const extractedSchema = z.object({
   has_parking: z.boolean().nullable().default(null),
   monthly_operating_costs: z.number().nullable().default(null),
   monthly_heating_costs: z.number().nullable().default(null),
+  commission_pct: z.number().nullable().default(null),
+  commission_eur: z.number().nullable().default(null),
   energy_class: z.string().default(""),
   hwb: z.number().nullable().default(null),
   availability: z.string().default(""),
   seller_type: z.string().default(""),
   description: z.string().default(""),
+  features: z.string().default(""),
+  image_urls: z.array(z.string()).default([]),
   estimated_rent_monthly: z.number().nullable().default(null),
   rent_is_estimate: z.boolean().default(true),
   mietrecht_hint: z.string().default(""),
@@ -91,19 +101,41 @@ export type PdfExtracted = z.infer<typeof pdfExtractedSchema>;
 export function detectPlatform(url: string): string {
   const u = (url || "").toLowerCase();
   if (!u) return "";
+  // Österreich
   if (u.includes("willhaben.at")) return "willhaben";
-  if (u.includes("immobilienscout24") || u.includes("immoscout")) return "ImmoScout24";
+  if (u.includes("immobilienscout24.at") || u.includes("immoscout24.at")) return "ImmoScout24 AT";
   if (u.includes("derstandard.at")) return "derStandard";
-  if (u.includes("immowelt")) return "immowelt";
+  if (u.includes("immowelt.at")) return "immowelt AT";
+  if (u.includes("immobazar")) return "immobazar";
   if (u.includes("immodirekt")) return "ImmoDirekt";
   if (u.includes("findmyhome")) return "FindMyHome";
-  if (u.includes("remax")) return "RE/MAX";
-  if (u.includes("engelvoelkers") || u.includes("engel-voelkers")) return "Engel & Völkers";
+  if (u.includes("ehl.at")) return "EHL";
   if (u.includes("otto-immobilien")) return "Otto Immobilien";
   if (u.includes("jp-immobilien")) return "JP Immobilien";
-  if (u.includes("ehl.at")) return "EHL";
+  // Deutschland
+  if (u.includes("immobilienscout24.de") || u.includes("immoscout24.de")) return "ImmoScout24 DE";
+  if (u.includes("immowelt.de")) return "immowelt DE";
+  if (u.includes("immonet")) return "immonet";
+  if (u.includes("kleinanzeigen.de") || u.includes("ebay-kleinanzeigen")) return "kleinanzeigen";
+  if (u.includes("meinestadt.de")) return "meinestadt";
+  if (u.includes("immobilien.de")) return "immobilien.de";
+  if (u.includes("ohne-makler.net")) return "ohne-makler";
+  if (u.includes("homeday")) return "Homeday";
+  if (u.includes("mcmakler")) return "McMakler";
+  // International / Makler
+  if (u.includes("remax")) return "RE/MAX";
+  if (u.includes("engelvoelkers") || u.includes("engel-voelkers")) return "Engel & Völkers";
+  if (u.includes("sothebys")) return "Sotheby's";
   if (u.includes("bauträger") || u.includes("bautraeger") || u.includes("neubau")) return "Bauträger";
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return "Sonstige"; }
+}
+
+export function detectCountry(url: string): "Österreich" | "Deutschland" | "" {
+  const u = (url || "").toLowerCase();
+  if (!u) return "";
+  if (/\.at(\/|$|\?)/.test(u) || u.includes("willhaben") || u.includes("derstandard") || u.includes("immobazar") || u.includes("ehl.at")) return "Österreich";
+  if (/\.de(\/|$|\?)/.test(u) || u.includes("kleinanzeigen") || u.includes("immonet") || u.includes("meinestadt")) return "Deutschland";
+  return "";
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -116,7 +148,10 @@ async function fetchPage(url: string): Promise<string> {
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000), redirect: "follow" });
     if (!res.ok) return "";
     const html = await res.text();
-    return html
+    // Try to capture JSON-LD blocks first for better structured data
+    const ldMatches = Array.from(html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
+      .map((m) => m[1]).join("\n").slice(0, 6000);
+    const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
@@ -125,6 +160,7 @@ async function fetchPage(url: string): Promise<string> {
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 22000);
+    return ldMatches ? `JSON-LD:\n${ldMatches}\n\nText:\n${text}` : text;
   } catch { return ""; }
 }
 
@@ -136,21 +172,36 @@ export const extractProperty = createServerFn({ method: "POST" })
 
     const url = (data.url || "").trim();
     const platform = detectPlatform(url);
+    const country = detectCountry(url);
     let text = (data.text || "").trim();
     let fetched = false;
 
     if (!text && url) { text = await fetchPage(url); fetched = text.length > 200; }
 
     if (!text) {
-      return { ok: false as const, platform, url,
+      return { ok: false as const, platform, country, url,
         error: "Inserat konnte nicht automatisch ausgelesen werden. Bitte den Inseratstext kopieren und unten manuell einfügen." };
     }
 
-    const system = `Du extrahierst strukturierte Daten aus Immobilien-Inseraten (Österreich, vor allem Wien).
-Antworte AUSSCHLIESSLICH mit gültigem JSON nach folgendem Schema. Werte die nicht eindeutig sind = null bzw. "" und in missing_data eintragen. Niemals raten.
-Schema-Felder: title, platform, purchase_price (EUR), living_area_m2, rooms, district (z.B. "1070"), location, city, year_built, condition, floor, has_elevator, has_balcony, has_terrace, has_loggia, has_garden, has_basement, has_parking, monthly_operating_costs, monthly_heating_costs, energy_class, hwb, availability, seller_type ("Makler"|"Privat"|""), description (max 500 Zeichen), estimated_rent_monthly (realistisch geschätzte Netto-Kaltmiete für Wien je Lage/Größe/Zustand), rent_is_estimate (true wenn geschätzt), mietrecht_hint ("Neubau / freie Miete" | "Teilanwendung MRG" | "Altbau / Richtwert möglich" | "unklar – rechtlich prüfen" | "nicht geeignet"), missing_data (string[]).`;
+    const system = `Du extrahierst strukturierte Daten aus Immobilien-Inseraten in Österreich und Deutschland (willhaben, ImmoScout24 AT/DE, derStandard, immowelt AT/DE, immobazar, immonet, kleinanzeigen, Makler- und Bauträgerseiten, Bank-/Verwertungsseiten, sowie unbekannte Immobilienseiten).
+Antworte AUSSCHLIESSLICH mit gültigem JSON nach folgendem Schema. Werte die nicht eindeutig sind = null bzw. "" und in missing_data eintragen. Niemals raten, niemals erfinden.
+Schema-Felder:
+- title, platform, country ("Österreich"|"Deutschland"|""), purchase_price (EUR, Kaufpreis als Zahl)
+- living_area_m2, plot_area_m2 (Grundstücksfläche), outdoor_area_m2 (Balkon+Terrasse+Garten gesamt falls nur summiert), rooms
+- address (Straße/Hausnummer falls genannt), district (AT z.B. "1070", DE z.B. Stadtteilname), location (freie Lagebeschreibung), city, region (Bundesland/Region)
+- property_type ("Wohnung"|"Haus"|"Grundstück"|"Zinshaus"|"Gewerbe"|"Sonstiges")
+- year_built, condition, floor
+- has_elevator, has_balcony, has_terrace, has_loggia, has_garden, has_basement, has_parking
+- monthly_operating_costs, monthly_heating_costs
+- commission_pct (Maklerprovision in %), commission_eur (Provision in EUR falls fix angegeben)
+- energy_class (A++..H), hwb (kWh/m²a), availability, seller_type ("Makler"|"Privat"|"Bauträger"|"Bank"|"")
+- description (max 500 Zeichen, neutrale Zusammenfassung), features (Ausstattungsliste max 400 Zeichen)
+- image_urls (Array mit bis zu 6 absoluten Bild-URLs aus dem Inserat falls im Text/JSON-LD erkennbar)
+- estimated_rent_monthly (realistisch geschätzte Netto-Kaltmiete je Lage/Größe/Zustand), rent_is_estimate (true wenn geschätzt)
+- mietrecht_hint nur für AT: ("Neubau / freie Miete" | "Teilanwendung MRG" | "Altbau / Richtwert möglich" | "unklar – rechtlich prüfen" | "nicht geeignet"). Für DE: ""
+- missing_data (string[] aller nicht gefundenen relevanten Felder).`;
 
-    const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\n\nInseratstext:\n${text}`;
+    const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\nLand (URL-Heuristik): ${country || "unbekannt"}\n\nInseratstext:\n${text}`;
 
     let json: unknown;
     try {
@@ -163,22 +214,22 @@ Schema-Felder: title, platform, purchase_price (EUR), living_area_m2, rooms, dis
           response_format: { type: "json_object" },
         }),
       });
-      if (resp.status === 429) return { ok: false as const, platform, url, error: "Rate-Limit – bitte später erneut versuchen." };
-      if (resp.status === 402) return { ok: false as const, platform, url, error: "Lovable AI Credits aufgebraucht – bitte aufladen." };
+      if (resp.status === 429) return { ok: false as const, platform, country, url, error: "Rate-Limit – bitte später erneut versuchen." };
+      if (resp.status === 402) return { ok: false as const, platform, country, url, error: "Lovable AI Credits aufgebraucht – bitte aufladen." };
       if (!resp.ok) {
         const t = await resp.text();
-        return { ok: false as const, platform, url, error: `AI-Fehler: ${resp.status} ${t.slice(0, 200)}` };
+        return { ok: false as const, platform, country, url, error: `AI-Fehler: ${resp.status} ${t.slice(0, 200)}` };
       }
       const body = await resp.json();
       const content = body?.choices?.[0]?.message?.content ?? "{}";
       json = typeof content === "string" ? JSON.parse(content) : content;
     } catch (e) {
-      return { ok: false as const, platform, url, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
+      return { ok: false as const, platform, country, url, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
     }
 
-    const merged = { ...(json as object), url, platform: (json as any)?.platform || platform };
+    const merged = { ...(json as object), url, platform: (json as Record<string, unknown>)?.platform || platform, country: (json as Record<string, unknown>)?.country || country };
     const parsed = extractedSchema.safeParse(merged);
-    if (!parsed.success) return { ok: false as const, platform, url, error: "Antwort konnte nicht geparst werden." };
+    if (!parsed.success) return { ok: false as const, platform, country, url, error: "Antwort konnte nicht geparst werden." };
     return { ok: true as const, data: parsed.data, fetchedFromUrl: fetched };
   });
 
