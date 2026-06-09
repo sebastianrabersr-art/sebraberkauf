@@ -349,6 +349,10 @@ function Detail() {
             <FinancePanel p={p} />
           </Section>
 
+          <Section title="Advanced Investment-Modell (Objektart, AfA, Projektion, Anschlussfinanzierung)">
+            <AdvancedInvestmentPanel p={p} />
+          </Section>
+
 
           <MietrechtRiskCard p={p} />
 
