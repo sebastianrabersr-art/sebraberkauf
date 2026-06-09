@@ -238,7 +238,7 @@ function PropertiesList() {
               );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={17} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
+                <tr><td colSpan={22} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
               )}
             </tbody>
           </table>
