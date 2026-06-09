@@ -105,3 +105,23 @@ export function PageHeader({ title, description, actions }: { title: string; des
     </div>
   );
 }
+
+function AccountBox() {
+  const { profile, subscription, signOut } = useAuth();
+  return (
+    <div className="p-3 border-t border-sidebar-border space-y-2">
+      <Link to="/settings" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent text-sm">
+        <UserCircle className="size-5" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium">{profile?.name || profile?.email || "Account"}</div>
+          <div className="text-[10px] text-sidebar-foreground/60 flex items-center gap-1">
+            <Sparkles className="size-3" /> {planLabel(subscription?.plan)}
+          </div>
+        </div>
+      </Link>
+      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent text-sm text-sidebar-foreground/80">
+        <LogOut className="size-4" /> Abmelden
+      </button>
+    </div>
+  );
+}
