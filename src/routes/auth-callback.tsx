@@ -10,12 +10,37 @@ export const Route = createFileRoute("/auth-callback")({
 function Callback() {
   const { redirect } = Route.useSearch();
   useEffect(() => {
-    (async () => {
-      // Session may be set already by OAuth broker / detectSessionInUrl
-      const { data } = await supabase.auth.getSession();
-      const target = redirect || (data.session ? "/dashboard" : "/login");
+    let done = false;
+    const finish = (hasSession: boolean) => {
+      if (done) return;
+      done = true;
+      const target = hasSession ? (redirect || "/dashboard") : "/login";
       window.location.replace(target);
-    })();
+    };
+
+    // 1) Listen for SIGNED_IN in case the broker is still processing the URL
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (event === "SIGNED_IN" && sess) finish(true);
+    });
+
+    // 2) Check immediately
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) finish(true);
+    });
+
+    // 3) Poll briefly as a fallback (some brokers populate session async)
+    let tries = 0;
+    const iv = setInterval(async () => {
+      tries += 1;
+      const { data } = await supabase.auth.getSession();
+      if (data.session) finish(true);
+      else if (tries >= 10) finish(false); // ~5s
+    }, 500);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      clearInterval(iv);
+    };
   }, [redirect]);
   return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Anmeldung wird abgeschlossen…</div>;
 }
