@@ -231,6 +231,16 @@ function Detail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {p.status === "Gekauft" && (
+            <>
+              <Section title="Portfolio · Tatsächliche Kaufdaten">
+                <PurchaseInfoPanel p={p} />
+              </Section>
+              <Section title="Zahlungen & Cashflow">
+                <PaymentsPanel p={p} />
+              </Section>
+            </>
+          )}
           <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
