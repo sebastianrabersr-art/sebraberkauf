@@ -6,10 +6,12 @@ import { AmpelBadge } from "@/components/AmpelBadge";
 import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
+import { FinancePanel } from "@/components/FinancePanel";
 import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/properties/$id")({
   head: ({ params }) => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
