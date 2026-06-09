@@ -226,6 +226,43 @@ function Detail() {
             </div>
           </Section>
 
+          <Section title="Maklerkosten & Kaufnebenkosten">
+            <div className="grid md:grid-cols-3 gap-3">
+              <F label="Maklerprovision %">
+                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={editMode} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
+              </F>
+              <F label="Maklerprovision netto €">
+                {editMode ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
+              </F>
+              <F label="USt auf Provision %">
+                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={editMode} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
+              </F>
+              <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
+              <F label="Maklerprovision brutto €"><Ro>{fmtEUR(c.maklerProvisionBrutto)}</Ro></F>
+              <F label="Maklerkosten zahlbar?">
+                <select
+                  disabled={!editMode}
+                  value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
+                  onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="auto">Automatisch ({c.maklerKostenZahlbar ? "Ja" : "Nein"})</option>
+                  <option value="ja">Ja</option>
+                  <option value="nein">Nein</option>
+                </select>
+              </F>
+              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={editMode} on={(v) => u({ grunderwerbsteuer: v })} /></F>
+              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={editMode} on={(v) => u({ grundbuchkosten: v })} /></F>
+              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={editMode} on={(v) => u({ vertragskosten: v })} /></F>
+              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={editMode} on={(v) => u({ finanzierungskosten: v })} /></F>
+              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={editMode} on={(v) => u({ sonstigeNK: v })} /></F>
+              <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-3">
+              Standard Österreich: bis zu 3 % vom Kaufpreis + 20 % USt. Bei Verkäufer „Privat" wird automatisch keine Maklerprovision angesetzt. Werte können manuell überschrieben werden.
+            </p>
+          </Section>
+
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
