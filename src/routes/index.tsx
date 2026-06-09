@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   TrendingUp,
   Wallet,
-  Wallet,
   X,
   GitCompareArrows,
 } from "lucide-react";
