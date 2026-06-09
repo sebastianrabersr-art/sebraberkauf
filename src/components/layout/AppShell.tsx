@@ -1,16 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Building2, ClipboardCheck, Database, FolderKanban, LinkIcon, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Dashboard", icon: BarChart3 },
-  { to: "/projects", label: "Projekte", icon: FolderKanban },
-  { to: "/analyze", label: "Link analysieren", icon: LinkIcon },
   { to: "/properties", label: "Immobilien", icon: Database },
+  { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
+  { to: "/projects", label: "Projekte", icon: FolderKanban },
+  { to: "/rechner", label: "Rechner", icon: Calculator },
+  { to: "/followups", label: "Follow-ups", icon: Bell },
   { to: "/viewing", label: "Besichtigung", icon: ClipboardCheck },
-  { to: "/assumptions", label: "Annahmen", icon: Settings },
+  { to: "/assumptions", label: "Einstellungen", icon: Settings },
 ];
 
 function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
@@ -43,8 +45,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Building2 className="size-5" />
           </div>
           <div>
-            <div className="font-semibold tracking-tight">Immo Invest</div>
-            <div className="text-xs text-sidebar-foreground/60">Bewertung & Analyse</div>
+            <div className="font-semibold tracking-tight">Immo Invest CRM</div>
+            <div className="text-xs text-sidebar-foreground/60">Bewertung & Kaufprozess</div>
           </div>
         </div>
         <div className="px-3 pt-3 pb-2 space-y-1.5">
@@ -57,25 +59,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           {NAV.map((n) => {
             const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
             return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
+              <Link key={n.to} to={n.to}
+                className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm transition",
+                  active ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground")}>
                 <n.icon className="size-4" />
                 {n.label}
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 text-xs text-sidebar-foreground/50 border-t border-sidebar-border">
-          Wien · Investment Tool
-        </div>
+        <div className="p-4 text-xs text-sidebar-foreground/50 border-t border-sidebar-border">Wien · Investment Tool</div>
       </aside>
       <main className="flex-1 min-w-0">
         <div className="md:hidden sticky top-0 z-10 bg-sidebar text-sidebar-foreground px-3 py-2 space-y-2">
@@ -84,14 +78,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             {NAV.map((n) => {
               const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
               return (
-                <Link
-                  key={n.to}
-                  to={n.to}
-                  className={cn(
-                    "text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
-                    active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "bg-sidebar-accent",
-                  )}
-                >
+                <Link key={n.to} to={n.to}
+                  className={cn("text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
+                    active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "bg-sidebar-accent")}>
                   {n.label}
                 </Link>
               );

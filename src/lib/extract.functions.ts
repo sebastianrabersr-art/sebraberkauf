@@ -36,6 +36,58 @@ const extractedSchema = z.object({
 
 export type ExtractedProperty = z.infer<typeof extractedSchema>;
 
+// PDF extraction
+const pdfExtractedSchema = z.object({
+  title: z.string().default(""),
+  purchase_price: z.number().nullable().default(null),
+  purchase_price_net: z.number().nullable().default(null),
+  purchase_price_gross: z.number().nullable().default(null),
+  living_area_m2: z.number().nullable().default(null),
+  outdoor_area_m2: z.number().nullable().default(null),
+  balcony_m2: z.number().nullable().default(null),
+  terrace_m2: z.number().nullable().default(null),
+  garden_m2: z.number().nullable().default(null),
+  basement_m2: z.number().nullable().default(null),
+  rooms: z.number().nullable().default(null),
+  bathrooms: z.number().nullable().default(null),
+  address: z.string().default(""),
+  district: z.string().default(""),
+  city: z.string().default(""),
+  state: z.string().default(""),
+  country: z.string().default(""),
+  year_built: z.number().nullable().default(null),
+  condition: z.string().default(""),
+  floor: z.string().default(""),
+  operating_costs: z.number().nullable().default(null),
+  heating_costs: z.number().nullable().default(null),
+  reserve_fund: z.number().nullable().default(null),
+  commission_eur: z.number().nullable().default(null),
+  commission_pct: z.number().nullable().default(null),
+  seller_name: z.string().default(""),
+  seller_company: z.string().default(""),
+  seller_phone: z.string().default(""),
+  seller_email: z.string().default(""),
+  seller_website: z.string().default(""),
+  seller_type: z.string().default(""),
+  energy_class: z.string().default(""),
+  hwb: z.number().nullable().default(null),
+  fgee: z.number().nullable().default(null),
+  heating_type: z.string().default(""),
+  description: z.string().default(""),
+  features: z.string().default(""),
+  legal_rent_hint: z.string().default(""),
+  availability: z.string().default(""),
+  has_elevator: z.boolean().nullable().default(null),
+  has_balcony: z.boolean().nullable().default(null),
+  has_terrace: z.boolean().nullable().default(null),
+  has_garden: z.boolean().nullable().default(null),
+  has_basement: z.boolean().nullable().default(null),
+  has_parking: z.boolean().nullable().default(null),
+  missing_data: z.array(z.string()).default([]),
+  notes: z.string().default(""),
+});
+export type PdfExtracted = z.infer<typeof pdfExtractedSchema>;
+
 export function detectPlatform(url: string): string {
   const u = (url || "").toLowerCase();
   if (!u) return "";
@@ -56,8 +108,7 @@ export function detectPlatform(url: string): string {
 
 async function fetchPage(url: string): Promise<string> {
   const headers = {
-    "User-Agent":
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
     Accept: "text/html,application/xhtml+xml",
     "Accept-Language": "de-AT,de;q=0.9,en;q=0.8",
   };
@@ -65,18 +116,16 @@ async function fetchPage(url: string): Promise<string> {
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000), redirect: "follow" });
     if (!res.ok) return "";
     const html = await res.text();
-    const text = html
+    return html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/g, " ")
       .replace(/\s+/g, " ")
-      .trim();
-    return text.slice(0, 22000);
-  } catch {
-    return "";
-  }
+      .trim()
+      .slice(0, 22000);
+  } catch { return ""; }
 }
 
 export const extractProperty = createServerFn({ method: "POST" })
@@ -90,19 +139,11 @@ export const extractProperty = createServerFn({ method: "POST" })
     let text = (data.text || "").trim();
     let fetched = false;
 
-    if (!text && url) {
-      text = await fetchPage(url);
-      fetched = text.length > 200;
-    }
+    if (!text && url) { text = await fetchPage(url); fetched = text.length > 200; }
 
     if (!text) {
-      return {
-        ok: false as const,
-        platform,
-        url,
-        error:
-          "Inserat konnte nicht automatisch ausgelesen werden. Bitte den Inseratstext kopieren und unten manuell einfügen.",
-      };
+      return { ok: false as const, platform, url,
+        error: "Inserat konnte nicht automatisch ausgelesen werden. Bitte den Inseratstext kopieren und unten manuell einfügen." };
     }
 
     const system = `Du extrahierst strukturierte Daten aus Immobilien-Inseraten (Österreich, vor allem Wien).
@@ -118,10 +159,7 @@ Schema-Felder: title, platform, purchase_price (EUR), living_area_m2, rooms, dis
         headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
+          messages: [{ role: "system", content: system }, { role: "user", content: user }],
           response_format: { type: "json_object" },
         }),
       });
@@ -140,8 +178,54 @@ Schema-Felder: title, platform, purchase_price (EUR), living_area_m2, rooms, dis
 
     const merged = { ...(json as object), url, platform: (json as any)?.platform || platform };
     const parsed = extractedSchema.safeParse(merged);
-    if (!parsed.success) {
-      return { ok: false as const, platform, url, error: "Antwort konnte nicht geparst werden." };
-    }
+    if (!parsed.success) return { ok: false as const, platform, url, error: "Antwort konnte nicht geparst werden." };
     return { ok: true as const, data: parsed.data, fetchedFromUrl: fetched };
+  });
+
+// PDF -> structured fields via Gemini (file content block)
+export const extractFromPdf = createServerFn({ method: "POST" })
+  .inputValidator((d: { pdfBase64: string; fileName: string }) => d)
+  .handler(async ({ data }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) return { ok: false as const, error: "LOVABLE_API_KEY fehlt." };
+    if (!data.pdfBase64) return { ok: false as const, error: "Keine PDF-Daten." };
+
+    const system = `Du extrahierst strukturierte Daten aus Immobilien-Exposés / Makler-PDFs (Österreich/Wien).
+Antworte AUSSCHLIESSLICH mit gültigem JSON. Werte, die nicht eindeutig im Dokument stehen, MÜSSEN null bzw. "" sein und in "missing_data" gelistet werden. Niemals raten.
+Felder: title, purchase_price, purchase_price_net, purchase_price_gross, living_area_m2, outdoor_area_m2, balcony_m2, terrace_m2, garden_m2, basement_m2, rooms, bathrooms, address, district (z.B. "1070"), city, state, country, year_built, condition, floor, operating_costs (mtl), heating_costs (mtl), reserve_fund (mtl), commission_eur, commission_pct, seller_name, seller_company, seller_phone, seller_email, seller_website, seller_type ("Privat"|"Makler"|"Bauträger"|"Bank"|"Sonstige"|""), energy_class, hwb, fgee, heating_type, description (max 600 Zeichen), features (max 400 Zeichen), legal_rent_hint, availability, has_elevator, has_balcony, has_terrace, has_garden, has_basement, has_parking, missing_data (string[]), notes.`;
+
+    const dataUrl = data.pdfBase64.startsWith("data:") ? data.pdfBase64 : `data:application/pdf;base64,${data.pdfBase64}`;
+
+    let json: unknown;
+    try {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: [
+              { type: "text", text: `Bitte extrahiere die Felder aus diesem Exposé (Dateiname: ${data.fileName}).` },
+              { type: "file", file: { filename: data.fileName, file_data: dataUrl } },
+            ]},
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+      if (resp.status === 429) return { ok: false as const, error: "Rate-Limit – bitte später erneut versuchen." };
+      if (resp.status === 402) return { ok: false as const, error: "Lovable AI Credits aufgebraucht – bitte aufladen." };
+      if (!resp.ok) {
+        const t = await resp.text();
+        return { ok: false as const, error: `AI-Fehler: ${resp.status} ${t.slice(0, 300)}` };
+      }
+      const body = await resp.json();
+      const content = body?.choices?.[0]?.message?.content ?? "{}";
+      json = typeof content === "string" ? JSON.parse(content) : content;
+    } catch (e) {
+      return { ok: false as const, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
+    }
+    const parsed = pdfExtractedSchema.safeParse(json);
+    if (!parsed.success) return { ok: false as const, error: "Antwort konnte nicht geparst werden." };
+    return { ok: true as const, data: parsed.data };
   });
