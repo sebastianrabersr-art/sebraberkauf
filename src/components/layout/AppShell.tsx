@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
+import { planLabel, useAuth } from "@/lib/auth";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -69,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-4 text-xs text-sidebar-foreground/50 border-t border-sidebar-border">Wien · Investment Tool</div>
+        <AccountBox />
       </aside>
       <main className="flex-1 min-w-0">
         <div className="md:hidden sticky top-0 z-10 bg-sidebar text-sidebar-foreground px-3 py-2 space-y-2">
