@@ -142,8 +142,27 @@ function PropertiesList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr className="border-b">
-                {["Score","Status","Prio","Titel","Bezirk","Kaufpreis","m²","€/m²","Miete","Min-Miete","Brutto","Cashflow","DQ","Nächste Aktion","Verkäufer","Links",""].map((h) => (
-                  <th key={h} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                {[
+                  ["Score","Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf"],
+                  ["Status","Aktueller CRM-Status"],
+                  ["Prio","Priorität für deine Pipeline"],
+                  ["Titel","Inserats-Titel"],
+                  ["Bezirk","Wiener Bezirk / Region"],
+                  ["Kaufpreis","Kaufpreis brutto"],
+                  ["m²","Wohnfläche"],
+                  ["€/m²","Preis pro m²"],
+                  ["Makler€","Maklerkosten brutto (Provision + USt)"],
+                  ["NK gesamt","Kaufnebenkosten gesamt (inkl. Maklerkosten)"],
+                  ["Gesamt­kapital","Gesamtkapitalbedarf = Kaufpreis + NK + Sanierung + Einrichtung + Reserve"],
+                  ["Miete","Erwartete Nettomiete"],
+                  ["Min-Miete","Benötigte Nettomiete für positiven Cashflow"],
+                  ["Brutto","Bruttorendite"],
+                  ["Cashflow","Monatlicher Cashflow"],
+                  ["Mietrecht","Mietrechtliches Risiko (automatisch eingeschätzt)"],
+                  ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder"],
+                  ["Nächste Aktion",""],["Verkäufer",""],["Links",""],["",""],
+                ].map(([h,tip]) => (
+                  <th key={h} title={tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
