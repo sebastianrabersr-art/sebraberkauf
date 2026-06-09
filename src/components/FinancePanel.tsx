@@ -276,17 +276,43 @@ function SondertilgungenEditor({ scn, onChange }: { scn: FinanceScenario; onChan
   );
 }
 
+type CompareRow = { scn: FinanceScenario; sum: ReturnType<typeof summarizeScenario> };
+
+/** Tonklasse je nach Rang innerhalb der Szenarien (best=grün, schlechtest=rot, dazwischen=gelb). */
+function tone(rows: CompareRow[], r: CompareRow, value: (x: CompareRow) => number, lowerIsBetter = true): "good" | "bad" | "neutral" {
+  if (rows.length < 2) return "neutral";
+  const vals = rows.map(value).filter((n) => isFinite(n));
+  if (vals.length === 0) return "neutral";
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  if (min === max) return "neutral";
+  const v = value(r);
+  const best = lowerIsBetter ? min : max;
+  const worst = lowerIsBetter ? max : min;
+  if (v === best) return "good";
+  if (v === worst) return "bad";
+  return "neutral";
+}
+
+const TONE_CELL: Record<"good" | "bad" | "neutral", string> = {
+  good: "bg-success/15 text-success font-medium",
+  bad: "bg-destructive/10 text-destructive font-medium",
+  neutral: "bg-warning/10 text-warning-foreground",
+};
+
+const PALETTE = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))", "hsl(var(--warning))", "#8b5cf6", "#06b6d4"];
+
 function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios: FinanceScenario[]; activeId?: string }) {
   const assumptions = useActiveAssumptions();
-  const rows = useMemo(() => scenarios.map((s) => ({ scn: s, sum: summarizeScenario(p, assumptions, s) })), [p, assumptions, scenarios]);
+  const rows: CompareRow[] = useMemo(() => scenarios.map((s) => ({ scn: s, sum: summarizeScenario(p, assumptions, s) })), [p, assumptions, scenarios]);
 
-  // Hint computation (ignore "Abgelehnt")
   const eligible = rows.filter((r) => r.scn.status !== "Abgelehnt");
   const minBy = <T,>(arr: T[], f: (x: T) => number) => arr.reduce((best, cur) => (f(cur) < f(best) ? cur : best), arr[0]);
   const maxBy = <T,>(arr: T[], f: (x: T) => number) => arr.reduce((best, cur) => (f(cur) > f(best) ? cur : best), arr[0]);
   const lowestRate = eligible.length ? minBy(eligible, (r) => r.sum.ratePerMonth || Infinity) : null;
   const lowestInterest = eligible.length ? minBy(eligible, (r) => r.sum.totalInterest || Infinity) : null;
   const bestCashflow = eligible.length ? maxBy(eligible, (r) => r.sum.cashflowMtl) : null;
+  const bestOverall = eligible.length ? minBy(eligible, (r) => r.sum.totalPayment || Infinity) : null;
   const shortTermVsLong = (() => {
     if (eligible.length < 2 || !lowestRate || !lowestInterest) return null;
     if (lowestRate.scn.id !== lowestInterest.scn.id) {
@@ -295,32 +321,94 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
     return null;
   })();
 
-  const hints: { id: string; msg: string }[] = [];
-  if (lowestRate) hints.push({ id: lowestRate.scn.id, msg: `„${lowestRate.scn.name}" hat die niedrigste Monatsrate (${fmtEUR(lowestRate.sum.ratePerMonth)}).` });
+  const hints: { id?: string; msg: string; icon: "rate" | "interest" | "cf" | "warn" | "best" }[] = [];
+  if (bestOverall) hints.push({ id: bestOverall.scn.id, icon: "best", msg: `Bestes Szenario gesamt: „${bestOverall.scn.name}" (niedrigste Gesamtkosten über Laufzeit ${fmtEUR(bestOverall.sum.totalPayment)}).` });
+  if (lowestRate) hints.push({ id: lowestRate.scn.id, icon: "rate", msg: `„${lowestRate.scn.name}" hat die niedrigste Monatsrate (${fmtEUR(lowestRate.sum.ratePerMonth)}).` });
   if (lowestInterest && lowestInterest.scn.id !== lowestRate?.scn.id)
-    hints.push({ id: lowestInterest.scn.id, msg: `„${lowestInterest.scn.name}" hat die niedrigsten Gesamtzinskosten (${fmtEUR(lowestInterest.sum.totalInterest)}).` });
+    hints.push({ id: lowestInterest.scn.id, icon: "interest", msg: `„${lowestInterest.scn.name}" hat die niedrigsten Gesamtzinskosten (${fmtEUR(lowestInterest.sum.totalInterest)}).` });
   if (bestCashflow && bestCashflow.scn.id !== lowestRate?.scn.id)
-    hints.push({ id: bestCashflow.scn.id, msg: `„${bestCashflow.scn.name}" ergibt den besten Cashflow (${fmtEUR(bestCashflow.sum.cashflowMtl)}/Mt).` });
-  if (shortTermVsLong) hints.push(shortTermVsLong);
+    hints.push({ id: bestCashflow.scn.id, icon: "cf", msg: `„${bestCashflow.scn.name}" liefert den besten Cashflow (${fmtEUR(bestCashflow.sum.cashflowMtl)}/Mt).` });
+  if (shortTermVsLong) hints.push({ id: shortTermVsLong.id, icon: "warn", msg: shortTermVsLong.msg });
+
+  // chart data
+  const chartData = rows.map((r) => ({
+    name: r.scn.name,
+    rate: Math.round(r.sum.ratePerMonth),
+    interest: Math.round(r.sum.totalInterest),
+    cashflow: Math.round(r.sum.cashflowMtl),
+    fill: r.scn.id === bestOverall?.scn.id ? "hsl(var(--success))" : r.scn.status === "Abgelehnt" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
+  }));
+
+  // line chart: Restschuld über Zeit
+  const balanceData = useMemo(() => {
+    const seriesByScn = rows.map((r, i) => ({ name: r.scn.name, color: PALETTE[i % PALETTE.length], series: calcBalanceSeries(r.scn) }));
+    const allYears = new Set<number>();
+    seriesByScn.forEach((s) => s.series.forEach((pt) => allYears.add(pt.year)));
+    const years = Array.from(allYears).sort((a, b) => a - b);
+    return {
+      data: years.map((y) => {
+        const row: Record<string, number | string> = { year: y };
+        seriesByScn.forEach((s) => {
+          const pt = s.series.find((x) => x.year === y);
+          row[s.name] = pt ? pt.balance : (s.series[s.series.length - 1]?.year < y ? 0 : (s.series[0]?.balance ?? 0));
+        });
+        return row;
+      }),
+      lines: seriesByScn,
+    };
+  }, [rows]);
 
   return (
-    <div className="rounded-xl border bg-card p-4 space-y-3">
+    <div className="rounded-xl border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h4 className="font-semibold text-sm">Szenariovergleich</h4>
-        <span className="text-[11px] text-muted-foreground">Aktives Szenario hervorgehoben</span>
+        <div className="flex items-center gap-3 text-[10px]">
+          <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-success" /> grün = bestes</span>
+          <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-warning" /> gelb = mittel</span>
+          <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-destructive" /> rot = kritisch</span>
+        </div>
       </div>
 
       {hints.length > 0 && (
-        <ul className="space-y-1.5">
-          {hints.map((h, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs rounded-md border bg-muted/30 px-2.5 py-2">
-              <Lightbulb className="size-3.5 mt-0.5 text-warning-foreground" />
-              <span>{h.msg}</span>
-            </li>
-          ))}
+        <ul className="grid sm:grid-cols-2 gap-1.5">
+          {hints.map((h, i) => {
+            const Icon = h.icon === "rate" ? TrendingDown : h.icon === "interest" ? TrendingDown : h.icon === "cf" ? TrendingUp : h.icon === "best" ? Star : Lightbulb;
+            const tone = h.icon === "warn" ? "border-warning/40 bg-warning/10 text-warning-foreground" : h.icon === "best" ? "border-success/40 bg-success/10 text-success" : "border-border bg-muted/30";
+            return (
+              <li key={i} className={`flex items-start gap-2 text-xs rounded-md border px-2.5 py-2 ${tone}`}>
+                <Icon className="size-3.5 mt-0.5" />
+                <span>{h.msg}</span>
+              </li>
+            );
+          })}
         </ul>
       )}
 
+      {/* Charts */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <MiniBarChart title="Monatliche Rate" data={chartData} dataKey="rate" />
+        <MiniBarChart title="Gesamtzinskosten" data={chartData} dataKey="interest" />
+        <MiniBarChart title="Cashflow mtl." data={chartData} dataKey="cashflow" higherBetter />
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Restschuld über Zeit</div>
+          <div className="h-48 w-full">
+            <ResponsiveContainer>
+              <LineChart data={balanceData.data}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="year" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+                <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {balanceData.lines.map((l) => (
+                  <Line key={l.name} type="monotone" dataKey={l.name} stroke={l.color} strokeWidth={l.name === rows.find((r) => r.scn.id === activeId)?.scn.name ? 3 : 1.5} dot={false} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Table mit Farbcodierung */}
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -329,11 +417,10 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
               <th className="py-2 pr-2">Bank</th>
               <th className="py-2 pr-2">Status</th>
               <th className="py-2 pr-2 text-right">Zinssatz</th>
-              <th className="py-2 pr-2 text-right">Laufzeit</th>
-              <th className="py-2 pr-2 text-right">Kreditbetrag</th>
               <th className="py-2 pr-2 text-right">Rate mtl.</th>
               <th className="py-2 pr-2 text-right">Schuldend. p.a.</th>
               <th className="py-2 pr-2 text-right">Zinsen gesamt</th>
+              <th className="py-2 pr-2 text-right">Gesamtkosten Laufzeit</th>
               <th className="py-2 pr-2 text-right">Rest n. 5 J</th>
               <th className="py-2 pr-2 text-right">Rest n. 10 J</th>
               <th className="py-2 pr-2 text-right">Cashflow</th>
@@ -342,38 +429,67 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ scn, sum }) => {
+            {rows.map((r) => {
+              const { scn, sum } = r;
               const isActive = scn.id === activeId;
+              const isBest = scn.id === bestOverall?.scn.id;
               return (
-                <tr key={scn.id} className={`border-b last:border-0 ${isActive ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : ""}`}>
+                <tr key={scn.id} className={`border-b last:border-0 ${isActive ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : ""} ${isBest && !isActive ? "bg-success/5" : ""}`}>
                   <td className="py-1.5 pr-2 font-medium">
                     <div className="flex items-center gap-1">
                       {isActive && <Star className="size-3 fill-current text-primary" />}
+                      {isBest && !isActive && <Star className="size-3 fill-current text-success" />}
                       {scn.name}
                     </div>
                   </td>
                   <td className="py-1.5 pr-2">{scn.bankName || "—"}</td>
                   <td className="py-1.5 pr-2">
-                    {scn.status && (
-                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 border ${STATUS_TONE[scn.status]}`}>{scn.status}</span>
-                    )}
+                    {scn.status && <span className={`text-[10px] rounded-full px-1.5 py-0.5 border ${STATUS_TONE[scn.status]}`}>{scn.status}</span>}
                   </td>
                   <td className="py-1.5 pr-2 text-right">{fmtPct(scn.zinssatz, 2)}</td>
-                  <td className="py-1.5 pr-2 text-right">{scn.laufzeitJahre} J</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(scn.kreditBetrag)}</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.ratePerMonth)}</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.annualDebtService)}</td>
-                  <td className="py-1.5 pr-2 text-right text-destructive">{fmtEUR(sum.totalInterest)}</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.balanceAfter5)}</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.balanceAfter10)}</td>
-                  <td className={`py-1.5 pr-2 text-right ${sum.cashflowMtl >= 0 ? "text-success" : "text-destructive"}`}>{fmtEUR(sum.cashflowMtl)}</td>
-                  <td className="py-1.5 pr-2 text-right">{sum.dscr ? sum.dscr.toFixed(2) : "—"}</td>
-                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.breakEvenMiete)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.ratePerMonth)]}`}>{fmtEUR(sum.ratePerMonth)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.annualDebtService)]}`}>{fmtEUR(sum.annualDebtService)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.totalInterest)]}`}>{fmtEUR(sum.totalInterest)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.totalPayment)]}`}>{fmtEUR(sum.totalPayment)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.balanceAfter5)]}`}>{fmtEUR(sum.balanceAfter5)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.balanceAfter10)]}`}>{fmtEUR(sum.balanceAfter10)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.cashflowMtl, false)]}`}>{fmtEUR(sum.cashflowMtl)}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.dscr || 0, false)]}`}>{sum.dscr ? sum.dscr.toFixed(2) : "—"}</td>
+                  <td className={`py-1.5 pr-2 text-right rounded ${TONE_CELL[tone(rows, r, (x) => x.sum.breakEvenMiete)]}`}>{fmtEUR(sum.breakEvenMiete)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      </div>
+      <p className="text-[11px] text-muted-foreground">Das <strong>aktive Szenario</strong> wird weiterhin für Investment Summary, Cashflow, DSCR, Break-even-Miete und Score verwendet.</p>
+    </div>
+  );
+}
+
+function MiniBarChart({ title, data, dataKey, higherBetter }: { title: string; data: any[]; dataKey: string; higherBetter?: boolean }) {
+  const vals = data.map((d) => d[dataKey]);
+  const best = higherBetter ? Math.max(...vals) : Math.min(...vals);
+  const worst = higherBetter ? Math.min(...vals) : Math.max(...vals);
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
+      <div className="h-40 w-full">
+        <ResponsiveContainer>
+          <BarChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={40} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+            <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+            <Bar dataKey={dataKey} radius={[6, 6, 0, 0]}>
+              {data.map((d, i) => {
+                const v = d[dataKey];
+                const color = v === best ? "hsl(var(--success))" : v === worst ? "hsl(var(--destructive))" : "hsl(var(--warning))";
+                return <Cell key={i} fill={color} />;
+              })}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
