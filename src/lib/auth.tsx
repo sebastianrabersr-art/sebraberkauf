@@ -1,0 +1,115 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useRouter } from "@tanstack/react-router";
+
+export type Plan = "free" | "plus" | "premium";
+
+export interface Subscription {
+  plan: Plan;
+  property_limit: number | null;
+  project_limit: number | null;
+  subscription_status: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  language: string;
+  country: string;
+  currency: string;
+  onboarding_completed: boolean;
+  marketing_opt_in: boolean;
+}
+
+interface AuthCtx {
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
+  subscription: Subscription | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+const Ctx = createContext<AuthCtx>({
+  session: null, user: null, profile: null, subscription: null,
+  loading: true, refresh: async () => {}, signOut: async () => {},
+});
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const fetchProfile = async (uid: string) => {
+    const [{ data: p }, { data: s }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+      supabase.from("subscriptions").select("plan, property_limit, project_limit, subscription_status").eq("user_id", uid).maybeSingle(),
+    ]);
+    setProfile(p as any);
+    setSubscription(s as any);
+  };
+
+  useEffect(() => {
+    // Sync listener first
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      setSession(sess);
+      if (event === "SIGNED_OUT") {
+        setProfile(null); setSubscription(null);
+        router.invalidate();
+        return;
+      }
+      if (sess?.user && (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "INITIAL_SESSION")) {
+        // defer DB reads to avoid deadlock
+        setTimeout(() => { fetchProfile(sess.user.id); }, 0);
+        if (event === "SIGNED_IN") router.invalidate();
+      }
+    });
+    // Then initial fetch
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session?.user) fetchProfile(data.session.user.id).finally(() => setLoading(false));
+      else setLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const refresh = async () => {
+    if (session?.user) await fetchProfile(session.user.id);
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
+    setSubscription(null);
+    window.location.href = "/";
+  };
+
+  return (
+    <Ctx.Provider value={{ session, user: session?.user ?? null, profile, subscription, loading, refresh, signOut }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export const useAuth = () => useContext(Ctx);
+
+// Plan limits helpers
+export function planLabel(p?: Plan | null) {
+  if (p === "plus") return "Plus";
+  if (p === "premium") return "Premium";
+  return "Kostenlos";
+}
+
+export function planLimits(plan: Plan | undefined | null): { properties: number | null; projects: number | null } {
+  if (plan === "plus") return { properties: 10, projects: null };
+  if (plan === "premium") return { properties: null, projects: null };
+  return { properties: 1, projects: 1 };
+}
