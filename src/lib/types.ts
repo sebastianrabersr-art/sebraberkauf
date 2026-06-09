@@ -238,14 +238,35 @@ export interface PurchaseInfo {
   tatsKaufpreis?: number | null;
   tatsKaufnebenkosten?: number | null;
   tatsMaklerkosten?: number | null;
+  notarkosten?: number | null;
+  grundbuchkosten?: number | null;
+  sonstigeKaufkosten?: number | null;
+  sanierungskosten?: number | null;
+  einrichtungskosten?: number | null;
   tatsEigenkapital?: number | null;
   tatsKreditbetrag?: number | null;
+  ursprKreditbetrag?: number | null;
   bank?: string;
-  kreditstatus?: "in Auszahlung" | "läuft" | "Sondertilgung geplant" | "abgelöst" | "in Verzug" | "";
+  kreditstatus?: "in Auszahlung" | "laufend" | "läuft" | "Sondertilgung geplant" | "abgelöst" | "abbezahlt" | "refinanziert" | "in Verzug" | "";
+  zinssatzPct?: number | null;
+  fixzinsBis?: string;
+  laufzeitJahre?: number | null;
+  tilgungsart?: "annuitaet" | "endfaellig" | "manuell" | "";
+  startdatumKredit?: string;
+  naechsteZinsanpassung?: string;
+  notizenKreditvertrag?: string;
   aktuelleRestschuld?: number | null;
   aktuelleMonatsrate?: number | null;
   aktuelleMonatsmiete?: number | null;
   tatsMonatlicheKosten?: number | null;
+  betriebskostenMtl?: number | null;
+  nichtUmlMtl?: number | null;
+  ruecklageMtl?: number | null;
+  versicherungMtl?: number | null;
+  verwaltungMtl?: number | null;
+  sonstigeMtlKosten?: number | null;
+  aktuelleNutzung?: "vermietet" | "selbst genutzt" | "leer" | "teilweise vermietet" | "";
+  aktuellerObjektwert?: number | null;
   notizenNachKauf?: string;
 }
 
