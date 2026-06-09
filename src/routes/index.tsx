@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { PricingTable } from "@/components/marketing/PricingTable";
 import { FaqList } from "@/components/marketing/FaqList";
-import { ArrowRight, Calculator, FileText, Link2, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Calculator,
+  Check,
+  ChevronRight,
+  FileText,
+  Link2,
+  Play,
+  ShieldCheck,
+  TrendingUp,
+  Wallet,
+  X,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,30 +40,233 @@ function Feature({ icon: Icon, title, children }: any) {
   );
 }
 
+function HeroMockup() {
+  return (
+    <div className="relative w-full max-w-lg mx-auto lg:mx-0 perspective-1000">
+      {/* Main app window */}
+      <div className="relative bg-card rounded-2xl border shadow-2xl shadow-primary/5 overflow-hidden">
+        {/* Title bar */}
+        <div className="px-4 py-3 border-b flex items-center gap-2 bg-muted/30">
+          <div className="flex gap-1.5">
+            <div className="size-2.5 rounded-full bg-destructive/80" />
+            <div className="size-2.5 rounded-full bg-warning/80" />
+            <div className="size-2.5 rounded-full bg-success/80" />
+          </div>
+          <div className="flex-1 text-center">
+            <span className="text-[11px] text-muted-foreground font-medium">kauf ma – Eigentumswohnung Wien</span>
+          </div>
+        </div>
+        {/* Content */}
+        <div className="p-5 space-y-4">
+          {/* Score bar */}
+          <div className="flex items-center gap-3">
+            <div className="size-12 rounded-xl bg-primary/10 text-primary grid place-items-center font-bold text-lg">7.8</div>
+            <div className="flex-1">
+              <div className="text-sm font-medium">Gesamtbewertung</div>
+              <div className="flex gap-1 mt-1.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= 4 ? "bg-primary" : "bg-muted"}`} />
+                ))}
+              </div>
+            </div>
+            <div className="text-xs font-medium text-success bg-success/10 px-2 py-1 rounded-full">Interessant</div>
+          </div>
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-muted/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Bruttorendite</div>
+              <div className="text-lg font-semibold mt-0.5">4.8 %</div>
+            </div>
+            <div className="rounded-xl bg-muted/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Monatl. Cashflow</div>
+              <div className="text-lg font-semibold mt-0.5 text-success">+ 312 €</div>
+            </div>
+            <div className="rounded-xl bg-muted/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Kaufpreis / m²</div>
+              <div className="text-lg font-semibold mt-0.5">4.120 €</div>
+            </div>
+            <div className="rounded-xl bg-muted/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Mietrecht-Risiko</div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="size-2.5 rounded-full bg-warning" />
+                <span className="text-sm font-medium">Mittel</span>
+              </div>
+            </div>
+          </div>
+          {/* Mini chart */}
+          <div className="rounded-xl bg-muted/40 p-3">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Zahlungsplan (10 Jahre)</div>
+            <div className="flex items-end gap-1 h-16">
+              {[40, 55, 48, 62, 58, 70, 65, 78, 72, 85].map((h, i) => (
+                <div key={i} className="flex-1 rounded-t-sm bg-primary/70" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+              <span>Jahr 1</span>
+              <span>Jahr 10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Floating cards */}
+      <div className="absolute -top-4 -right-4 bg-card rounded-xl border shadow-lg p-3 max-w-[180px] animate-float">
+        <div className="flex items-center gap-2">
+          <div className="size-6 rounded-lg bg-success/10 grid place-items-center">
+            <Check className="size-3.5 text-success" />
+          </div>
+          <span className="text-xs font-medium">Kaufnebenkosten OK</span>
+        </div>
+        <div className="text-[10px] text-muted-foreground mt-1">Grunderwerbsteuer & Notar berücksichtigt</div>
+      </div>
+      <div className="absolute -bottom-3 -left-4 bg-card rounded-xl border shadow-lg p-3 max-w-[190px] animate-float-delayed">
+        <div className="flex items-center gap-2">
+          <div className="size-6 rounded-lg bg-primary/10 grid place-items-center">
+            <Link2 className="size-3.5 text-primary" />
+          </div>
+          <span className="text-xs font-medium">willhaben importiert</span>
+        </div>
+        <div className="text-[10px] text-muted-foreground mt-1">Alle Daten automatisch erkannt</div>
+      </div>
+    </div>
+  );
+}
+
 function Landing() {
   return (
     <MarketingShell>
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-20 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground mb-5">
-          <Calculator className="size-3.5" /> Immobilien-Rechner & CRM für Käufer
+      {/* ===== HERO SECTION ===== */}
+      <section className="relative overflow-hidden">
+        {/* Subtle background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent pointer-events-none" />
+        
+        <div className="max-w-6xl mx-auto px-6 pt-12 pb-20 md:pt-20 md:pb-28">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: Text */}
+            <div className="text-center lg:text-left">
+              {/* Trust badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3.5 py-1.5 text-xs text-muted-foreground mb-6 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                </span>
+                Für private Käufer und Anleger in Österreich & Deutschland
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1]">
+                Immobilie gefunden?{" "}
+                <span className="text-primary">Link einfügen.</span>{" "}
+                Sofort wissen, ob sie sich lohnt.
+              </h1>
+
+              {/* Subheadline */}
+              <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Berechne Kaufpreis, Nebenkosten, Finanzierung, Miete, Rendite und Cashflow in wenigen Minuten –{" "}
+                <strong className="text-foreground">ohne Excel-Chaos</strong>{" "}
+                und ohne großes Immobilien-Vorwissen.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="mt-8 flex gap-3 justify-center lg:justify-start flex-wrap">
+                <a
+                  href="/signup"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+                >
+                  Kostenlos starten <ArrowRight className="size-4" />
+                </a>
+                <a
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 rounded-xl border bg-card px-7 py-3.5 font-medium text-sm hover:bg-accent transition-colors"
+                >
+                  <Play className="size-3.5" /> Demo ansehen
+                </a>
+              </div>
+
+              {/* Micro trust */}
+              <p className="mt-3 text-xs text-muted-foreground">
+                Keine Kreditkarte. 1 Immobilie gratis. Jederzeit upgraden.
+              </p>
+
+              {/* Hero bullets */}
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 max-w-lg mx-auto lg:mx-0">
+                {[
+                  "Inserat-Link einfügen",
+                  "Daten automatisch übernehmen",
+                  "Cashflow & Rendite berechnen",
+                  "Immobilien vergleichen",
+                  "Risiken erkennen",
+                ].map((text) => (
+                  <div key={text} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="size-5 rounded-full bg-success/10 grid place-items-center shrink-0">
+                      <Check className="size-3 text-success" />
+                    </div>
+                    {text}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Mockup */}
+            <div className="hidden lg:block">
+              <HeroMockup />
+            </div>
+          </div>
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-          Kauf ich – oder kauf ich nicht?
-        </h1>
-        <p className="mt-5 max-w-2xl mx-auto text-lg text-muted-foreground">
-          <strong>kauf ma</strong> bewertet jede Eigentumswohnung in Sekunden: Rendite, Cashflow, Maklerkosten, Kaufnebenkosten, Mietrecht-Risiko. Importiere willhaben-Links oder lade ein Exposé hoch.
-        </p>
-        <div className="mt-8 flex gap-3 justify-center flex-wrap">
-          <a href="/signup" className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-6 py-3 font-medium">
-            Kostenlos starten <ArrowRight className="size-4" />
-          </a>
-          <a href="/pricing" className="inline-flex items-center gap-2 rounded-md border bg-card px-6 py-3 font-medium">
-            Preise ansehen
-          </a>
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">Keine Kreditkarte. 1 Immobilie gratis. Jederzeit upgraden.</p>
       </section>
 
+      {/* ===== WHY NOT EXCEL SECTION ===== */}
+      <section className="border-t bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
+          <div className="max-w-3xl mx-auto text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+              Warum nicht einfach Excel?
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Viele Käufer fangen mit Tabellen an – und merken schnell, dass das nicht reicht.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Card 1 */}
+            <div className="rounded-2xl border bg-card p-6 text-center">
+              <div className="size-12 rounded-2xl bg-destructive/10 text-destructive grid place-items-center mx-auto mb-4">
+                <X className="size-6" />
+              </div>
+              <h3 className="font-semibold text-base">Schnell unübersichtlich</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Sobald man mehrere Immobilien vergleicht, wird Excel chaotisch. Formeln brechen, Zellen verrutschen, die Übersicht geht verloren.
+              </p>
+            </div>
+            {/* Card 2 */}
+            <div className="rounded-2xl border bg-card p-6 text-center">
+              <div className="size-12 rounded-2xl bg-warning/10 text-warning grid place-items-center mx-auto mb-4">
+                <X className="size-6" />
+              </div>
+              <h3 className="font-semibold text-base">Wichtige Kosten vergessen</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Makler, Grunderwerbsteuer, Notar, Finanzierung, Rücklagen, Mietrecht-Befristung – viele Kosten fallen erst später auf.
+              </p>
+            </div>
+            {/* Card 3 */}
+            <div className="rounded-2xl border bg-card p-6 text-center relative overflow-hidden">
+              <div className="absolute top-0 right-0 size-24 bg-success/5 rounded-bl-full" />
+              <div className="size-12 rounded-2xl bg-success/10 text-success grid place-items-center mx-auto mb-4 relative">
+                <Check className="size-6" />
+              </div>
+              <h3 className="font-semibold text-base">Strukturiert & sicher</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Die App führt dich Schritt für Schritt durch die wichtigsten Zahlen und zeigt sofort, ob ein Objekt interessant oder kritisch ist.
+              </p>
+              <div className="mt-4">
+                <a href="/signup" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                  Kostenlos testen <ChevronRight className="size-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== REST UNCHANGED ===== */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-16 border-t">
         <h2 className="text-3xl font-semibold text-center">Alles in einem Tool</h2>
         <p className="text-muted-foreground text-center mt-2">Von der ersten Inserat-Idee bis zum Notartermin.</p>
