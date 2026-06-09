@@ -551,26 +551,30 @@ function ViewingChecklist({ propertyId, viewings, setViewing }: { propertyId: st
   );
 }
 
-function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
+function Section({ title, children, actions, defaultOpen = false }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <h3 className="font-semibold">{title}</h3>
-        {actions}
-      </div>
-      {children}
-    </div>
+    <details open={defaultOpen} className="group rounded-2xl border bg-card overflow-hidden">
+      <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none hover:bg-muted/30 transition-colors [&::-webkit-details-marker]:hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <svg className="size-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
+        </div>
+        {actions && <div onClick={(e) => e.preventDefault()}>{actions}</div>}
+      </summary>
+      <div className="px-5 pb-5 pt-1 border-t bg-card">{children}</div>
+    </details>
   );
 }
 function Stat({ label, value, hint, tone, tip }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral"; tip?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4" title={tip}>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`text-xl font-semibold mt-1 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
+    <div className="rounded-xl border bg-muted/30 p-3.5" title={tip}>
+      <div className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold mt-1 tabular-nums ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
     </div>
   );
 }
+
 function QuickFact({ label, value, hint, actions }: { label: string; value: string; hint?: string; actions?: React.ReactNode }) {
   return (
     <div className="rounded-lg border bg-muted/30 p-3">
