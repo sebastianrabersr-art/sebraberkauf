@@ -66,7 +66,7 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const nebenkostenPct =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
 
-  // Maklerkosten
+  // Maklerkosten – bidirektional, "provisionLastEdit" = source of truth
   const sellerIsPrivat = p.sellerType === "Privat";
   const maklerKostenZahlbar =
     p.maklerkostenZahlbar != null
@@ -75,13 +75,27 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
         ? false
         : p.makler === "Nein"
           ? false
-          : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || p.sellerType === "Makler";
+          : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || !!p.provisionBruttoEUR || p.sellerType === "Makler";
   const maklerProvisionUstPct = p.maklerprovisionUstPct ?? 0.20;
-  const maklerProvisionPct = p.provisionPct ?? (maklerKostenZahlbar ? 0.03 : 0);
-  let maklerProvisionNetto = p.provisionEUR != null ? p.provisionEUR : kaufpreis * maklerProvisionPct;
-  if (!maklerKostenZahlbar) maklerProvisionNetto = 0;
-  const maklerProvisionUst = maklerProvisionNetto * maklerProvisionUstPct;
-  const maklerProvisionBrutto = maklerProvisionNetto + maklerProvisionUst;
+  const provBasis = (p.provisionBasis ?? "brutto") === "netto" ? (p.kaufpreisNetto ?? kaufpreis) : (p.kaufpreisBrutto ?? kaufpreis);
+  const last = p.provisionLastEdit ?? (p.provisionBruttoEUR != null ? "brutto" : p.provisionEUR != null ? "netto" : "pct");
+  let maklerProvisionPct = 0, maklerProvisionNetto = 0, maklerProvisionBrutto = 0;
+  if (maklerKostenZahlbar) {
+    if (last === "brutto" && p.provisionBruttoEUR != null) {
+      maklerProvisionBrutto = p.provisionBruttoEUR;
+      maklerProvisionNetto = maklerProvisionBrutto / (1 + maklerProvisionUstPct);
+      maklerProvisionPct = provBasis > 0 ? maklerProvisionNetto / provBasis : 0;
+    } else if (last === "netto" && p.provisionEUR != null) {
+      maklerProvisionNetto = p.provisionEUR;
+      maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
+      maklerProvisionPct = provBasis > 0 ? maklerProvisionNetto / provBasis : 0;
+    } else {
+      maklerProvisionPct = p.provisionPct ?? 0.03;
+      maklerProvisionNetto = provBasis * maklerProvisionPct;
+      maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
+    }
+  }
+  const maklerProvisionUst = maklerProvisionBrutto - maklerProvisionNetto;
 
   const otherNK =
     (p.grunderwerbsteuer ?? 0) + (p.grundbuchkosten ?? 0) + (p.vertragskosten ?? 0) +
@@ -89,10 +103,19 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const explicitNK = otherNK + maklerProvisionBrutto;
   const kaufNebenkosten = explicitNK > 0 ? explicitNK : kaufpreis * nebenkostenPct;
   const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
-  const ekEinsatz = Math.min(a.eigenkapital, gesamtkosten);
-  const kreditBetrag = Math.max(0, gesamtkosten - a.eigenkapital);
-  const kreditRateMtl = pmt(a.zinssatz / 12, a.laufzeit * 12, kreditBetrag);
+
+  // Finance scenario override
+  const activeScn = getActiveFinance(p);
+  const ekDefault = Math.min(a.eigenkapital, gesamtkosten);
+  const ekEinsatz = activeScn?.eigenkapital != null ? Math.min(activeScn.eigenkapital, gesamtkosten) : ekDefault;
+  const kreditBetrag = activeScn?.kreditBetrag != null ? activeScn.kreditBetrag : Math.max(0, gesamtkosten - ekEinsatz);
+  const scnZins = activeScn?.zinssatz ?? a.zinssatz;
+  const scnLaufzeit = activeScn?.laufzeitJahre ?? a.laufzeit;
+  const kreditRateMtl = activeScn && activeScn.tilgungsart === "endfaellig"
+    ? (kreditBetrag * scnZins) / 12
+    : pmt(scnZins / 12, scnLaufzeit * 12, kreditBetrag);
   const annuitaet = kreditRateMtl * 12;
+
 
   const nichtUmlMtl = p.bkNichtUmlagefaehig != null ? p.bkNichtUmlagefaehig : m2 * a.nichtUmlPerM2;
   const ruecklageMtl = p.ruecklageMtl != null ? p.ruecklageMtl : m2 * a.ruecklagePerM2;
