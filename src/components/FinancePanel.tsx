@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Plus, Trash2, Check, Star } from "lucide-react";
 import { toast } from "sonner";
 import type { FinanceScenario, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
