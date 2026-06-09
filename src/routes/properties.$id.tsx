@@ -7,20 +7,22 @@ import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
-import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Trash2 } from "lucide-react";
+import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
+import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
+import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/properties/$id")({
-  head: ({ params }) => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
+  head: () => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
   component: Detail,
   notFoundComponent: () => (<AppShell><div className="p-8">Objekt nicht gefunden.</div></AppShell>),
 });
 
 const STATUSES: PropertyStatus[] = ALL_STATUSES;
-const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Vollanwendung MRG","Altbau / Richtwert möglich","Befristung relevant","Gewerbliche Nutzung relevant","Kurzzeitvermietung / Airbnb prüfen","unklar – rechtlich prüfen","nicht geeignet"];
+const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 
 function Detail() {
   const { id } = Route.useParams();
