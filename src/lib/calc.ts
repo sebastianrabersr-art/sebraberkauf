@@ -258,38 +258,67 @@ export function inferMietrecht(p: Property): MietrechtInference {
   const text = `${p.beschreibung ?? ""} ${p.objekttyp ?? ""} ${p.zustand ?? ""}`.toLowerCase();
   const isAirbnb = /airbnb|kurzzeit|tourist|ferienwohnung/.test(text);
   const isGewerblich = /gewerbl|büro|lokal|geschäftsl/.test(text);
+  const land = (p.land ?? "").toLowerCase();
+  const isDE = land === "deutschland" || land === "de" || land === "germany";
+
   if (isAirbnb) return {
     kategorie: "Kurzzeitvermietung / Airbnb prüfen",
-    erklaerung: "Kurzzeitvermietung wird in Wien strikt reguliert (Bauordnung-Novelle 2024). Vor Kauf widmungsrechtlich prüfen.",
+    erklaerung: isDE
+      ? "Kurzzeitvermietung ist in vielen Städten (Berlin, München, Hamburg) zweckentfremdungsrechtlich beschränkt."
+      : "Kurzzeitvermietung wird in Wien strikt reguliert (Bauordnung-Novelle 2024). Vor Kauf widmungsrechtlich prüfen.",
     risiko: "hoch",
-    pruefen: ["Widmung Wohnzone","kommunale Vermietungsregeln","Eigentümergemeinschaft erlaubt es?"],
+    pruefen: ["Widmung / Zweckentfremdung","kommunale Vermietungsregeln","Eigentümergemeinschaft erlaubt es?"],
   };
   if (isGewerblich) return {
     kategorie: "Gewerbliche Nutzung relevant",
-    erklaerung: "Gewerbliche Nutzung unterliegt nicht dem MRG-Mietzinsschutz – andere Bewertung der Mieten.",
+    erklaerung: "Gewerbliche Nutzung unterliegt nicht dem Wohnungs-Mietzinsschutz – andere Bewertung der Mieten.",
     risiko: "mittel",
     pruefen: ["Mietvertrag","Indexierung","Befristung","Umsatzsteuer-Option"],
   };
+
+  if (isDE) {
+    // Deutschland – Mietpreisbremse / Mietspiegel
+    if (y >= 2014) return {
+      kategorie: "freie Mietzinsbildung wahrscheinlich",
+      erklaerung: `Errichtet ${y}. Erstmals nach 01.10.2014 bezugsfertige Neubauten sind grundsätzlich von der Mietpreisbremse ausgenommen.`,
+      risiko: "niedrig",
+      pruefen: ["Erstbezug-Datum","umfassende Modernisierung","ortsübliche Vergleichsmiete"],
+    };
+    if (y > 0) return {
+      kategorie: "Mietpreisbremse möglich",
+      erklaerung: `Errichtet ${y}. In Gebieten mit angespanntem Wohnungsmarkt darf die Miete bei Wiedervermietung max. 10 % über der ortsüblichen Vergleichsmiete liegen.`,
+      risiko: "mittel",
+      pruefen: ["Gilt Mietpreisbremse in dieser Gemeinde?","qualifizierter Mietspiegel","Kappungsgrenze 15 % in 3 Jahren","Modernisierungsumlage"],
+    };
+    return {
+      kategorie: "Mietspiegel relevant",
+      erklaerung: "Baujahr unbekannt – ortsüblicher Mietspiegel und Mietpreisbremse müssen geprüft werden.",
+      risiko: "hoch",
+      pruefen: ["Baujahr","Erstbezug-Datum","qualifizierter Mietspiegel","gilt Mietpreisbremse?"],
+    };
+  }
+
+  // Österreich (Default)
   if (y >= 1953) return {
-    kategorie: "Neubau / freie Miete",
+    kategorie: "freie Mietzinsbildung wahrscheinlich",
     erklaerung: `Errichtet ${y}. Gebäude nach 1953 (bzw. mit Baubewilligung nach 30.06.1953) sind im Vollanwendungsbereich des MRG vom Richtwert ausgenommen → freie Mietzinsvereinbarung möglich.`,
     risiko: "niedrig",
     pruefen: ["Bauwidmung","ev. Förderdarlehen","Befristungsabschlag bei befristeten Verträgen"],
   };
   if (y >= 1945) return {
-    kategorie: "Teilanwendung MRG",
+    kategorie: "MRG Teilanwendung möglich",
     erklaerung: `Errichtet ${y}. Häuser mit Baubewilligung 1945–1953 fallen oft in die Teilanwendung des MRG – freie Mietzinsbildung mit eingeschränkten Schutzbestimmungen.`,
     risiko: "mittel",
     pruefen: ["genaues Baubewilligungsdatum","Förderungs-/Sanierungsstatus","Kategorie der Wohnung"],
   };
   if (y > 0 && y < 1945) return {
-    kategorie: "Altbau / Richtwert möglich",
-    erklaerung: `Errichtet ${y}. Altbau vor 1945 fällt typischerweise in den Vollanwendungsbereich des MRG → Richtwertmietzins (Wien aktueller Richtwert + Zu-/Abschläge). Das deckelt die erzielbare Miete erheblich.`,
+    kategorie: "Richtwertmietzins möglich",
+    erklaerung: `Errichtet ${y}. Altbau vor 1945 fällt typischerweise in den Vollanwendungsbereich des MRG → Richtwertmietzins + Zu-/Abschläge. Das deckelt die erzielbare Miete erheblich.`,
     risiko: "hoch",
     pruefen: ["Lagezuschlag-Karte","Ausstattungskategorie","Zu-/Abschläge","befristete vs. unbefristete Vermietung"],
   };
   return {
-    kategorie: "unklar – rechtlich prüfen",
+    kategorie: "unklar – professionell prüfen",
     erklaerung: "Baujahr unbekannt – Mietrecht kann nicht eingeschätzt werden.",
     risiko: "hoch",
     pruefen: ["Baujahr/Baubewilligungsdatum","Widmung","bestehende Mietverträge"],

@@ -7,20 +7,22 @@ import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
-import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Trash2 } from "lucide-react";
+import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
+import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
+import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/properties/$id")({
-  head: ({ params }) => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
+  head: () => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
   component: Detail,
   notFoundComponent: () => (<AppShell><div className="p-8">Objekt nicht gefunden.</div></AppShell>),
 });
 
 const STATUSES: PropertyStatus[] = ALL_STATUSES;
-const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Vollanwendung MRG","Altbau / Richtwert möglich","Befristung relevant","Gewerbliche Nutzung relevant","Kurzzeitvermietung / Airbnb prüfen","unklar – rechtlich prüfen","nicht geeignet"];
+const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 
 function Detail() {
   const { id } = Route.useParams();
@@ -36,11 +38,31 @@ function Detail() {
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
-
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const mapsUrl = googleMapsUrl(p);
   const mietrecht = inferMietrecht(p);
+  const country = countryOf(p.land);
+  const regions = country ? regionsOf(country) : [];
+
+  const applyRegionDefaults = () => {
+    const d = regionDefaultsForProperty(p);
+    if (!d) {
+      toast.error("Bitte zuerst Land und Bundesland auswählen.");
+      return;
+    }
+    u({
+      grunderwerbsteuer: d.grunderwerbsteuer,
+      grundbuchkosten: d.grundbuchkosten,
+      vertragskosten: d.vertragskosten,
+      provisionPct: d.provisionPct,
+      maklerprovisionUstPct: d.maklerprovisionUstPct,
+      provisionLastEdit: "pct",
+      provisionEUR: null,
+      provisionBruttoEUR: null,
+    });
+    toast.success(`Standardwerte für ${d.region.name} übernommen`);
+  };
 
   const openOriginal = () => {
     if (!linkValid) {
@@ -156,6 +178,37 @@ function Detail() {
             </div>
           );
         })()}
+
+        {/* Quick facts: Verkäufer, Original-Link, Maps, nächste Aktion */}
+        <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 border-t pt-4">
+          <QuickFact label="Verkäufer/Makler" value={p.sellerName || p.sellerCompany || "—"}
+            hint={[p.sellerType, p.sellerPhone, p.sellerEmail].filter(Boolean).join(" · ") || undefined}
+            actions={
+              <>
+                {p.sellerPhone && <a href={`tel:${p.sellerPhone}`} className="text-xs inline-flex items-center gap-1 text-primary"><Phone className="size-3" />Anruf</a>}
+                {p.sellerEmail && <a href={`mailto:${p.sellerEmail}`} className="text-xs inline-flex items-center gap-1 text-primary"><Mail className="size-3" />E-Mail</a>}
+              </>
+            }
+          />
+          <QuickFact label="Original-Inserat" value={p.platform || (linkValid ? "Link gespeichert" : "—")}
+            actions={linkValid ? (
+              <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Öffnen <ExternalLink className="size-3" /></a>
+            ) : <span className="text-xs text-destructive">URL fehlt/ungültig</span>}
+          />
+          <QuickFact label="Google Maps" value={[p.adresse, p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
+            actions={mapsUrl ? (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Karte öffnen <MapPin className="size-3" /></a>
+            ) : null}
+          />
+          <QuickFact label="Nächste Aktion" value={p.nextAction || "—"}
+            hint={p.nextActionDate ? `bis ${new Date(p.nextActionDate).toLocaleDateString("de-AT")}` : undefined}
+          />
+        </div>
+      </div>
+
+      {/* Mietrechtliche Einschätzung – prominent direkt unter Investment Summary */}
+      <div className="mb-6">
+        <MietrechtRiskCard p={p} />
       </div>
 
       {!linkValid && (
@@ -178,8 +231,25 @@ function Detail() {
                     {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
                   </select>
               </F>
-              <F label="Bezirk"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
+              <F label="Land">
+                <select value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                  <option value="">—</option>
+                  <option value="Österreich">Österreich</option>
+                  <option value="Deutschland">Deutschland</option>
+                </select>
+              </F>
+              <F label="Bundesland / Region">
+                {regions.length > 0 ? (
+                  <select value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                    <option value="">—</option>
+                    {regions.map((r) => <option key={r.code} value={r.name}>{r.name}</option>)}
+                  </select>
+                ) : (
+                  <T value={p.bundesland ?? ""} edit={true} on={(v) => u({ bundesland: v })} />
+                )}
+              </F>
               <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
+              <F label="Bezirk / Landkreis"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
               <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
               <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
               <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
@@ -221,7 +291,12 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Maklerkosten & Kaufnebenkosten">
+          <Section title="Maklerkosten & Kaufnebenkosten" actions={
+            <button onClick={applyRegionDefaults} type="button"
+              className="inline-flex items-center gap-1 text-xs border rounded-md px-2.5 py-1 hover:bg-accent">
+              <Wand2 className="size-3.5" /> Standardwerte für Region übernehmen
+            </button>
+          }>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Maklerprovision %">
                 <N value={c.maklerProvisionPct ? c.maklerProvisionPct * 100 : (p.provisionPct != null ? p.provisionPct * 100 : null)} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100, provisionLastEdit: "pct", provisionEUR: null, provisionBruttoEUR: null })} />
@@ -269,6 +344,8 @@ function Detail() {
             <FinancePanel p={p} />
           </Section>
 
+
+          <MietrechtRiskCard p={p} />
 
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
@@ -445,10 +522,13 @@ function ViewingChecklist({ propertyId, viewings, setViewing }: { propertyId: st
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="rounded-xl border bg-card p-5">
-      <h3 className="font-semibold mb-3">{title}</h3>
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h3 className="font-semibold">{title}</h3>
+        {actions}
+      </div>
       {children}
     </div>
   );
@@ -459,6 +539,16 @@ function Stat({ label, value, hint, tone, tip }: { label: string; value: string;
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`text-xl font-semibold mt-1 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
       {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
+    </div>
+  );
+}
+function QuickFact({ label, value, hint, actions }: { label: string; value: string; hint?: string; actions?: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium mt-0.5 truncate" title={value}>{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5 truncate" title={hint}>{hint}</div>}
+      {actions && <div className="mt-1.5 flex items-center gap-3">{actions}</div>}
     </div>
   );
 }
