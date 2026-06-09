@@ -1,10 +1,13 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import type { Mietrecht, Property, PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ActivitiesPanel } from "@/components/ActivitiesPanel";
+import { CrmPanel } from "@/components/CrmPanel";
+import { PdfUploader } from "@/components/PdfUploader";
+import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,8 +17,8 @@ export const Route = createFileRoute("/properties/$id")({
   notFoundComponent: () => (<AppShell><div className="p-8">Objekt nicht gefunden.</div></AppShell>),
 });
 
-const STATUSES: PropertyStatus[] = ["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"];
-const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"];
+const STATUSES: PropertyStatus[] = ALL_STATUSES;
+const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Vollanwendung MRG","Altbau / Richtwert möglich","Befristung relevant","Gewerbliche Nutzung relevant","Kurzzeitvermietung / Airbnb prüfen","unklar – rechtlich prüfen","nicht geeignet"];
 
 function Detail() {
   const { id } = Route.useParams();
