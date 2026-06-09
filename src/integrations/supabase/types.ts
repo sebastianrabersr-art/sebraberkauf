@@ -14,7 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          country: string
+          created_at: string
+          currency: string
+          email: string | null
+          id: string
+          language: string
+          marketing_opt_in: boolean
+          name: string | null
+          onboarding_completed: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          email?: string | null
+          id: string
+          language?: string
+          marketing_opt_in?: boolean
+          name?: string | null
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          email?: string | null
+          id?: string
+          language?: string
+          marketing_opt_in?: boolean
+          name?: string | null
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          plan: Database["public"]["Enums"]["plan_tier"]
+          project_limit: number | null
+          property_limit: number | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          project_limit?: number | null
+          property_limit?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          project_limit?: number | null
+          property_limit?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          default_commission_percent: number | null
+          default_equity: number | null
+          default_grundbuchkosten: number | null
+          default_grunderwerbsteuer: number | null
+          default_interest_rate: number | null
+          default_loan_term: number | null
+          default_repair_reserve: number | null
+          default_vacancy_buffer: number | null
+          default_vat_rate: number | null
+          default_vertragskosten: number | null
+          goal: string | null
+          location_focus: string | null
+          min_cashflow: number | null
+          notification_preferences: Json
+          target_gross_yield: number | null
+          target_net_yield: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_commission_percent?: number | null
+          default_equity?: number | null
+          default_grundbuchkosten?: number | null
+          default_grunderwerbsteuer?: number | null
+          default_interest_rate?: number | null
+          default_loan_term?: number | null
+          default_repair_reserve?: number | null
+          default_vacancy_buffer?: number | null
+          default_vat_rate?: number | null
+          default_vertragskosten?: number | null
+          goal?: string | null
+          location_focus?: string | null
+          min_cashflow?: number | null
+          notification_preferences?: Json
+          target_gross_yield?: number | null
+          target_net_yield?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_commission_percent?: number | null
+          default_equity?: number | null
+          default_grundbuchkosten?: number | null
+          default_grunderwerbsteuer?: number | null
+          default_interest_rate?: number | null
+          default_loan_term?: number | null
+          default_repair_reserve?: number | null
+          default_vacancy_buffer?: number | null
+          default_vat_rate?: number | null
+          default_vertragskosten?: number | null
+          goal?: string | null
+          location_focus?: string | null
+          min_cashflow?: number | null
+          notification_preferences?: Json
+          target_gross_yield?: number | null
+          target_net_yield?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +175,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      plan_tier: "free" | "plus" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +302,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_tier: ["free", "plus", "premium"],
+    },
   },
 } as const
