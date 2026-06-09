@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
+import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
 
 const ViewingRoute = ViewingRouteImport.update({
   id: '/viewing',
@@ -136,6 +137,11 @@ const PropertiesIdRoute = PropertiesIdRouteImport.update({
   path: '/properties/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortfolioNewRoute = PortfolioNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => PortfolioRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -148,7 +154,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
-  '/portfolio': typeof PortfolioRoute
+  '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
+  '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -171,7 +178,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
-  '/portfolio': typeof PortfolioRoute
+  '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
+  '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/properties': typeof PropertiesIndexRoute
@@ -195,7 +203,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
-  '/portfolio': typeof PortfolioRoute
+  '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
+  '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/viewing'
+    | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/properties/'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/viewing'
+    | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/properties'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/viewing'
+    | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/properties/'
@@ -290,7 +302,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
-  PortfolioRoute: typeof PortfolioRoute
+  PortfolioRoute: typeof PortfolioRouteWithChildren
   PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
   RechnerRoute: typeof RechnerRoute
@@ -452,8 +464,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portfolio/new': {
+      id: '/portfolio/new'
+      path: '/new'
+      fullPath: '/portfolio/new'
+      preLoaderRoute: typeof PortfolioNewRouteImport
+      parentRoute: typeof PortfolioRoute
+    }
   }
 }
+
+interface PortfolioRouteChildren {
+  PortfolioNewRoute: typeof PortfolioNewRoute
+}
+
+const PortfolioRouteChildren: PortfolioRouteChildren = {
+  PortfolioNewRoute: PortfolioNewRoute,
+}
+
+const PortfolioRouteWithChildren = PortfolioRoute._addFileChildren(
+  PortfolioRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -466,7 +497,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,
-  PortfolioRoute: PortfolioRoute,
+  PortfolioRoute: PortfolioRouteWithChildren,
   PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
   RechnerRoute: RechnerRoute,
