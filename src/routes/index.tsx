@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-function KpiCard({ label, value, sub, icon: Icon }: { label: string; value: string; sub?: string; icon: any }) {
+function KpiCard({ label, value, sub, icon: Icon, tip }: { label: string; value: string; sub?: string; icon: any; tip?: string }) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
+    <div className="rounded-xl border bg-card p-5 shadow-sm" title={tip}>
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
