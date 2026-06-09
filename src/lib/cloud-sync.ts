@@ -319,6 +319,26 @@ export async function initCloudSync(userId: string) {
       await supabase.from("profiles").update({ legacy_imported_at: new Date().toISOString() }).eq("id", userId);
       if (imported) console.info("[cloud-sync] legacy data imported to cloud");
     }
+
+    // Ensure user always has at least one project
+    if (useStore.getState().projects.length === 0) {
+      const { DEFAULT_ASSUMPTIONS } = await import("@/lib/calc");
+      const nowIso = new Date().toISOString();
+      const proj: Project = {
+        id: crypto.randomUUID(), name: "Mein erstes Projekt", description: "",
+        investmentGoal: "", locationFocus: "Wien", budgetMin: null, budgetMax: null,
+        maxNegativeCashflow: null, preferredSizeMin: null, preferredSizeMax: null,
+        preferredDistricts: "", status: "Aktiv", assumptions: { ...DEFAULT_ASSUMPTIONS },
+        createdAt: nowIso, updatedAt: nowIso,
+      } as Project;
+      useStore.setState({ projects: [proj], activeProjectId: proj.id } as any);
+      await supabase.from("projects").upsert({
+        id: proj.id, user_id: userId, name: proj.name, status: proj.status,
+        is_demo: false, data: proj as any,
+      });
+    } else if (!useStore.getState().activeProjectId) {
+      useStore.setState({ activeProjectId: useStore.getState().projects[0].id } as any);
+    }
   } catch (e) {
     console.error("[cloud-sync] init failed:", e);
   }
