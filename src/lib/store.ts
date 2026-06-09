@@ -93,6 +93,7 @@ interface State {
   viewings: Record<string, ViewingNote>;
   documents: PropertyDocument[];
   activities: Activity[];
+  payments: Payment[];
   addProject: (p?: Partial<Project>) => Project;
   updateProject: (id: string, patch: Partial<Project>) => void;
   updateProjectAssumptions: (id: string, patch: Partial<Assumptions>) => void;
@@ -106,14 +107,15 @@ interface State {
   setViewing: (id: string, key: string, patch: Partial<{ done: boolean; note: string }>) => void;
   findByLink: (link: string, projectId?: string) => Property | undefined;
   deleteDemoData: () => void;
-  // documents
   addDocument: (d: PropertyDocument) => void;
   updateDocument: (id: string, patch: Partial<PropertyDocument>) => void;
   deleteDocument: (id: string) => void;
-  // activities
   addActivity: (a: Activity) => void;
   updateActivity: (id: string, patch: Partial<Activity>) => void;
   deleteActivity: (id: string) => void;
+  addPayment: (p: Payment) => void;
+  updatePayment: (id: string, patch: Partial<Payment>) => void;
+  deletePayment: (id: string) => void;
 }
 
 export const useStore = create<State>()(
