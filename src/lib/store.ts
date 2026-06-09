@@ -188,15 +188,18 @@ export const useStore = create<State>()(
       addActivity: (a) => set((s) => ({ activities: [a, ...s.activities] })),
       updateActivity: (id, patch) => set((s) => ({ activities: s.activities.map((a) => a.id === id ? { ...a, ...patch, updatedAt: now() } : a) })),
       deleteActivity: (id) => set((s) => ({ activities: s.activities.filter((a) => a.id !== id) })),
+      addPayment: (p) => set((s) => ({ payments: [p, ...s.payments] })),
+      updatePayment: (id, patch) => set((s) => ({ payments: s.payments.map((x) => x.id === id ? { ...x, ...patch, updatedAt: now() } : x) })),
+      deletePayment: (id) => set((s) => ({ payments: s.payments.filter((x) => x.id !== id) })),
     }),
     {
       name: "immo-invest-store-v2",
-      version: 3,
+      version: 4,
       migrate: (persisted: any, _version: number) => {
-        // ensure new collections exist when loading older persisted state
         if (persisted && typeof persisted === "object") {
           persisted.documents = persisted.documents ?? [];
           persisted.activities = persisted.activities ?? [];
+          persisted.payments = persisted.payments ?? [];
         }
         return persisted;
       },
