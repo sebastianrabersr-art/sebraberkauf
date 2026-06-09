@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import { fmtEUR, summarizePayments } from "@/lib/calc";
-import { Building2 } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/portfolio")({
   head: () => ({ meta: [{ title: "Portfolio – Bestand" }] }),
