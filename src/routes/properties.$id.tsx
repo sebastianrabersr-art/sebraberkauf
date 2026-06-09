@@ -30,12 +30,12 @@ function Detail() {
   const p = properties.find((x) => x.id === id);
   if (!p) throw notFound();
 
-  const [editMode, setEditMode] = useState(false);
   const c = calcProperty(p, assumptions);
   const s = calcScore(p, assumptions, c);
   const dq = calcDataQuality(p);
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
+
 
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
