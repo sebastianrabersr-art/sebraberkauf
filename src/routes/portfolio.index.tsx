@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { fmtEUR, summarizePayments } from "@/lib/calc";
 import { Building2, Plus } from "lucide-react";
 
-export const Route = createFileRoute("/portfolio")({
+export const Route = createFileRoute("/portfolio/")({
   head: () => ({ meta: [{ title: "Portfolio – Bestand" }] }),
   component: Portfolio,
 });
