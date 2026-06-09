@@ -6,10 +6,12 @@ import { AmpelBadge } from "@/components/AmpelBadge";
 import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
+import { FinancePanel } from "@/components/FinancePanel";
 import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/properties/$id")({
   head: ({ params }) => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
@@ -28,12 +30,12 @@ function Detail() {
   const p = properties.find((x) => x.id === id);
   if (!p) throw notFound();
 
-  const [editMode, setEditMode] = useState(false);
   const c = calcProperty(p, assumptions);
   const s = calcScore(p, assumptions, c);
   const dq = calcDataQuality(p);
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
+
 
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
@@ -88,9 +90,8 @@ function Detail() {
                 <MapPin className="size-3.5" /> Google Maps
               </a>
             )}
-            <button onClick={() => setEditMode((v) => !v)} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
-              <Pencil className="size-3.5" /> {editMode ? "Fertig" : "Bearbeiten"}
-            </button>
+            <span className="text-[11px] text-muted-foreground italic px-2">Felder sind inline editierbar</span>
+
             <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
               <Copy className="size-3.5" /> Duplizieren
             </button>
@@ -167,59 +168,53 @@ function Detail() {
         <div className="lg:col-span-2 space-y-6">
           <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
-              <F label="Titel"><T value={p.title} edit={editMode} on={(v) => u({ title: v })} /></F>
+              <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
-                <T value={p.link} edit={editMode} on={(v) => u({ link: v })} />
+                <T value={p.link} edit={true} on={(v) => u({ link: v })} />
                 {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
               </F>
               <F label="Projekt">
-                {editMode ? (
-                  <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
                   </select>
-                ) : <Ro>{project?.name ?? "—"}</Ro>}
               </F>
-              <F label="Bezirk"><T value={p.bezirk} edit={editMode} on={(v) => u({ bezirk: v })} /></F>
-              <F label="Stadt"><T value={p.city ?? ""} edit={editMode} on={(v) => u({ city: v })} /></F>
-              <F label="Adresse / Gegend"><T value={p.adresse} edit={editMode} on={(v) => u({ adresse: v })} /></F>
-              <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={editMode} on={(v) => u({ wohnflaecheM2: v })} /></F>
-              <F label="Zimmer"><N value={p.zimmer} edit={editMode} on={(v) => u({ zimmer: v })} /></F>
-              <F label="Baujahr"><N value={p.baujahr} edit={editMode} on={(v) => u({ baujahr: v })} /></F>
-              <F label="Zustand"><T value={p.zustand} edit={editMode} on={(v) => u({ zustand: v })} /></F>
-              <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit={editMode} on={(v) => u({ stockwerk: v })} /></F>
-              <F label="Energieklasse"><T value={p.energyClass ?? ""} edit={editMode} on={(v) => u({ energyClass: v })} /></F>
-              <F label="HWB"><N value={p.hwb ?? null} edit={editMode} on={(v) => u({ hwb: v })} /></F>
-              <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={editMode} on={(v) => u({ verfuegbarkeit: v })} /></F>
+              <F label="Bezirk"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
+              <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
+              <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
+              <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
+              <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
+              <F label="Baujahr"><N value={p.baujahr} edit={true} on={(v) => u({ baujahr: v })} /></F>
+              <F label="Zustand"><T value={p.zustand} edit={true} on={(v) => u({ zustand: v })} /></F>
+              <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit={true} on={(v) => u({ stockwerk: v })} /></F>
+              <F label="Energieklasse"><T value={p.energyClass ?? ""} edit={true} on={(v) => u({ energyClass: v })} /></F>
+              <F label="HWB"><N value={p.hwb ?? null} edit={true} on={(v) => u({ hwb: v })} /></F>
+              <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={true} on={(v) => u({ verfuegbarkeit: v })} /></F>
               <F label="Status">
-                {editMode ? (
-                  <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.status}</Ro>}
               </F>
               <F label="Makler?">
-                {editMode ? (
-                  <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {["Ja","Nein","unklar"].map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.makler}</Ro>}
               </F>
             </div>
           </Section>
 
           <Section title="Kauf, Miete & Nebenkosten">
             <div className="grid md:grid-cols-3 gap-3">
-              <F label="Kaufpreis €"><N value={p.kaufpreis} edit={editMode} on={(v) => u({ kaufpreis: v })} /></F>
-              <F label="Sanierung €"><N value={p.sanierung} edit={editMode} on={(v) => u({ sanierung: v ?? 0 })} /></F>
-              <F label="Einrichtung €"><N value={p.einrichtung} edit={editMode} on={(v) => u({ einrichtung: v ?? 0 })} /></F>
-              <F label="Reserve €"><N value={p.reserve} edit={editMode} on={(v) => u({ reserve: v ?? 0 })} /></F>
-              <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit={editMode} on={(v) => u({ betriebskostenMtl: v })} /></F>
-              <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit={editMode} on={(v) => u({ heizkostenMtl: v })} /></F>
-              <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit={editMode} on={(v) => u({ ruecklageFonds: v })} /></F>
-              <F label="Nettomiete mtl. €"><N value={p.nettomieteMtl} edit={editMode} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+              <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
+              <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
+              <F label="Einrichtung €"><N value={p.einrichtung} edit={true} on={(v) => u({ einrichtung: v ?? 0 })} /></F>
+              <F label="Reserve €"><N value={p.reserve} edit={true} on={(v) => u({ reserve: v ?? 0 })} /></F>
+              <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit={true} on={(v) => u({ betriebskostenMtl: v })} /></F>
+              <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit={true} on={(v) => u({ heizkostenMtl: v })} /></F>
+              <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit={true} on={(v) => u({ ruecklageFonds: v })} /></F>
+              <F label="Nettomiete mtl. €"><N value={p.nettomieteMtl} edit={true} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
               <F label="Miete geschätzt?">
                 <label className="flex items-center gap-2 px-3 py-2 border rounded-md bg-background text-sm">
-                  <input type="checkbox" disabled={!editMode} checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} />
+                  <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} />
                   Schätzwert
                 </label>
               </F>
@@ -229,19 +224,26 @@ function Detail() {
           <Section title="Maklerkosten & Kaufnebenkosten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Maklerprovision %">
-                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={editMode} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
+                <N value={c.maklerProvisionPct ? c.maklerProvisionPct * 100 : (p.provisionPct != null ? p.provisionPct * 100 : null)} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100, provisionLastEdit: "pct", provisionEUR: null, provisionBruttoEUR: null })} />
               </F>
               <F label="Maklerprovision netto €">
-                {editMode ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
+                <N value={p.provisionLastEdit === "netto" ? (p.provisionEUR ?? null) : c.maklerProvisionNetto} edit={true} on={(v) => u({ provisionEUR: v, provisionLastEdit: "netto", provisionPct: null, provisionBruttoEUR: null })} />
+              </F>
+              <F label="Maklerprovision brutto €">
+                <N value={p.provisionLastEdit === "brutto" ? (p.provisionBruttoEUR ?? null) : c.maklerProvisionBrutto} edit={true} on={(v) => u({ provisionBruttoEUR: v, provisionLastEdit: "brutto", provisionPct: null, provisionEUR: null })} />
               </F>
               <F label="USt auf Provision %">
-                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={editMode} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
+                <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={true} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
               </F>
               <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
-              <F label="Maklerprovision brutto €"><Ro>{fmtEUR(c.maklerProvisionBrutto)}</Ro></F>
+              <F label="Berechnungsbasis">
+                <select value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                  <option value="brutto">Kaufpreis brutto</option>
+                  <option value="netto">Kaufpreis netto</option>
+                </select>
+              </F>
               <F label="Maklerkosten zahlbar?">
                 <select
-                  disabled={!editMode}
                   value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
                   onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -251,29 +253,32 @@ function Detail() {
                   <option value="nein">Nein</option>
                 </select>
               </F>
-              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={editMode} on={(v) => u({ grunderwerbsteuer: v })} /></F>
-              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={editMode} on={(v) => u({ grundbuchkosten: v })} /></F>
-              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={editMode} on={(v) => u({ vertragskosten: v })} /></F>
-              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={editMode} on={(v) => u({ finanzierungskosten: v })} /></F>
-              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={editMode} on={(v) => u({ sonstigeNK: v })} /></F>
+              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={true} on={(v) => u({ grunderwerbsteuer: v })} /></F>
+              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={true} on={(v) => u({ grundbuchkosten: v })} /></F>
+              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={true} on={(v) => u({ vertragskosten: v })} /></F>
+              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={true} on={(v) => u({ finanzierungskosten: v })} /></F>
+              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={true} on={(v) => u({ sonstigeNK: v })} /></F>
               <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
             </div>
             <p className="text-[11px] text-muted-foreground mt-3">
-              Standard Österreich: bis zu 3 % vom Kaufpreis + 20 % USt. Bei Verkäufer „Privat" wird automatisch keine Maklerprovision angesetzt. Werte können manuell überschrieben werden.
+              Bidirektional: ändere %, netto oder brutto – die anderen Werte werden automatisch berechnet. Das zuletzt bearbeitete Feld ({p.provisionLastEdit ?? "pct"}) ist die Quelle der Wahrheit.
             </p>
           </Section>
+
+          <Section title="Finanzierung & Bank-Zahlungsplan">
+            <FinancePanel p={p} />
+          </Section>
+
 
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
-                {editMode ? (
-                  <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.mietrecht}</Ro>}
               </F>
               <F label="Fehlende Daten (komma-getrennt)">
-                <T value={p.missingData.join(", ")} edit={editMode} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
               </F>
             </div>
             <div className="grid md:grid-cols-3 gap-3 mt-4">
@@ -287,7 +292,7 @@ function Detail() {
           <Section title="Beschreibung & Notizen">
             <textarea
               value={p.beschreibung ?? ""}
-              disabled={!editMode}
+             
               onChange={(e) => u({ beschreibung: e.target.value })}
               rows={3}
               placeholder="Beschreibung aus dem Inserat…"
@@ -295,7 +300,7 @@ function Detail() {
             />
             <textarea
               value={p.notizen}
-              disabled={!editMode}
+             
               onChange={(e) => u({ notizen: e.target.value })}
               rows={4}
               placeholder="Eigene Notizen…"
@@ -304,7 +309,7 @@ function Detail() {
           </Section>
 
           <Section title="CRM · Verkäufer & Follow-up">
-            <CrmPanel p={p} edit={editMode} u={u} />
+            <CrmPanel p={p} edit={true} u={u} />
           </Section>
 
           <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
@@ -337,12 +342,12 @@ function Detail() {
 
         <div className="space-y-6">
           <Section title={`Score ${s.total} / 100`}>
-            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => editMode && u({ scoreLage: v })} disabled={!editMode} />
+            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => true && u({ scoreLage: v })} />
             <ScoreRow label="Zahlen / Rendite" max={25} value={s.zahlen} readonly />
-            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => editMode && u({ scoreVermietbarkeit: v })} disabled={!editMode} />
-            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => editMode && u({ scoreZustand: v })} disabled={!editMode} />
-            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => editMode && u({ scoreRecht: v })} disabled={!editMode} />
-            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => editMode && u({ scoreWiederverkauf: v })} disabled={!editMode} />
+            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => true && u({ scoreVermietbarkeit: v })} />
+            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => true && u({ scoreZustand: v })} />
+            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => true && u({ scoreRecht: v })} />
+            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => true && u({ scoreWiederverkauf: v })} />
             <div className="border-t mt-3 pt-3 flex justify-between text-sm">
               <span className="font-medium">Entscheidung</span>
               <AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge>
@@ -374,7 +379,7 @@ function Detail() {
               <label key={key as string} className="flex items-center justify-between text-sm py-1.5">
                 <span>{label}</span>
                 <select
-                  disabled={!editMode}
+                 
                   value={(p as any)[key as string] === true ? "ja" : (p as any)[key as string] === false ? "nein" : ""}
                   onChange={(e) => u({ [key as string]: e.target.value === "ja" ? true : e.target.value === "nein" ? false : null } as any)}
                   className="rounded border bg-background px-2 py-1 text-xs"
@@ -464,13 +469,66 @@ function Ro({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-2 rounded-md border bg-muted/40 text-sm min-h-[36px]">{children}</div>;
 }
 function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: boolean }) {
+  const [local, setLocal] = useState(value);
+  const originalRef = useRef(value);
+  useEffect(() => { setLocal(value); originalRef.current = value; }, [value]);
   if (!edit) return <Ro>{value || "—"}</Ro>;
-  return <input value={value} onChange={(e) => on(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
+  const commit = () => {
+    if (local !== originalRef.current) {
+      on(local);
+      originalRef.current = local;
+      toast.success("Gespeichert", { duration: 900 });
+    }
+  };
+  return (
+    <input
+      value={local}
+      placeholder="—"
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
+        else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
+      }}
+      className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-ring"
+    />
+  );
 }
 function N({ value, on, edit }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean }) {
+  const [local, setLocal] = useState<string>(value == null ? "" : String(value));
+  const originalRef = useRef<string>(value == null ? "" : String(value));
+  useEffect(() => {
+    const s = value == null ? "" : String(value);
+    setLocal(s); originalRef.current = s;
+  }, [value]);
   if (!edit) return <Ro>{value ?? "—"}</Ro>;
-  return <input type="number" value={value ?? ""} onChange={(e) => on(e.target.value === "" ? null : Number(e.target.value))} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
+  const commit = () => {
+    if (local === originalRef.current) return;
+    if (local !== "" && isNaN(Number(local))) {
+      toast.error("Ungültige Zahl");
+      setLocal(originalRef.current);
+      return;
+    }
+    on(local === "" ? null : Number(local));
+    originalRef.current = local;
+    toast.success("Gespeichert", { duration: 900 });
+  };
+  return (
+    <input
+      type="number"
+      value={local}
+      placeholder="—"
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
+        else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
+      }}
+      className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-ring"
+    />
+  );
 }
+
 function Alert({ children, tone = "warning" }: { children: React.ReactNode; tone?: "warning" | "destructive" }) {
   return (
     <div className={`mb-4 flex items-start gap-3 rounded-lg border p-4 text-sm ${tone === "destructive" ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"}`}>

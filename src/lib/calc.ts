@@ -1,4 +1,4 @@
-import type { Assumptions, Mietrecht, Property } from "./types";
+import type { Assumptions, FinanceScenario, Mietrecht, Property } from "./types";
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
   eigenkapital: 100000,
@@ -66,7 +66,7 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const nebenkostenPct =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
 
-  // Maklerkosten
+  // Maklerkosten – bidirektional, "provisionLastEdit" = source of truth
   const sellerIsPrivat = p.sellerType === "Privat";
   const maklerKostenZahlbar =
     p.maklerkostenZahlbar != null
@@ -75,13 +75,27 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
         ? false
         : p.makler === "Nein"
           ? false
-          : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || p.sellerType === "Makler";
+          : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || !!p.provisionBruttoEUR || p.sellerType === "Makler";
   const maklerProvisionUstPct = p.maklerprovisionUstPct ?? 0.20;
-  const maklerProvisionPct = p.provisionPct ?? (maklerKostenZahlbar ? 0.03 : 0);
-  let maklerProvisionNetto = p.provisionEUR != null ? p.provisionEUR : kaufpreis * maklerProvisionPct;
-  if (!maklerKostenZahlbar) maklerProvisionNetto = 0;
-  const maklerProvisionUst = maklerProvisionNetto * maklerProvisionUstPct;
-  const maklerProvisionBrutto = maklerProvisionNetto + maklerProvisionUst;
+  const provBasis = (p.provisionBasis ?? "brutto") === "netto" ? (p.kaufpreisNetto ?? kaufpreis) : (p.kaufpreisBrutto ?? kaufpreis);
+  const last = p.provisionLastEdit ?? (p.provisionBruttoEUR != null ? "brutto" : p.provisionEUR != null ? "netto" : "pct");
+  let maklerProvisionPct = 0, maklerProvisionNetto = 0, maklerProvisionBrutto = 0;
+  if (maklerKostenZahlbar) {
+    if (last === "brutto" && p.provisionBruttoEUR != null) {
+      maklerProvisionBrutto = p.provisionBruttoEUR;
+      maklerProvisionNetto = maklerProvisionBrutto / (1 + maklerProvisionUstPct);
+      maklerProvisionPct = provBasis > 0 ? maklerProvisionNetto / provBasis : 0;
+    } else if (last === "netto" && p.provisionEUR != null) {
+      maklerProvisionNetto = p.provisionEUR;
+      maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
+      maklerProvisionPct = provBasis > 0 ? maklerProvisionNetto / provBasis : 0;
+    } else {
+      maklerProvisionPct = p.provisionPct ?? 0.03;
+      maklerProvisionNetto = provBasis * maklerProvisionPct;
+      maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
+    }
+  }
+  const maklerProvisionUst = maklerProvisionBrutto - maklerProvisionNetto;
 
   const otherNK =
     (p.grunderwerbsteuer ?? 0) + (p.grundbuchkosten ?? 0) + (p.vertragskosten ?? 0) +
@@ -89,10 +103,19 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   const explicitNK = otherNK + maklerProvisionBrutto;
   const kaufNebenkosten = explicitNK > 0 ? explicitNK : kaufpreis * nebenkostenPct;
   const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
-  const ekEinsatz = Math.min(a.eigenkapital, gesamtkosten);
-  const kreditBetrag = Math.max(0, gesamtkosten - a.eigenkapital);
-  const kreditRateMtl = pmt(a.zinssatz / 12, a.laufzeit * 12, kreditBetrag);
+
+  // Finance scenario override
+  const activeScn = getActiveFinance(p);
+  const ekDefault = Math.min(a.eigenkapital, gesamtkosten);
+  const ekEinsatz = activeScn?.eigenkapital != null ? Math.min(activeScn.eigenkapital, gesamtkosten) : ekDefault;
+  const kreditBetrag = activeScn?.kreditBetrag != null ? activeScn.kreditBetrag : Math.max(0, gesamtkosten - ekEinsatz);
+  const scnZins = activeScn?.zinssatz ?? a.zinssatz;
+  const scnLaufzeit = activeScn?.laufzeitJahre ?? a.laufzeit;
+  const kreditRateMtl = activeScn && activeScn.tilgungsart === "endfaellig"
+    ? (kreditBetrag * scnZins) / 12
+    : pmt(scnZins / 12, scnLaufzeit * 12, kreditBetrag);
   const annuitaet = kreditRateMtl * 12;
+
 
   const nichtUmlMtl = p.bkNichtUmlagefaehig != null ? p.bkNichtUmlagefaehig : m2 * a.nichtUmlPerM2;
   const ruecklageMtl = p.ruecklageMtl != null ? p.ruecklageMtl : m2 * a.ruecklagePerM2;
@@ -270,5 +293,118 @@ export function inferMietrecht(p: Property): MietrechtInference {
     erklaerung: "Baujahr unbekannt – Mietrecht kann nicht eingeschätzt werden.",
     risiko: "hoch",
     pruefen: ["Baujahr/Baubewilligungsdatum","Widmung","bestehende Mietverträge"],
+  };
+}
+
+export function getActiveFinance(p: Property): FinanceScenario | undefined {
+  const list = p.financeScenarios ?? [];
+  if (list.length === 0) return undefined;
+  return list.find((s) => s.id === p.activeFinanceId) ?? list[0];
+}
+
+export interface AmortYear {
+  year: number;
+  payment: number;
+  interest: number;
+  principal: number;
+  extraPayment: number;
+  balanceEnd: number;
+  cumulativeInterest: number;
+}
+
+export function calcAmortizationSchedule(scn: FinanceScenario): AmortYear[] {
+  const periodsPerYear = scn.intervall === "monatlich" ? 12 : scn.intervall === "quartalsweise" ? 4 : 1;
+  const totalPeriods = Math.max(1, Math.round(scn.laufzeitJahre * periodsPerYear));
+  const periodRate = (scn.zinssatz || 0) / periodsPerYear;
+  const principal = scn.kreditBetrag ?? 0;
+  if (principal <= 0) return [];
+
+  let payment = 0;
+  if (scn.tilgungsart === "annuitaet") {
+    payment = periodRate === 0 ? principal / totalPeriods : (principal * periodRate) / (1 - Math.pow(1 + periodRate, -totalPeriods));
+  } else if (scn.tilgungsart === "endfaellig") {
+    payment = principal * periodRate; // interest only
+  }
+
+  const start = scn.startDate ? new Date(scn.startDate) : new Date();
+  const startYear = start.getFullYear();
+  const sondertilgungenByYear: Record<number, number> = {};
+  (scn.sondertilgungen ?? []).forEach((s) => {
+    const y = new Date(s.date).getFullYear();
+    sondertilgungenByYear[y] = (sondertilgungenByYear[y] ?? 0) + (s.amount || 0);
+  });
+
+  let balance = principal;
+  let cumInterest = 0;
+  const yearAgg: Record<number, AmortYear> = {};
+
+  for (let i = 0; i < totalPeriods && balance > 0.01; i++) {
+    const periodDate = new Date(start);
+    if (scn.intervall === "monatlich") periodDate.setMonth(start.getMonth() + i);
+    else if (scn.intervall === "quartalsweise") periodDate.setMonth(start.getMonth() + i * 3);
+    else periodDate.setFullYear(start.getFullYear() + i);
+    const y = periodDate.getFullYear();
+
+    let interest = balance * periodRate;
+    let principalPay = 0;
+    if (scn.tilgungsart === "annuitaet") {
+      principalPay = Math.min(balance, payment - interest);
+    } else if (scn.tilgungsart === "endfaellig") {
+      principalPay = i === totalPeriods - 1 ? balance : 0;
+    } else if (scn.tilgungsart === "manuell") {
+      const m = (scn.manualSchedule ?? []).find((x) => x.year === y);
+      const yearPay = m?.payment ?? 0;
+      const perPeriodPay = yearPay / periodsPerYear;
+      principalPay = Math.max(0, perPeriodPay - interest);
+      if (principalPay > balance) principalPay = balance;
+    }
+
+    balance -= principalPay;
+    cumInterest += interest;
+    const totalPay = principalPay + interest;
+
+    if (!yearAgg[y]) yearAgg[y] = { year: y, payment: 0, interest: 0, principal: 0, extraPayment: 0, balanceEnd: 0, cumulativeInterest: 0 };
+    yearAgg[y].payment += totalPay;
+    yearAgg[y].interest += interest;
+    yearAgg[y].principal += principalPay;
+  }
+
+  // Sondertilgungen anwenden
+  const years = Object.keys(yearAgg).map(Number).sort((a, b) => a - b);
+  let runningBalance = principal;
+  let runningCum = 0;
+  for (const y of years) {
+    runningBalance -= yearAgg[y].principal;
+    const extra = sondertilgungenByYear[y] ?? 0;
+    const appliedExtra = Math.min(Math.max(0, runningBalance), extra);
+    runningBalance -= appliedExtra;
+    yearAgg[y].extraPayment = appliedExtra;
+    yearAgg[y].payment += appliedExtra;
+    yearAgg[y].balanceEnd = Math.max(0, runningBalance);
+    runningCum += yearAgg[y].interest;
+    yearAgg[y].cumulativeInterest = runningCum;
+  }
+
+  return years.map((y) => yearAgg[y]);
+}
+
+export function makeFinanceScenario(partial: Partial<FinanceScenario> = {}): FinanceScenario {
+  return {
+    id: crypto.randomUUID(),
+    name: partial.name ?? "Bank-Szenario",
+    bankName: "",
+    kreditBetrag: null,
+    eigenkapital: null,
+    zinssatz: 0.038,
+    zinsbindung: "fix",
+    zinsbindungJahre: 10,
+    laufzeitJahre: 30,
+    intervall: "monatlich",
+    tilgungsart: "annuitaet",
+    startDate: new Date().toISOString().slice(0, 10),
+    sondertilgungen: [],
+    manualSchedule: [],
+    notizen: "",
+    ...partial,
   };
 }
