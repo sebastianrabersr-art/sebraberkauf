@@ -4,9 +4,11 @@ import {
   createRootRouteWithContext,
   HeadContent,
   Scripts,
+  useRouterState,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
 
@@ -15,8 +17,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Immo Invest – Wien" },
-      { name: "description", content: "Professionelle Bewertung von Immobilien-Investments." },
+      { title: "kauf ma – Immobilien-Rechner & CRM" },
+      { name: "description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -27,6 +29,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       <div>
         <h1 className="text-3xl font-semibold">Nicht gefunden</h1>
         <p className="text-muted-foreground mt-2">Diese Seite existiert nicht.</p>
+        <a href="/" className="inline-block mt-4 text-primary underline">Zur Startseite</a>
       </div>
     </div>
   ),
@@ -54,12 +57,38 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing", "/faq", "/auth-callback", "/reset-password", "/legal"];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-right" richColors />
+      <AuthProvider>
+        <GatedOutlet />
+        <Toaster position="top-right" richColors />
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function GatedOutlet() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { session, profile, loading } = useAuth();
+  const isPublic = PUBLIC_PATHS.some((p) => p === pathname) || pathname.startsWith("/legal");
+
+  if (isPublic) return <Outlet />;
+  if (loading) {
+    return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Lade…</div>;
+  }
+  if (!session) {
+    if (typeof window !== "undefined") {
+      window.location.href = `/login?redirect=${encodeURIComponent(pathname)}`;
+    }
+    return null;
+  }
+  if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
+    if (typeof window !== "undefined") window.location.href = "/onboarding";
+    return null;
+  }
+  return <Outlet />;
 }

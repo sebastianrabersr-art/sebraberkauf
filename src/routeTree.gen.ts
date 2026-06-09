@@ -10,10 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RechnerRouteImport } from './routes/rechner'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FollowupsRouteImport } from './routes/followups'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +35,21 @@ const ViewingRoute = ViewingRouteImport.update({
   path: '/viewing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RechnerRoute = RechnerRouteImport.update({
   id: '/rechner',
   path: '/rechner',
@@ -36,14 +60,44 @@ const ProjectsRoute = ProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FollowupsRoute = FollowupsRouteImport.update({
   id: '/followups',
   path: '/followups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth-callback',
+  path: '/auth-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssumptionsRoute = AssumptionsRouteImport.update({
@@ -81,10 +135,19 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/auth-callback': typeof AuthCallbackRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -94,10 +157,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/auth-callback': typeof AuthCallbackRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -108,10 +180,19 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/auth-callback': typeof AuthCallbackRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/viewing': typeof ViewingRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -123,10 +204,19 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/auth-callback'
+    | '/dashboard'
+    | '/faq'
     | '/followups'
+    | '/login'
+    | '/onboarding'
     | '/pipeline'
+    | '/pricing'
     | '/projects'
     | '/rechner'
+    | '/reset-password'
+    | '/settings'
+    | '/signup'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -136,10 +226,19 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/auth-callback'
+    | '/dashboard'
+    | '/faq'
     | '/followups'
+    | '/login'
+    | '/onboarding'
     | '/pipeline'
+    | '/pricing'
     | '/projects'
     | '/rechner'
+    | '/reset-password'
+    | '/settings'
+    | '/signup'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -149,10 +248,19 @@ export interface FileRouteTypes {
     | '/'
     | '/analyze'
     | '/assumptions'
+    | '/auth-callback'
+    | '/dashboard'
+    | '/faq'
     | '/followups'
+    | '/login'
+    | '/onboarding'
     | '/pipeline'
+    | '/pricing'
     | '/projects'
     | '/rechner'
+    | '/reset-password'
+    | '/settings'
+    | '/signup'
     | '/viewing'
     | '/properties/$id'
     | '/properties/new'
@@ -163,10 +271,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  DashboardRoute: typeof DashboardRoute
+  FaqRoute: typeof FaqRoute
   FollowupsRoute: typeof FollowupsRoute
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
+  PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
   RechnerRoute: typeof RechnerRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   ViewingRoute: typeof ViewingRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   PropertiesNewRoute: typeof PropertiesNewRoute
@@ -180,6 +297,27 @@ declare module '@tanstack/react-router' {
       path: '/viewing'
       fullPath: '/viewing'
       preLoaderRoute: typeof ViewingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rechner': {
@@ -196,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pipeline': {
       id: '/pipeline'
       path: '/pipeline'
@@ -203,11 +348,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/followups': {
       id: '/followups'
       path: '/followups'
       fullPath: '/followups'
       preLoaderRoute: typeof FollowupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth-callback': {
+      id: '/auth-callback'
+      path: '/auth-callback'
+      fullPath: '/auth-callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assumptions': {
@@ -259,10 +439,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  DashboardRoute: DashboardRoute,
+  FaqRoute: FaqRoute,
   FollowupsRoute: FollowupsRoute,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,
+  PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
   RechnerRoute: RechnerRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   ViewingRoute: ViewingRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   PropertiesNewRoute: PropertiesNewRoute,

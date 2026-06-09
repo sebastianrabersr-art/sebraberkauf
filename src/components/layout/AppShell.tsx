@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
+import { planLabel, useAuth } from "@/lib/auth";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/", label: "Dashboard", icon: BarChart3 },
+  { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/properties", label: "Immobilien", icon: Database },
   { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { to: "/projects", label: "Projekte", icon: FolderKanban },
@@ -57,7 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
             return (
               <Link key={n.to} to={n.to}
                 className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm transition",
@@ -69,14 +70,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-4 text-xs text-sidebar-foreground/50 border-t border-sidebar-border">Wien · Investment Tool</div>
+        <AccountBox />
       </aside>
       <main className="flex-1 min-w-0">
         <div className="md:hidden sticky top-0 z-10 bg-sidebar text-sidebar-foreground px-3 py-2 space-y-2">
           <ProjectSwitcher compact />
           <div className="flex gap-2 overflow-x-auto">
             {NAV.map((n) => {
-              const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+              const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
               return (
                 <Link key={n.to} to={n.to}
                   className={cn("text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
@@ -101,6 +102,26 @@ export function PageHeader({ title, description, actions }: { title: string; des
         {description && <p className="text-muted-foreground mt-1 text-sm md:text-base">{description}</p>}
       </div>
       {actions}
+    </div>
+  );
+}
+
+function AccountBox() {
+  const { profile, subscription, signOut } = useAuth();
+  return (
+    <div className="p-3 border-t border-sidebar-border space-y-2">
+      <Link to="/settings" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent text-sm">
+        <UserCircle className="size-5" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium">{profile?.name || profile?.email || "Account"}</div>
+          <div className="text-[10px] text-sidebar-foreground/60 flex items-center gap-1">
+            <Sparkles className="size-3" /> {planLabel(subscription?.plan)}
+          </div>
+        </div>
+      </Link>
+      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent text-sm text-sidebar-foreground/80">
+        <LogOut className="size-4" /> Abmelden
+      </button>
     </div>
   );
 }
