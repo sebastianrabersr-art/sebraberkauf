@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/properties")({
+export const Route = createFileRoute("/properties/")({
   head: () => ({ meta: [{ title: "Immobilien-Datenbank – Immo Invest" }] }),
   component: PropertiesList,
 });
