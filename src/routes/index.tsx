@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   TrendingUp,
   Wallet,
+  Wallet,
   X,
+  GitCompareArrows,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -214,54 +216,70 @@ function Landing() {
         </div>
       </section>
 
-      {/* ===== WHY NOT EXCEL SECTION ===== */}
+      {/* ===== SO FUNKTIONIERT'S SECTION ===== */}
       <section className="border-t bg-muted/20">
-        <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
-          <div className="max-w-3xl mx-auto text-center mb-10">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+          {/* Header */}
+          <div className="max-w-2xl mx-auto text-center mb-14">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-              Warum nicht einfach Excel?
+              Immobilienanalyse in 3 einfachen Schritten
             </h2>
-            <p className="text-muted-foreground mt-2">
-              Viele Käufer fangen mit Tabellen an – und merken schnell, dass das nicht reicht.
+            <p className="text-muted-foreground mt-3 leading-relaxed">
+              Kein Excel, keine komplizierten Formeln. Du fügst eine Immobilie hinzu und bekommst eine strukturierte Bewertung.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Card 1 */}
-            <div className="rounded-2xl border bg-card p-6 text-center">
-              <div className="size-12 rounded-2xl bg-destructive/10 text-destructive grid place-items-center mx-auto mb-4">
-                <X className="size-6" />
+
+          {/* Steps */}
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            {/* Connecting line — desktop only */}
+            <div className="hidden md:block absolute top-14 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+
+            {/* Step 1 */}
+            <div className="relative text-center">
+              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
+                <Link2 className="size-6" />
+                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">1</span>
               </div>
-              <h3 className="font-semibold text-base">Schnell unübersichtlich</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Sobald man mehrere Immobilien vergleicht, wird Excel chaotisch. Formeln brechen, Zellen verrutschen, die Übersicht geht verloren.
+              <h3 className="font-semibold text-base">Link einfügen oder PDF hochladen</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
+                Füge einfach den Link eines Immobilieninserats ein, lade ein Exposé hoch oder trage die Daten manuell ein.
               </p>
             </div>
-            {/* Card 2 */}
-            <div className="rounded-2xl border bg-card p-6 text-center">
-              <div className="size-12 rounded-2xl bg-warning/10 text-warning grid place-items-center mx-auto mb-4">
-                <X className="size-6" />
+
+            {/* Step 2 */}
+            <div className="relative text-center">
+              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
+                <Calculator className="size-6" />
+                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">2</span>
               </div>
-              <h3 className="font-semibold text-base">Wichtige Kosten vergessen</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Makler, Grunderwerbsteuer, Notar, Finanzierung, Rücklagen, Mietrecht-Befristung – viele Kosten fallen erst später auf.
+              <h3 className="font-semibold text-base">Kosten, Finanzierung und Cashflow verstehen</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
+                Die App berechnet Kaufnebenkosten, Maklerkosten, Kreditrate, Break-even-Miete, Rendite, Cashflow und wichtige Risiken.
               </p>
             </div>
-            {/* Card 3 */}
-            <div className="rounded-2xl border bg-card p-6 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 size-24 bg-success/5 rounded-bl-full" />
-              <div className="size-12 rounded-2xl bg-success/10 text-success grid place-items-center mx-auto mb-4 relative">
-                <Check className="size-6" />
+
+            {/* Step 3 */}
+            <div className="relative text-center">
+              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
+                <GitCompareArrows className="size-6" />
+                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">3</span>
               </div>
-              <h3 className="font-semibold text-base">Strukturiert & sicher</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Die App führt dich Schritt für Schritt durch die wichtigsten Zahlen und zeigt sofort, ob ein Objekt interessant oder kritisch ist.
+              <h3 className="font-semibold text-base">Vergleichen und entscheiden</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
+                Vergleiche mehrere Immobilien nebeneinander und erkenne, welches Objekt wirklich interessant ist – und welches du lieber aussortierst.
               </p>
-              <div className="mt-4">
-                <a href="/signup" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                  Kostenlos testen <ChevronRight className="size-4" />
-                </a>
-              </div>
             </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-14 text-center">
+            <a
+              href="/signup"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+            >
+              Kostenlos starten <ArrowRight className="size-4" />
+            </a>
+            <p className="mt-3 text-xs text-muted-foreground">Keine Kreditkarte. 1 Immobilie gratis. Jederzeit upgraden.</p>
           </div>
         </div>
       </section>
