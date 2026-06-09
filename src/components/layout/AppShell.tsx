@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Bell, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, Briefcase, Building2, Calculator, ClipboardCheck, Database, FolderKanban, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
@@ -7,8 +7,9 @@ import { planLabel, useAuth } from "@/lib/auth";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { to: "/properties", label: "Immobilien", icon: Database },
+  { to: "/properties", label: "Kaufkandidaten", icon: Database },
   { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
+  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/projects", label: "Projekte", icon: FolderKanban },
   { to: "/rechner", label: "Rechner", icon: Calculator },
   { to: "/followups", label: "Follow-ups", icon: Bell },
