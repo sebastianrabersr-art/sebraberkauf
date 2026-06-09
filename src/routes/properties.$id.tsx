@@ -478,14 +478,8 @@ function Detail() {
             ))}
           </Section>
 
-          <Section title="Offene Fragen für Besichtigung">
-            <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
-              <li>Rücklage der Eigentümergemeinschaft?</li>
-              <li>Geplante Sanierungen am Haus?</li>
-              <li>Letzte Mieten in der Anlage?</li>
-              <li>Mietrechtliche Einstufung schriftlich?</li>
-              <li>Versteckte Mängel / Feuchtigkeit?</li>
-            </ul>
+          <Section title="Offene Fragen für Besichtigung & Prüfung">
+            <OpenQuestionsPanel p={p} />
           </Section>
         </div>
       </div>
