@@ -174,7 +174,7 @@ function Detail() {
                 {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
               </F>
               <F label="Projekt">
-                {editMode ? (
+                {true ? (
                   <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
                   </select>
@@ -192,14 +192,14 @@ function Detail() {
               <F label="HWB"><N value={p.hwb ?? null} edit={true} on={(v) => u({ hwb: v })} /></F>
               <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={true} on={(v) => u({ verfuegbarkeit: v })} /></F>
               <F label="Status">
-                {editMode ? (
+                {true ? (
                   <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 ) : <Ro>{p.status}</Ro>}
               </F>
               <F label="Makler?">
-                {editMode ? (
+                {true ? (
                   <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {["Ja","Nein","unklar"].map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
@@ -233,7 +233,7 @@ function Detail() {
                 <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
               </F>
               <F label="Maklerprovision netto €">
-                {editMode ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
+                {true ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
               </F>
               <F label="USt auf Provision %">
                 <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={true} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
@@ -267,7 +267,7 @@ function Detail() {
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
-                {editMode ? (
+                {true ? (
                   <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
@@ -338,12 +338,12 @@ function Detail() {
 
         <div className="space-y-6">
           <Section title={`Score ${s.total} / 100`}>
-            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => editMode && u({ scoreLage: v })} />
+            <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => true && u({ scoreLage: v })} />
             <ScoreRow label="Zahlen / Rendite" max={25} value={s.zahlen} readonly />
-            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => editMode && u({ scoreVermietbarkeit: v })} />
-            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => editMode && u({ scoreZustand: v })} />
-            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => editMode && u({ scoreRecht: v })} />
-            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => editMode && u({ scoreWiederverkauf: v })} />
+            <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => true && u({ scoreVermietbarkeit: v })} />
+            <ScoreRow label="Zustand" max={15} value={p.scoreZustand} onChange={(v) => true && u({ scoreZustand: v })} />
+            <ScoreRow label="Mietrecht" max={10} value={p.scoreRecht} onChange={(v) => true && u({ scoreRecht: v })} />
+            <ScoreRow label="Wiederverkauf" max={5} value={p.scoreWiederverkauf} onChange={(v) => true && u({ scoreWiederverkauf: v })} />
             <div className="border-t mt-3 pt-3 flex justify-between text-sm">
               <span className="font-medium">Entscheidung</span>
               <AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge>
