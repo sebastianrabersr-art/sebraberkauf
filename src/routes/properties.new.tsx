@@ -43,9 +43,24 @@ function NewPropertyPage() {
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
 
+  const createForPdf = () => {
+    const p = makeEmptyProperty({ projectId: project.id, title: "Neues Objekt (PDF)", extractionStatus: "manuell" });
+    addProperty(p);
+    toast.success("Leere Immobilie angelegt – PDF im Detail hochladen.");
+    navigate({ to: "/properties/$id", params: { id: p.id } });
+  };
+
   return (
     <AppShell>
-      <PageHeader title="Immobilie manuell hinzufügen" description={`Projekt: ${project.name}`} />
+      <PageHeader
+        title="Immobilie manuell hinzufügen"
+        description={`Projekt: ${project.name}`}
+        actions={
+          <button onClick={createForPdf} className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
+            Leeres Objekt für PDF-Upload anlegen →
+          </button>
+        }
+      />
       <div className="rounded-xl border bg-card p-5 max-w-2xl space-y-3">
         <Row label="Titel *"><input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
         <Row label="Original-Link (URL)">
@@ -63,7 +78,7 @@ function NewPropertyPage() {
           <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>
           <button onClick={() => navigate({ to: "/properties" })} className="rounded-md border px-4 py-2 text-sm">Abbrechen</button>
         </div>
-        <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen.</p>
+        <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen. Tipp: „Leeres Objekt für PDF-Upload" rechts oben legt dir direkt eine Hülle an, in die du anschließend das Makler-PDF einlesen kannst.</p>
       </div>
     </AppShell>
   );

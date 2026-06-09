@@ -1,10 +1,13 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import type { Mietrecht, Property, PropertyStatus } from "@/lib/types";
-import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ActivitiesPanel } from "@/components/ActivitiesPanel";
+import { CrmPanel } from "@/components/CrmPanel";
+import { PdfUploader } from "@/components/PdfUploader";
+import { ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
+import { AlertTriangle, ArrowLeft, Copy, ExternalLink, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,8 +17,8 @@ export const Route = createFileRoute("/properties/$id")({
   notFoundComponent: () => (<AppShell><div className="p-8">Objekt nicht gefunden.</div></AppShell>),
 });
 
-const STATUSES: PropertyStatus[] = ["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"];
-const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"];
+const STATUSES: PropertyStatus[] = ALL_STATUSES;
+const MIETRECHTE: Mietrecht[] = ["Neubau / freie Miete","Teilanwendung MRG","Vollanwendung MRG","Altbau / Richtwert möglich","Befristung relevant","Gewerbliche Nutzung relevant","Kurzzeitvermietung / Airbnb prüfen","unklar – rechtlich prüfen","nicht geeignet"];
 
 function Detail() {
   const { id } = Route.useParams();
@@ -34,6 +37,8 @@ function Detail() {
 
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
+  const mapsUrl = googleMapsUrl(p);
+  const mietrecht = inferMietrecht(p);
 
   const openOriginal = () => {
     if (!linkValid) {
@@ -78,6 +83,11 @@ function Detail() {
             >
               Original-Inserat öffnen <ExternalLink className="size-3.5" />
             </button>
+            {mapsUrl && (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
+                <MapPin className="size-3.5" /> Google Maps
+              </a>
+            )}
             <button onClick={() => setEditMode((v) => !v)} className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
               <Pencil className="size-3.5" /> {editMode ? "Fertig" : "Bearbeiten"}
             </button>
@@ -123,6 +133,7 @@ function Detail() {
         <Stat label="Preis/m²" value={fmtEUR(c.preisProM2)} />
         <Stat label="DSCR" value={c.dscr ? c.dscr.toFixed(2) : "—"} />
         <Stat label="Break-even Miete" value={fmtEUR(c.breakEvenMiete)} />
+        <Stat label="Mindestmiete (CF≥0)" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -226,6 +237,35 @@ function Detail() {
               placeholder="Eigene Notizen…"
               className="w-full rounded-md border bg-background p-3 text-sm mt-3 disabled:opacity-80"
             />
+          </Section>
+
+          <Section title="CRM · Verkäufer & Follow-up">
+            <CrmPanel p={p} edit={editMode} u={u} />
+          </Section>
+
+          <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">Kategorie</span>
+                <AmpelBadge ampel={mietrecht.risiko === "niedrig" ? "green" : mietrecht.risiko === "mittel" ? "yellow" : "red"}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
+              </div>
+              <p className="text-sm text-muted-foreground">{mietrecht.erklaerung}</p>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Vor Kauf prüfen</div>
+                <ul className="list-disc list-inside text-sm">
+                  {mietrecht.pruefen.map((x) => <li key={x}>{x}</li>)}
+                </ul>
+              </div>
+              <p className="text-[11px] text-muted-foreground border-t pt-2">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
+            </div>
+          </Section>
+
+          <Section title="Dokumente / Exposé-PDF">
+            <PdfUploader propertyId={p.id} />
+          </Section>
+
+          <Section title="Aktivitäten / Verlauf">
+            <ActivitiesPanel propertyId={p.id} />
           </Section>
 
           <ViewingChecklist propertyId={p.id} viewings={viewings} setViewing={setViewing} />
