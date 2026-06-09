@@ -444,7 +444,9 @@ function Detail() {
         </div>
 
         <div className="space-y-6">
-          <Section title={`Score ${s.total} / 100`}>
+          <ScoreBreakdownCard p={p} />
+
+          <Section title={`Score-Slider (manuell anpassen) – ${s.total} / 100`}>
             <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => true && u({ scoreLage: v })} />
             <ScoreRow label="Zahlen / Rendite" max={25} value={s.zahlen} readonly />
             <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => true && u({ scoreVermietbarkeit: v })} />
