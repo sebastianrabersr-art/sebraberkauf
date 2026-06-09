@@ -669,3 +669,49 @@ export const DEFAULT_OPEN_QUESTIONS: { text: string; category: import("./types")
   { text: "Gibt es Einschränkungen bei Vermietung oder Kurzzeitvermietung?", category: "Mietrecht", important: true },
   { text: "Welche Unterlagen fehlen noch?", category: "Unterlagen" },
 ];
+
+import type { Payment } from "./types";
+
+export interface PaymentSummary {
+  einnahmenGesamt: number;
+  ausgabenGesamt: number;
+  nettoCashflow: number;
+  cashflowMonat: number;
+  cashflowJahr: number;
+  offenAnzahl: number;
+  offenSumme: number;
+  mieteEingegangen: number;
+  kreditratenGezahlt: number;
+  zinsenGezahlt: number;
+  tilgungGezahlt: number;
+  reparaturGezahlt: number;
+}
+
+export function summarizePayments(list: Payment[]): PaymentSummary {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const y = String(now.getFullYear());
+  const paid = list.filter((p) => p.status === "bezahlt");
+  const offen = list.filter((p) => p.status === "offen");
+  const sumBy = (arr: Payment[], pred: (p: Payment) => boolean) =>
+    arr.filter(pred).reduce((a, p) => a + (p.amount || 0), 0);
+  const einnahmen = sumBy(paid, (p) => p.direction === "Einnahme");
+  const ausgaben = sumBy(paid, (p) => p.direction === "Ausgabe");
+  const sign = (p: Payment) => (p.direction === "Einnahme" ? 1 : -1);
+  const cashflowMonat = paid.filter((p) => p.date?.startsWith(ym)).reduce((a, p) => a + sign(p) * p.amount, 0);
+  const cashflowJahr = paid.filter((p) => p.date?.startsWith(y)).reduce((a, p) => a + sign(p) * p.amount, 0);
+  return {
+    einnahmenGesamt: einnahmen,
+    ausgabenGesamt: ausgaben,
+    nettoCashflow: einnahmen - ausgaben,
+    cashflowMonat,
+    cashflowJahr,
+    offenAnzahl: offen.length,
+    offenSumme: offen.reduce((a, p) => a + (p.amount || 0), 0),
+    mieteEingegangen: sumBy(paid, (p) => p.category === "Miete"),
+    kreditratenGezahlt: sumBy(paid, (p) => p.category === "Kreditrate"),
+    zinsenGezahlt: sumBy(paid, (p) => p.category === "Zinsen"),
+    tilgungGezahlt: sumBy(paid, (p) => p.category === "Tilgung"),
+    reparaturGezahlt: sumBy(paid, (p) => p.category === "Reparatur / Instandhaltung"),
+  };
+}
