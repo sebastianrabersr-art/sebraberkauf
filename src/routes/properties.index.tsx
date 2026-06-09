@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { useMemo, useState } from "react";
-import { Download, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
@@ -142,13 +142,15 @@ function PropertiesList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr className="border-b">
-                {["Score","Status","Titel","Projekt","Bezirk","Kaufpreis","m²","€/m²","Miete","Brutto","Netto","Cashflow","DQ","Mietrecht","Link",""].map((h) => (
+                {["Score","Status","Prio","Titel","Bezirk","Kaufpreis","m²","€/m²","Miete","Min-Miete","Brutto","Cashflow","DQ","Nächste Aktion","Verkäufer","Links",""].map((h) => (
                   <th key={h} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ p, c, s, dq, projectName }) => (
+              {rows.map(({ p, c, s, dq, projectName }) => {
+                const maps = googleMapsUrl(p);
+                return (
                 <tr
                   key={p.id}
                   className="border-b last:border-0 hover:bg-accent/30 cursor-pointer"
@@ -156,11 +158,11 @@ function PropertiesList() {
                 >
                   <td className="py-2.5 px-3"><div className="font-semibold">{s.total}</div><AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge></td>
                   <td className="py-2.5 px-3 text-xs"><span className="px-2 py-0.5 rounded bg-secondary">{p.status}</span></td>
+                  <td className="py-2.5 px-3 text-xs">{p.priority ?? "—"}</td>
                   <td className="py-2.5 px-3 max-w-xs">
                     <div className="font-medium hover:underline">{p.title || "—"}</div>
-                    <div className="text-xs text-muted-foreground truncate">{p.platform}</div>
+                    <div className="text-xs text-muted-foreground truncate">{projectName} · {p.platform}</div>
                   </td>
-                  <td className="py-2.5 px-3 text-xs">{projectName}</td>
                   <td className="py-2.5 px-3">{p.bezirk || "—"}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(p.kaufpreis)}</td>
                   <td className="py-2.5 px-3">{p.wohnflaecheM2 ?? "—"}</td>
@@ -169,17 +171,38 @@ function PropertiesList() {
                     {fmtEUR(p.nettomieteMtl)}
                     {p.nettomieteGeschaetzt && <div className="text-[10px] text-warning-foreground">geschätzt</div>}
                   </td>
+                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`}>
+                    {fmtEUR(c.requiredBreakEvenRent)}
+                    <div className="text-[10px] text-muted-foreground">{fmtEUR(c.requiredBreakEvenRentPerM2)}/m²</div>
+                  </td>
                   <td className="py-2.5 px-3">{fmtPct(c.bruttorendite)}</td>
-                  <td className="py-2.5 px-3">{fmtPct(c.nettorendite)}</td>
                   <td className={`py-2.5 px-3 whitespace-nowrap ${c.cashflowMtl < 0 ? "text-destructive" : "text-success"}`}>{fmtEUR(c.cashflowMtl)}</td>
                   <td className="py-2.5 px-3"><AmpelBadge ampel={dq.ampel}>{dq.score}%</AmpelBadge></td>
-                  <td className="py-2.5 px-3 text-xs">{p.mietrecht}</td>
+                  <td className="py-2.5 px-3 text-xs">
+                    {p.nextAction ? (
+                      <>
+                        <div className="truncate max-w-[140px]">{p.nextAction}</div>
+                        {p.nextActionDate && <div className="text-[10px] text-muted-foreground">{p.nextActionDate}</div>}
+                      </>
+                    ) : "—"}
+                  </td>
+                  <td className="py-2.5 px-3 text-xs">
+                    <div className="truncate max-w-[140px]">{p.sellerName || p.sellerCompany || "—"}</div>
+                    {p.sellerType && p.sellerType !== "unklar" && <div className="text-[10px] text-muted-foreground">{p.sellerType}</div>}
+                  </td>
                   <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                    {isValidUrl(p.link) ? (
-                      <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1 text-xs hover:underline">
-                        <ExternalLink className="size-3" /> Inserat
-                      </a>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    <div className="flex items-center gap-2">
+                      {isValidUrl(p.link) ? (
+                        <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-primary hover:underline">
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                      {maps && (
+                        <a href={maps} target="_blank" rel="noopener noreferrer" title="Google Maps" className="text-primary hover:underline">
+                          <MapPin className="size-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </td>
                   <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => { if (confirm("Wirklich löschen?")) { deleteProperty(p.id); toast.success("Gelöscht."); } }} className="text-muted-foreground hover:text-destructive">
@@ -187,9 +210,10 @@ function PropertiesList() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
               {rows.length === 0 && (
-                <tr><td colSpan={16} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
+                <tr><td colSpan={17} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
               )}
             </tbody>
           </table>
