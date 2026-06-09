@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
 import { calcAmortizationSchedule, calcBalanceSeries, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
-import { useActiveAssumptions, useStore } from "@/lib/store";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
   "Anfrage": "bg-muted text-muted-foreground border-muted-foreground/30",
