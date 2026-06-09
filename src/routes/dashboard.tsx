@@ -66,7 +66,7 @@ function Dashboard() {
       </AppShell>
     );
   }
-  const inProject = properties.filter((p) => p.projectId === project.id);
+  const inProject = properties.filter((p) => p.projectId === project.id && p.status !== "Gekauft");
   const rows = inProject.map((p) => {
     const c = calcProperty(p, assumptions);
     const s = calcScore(p, assumptions, c);
