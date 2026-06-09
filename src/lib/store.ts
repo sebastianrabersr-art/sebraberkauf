@@ -127,6 +127,7 @@ export const useStore = create<State>()(
       viewings: {},
       documents: [],
       activities: [],
+      payments: [],
       addProject: (p) => {
         const proj = makeProject(p);
         set((s) => ({ projects: [proj, ...s.projects], activeProjectId: proj.id }));
