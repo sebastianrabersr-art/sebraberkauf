@@ -243,12 +243,12 @@ function Detail() {
               <Section title="Portfolio · Tatsächliche Kaufdaten">
                 <PurchaseInfoPanel p={p} />
               </Section>
-              <Section title="Zahlungen & Cashflow">
+              <Section title="Zahlungen & Cashflow" defaultOpen>
                 <PaymentsPanel p={p} />
               </Section>
             </>
           )}
-          <Section title="Objektdaten">
+          <Section title="Objektdaten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
@@ -302,7 +302,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Kauf, Miete & Nebenkosten">
+          <Section title="Kauf, Miete & Nebenkosten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
               <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
@@ -370,7 +370,7 @@ function Detail() {
             </p>
           </Section>
 
-          <Section title="Finanzierung & Bank-Zahlungsplan">
+          <Section title="Finanzierung & Bank-Zahlungsplan" defaultOpen>
             <FinancePanel p={p} />
           </Section>
 
