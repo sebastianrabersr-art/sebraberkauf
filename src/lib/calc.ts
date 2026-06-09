@@ -422,6 +422,8 @@ export function makeFinanceScenario(partial: Partial<FinanceScenario> = {}): Fin
     id: crypto.randomUUID(),
     name: partial.name ?? "Bank-Szenario",
     bankName: "",
+    ansprechpartner: "",
+    status: "Anfrage",
     kreditBetrag: null,
     eigenkapital: null,
     zinssatz: 0.038,
@@ -435,5 +437,47 @@ export function makeFinanceScenario(partial: Partial<FinanceScenario> = {}): Fin
     manualSchedule: [],
     notizen: "",
     ...partial,
+  };
+}
+
+export interface ScenarioSummary {
+  ratePerPeriod: number;
+  ratePerMonth: number;
+  annualDebtService: number;
+  totalInterest: number;
+  totalPayment: number;
+  balanceAfter5: number;
+  balanceAfter10: number;
+  cashflowMtl: number;
+  dscr: number;
+  breakEvenMiete: number;
+}
+
+/** Per-scenario summary using the property's other costs but this scenario's terms. */
+export function summarizeScenario(p: Property, a: Assumptions, scn: FinanceScenario): ScenarioSummary {
+  const overridden: Property = { ...p, financeScenarios: [scn], activeFinanceId: scn.id };
+  const c = calcProperty(overridden, a);
+  const sched = calcAmortizationSchedule(scn);
+  const totalInterest = sched.reduce((s, y) => s + y.interest, 0);
+  const totalPayment = sched.reduce((s, y) => s + y.payment, 0);
+  const startYear = sched[0]?.year ?? new Date().getFullYear();
+  const findBal = (offset: number) => {
+    const target = startYear + offset - 1;
+    const row = sched.find((r) => r.year === target);
+    return row ? row.balanceEnd : (offset >= sched.length ? 0 : (scn.kreditBetrag ?? 0));
+  };
+  const periodsPerYear = scn.intervall === "monatlich" ? 12 : scn.intervall === "quartalsweise" ? 4 : 1;
+  const ratePerPeriod = c.kreditRateMtl * 12 / periodsPerYear;
+  return {
+    ratePerPeriod,
+    ratePerMonth: c.kreditRateMtl,
+    annualDebtService: c.kreditRateMtl * 12,
+    totalInterest,
+    totalPayment,
+    balanceAfter5: findBal(5),
+    balanceAfter10: findBal(10),
+    cashflowMtl: c.cashflowMtl,
+    dscr: c.dscr,
+    breakEvenMiete: c.requiredBreakEvenRent,
   };
 }
