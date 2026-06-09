@@ -78,7 +78,7 @@ async function pushChanges(userId: string) {
       if (d.upserts.length) {
         const rows = d.upserts.map((p) => ({
           id: p.id, user_id: userId, name: p.name, status: p.status,
-          is_demo: !!p.isDemo, data: p as unknown as Record<string, unknown>,
+          is_demo: !!p.isDemo, data: p as any,
         }));
         const { error } = await supabase.from("projects").upsert(rows);
         if (error) throw error;
@@ -96,7 +96,7 @@ async function pushChanges(userId: string) {
         const rows = d.upserts.map((p) => ({
           id: p.id, user_id: userId, project_id: p.projectId || null,
           title: p.title, status: p.status, is_demo: !!p.isDemo,
-          data: p as unknown as Record<string, unknown>,
+          data: p as any,
         }));
         const { error } = await supabase.from("properties").upsert(rows);
         if (error) throw error;
@@ -112,7 +112,7 @@ async function pushChanges(userId: string) {
       const d = diffViewings(snapshot.viewings, s.viewings);
       if (d.upserts.length) {
         const rows = d.upserts.map((v) => ({
-          property_id: v.propertyId, user_id: userId, checks: v.checks as unknown as Record<string, unknown>,
+          property_id: v.propertyId, user_id: userId, checks: v.checks as any,
         }));
         const { error } = await supabase.from("viewings").upsert(rows);
         if (error) throw error;
@@ -129,7 +129,7 @@ async function pushChanges(userId: string) {
       if (d.upserts.length) {
         const rows = d.upserts.map((x) => ({
           id: x.id, user_id: userId, property_id: x.propertyId || null,
-          data: x as unknown as Record<string, unknown>,
+          data: x as any,
         }));
         const { error } = await supabase.from("documents").upsert(rows);
         if (error) throw error;
@@ -146,7 +146,7 @@ async function pushChanges(userId: string) {
       if (d.upserts.length) {
         const rows = d.upserts.map((a) => ({
           id: a.id, user_id: userId, property_id: a.propertyId || null,
-          data: a as unknown as Record<string, unknown>,
+          data: a as any,
         }));
         const { error } = await supabase.from("activities").upsert(rows);
         if (error) throw error;
@@ -246,31 +246,31 @@ async function importLegacyToCloud(userId: string) {
   if (projects.length) {
     await supabase.from("projects").upsert(projects.map((p) => ({
       id: p.id, user_id: userId, name: p.name, status: p.status,
-      is_demo: !!p.isDemo, data: p as unknown as Record<string, unknown>,
+      is_demo: !!p.isDemo, data: p as any,
     })));
   }
   if (properties.length) {
     await supabase.from("properties").upsert(properties.map((p) => ({
       id: p.id, user_id: userId, project_id: p.projectId || null,
       title: p.title, status: p.status, is_demo: !!p.isDemo,
-      data: p as unknown as Record<string, unknown>,
+      data: p as any,
     })));
   }
   if (Object.keys(viewings).length) {
     await supabase.from("viewings").upsert(Object.values(viewings).map((v) => ({
-      property_id: v.propertyId, user_id: userId, checks: v.checks as unknown as Record<string, unknown>,
+      property_id: v.propertyId, user_id: userId, checks: v.checks as any,
     })));
   }
   if (documents.length) {
     await supabase.from("documents").upsert(documents.map((x) => ({
       id: x.id, user_id: userId, property_id: x.propertyId || null,
-      data: x as unknown as Record<string, unknown>,
+      data: x as any,
     })));
   }
   if (activities.length) {
     await supabase.from("activities").upsert(activities.map((a) => ({
       id: a.id, user_id: userId, property_id: a.propertyId || null,
-      data: a as unknown as Record<string, unknown>,
+      data: a as any,
     })));
   }
   return true;
