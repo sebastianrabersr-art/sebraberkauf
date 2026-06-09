@@ -38,6 +38,17 @@ function Dashboard() {
   const project = useActiveProject();
   const assumptions = useActiveAssumptions();
   const { properties } = useStore();
+  if (!project) {
+    return (
+      <AppShell>
+        <div className="min-h-[60vh] grid place-items-center text-center p-8">
+          <div>
+            <div className="text-sm text-muted-foreground">Lade dein Projekt…</div>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
   const inProject = properties.filter((p) => p.projectId === project.id);
   const rows = inProject.map((p) => {
     const c = calcProperty(p, assumptions);
