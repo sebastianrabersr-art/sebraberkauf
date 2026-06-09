@@ -133,63 +133,70 @@ function Detail() {
         }
       />
 
-      {/* Investment Summary – die wichtigsten Kennzahlen ganz oben */}
-      <div className="rounded-2xl border bg-card p-5 mb-6">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h2 className="font-semibold">Investment Summary</h2>
-          <div className="flex items-center gap-2">
-            <AmpelBadge ampel={s.ampel}>Entscheidung: {s.entscheidung}</AmpelBadge>
-            <span className="text-xs text-muted-foreground">Status: {p.status}</span>
+      {/* Investment Summary – nur die wirklich wichtigen KPIs */}
+      <div className="rounded-2xl border bg-card p-6 mb-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="font-semibold tracking-tight">Investment Summary</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Die wichtigsten Kennzahlen auf einen Blick</p>
           </div>
+          <AmpelBadge ampel={s.ampel}>Entscheidung: {s.entscheidung}</AmpelBadge>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <Stat label="Kaufpreis (brutto)" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis inkl. USt falls relevant. Wird in Renditen und Nebenkosten verwendet." />
-          <Stat label="Kaufpreis netto" value={fmtEUR(p.kaufpreisNetto ?? p.kaufpreis)} tip="Kaufpreis ohne USt (bei gewerblicher Vermietung relevant)." />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis brutto inkl. USt falls relevant." />
           <Stat label="Gesamtkapitalbedarf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Kaufnebenkosten + Sanierung + Einrichtung + Reserve." />
-          <Stat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} hint={`Anteil ${fmtPct(c.gesamtkosten>0 ? c.kaufNebenkosten/c.gesamtkosten:0,1)}`} tip="Grunderwerbsteuer, Eintragung, Vertrag, Finanzierungskosten, Maklerkosten brutto." />
-          <Stat label="Maklerkosten brutto" value={fmtEUR(c.maklerProvisionBrutto)} hint={c.maklerKostenZahlbar ? `${fmtPct(c.maklerProvisionPct,2)} + USt ${fmtPct(c.maklerProvisionUstPct,0)}` : "nicht zahlbar"} tone={c.maklerProvisionBrutto > 0 ? "neutral" : undefined} tip="Maklerprovision netto + Umsatzsteuer (Standard 3% + 20% USt)." />
-          <Stat label="Eigenkapital" value={fmtEUR(c.eigenkapitalEinsatz)} hint={`Projekt-EK ${fmtEUR(assumptions.eigenkapital)}`} tip="Tatsächlich eingesetztes Eigenkapital." />
-          <Stat label="Kreditbedarf" value={fmtEUR(c.kreditBetrag)} hint={`LTV ${fmtPct(c.ltv, 0)}`} tip="Gesamtkapital minus Eigenkapital." />
-          <Stat label="Monatliche Rate" value={fmtEUR(c.kreditRateMtl)} hint={`${assumptions.laufzeit} J. @ ${fmtPct(assumptions.zinssatz, 2)}`} tip="Annuitätenrate Kredit pro Monat." />
           <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Erzielbare Nettomiete pro Monat." />
-          <Stat label="Mindestmiete CF≥0" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Benötigte Nettomiete für positiven Cashflow inkl. Leerstandspuffer." />
-          <Stat label="Cashflow mtl." value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Miete – Rate – nicht umlagefähige BK – Rücklage – Leerstand." />
-          <Stat label="Bruttorendite" value={fmtPct(c.bruttorendite)} tip="Jahresmiete / Kaufpreis." />
+          <Stat label="Break-even-Miete" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Benötigte Nettomiete für positiven Cashflow." />
+          <Stat label="Cashflow / Monat" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Miete – Rate – BK – Rücklage – Leerstand." />
           <Stat label="Nettorendite" value={fmtPct(c.nettorendite)} tip="Jahresnettomieten / Gesamtkapitalbedarf." />
-          <Stat label="EK-Rendite" value={fmtPct(c.eigenkapitalrendite)} tip="Jahres-Cashflow / eingesetztes Eigenkapital." />
-          <Stat label="Preis/m²" value={fmtEUR(c.preisProM2)} tip="Kaufpreis / Wohnfläche." />
-          <Stat label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} tip="Nutzbare Wohnfläche laut Inserat." />
-          <Stat label="Außenfläche" value={(() => { const x = (p.aussenflaecheM2 ?? 0) + (p.balkonM2 ?? 0) + (p.terrasseM2 ?? 0) + (p.gartenM2 ?? 0); return x > 0 ? `${x} m²` : "—"; })()} tip="Summe aus Balkon, Terrasse, Garten und sonstigen Außenflächen." />
-          <Stat label="DSCR" value={c.dscr ? c.dscr.toFixed(2) : "—"} tone={c.dscr >= 1.2 ? "good" : c.dscr < 1 ? "bad" : "neutral"} tip="Debt Service Coverage Ratio: Miete / Rate. ≥1.2 = solide." />
-          <Stat label="Score" value={`${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf." />
-          <Stat label="Datenqualität" value={`${dq.score}% · ${dq.level}`} tone={dq.ampel === "green" ? "good" : dq.ampel === "red" ? "bad" : "neutral"} tip="Anteil der ausgefüllten Pflichtfelder." />
-          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung aus Baujahr und Beschreibung. Keine Rechtsberatung." />
+          <Stat label="Score" value={`${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung." />
+          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung." />
+          <Stat label="Datenqualität" value={`${dq.score}%`} hint={dq.level} tone={dq.ampel === "green" ? "good" : dq.ampel === "red" ? "bad" : "neutral"} tip="Anteil ausgefüllter Pflichtfelder." />
+          <Stat label="Status" value={p.status} tip="Aktueller Bearbeitungsstand." />
         </div>
 
-        {/* Warnungen direkt unter den KPIs */}
+        {/* Warnungen: nur die wichtigsten 3 zeigen, Rest einklappbar */}
         {(() => {
-          const warns: string[] = [];
-          if (mietrechtWarn) warns.push("Mietrecht prüfen (Altbau / unklar)");
-          if (dq.score < 70) warns.push(`Daten unvollständig (${dq.missing.slice(0,3).join(", ")}${dq.missing.length>3?", …":""})`);
-          if (c.cashflowMtl < 0) warns.push("Cashflow negativ");
-          if (c.requiredBreakEvenRentPerM2 > 30) warns.push("Benötigte Miete pro m² unrealistisch hoch (> 30 €/m²)");
-          if (c.maklerProvisionBrutto === 0 && p.sellerType !== "Privat" && p.makler !== "Nein") warns.push("Maklerkosten fehlen / nicht erfasst");
-          if (p.betriebskostenMtl == null) warns.push("Betriebskosten fehlen");
-          if (p.ruecklageFonds == null && p.ruecklageMtl == null) warns.push("Rücklage fehlt");
+          const warns: { text: string; critical: boolean }[] = [];
+          if (c.cashflowMtl < 0) warns.push({ text: "Cashflow negativ", critical: true });
+          if (mietrechtWarn) warns.push({ text: "Mietrecht prüfen (Altbau / unklar)", critical: true });
+          if (dq.score < 70) warns.push({ text: `Daten unvollständig (${dq.missing.slice(0, 2).join(", ")}${dq.missing.length > 2 ? "…" : ""})`, critical: false });
+          if (c.requiredBreakEvenRentPerM2 > 30) warns.push({ text: "Benötigte Miete pro m² unrealistisch hoch", critical: true });
+          if (c.maklerProvisionBrutto === 0 && p.sellerType !== "Privat" && p.makler !== "Nein") warns.push({ text: "Maklerkosten fehlen / nicht erfasst", critical: false });
+          if (p.betriebskostenMtl == null) warns.push({ text: "Betriebskosten fehlen", critical: false });
+          if (p.ruecklageFonds == null && p.ruecklageMtl == null) warns.push({ text: "Rücklage fehlt", critical: false });
           const importantQs = getImportantOpenQuestions(p);
-          importantQs.slice(0, 4).forEach((q) => warns.push(`Offene Frage (${q.category}): ${q.text}`));
-          if (importantQs.length > 4) warns.push(`+ ${importantQs.length - 4} weitere offene Fragen`);
+          importantQs.forEach((q) => warns.push({ text: `Offene Frage (${q.category}): ${q.text}`, critical: false }));
           if (warns.length === 0) return null;
+          const top = warns.slice(0, 3);
+          const rest = warns.slice(3);
           return (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {warns.map((w) => (
-                <span key={w} className="inline-flex items-center gap-1 text-xs rounded-full border border-warning/40 bg-warning/10 text-warning-foreground px-2.5 py-1">
-                  <AlertTriangle className="size-3" /> {w}
-                </span>
-              ))}
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-2">
+                {top.map((w, i) => (
+                  <span key={i} className={`inline-flex items-center gap-1.5 text-xs rounded-full border px-3 py-1 ${w.critical ? "border-destructive/30 bg-destructive/8 text-destructive" : "border-border bg-muted/60 text-muted-foreground"}`}>
+                    <AlertTriangle className="size-3" /> {w.text}
+                  </span>
+                ))}
+              </div>
+              {rest.length > 0 && (
+                <details className="mt-2 group">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-block">
+                    +{rest.length} weitere Hinweise
+                  </summary>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {rest.map((w, i) => (
+                      <span key={i} className="inline-flex items-center gap-1.5 text-xs rounded-full border border-border bg-muted/40 text-muted-foreground px-3 py-1">
+                        {w.text}
+                      </span>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
           );
         })()}
+
 
         {/* Quick facts: Verkäufer, Original-Link, Maps, nächste Aktion */}
         <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 border-t pt-4">
@@ -236,12 +243,12 @@ function Detail() {
               <Section title="Portfolio · Tatsächliche Kaufdaten">
                 <PurchaseInfoPanel p={p} />
               </Section>
-              <Section title="Zahlungen & Cashflow">
+              <Section title="Zahlungen & Cashflow" defaultOpen>
                 <PaymentsPanel p={p} />
               </Section>
             </>
           )}
-          <Section title="Objektdaten">
+          <Section title="Objektdaten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
@@ -295,7 +302,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Kauf, Miete & Nebenkosten">
+          <Section title="Kauf, Miete & Nebenkosten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
               <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
@@ -363,7 +370,7 @@ function Detail() {
             </p>
           </Section>
 
-          <Section title="Finanzierung & Bank-Zahlungsplan">
+          <Section title="Finanzierung & Bank-Zahlungsplan" defaultOpen>
             <FinancePanel p={p} />
           </Section>
 
@@ -372,7 +379,6 @@ function Detail() {
           </Section>
 
 
-          <MietrechtRiskCard p={p} />
 
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
@@ -545,26 +551,30 @@ function ViewingChecklist({ propertyId, viewings, setViewing }: { propertyId: st
   );
 }
 
-function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
+function Section({ title, children, actions, defaultOpen = false }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <h3 className="font-semibold">{title}</h3>
-        {actions}
-      </div>
-      {children}
-    </div>
+    <details open={defaultOpen} className="group rounded-2xl border bg-card overflow-hidden">
+      <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none hover:bg-muted/30 transition-colors [&::-webkit-details-marker]:hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <svg className="size-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
+        </div>
+        {actions && <div onClick={(e) => e.preventDefault()}>{actions}</div>}
+      </summary>
+      <div className="px-5 pb-5 pt-1 border-t bg-card">{children}</div>
+    </details>
   );
 }
 function Stat({ label, value, hint, tone, tip }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral"; tip?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4" title={tip}>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`text-xl font-semibold mt-1 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
+    <div className="rounded-xl border bg-muted/30 p-3.5" title={tip}>
+      <div className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold mt-1 tabular-nums ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
     </div>
   );
 }
+
 function QuickFact({ label, value, hint, actions }: { label: string; value: string; hint?: string; actions?: React.ReactNode }) {
   return (
     <div className="rounded-lg border bg-muted/30 p-3">
