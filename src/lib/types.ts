@@ -263,3 +263,37 @@ export const DOCUMENT_CATEGORIES = [
   "Mietvertrag","Sanierungsinformationen","Maklerunterlagen",
 ] as const;
 export type DocumentCategory = typeof DOCUMENT_CATEGORIES[number];
+
+export type ZahlungsIntervall = "monatlich" | "quartalsweise" | "jaehrlich";
+export type Tilgungsart = "annuitaet" | "endfaellig" | "manuell";
+export type Zinsbindung = "fix" | "variabel";
+
+export interface Sondertilgung {
+  id: string;
+  date: string; // YYYY-MM-DD
+  amount: number;
+  note?: string;
+}
+
+export interface ManualPayment {
+  year: number;
+  payment: number;
+}
+
+export interface FinanceScenario {
+  id: string;
+  name: string;
+  bankName?: string;
+  kreditBetrag: number | null;
+  eigenkapital: number | null;
+  zinssatz: number; // p.a. decimal
+  zinsbindung?: Zinsbindung;
+  zinsbindungJahre?: number | null;
+  laufzeitJahre: number;
+  intervall: ZahlungsIntervall;
+  tilgungsart: Tilgungsart;
+  startDate: string;
+  sondertilgungen?: Sondertilgung[];
+  manualSchedule?: ManualPayment[];
+  notizen?: string;
+}
