@@ -174,11 +174,9 @@ function Detail() {
                 {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
               </F>
               <F label="Projekt">
-                {true ? (
-                  <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
                   </select>
-                ) : <Ro>{project?.name ?? "—"}</Ro>}
               </F>
               <F label="Bezirk"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
               <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
@@ -192,18 +190,14 @@ function Detail() {
               <F label="HWB"><N value={p.hwb ?? null} edit={true} on={(v) => u({ hwb: v })} /></F>
               <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit={true} on={(v) => u({ verfuegbarkeit: v })} /></F>
               <F label="Status">
-                {true ? (
-                  <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.status}</Ro>}
               </F>
               <F label="Makler?">
-                {true ? (
-                  <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {["Ja","Nein","unklar"].map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.makler}</Ro>}
               </F>
             </div>
           </Section>
@@ -279,11 +273,9 @@ function Detail() {
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
-                {true ? (
-                  <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                     {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
-                ) : <Ro>{p.mietrecht}</Ro>}
               </F>
               <F label="Fehlende Daten (komma-getrennt)">
                 <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
