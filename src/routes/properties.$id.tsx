@@ -169,6 +169,9 @@ function Detail() {
           if (c.maklerProvisionBrutto === 0 && p.sellerType !== "Privat" && p.makler !== "Nein") warns.push("Maklerkosten fehlen / nicht erfasst");
           if (p.betriebskostenMtl == null) warns.push("Betriebskosten fehlen");
           if (p.ruecklageFonds == null && p.ruecklageMtl == null) warns.push("Rücklage fehlt");
+          const importantQs = getImportantOpenQuestions(p);
+          importantQs.slice(0, 4).forEach((q) => warns.push(`Offene Frage (${q.category}): ${q.text}`));
+          if (importantQs.length > 4) warns.push(`+ ${importantQs.length - 4} weitere offene Fragen`);
           if (warns.length === 0) return null;
           return (
             <div className="mt-4 flex flex-wrap gap-2">
