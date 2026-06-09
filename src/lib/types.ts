@@ -202,6 +202,8 @@ export interface Property {
   sellerWebsite?: string;
   sellerAddress?: string;
   sellerNotes?: string;
+  financeScenarios?: FinanceScenario[];
+  activeFinanceId?: string;
   createdAt: string;
   updatedAt?: string;
   isDemo?: boolean;
