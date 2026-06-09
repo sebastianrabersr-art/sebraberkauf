@@ -411,9 +411,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </div>
   );
 }
-function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral" }) {
+function Stat({ label, value, hint, tone, tip }: { label: string; value: string; hint?: string; tone?: "good" | "bad" | "neutral"; tip?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-lg border bg-card p-4" title={tip}>
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`text-xl font-semibold mt-1 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
       {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
