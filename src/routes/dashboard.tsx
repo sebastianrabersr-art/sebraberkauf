@@ -10,7 +10,7 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard – Immo Invest" },
-      { name: "description", content: "Überblick aller analysierten Immobilien-Investments." },
+      { name: "description", content: "Übersicht deiner analysierten Kaufkandidaten." },
     ],
   }),
   component: Dashboard,
