@@ -74,8 +74,7 @@ function NewPropertyPage() {
           <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
           <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
         </div>
-        <div class
-Name="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2">
           <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>
           <button onClick={() => navigate({ to: "/properties" })} className="rounded-md border px-4 py-2 text-sm">Abbrechen</button>
         </div>
