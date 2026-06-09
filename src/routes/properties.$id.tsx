@@ -178,6 +178,37 @@ function Detail() {
             </div>
           );
         })()}
+
+        {/* Quick facts: Verkäufer, Original-Link, Maps, nächste Aktion */}
+        <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 border-t pt-4">
+          <QuickFact label="Verkäufer/Makler" value={p.sellerName || p.sellerCompany || "—"}
+            hint={[p.sellerType, p.sellerPhone, p.sellerEmail].filter(Boolean).join(" · ") || undefined}
+            actions={
+              <>
+                {p.sellerPhone && <a href={`tel:${p.sellerPhone}`} className="text-xs inline-flex items-center gap-1 text-primary"><Phone className="size-3" />Anruf</a>}
+                {p.sellerEmail && <a href={`mailto:${p.sellerEmail}`} className="text-xs inline-flex items-center gap-1 text-primary"><Mail className="size-3" />E-Mail</a>}
+              </>
+            }
+          />
+          <QuickFact label="Original-Inserat" value={p.platform || (linkValid ? "Link gespeichert" : "—")}
+            actions={linkValid ? (
+              <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Öffnen <ExternalLink className="size-3" /></a>
+            ) : <span className="text-xs text-destructive">URL fehlt/ungültig</span>}
+          />
+          <QuickFact label="Google Maps" value={[p.adresse, p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
+            actions={mapsUrl ? (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Karte öffnen <MapPin className="size-3" /></a>
+            ) : null}
+          />
+          <QuickFact label="Nächste Aktion" value={p.nextAction || "—"}
+            hint={p.nextActionDate ? `bis ${new Date(p.nextActionDate).toLocaleDateString("de-AT")}` : undefined}
+          />
+        </div>
+      </div>
+
+      {/* Mietrechtliche Einschätzung – prominent direkt unter Investment Summary */}
+      <div className="mb-6">
+        <MietrechtRiskCard p={p} />
       </div>
 
       {!linkValid && (
