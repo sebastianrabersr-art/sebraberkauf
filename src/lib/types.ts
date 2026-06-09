@@ -37,12 +37,22 @@ export type Mietrecht =
   | "Gewerbliche Nutzung relevant"
   | "Kurzzeitvermietung / Airbnb prüfen"
   | "unklar – rechtlich prüfen"
-  | "nicht geeignet";
+  | "nicht geeignet"
+  // erweiterte Kategorien (AT + DE)
+  | "freie Mietzinsbildung wahrscheinlich"
+  | "MRG Teilanwendung möglich"
+  | "MRG Vollanwendung möglich"
+  | "Richtwertmietzins möglich"
+  | "Mietpreisbremse möglich"
+  | "Mietspiegel relevant"
+  | "unklar – professionell prüfen";
 
 export const ALL_MIETRECHTE: Mietrecht[] = [
+  "freie Mietzinsbildung wahrscheinlich","MRG Teilanwendung möglich","MRG Vollanwendung möglich",
+  "Richtwertmietzins möglich","Mietpreisbremse möglich","Mietspiegel relevant",
+  "Kurzzeitvermietung / Airbnb prüfen","Gewerbliche Nutzung relevant","Befristung relevant",
   "Neubau / freie Miete","Teilanwendung MRG","Vollanwendung MRG","Altbau / Richtwert möglich",
-  "Befristung relevant","Gewerbliche Nutzung relevant","Kurzzeitvermietung / Airbnb prüfen",
-  "unklar – rechtlich prüfen","nicht geeignet",
+  "unklar – professionell prüfen","unklar – rechtlich prüfen","nicht geeignet",
 ];
 
 export type SellerType = "Privat" | "Makler" | "Bauträger" | "Bank" | "Sonstige" | "unklar";
