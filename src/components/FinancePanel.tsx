@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Plus, Trash2, Check, Star, Copy, Lightbulb } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Plus, Trash2, Check, Star, Copy, Lightbulb, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
-import { calcAmortizationSchedule, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { calcAmortizationSchedule, calcBalanceSeries, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { useActiveAssumptions, useStore } from "@/lib/store";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
