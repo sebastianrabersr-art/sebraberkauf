@@ -133,6 +133,7 @@ function Detail() {
         <Stat label="Preis/m²" value={fmtEUR(c.preisProM2)} />
         <Stat label="DSCR" value={c.dscr ? c.dscr.toFixed(2) : "—"} />
         <Stat label="Break-even Miete" value={fmtEUR(c.breakEvenMiete)} />
+        <Stat label="Mindestmiete (CF≥0)" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
