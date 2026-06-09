@@ -51,6 +51,11 @@ function Dashboard() {
   const avgBrutto = total ? rows.reduce((a, r) => a + r.c.bruttorendite, 0) / total : 0;
   const avgNetto = total ? rows.reduce((a, r) => a + r.c.nettorendite, 0) / total : 0;
   const avgCashflow = total ? rows.reduce((a, r) => a + r.c.cashflowMtl, 0) / total : 0;
+  const sumMakler = rows.reduce((a, r) => a + r.c.maklerProvisionBrutto, 0);
+  const sumNK = rows.reduce((a, r) => a + r.c.kaufNebenkosten, 0);
+  const sumKapital = rows.reduce((a, r) => a + r.c.gesamtkosten, 0);
+  const avgMinMiete = total ? rows.reduce((a, r) => a + r.c.requiredBreakEvenRent, 0) / total : 0;
+  const avgErwMiete = total ? rows.reduce((a, r) => a + (r.p.nettomieteMtl ?? 0), 0) / total : 0;
   const interessant = rows.filter((r) => r.s.total >= 70).length;
   const fehlend = rows.filter((r) => r.dq.score < 70).length;
 
