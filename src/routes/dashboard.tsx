@@ -89,7 +89,7 @@ function Dashboard() {
     <AppShell>
       <PageHeader
         title="Dashboard"
-        description={`Projekt: ${project.name} · ${project.description || "Übersicht deiner Investments"}`}
+        description={`Projekt: ${project.name} · ${project.description || "Deine Kaufkandidaten in Prüfung"}`}
         actions={
           <Link
             to="/analyze"
