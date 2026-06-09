@@ -157,6 +157,7 @@ export const useStore = create<State>()(
           viewings: Object.fromEntries(Object.entries(s.viewings).filter(([k]) => k !== id)),
           documents: s.documents.filter((d) => d.propertyId !== id),
           activities: s.activities.filter((a) => a.propertyId !== id),
+          payments: s.payments.filter((x) => x.propertyId !== id),
         })),
       duplicateProperty: (id) => {
         const src = get().properties.find((p) => p.id === id);
