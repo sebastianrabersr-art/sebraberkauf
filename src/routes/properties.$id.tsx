@@ -469,13 +469,66 @@ function Ro({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-2 rounded-md border bg-muted/40 text-sm min-h-[36px]">{children}</div>;
 }
 function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: boolean }) {
+  const [local, setLocal] = useState(value);
+  const originalRef = useRef(value);
+  useEffect(() => { setLocal(value); originalRef.current = value; }, [value]);
   if (!edit) return <Ro>{value || "—"}</Ro>;
-  return <input value={value} onChange={(e) => on(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
+  const commit = () => {
+    if (local !== originalRef.current) {
+      on(local);
+      originalRef.current = local;
+      toast.success("Gespeichert", { duration: 900 });
+    }
+  };
+  return (
+    <input
+      value={local}
+      placeholder="—"
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
+        else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
+      }}
+      className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-ring"
+    />
+  );
 }
 function N({ value, on, edit }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean }) {
+  const [local, setLocal] = useState<string>(value == null ? "" : String(value));
+  const originalRef = useRef<string>(value == null ? "" : String(value));
+  useEffect(() => {
+    const s = value == null ? "" : String(value);
+    setLocal(s); originalRef.current = s;
+  }, [value]);
   if (!edit) return <Ro>{value ?? "—"}</Ro>;
-  return <input type="number" value={value ?? ""} onChange={(e) => on(e.target.value === "" ? null : Number(e.target.value))} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
+  const commit = () => {
+    if (local === originalRef.current) return;
+    if (local !== "" && isNaN(Number(local))) {
+      toast.error("Ungültige Zahl");
+      setLocal(originalRef.current);
+      return;
+    }
+    on(local === "" ? null : Number(local));
+    originalRef.current = local;
+    toast.success("Gespeichert", { duration: 900 });
+  };
+  return (
+    <input
+      type="number"
+      value={local}
+      placeholder="—"
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
+        else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
+      }}
+      className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-1 focus:ring-ring"
+    />
+  );
 }
+
 function Alert({ children, tone = "warning" }: { children: React.ReactNode; tone?: "warning" | "destructive" }) {
   return (
     <div className={`mb-4 flex items-start gap-3 rounded-lg border p-4 text-sm ${tone === "destructive" ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"}`}>
