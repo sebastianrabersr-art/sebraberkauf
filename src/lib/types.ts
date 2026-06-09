@@ -292,10 +292,14 @@ export interface ManualPayment {
   payment: number;
 }
 
+export type FinanceStatus = "Anfrage" | "Angebot erhalten" | "Favorit" | "Abgelehnt";
+
 export interface FinanceScenario {
   id: string;
   name: string;
   bankName?: string;
+  ansprechpartner?: string;
+  status?: FinanceStatus;
   kreditBetrag: number | null;
   eigenkapital: number | null;
   zinssatz: number; // p.a. decimal
