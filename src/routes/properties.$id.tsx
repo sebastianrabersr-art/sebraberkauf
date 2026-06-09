@@ -230,19 +230,26 @@ function Detail() {
           <Section title="Maklerkosten & Kaufnebenkosten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Maklerprovision %">
-                <N value={p.provisionPct != null ? p.provisionPct * 100 : null} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100 })} />
+                <N value={c.maklerProvisionPct ? c.maklerProvisionPct * 100 : (p.provisionPct != null ? p.provisionPct * 100 : null)} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100, provisionLastEdit: "pct", provisionEUR: null, provisionBruttoEUR: null })} />
               </F>
               <F label="Maklerprovision netto €">
-                {true ? <N value={p.provisionEUR ?? null} edit on={(v) => u({ provisionEUR: v })} /> : <Ro>{fmtEUR(c.maklerProvisionNetto)}</Ro>}
+                <N value={p.provisionLastEdit === "netto" ? (p.provisionEUR ?? null) : c.maklerProvisionNetto} edit={true} on={(v) => u({ provisionEUR: v, provisionLastEdit: "netto", provisionPct: null, provisionBruttoEUR: null })} />
+              </F>
+              <F label="Maklerprovision brutto €">
+                <N value={p.provisionLastEdit === "brutto" ? (p.provisionBruttoEUR ?? null) : c.maklerProvisionBrutto} edit={true} on={(v) => u({ provisionBruttoEUR: v, provisionLastEdit: "brutto", provisionPct: null, provisionEUR: null })} />
               </F>
               <F label="USt auf Provision %">
                 <N value={(p.maklerprovisionUstPct ?? 0.20) * 100} edit={true} on={(v) => u({ maklerprovisionUstPct: v == null ? null : v / 100 })} />
               </F>
               <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
-              <F label="Maklerprovision brutto €"><Ro>{fmtEUR(c.maklerProvisionBrutto)}</Ro></F>
+              <F label="Berechnungsbasis">
+                <select value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                  <option value="brutto">Kaufpreis brutto</option>
+                  <option value="netto">Kaufpreis netto</option>
+                </select>
+              </F>
               <F label="Maklerkosten zahlbar?">
                 <select
-                 
                   value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
                   onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -260,9 +267,14 @@ function Detail() {
               <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
             </div>
             <p className="text-[11px] text-muted-foreground mt-3">
-              Standard Österreich: bis zu 3 % vom Kaufpreis + 20 % USt. Bei Verkäufer „Privat" wird automatisch keine Maklerprovision angesetzt. Werte können manuell überschrieben werden.
+              Bidirektional: ändere %, netto oder brutto – die anderen Werte werden automatisch berechnet. Das zuletzt bearbeitete Feld ({p.provisionLastEdit ?? "pct"}) ist die Quelle der Wahrheit.
             </p>
           </Section>
+
+          <Section title="Finanzierung & Bank-Zahlungsplan">
+            <FinancePanel p={p} />
+          </Section>
+
 
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
