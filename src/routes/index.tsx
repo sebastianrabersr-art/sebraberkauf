@@ -90,12 +90,23 @@ function Dashboard() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard label="Objekte" value={String(total)} icon={Building} />
-        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} />
-        <KpiCard label="Beste" value={best ? `${best.s.total}` : "—"} sub={best?.p.title.slice(0, 24)} icon={TrendingUp} />
-        <KpiCard label="Ø Brutto" value={fmtPct(avgBrutto)} sub={`Ø Netto ${fmtPct(avgNetto)}`} icon={TrendingUp} />
-        <KpiCard label="Ø Cashflow mtl." value={fmtEUR(avgCashflow)} icon={Wallet} />
-        <KpiCard label="Interessant" value={String(interessant)} sub={`${fehlend} mit fehlenden Daten`} icon={AlertTriangle} />
+        <KpiCard label="Objekte" value={String(total)} icon={Building} tip="Anzahl Immobilien im aktiven Projekt" />
+        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} tip="Durchschnittliche Gesamtbewertung" />
+        <KpiCard label="Beste" value={best ? `${best.s.total}` : "—"} sub={best?.p.title.slice(0, 24)} icon={TrendingUp} tip="Höchster Score im Projekt" />
+        <KpiCard label="Ø Brutto" value={fmtPct(avgBrutto)} sub={`Ø Netto ${fmtPct(avgNetto)}`} icon={TrendingUp} tip="Durchschnittliche Renditen" />
+        <KpiCard label="Ø Cashflow mtl." value={fmtEUR(avgCashflow)} icon={Wallet} tip="Durchschnittlicher monatlicher Cashflow" />
+        <KpiCard label="Interessant" value={String(interessant)} sub={`${fehlend} mit fehlenden Daten`} icon={AlertTriangle} tip="Score ≥ 70" />
+        <KpiCard label="Σ Maklerkosten" value={fmtEUR(sumMakler)} icon={Wallet} tip="Summe aller Maklerkosten brutto" />
+        <KpiCard label="Σ Kaufnebenkosten" value={fmtEUR(sumNK)} icon={Wallet} tip="Summe aller Kaufnebenkosten" />
+        <KpiCard label="Σ Gesamtkapital" value={fmtEUR(sumKapital)} icon={Wallet} tip="Summe Gesamtkapitalbedarf aller Objekte" />
+        <KpiCard label="Ø erwartete Miete" value={fmtEUR(avgErwMiete)} icon={Wallet} tip="Durchschnittliche erwartete Nettomiete" />
+        <KpiCard label="Ø Min-Miete CF≥0" value={fmtEUR(avgMinMiete)} icon={Wallet} tip="Durchschnittlich benötigte Mindestmiete für positiven Cashflow" />
+        <KpiCard label="Ø Mietrecht-Risiko" value={(() => {
+          const counts = { niedrig: 0, mittel: 0, hoch: 0 } as Record<string, number>;
+          rows.forEach((r) => { counts[(r.p.mietrechtRisiko as string) || "hoch"] = (counts[(r.p.mietrechtRisiko as string) || "hoch"] ?? 0) + 1; });
+          const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+          return top && total ? `${top[0]} (${top[1]})` : "—";
+        })()} icon={AlertTriangle} tip="Häufigste Mietrecht-Risikostufe" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mt-8">
