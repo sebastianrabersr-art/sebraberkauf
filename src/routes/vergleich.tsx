@@ -7,7 +7,7 @@ import {
   isValidUrl,
 } from "@/lib/calc";
 import { ALL_STATUSES, type Property } from "@/lib/types";
-import { ExternalLink, RotateCcw, GitCompareArrows, X } from "lucide-react";
+import { ExternalLink, RotateCcw, GitCompareArrows } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";

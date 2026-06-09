@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
+import { Route as VergleichRouteImport } from './routes/vergleich'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -36,6 +37,11 @@ import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
 const ViewingRoute = ViewingRouteImport.update({
   id: '/viewing',
   path: '/viewing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VergleichRoute = VergleichRouteImport.update({
+  id: '/vergleich',
+  path: '/vergleich',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/vergleich'
     | '/viewing'
     | '/portfolio/new'
     | '/properties/$id'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/vergleich'
     | '/viewing'
     | '/portfolio/new'
     | '/properties/$id'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/vergleich'
     | '/viewing'
     | '/portfolio/new'
     | '/properties/$id'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  VergleichRoute: typeof VergleichRoute
   ViewingRoute: typeof ViewingRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   PropertiesNewRoute: typeof PropertiesNewRoute
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       path: '/viewing'
       fullPath: '/viewing'
       preLoaderRoute: typeof ViewingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vergleich': {
+      id: '/vergleich'
+      path: '/vergleich'
+      fullPath: '/vergleich'
+      preLoaderRoute: typeof VergleichRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  VergleichRoute: VergleichRoute,
   ViewingRoute: ViewingRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   PropertiesNewRoute: PropertiesNewRoute,
