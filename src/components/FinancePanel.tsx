@@ -1,10 +1,19 @@
 import { useMemo, useState } from "react";
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Plus, Trash2, Check, Star } from "lucide-react";
+import { Plus, Trash2, Check, Star, Copy, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
-import type { FinanceScenario, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
-import { calcAmortizationSchedule, fmtEUR, makeFinanceScenario } from "@/lib/calc";
-import { useStore } from "@/lib/store";
+import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
+import { calcAmortizationSchedule, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { useActiveAssumptions, useStore } from "@/lib/store";
+
+const STATUS_TONE: Record<FinanceStatus, string> = {
+  "Anfrage": "bg-muted text-muted-foreground border-muted-foreground/30",
+  "Angebot erhalten": "bg-warning/15 text-warning-foreground border-warning/40",
+  "Favorit": "bg-success/15 text-success-foreground border-success/40",
+  "Abgelehnt": "bg-destructive/10 text-destructive border-destructive/40",
+};
+
+const STATUS_OPTIONS: FinanceStatus[] = ["Anfrage", "Angebot erhalten", "Favorit", "Abgelehnt"];
 
 export function FinancePanel({ p }: { p: Property }) {
   const { updateProperty } = useStore();
@@ -36,6 +45,14 @@ export function FinancePanel({ p }: { p: Property }) {
     setScenarios(next, newActive);
     if (selId === id) setSelId(next[0]?.id ?? "");
   };
+  const duplicateScn = (id: string) => {
+    const src = scenarios.find((s) => s.id === id);
+    if (!src) return;
+    const copy: FinanceScenario = { ...src, id: crypto.randomUUID(), name: `${src.name} (Kopie)` };
+    setScenarios([...scenarios, copy]);
+    setSelId(copy.id);
+    toast.success("Szenario dupliziert");
+  };
   const setActive = (id: string) => {
     updateProperty(p.id, { activeFinanceId: id });
     toast.success("Aktives Szenario gesetzt");
@@ -51,20 +68,30 @@ export function FinancePanel({ p }: { p: Property }) {
             <button
               key={s.id}
               onClick={() => setSelId(s.id)}
-              className={`text-xs rounded-full border px-3 py-1.5 inline-flex items-center gap-1 ${selId === s.id ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"}`}
+              className={`text-xs rounded-full border px-3 py-1.5 inline-flex items-center gap-1.5 ${selId === s.id ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"}`}
             >
               {p.activeFinanceId === s.id && <Star className="size-3 fill-current" />}
               {s.name}
+              {s.status && s.status !== "Anfrage" && (
+                <span className={`text-[10px] rounded-full px-1.5 py-0 border ${selId === s.id ? "bg-primary-foreground/20 border-primary-foreground/30" : STATUS_TONE[s.status]}`}>{s.status}</span>
+              )}
             </button>
           ))}
           <button onClick={addScenario} className="text-xs rounded-full border px-3 py-1.5 inline-flex items-center gap-1 hover:bg-accent">
             <Plus className="size-3" /> Szenario
           </button>
         </div>
-        {current && p.activeFinanceId !== current.id && (
-          <button onClick={() => setActive(current.id)} className="text-xs rounded-md border px-3 py-1.5 inline-flex items-center gap-1 hover:bg-accent">
-            <Check className="size-3" /> Als aktives Szenario übernehmen
-          </button>
+        {current && (
+          <div className="flex items-center gap-2">
+            <button onClick={() => duplicateScn(current.id)} className="text-xs rounded-md border px-3 py-1.5 inline-flex items-center gap-1 hover:bg-accent">
+              <Copy className="size-3" /> Duplizieren
+            </button>
+            {p.activeFinanceId !== current.id && (
+              <button onClick={() => setActive(current.id)} className="text-xs rounded-md border px-3 py-1.5 inline-flex items-center gap-1 hover:bg-accent">
+                <Check className="size-3" /> Als aktiv markieren
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -76,7 +103,7 @@ export function FinancePanel({ p }: { p: Property }) {
         <ScenarioEditor scn={current} onChange={(patch) => updateScn(current.id, patch)} onDelete={() => removeScn(current.id)} />
       )}
 
-      {scenarios.length >= 2 && <CompareChart scenarios={scenarios} />}
+      {scenarios.length >= 2 && <ScenarioComparison p={p} scenarios={scenarios} activeId={p.activeFinanceId} />}
     </div>
   );
 }
@@ -97,8 +124,14 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
   return (
     <div className="space-y-5">
       <div className="grid md:grid-cols-3 gap-3">
-        <Fld label="Name"><Inp v={scn.name} onChange={(v) => onChange({ name: v })} /></Fld>
+        <Fld label="Szenarioname"><Inp v={scn.name} onChange={(v) => onChange({ name: v })} /></Fld>
         <Fld label="Bank"><Inp v={scn.bankName ?? ""} onChange={(v) => onChange({ bankName: v })} /></Fld>
+        <Fld label="Ansprechpartner Bank"><Inp v={scn.ansprechpartner ?? ""} onChange={(v) => onChange({ ansprechpartner: v })} /></Fld>
+        <Fld label="Status">
+          <select value={scn.status ?? "Anfrage"} onChange={(e) => onChange({ status: e.target.value as FinanceStatus })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </Fld>
         <Fld label="Startdatum"><Inp type="date" v={scn.startDate} onChange={(v) => onChange({ startDate: v })} /></Fld>
         <Fld label="Kreditbetrag €"><NumInp v={scn.kreditBetrag} onChange={(v) => onChange({ kreditBetrag: v })} /></Fld>
         <Fld label="Eigenkapital €"><NumInp v={scn.eigenkapital} onChange={(v) => onChange({ eigenkapital: v })} /></Fld>
@@ -243,39 +276,104 @@ function SondertilgungenEditor({ scn, onChange }: { scn: FinanceScenario; onChan
   );
 }
 
-function CompareChart({ scenarios }: { scenarios: FinanceScenario[] }) {
-  const data = useMemo(() => {
-    const allYears = new Set<number>();
-    const schedules = scenarios.map((s) => calcAmortizationSchedule(s));
-    schedules.forEach((s) => s.forEach((y) => allYears.add(y.year)));
-    const years = [...allYears].sort((a, b) => a - b);
-    return years.map((y) => {
-      const row: any = { year: y };
-      scenarios.forEach((s, i) => {
-        const sched = schedules[i];
-        const entry = sched.find((x) => x.year === y);
-        row[s.name] = entry ? Math.round(entry.balanceEnd) : null;
-      });
-      return row;
-    });
-  }, [scenarios]);
-  const colors = ["hsl(var(--primary))", "hsl(var(--destructive))", "hsl(var(--warning))", "hsl(var(--muted-foreground))"];
+function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios: FinanceScenario[]; activeId?: string }) {
+  const assumptions = useActiveAssumptions();
+  const rows = useMemo(() => scenarios.map((s) => ({ scn: s, sum: summarizeScenario(p, assumptions, s) })), [p, assumptions, scenarios]);
+
+  // Hint computation (ignore "Abgelehnt")
+  const eligible = rows.filter((r) => r.scn.status !== "Abgelehnt");
+  const minBy = <T,>(arr: T[], f: (x: T) => number) => arr.reduce((best, cur) => (f(cur) < f(best) ? cur : best), arr[0]);
+  const maxBy = <T,>(arr: T[], f: (x: T) => number) => arr.reduce((best, cur) => (f(cur) > f(best) ? cur : best), arr[0]);
+  const lowestRate = eligible.length ? minBy(eligible, (r) => r.sum.ratePerMonth || Infinity) : null;
+  const lowestInterest = eligible.length ? minBy(eligible, (r) => r.sum.totalInterest || Infinity) : null;
+  const bestCashflow = eligible.length ? maxBy(eligible, (r) => r.sum.cashflowMtl) : null;
+  const shortTermVsLong = (() => {
+    if (eligible.length < 2 || !lowestRate || !lowestInterest) return null;
+    if (lowestRate.scn.id !== lowestInterest.scn.id) {
+      return { id: lowestRate.scn.id, msg: `„${lowestRate.scn.name}" ist kurzfristig günstiger (niedrigste Rate), aber langfristig teurer (mehr Gesamtzinsen).` };
+    }
+    return null;
+  })();
+
+  const hints: { id: string; msg: string }[] = [];
+  if (lowestRate) hints.push({ id: lowestRate.scn.id, msg: `„${lowestRate.scn.name}" hat die niedrigste Monatsrate (${fmtEUR(lowestRate.sum.ratePerMonth)}).` });
+  if (lowestInterest && lowestInterest.scn.id !== lowestRate?.scn.id)
+    hints.push({ id: lowestInterest.scn.id, msg: `„${lowestInterest.scn.name}" hat die niedrigsten Gesamtzinskosten (${fmtEUR(lowestInterest.sum.totalInterest)}).` });
+  if (bestCashflow && bestCashflow.scn.id !== lowestRate?.scn.id)
+    hints.push({ id: bestCashflow.scn.id, msg: `„${bestCashflow.scn.name}" ergibt den besten Cashflow (${fmtEUR(bestCashflow.sum.cashflowMtl)}/Mt).` });
+  if (shortTermVsLong) hints.push(shortTermVsLong);
+
   return (
-    <div>
-      <div className="text-sm font-medium mb-2">Vergleich Restschuld</div>
-      <div className="h-56">
-        <ResponsiveContainer>
-          <ComposedChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-            <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            {scenarios.map((s, i) => (
-              <Line key={s.id} type="monotone" dataKey={s.name} stroke={colors[i % colors.length]} strokeWidth={2} dot={false} />
-            ))}
-          </ComposedChart>
-        </ResponsiveContainer>
+    <div className="rounded-xl border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h4 className="font-semibold text-sm">Szenariovergleich</h4>
+        <span className="text-[11px] text-muted-foreground">Aktives Szenario hervorgehoben</span>
+      </div>
+
+      {hints.length > 0 && (
+        <ul className="space-y-1.5">
+          {hints.map((h, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs rounded-md border bg-muted/30 px-2.5 py-2">
+              <Lightbulb className="size-3.5 mt-0.5 text-warning-foreground" />
+              <span>{h.msg}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left border-b text-[10px] uppercase text-muted-foreground">
+              <th className="py-2 pr-2">Szenario</th>
+              <th className="py-2 pr-2">Bank</th>
+              <th className="py-2 pr-2">Status</th>
+              <th className="py-2 pr-2 text-right">Zinssatz</th>
+              <th className="py-2 pr-2 text-right">Laufzeit</th>
+              <th className="py-2 pr-2 text-right">Kreditbetrag</th>
+              <th className="py-2 pr-2 text-right">Rate mtl.</th>
+              <th className="py-2 pr-2 text-right">Schuldend. p.a.</th>
+              <th className="py-2 pr-2 text-right">Zinsen gesamt</th>
+              <th className="py-2 pr-2 text-right">Rest n. 5 J</th>
+              <th className="py-2 pr-2 text-right">Rest n. 10 J</th>
+              <th className="py-2 pr-2 text-right">Cashflow</th>
+              <th className="py-2 pr-2 text-right">DSCR</th>
+              <th className="py-2 pr-2 text-right">Break-even</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ scn, sum }) => {
+              const isActive = scn.id === activeId;
+              return (
+                <tr key={scn.id} className={`border-b last:border-0 ${isActive ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : ""}`}>
+                  <td className="py-1.5 pr-2 font-medium">
+                    <div className="flex items-center gap-1">
+                      {isActive && <Star className="size-3 fill-current text-primary" />}
+                      {scn.name}
+                    </div>
+                  </td>
+                  <td className="py-1.5 pr-2">{scn.bankName || "—"}</td>
+                  <td className="py-1.5 pr-2">
+                    {scn.status && (
+                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 border ${STATUS_TONE[scn.status]}`}>{scn.status}</span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right">{fmtPct(scn.zinssatz, 2)}</td>
+                  <td className="py-1.5 pr-2 text-right">{scn.laufzeitJahre} J</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(scn.kreditBetrag)}</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.ratePerMonth)}</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.annualDebtService)}</td>
+                  <td className="py-1.5 pr-2 text-right text-destructive">{fmtEUR(sum.totalInterest)}</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.balanceAfter5)}</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.balanceAfter10)}</td>
+                  <td className={`py-1.5 pr-2 text-right ${sum.cashflowMtl >= 0 ? "text-success" : "text-destructive"}`}>{fmtEUR(sum.cashflowMtl)}</td>
+                  <td className="py-1.5 pr-2 text-right">{sum.dscr ? sum.dscr.toFixed(2) : "—"}</td>
+                  <td className="py-1.5 pr-2 text-right">{fmtEUR(sum.breakEvenMiete)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
