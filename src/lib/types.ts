@@ -225,11 +225,59 @@ export interface Property {
   afa?: AfaSettings;
   projections?: LongTermProjections;
   followUpFinance?: FollowUpFinance;
-  // Offene Fragen für Besichtigung
   openQuestions?: OpenQuestion[];
+  googleMapsUrlOverride?: string;
+  purchase?: PurchaseInfo;
   createdAt: string;
   updatedAt?: string;
   isDemo?: boolean;
+}
+
+export interface PurchaseInfo {
+  kaufdatum?: string;
+  tatsKaufpreis?: number | null;
+  tatsKaufnebenkosten?: number | null;
+  tatsMaklerkosten?: number | null;
+  tatsEigenkapital?: number | null;
+  tatsKreditbetrag?: number | null;
+  bank?: string;
+  kreditstatus?: "in Auszahlung" | "läuft" | "Sondertilgung geplant" | "abgelöst" | "in Verzug" | "";
+  aktuelleRestschuld?: number | null;
+  aktuelleMonatsrate?: number | null;
+  aktuelleMonatsmiete?: number | null;
+  tatsMonatlicheKosten?: number | null;
+  notizenNachKauf?: string;
+}
+
+export type PaymentDirection = "Einnahme" | "Ausgabe";
+export type PaymentStatus = "bezahlt" | "offen";
+
+export const EINNAHME_KATEGORIEN = [
+  "Miete","Betriebskosten vom Mieter","Kaution","Sonstige Einnahme",
+] as const;
+export const AUSGABE_KATEGORIEN = [
+  "Kreditrate","Zinsen","Tilgung","Betriebskosten","Reparatur / Instandhaltung",
+  "Hausverwaltung","Versicherung","Steuer","Maklerkosten","Kaufnebenkosten",
+  "Einrichtung","Sanierung","Sonstige Ausgabe",
+] as const;
+export type EinnahmeKategorie = typeof EINNAHME_KATEGORIEN[number];
+export type AusgabeKategorie = typeof AUSGABE_KATEGORIEN[number];
+export type PaymentKategorie = EinnahmeKategorie | AusgabeKategorie;
+
+export interface Payment {
+  id: string;
+  propertyId: string;
+  date: string;
+  direction: PaymentDirection;
+  category: PaymentKategorie;
+  amount: number;
+  description?: string;
+  recurring?: boolean;
+  status: PaymentStatus;
+  documentName?: string;
+  documentDataUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export type ObjektartDetail = "Wohnung" | "Haus" | "Grundstück" | "Zinshaus" | "Sonstiges";
