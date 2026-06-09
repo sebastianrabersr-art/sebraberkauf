@@ -6,7 +6,7 @@ import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { AlertTriangle, ArrowRight, Building, Target, TrendingUp, Wallet } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard – Immo Invest" },

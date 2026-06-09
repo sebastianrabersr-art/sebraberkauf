@@ -14,9 +14,9 @@ import { Route as RechnerRouteImport } from './routes/rechner'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as FollowupsRouteImport } from './routes/followups'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
@@ -46,6 +46,11 @@ const FollowupsRoute = FollowupsRouteImport.update({
   path: '/followups',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssumptionsRoute = AssumptionsRouteImport.update({
   id: '/assumptions',
   path: '/assumptions',
@@ -54,11 +59,6 @@ const AssumptionsRoute = AssumptionsRouteImport.update({
 const AnalyzeRoute = AnalyzeRouteImport.update({
   id: '/analyze',
   path: '/analyze',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
@@ -78,9 +78,9 @@ const PropertiesIdRoute = PropertiesIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/dashboard': typeof DashboardRoute
   '/followups': typeof FollowupsRoute
   '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
@@ -91,9 +91,9 @@ export interface FileRoutesByFullPath {
   '/properties/': typeof PropertiesIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/dashboard': typeof DashboardRoute
   '/followups': typeof FollowupsRoute
   '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
@@ -105,9 +105,9 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
+  '/dashboard': typeof DashboardRoute
   '/followups': typeof FollowupsRoute
   '/pipeline': typeof PipelineRoute
   '/projects': typeof ProjectsRoute
@@ -120,9 +120,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/analyze'
     | '/assumptions'
+    | '/dashboard'
     | '/followups'
     | '/pipeline'
     | '/projects'
@@ -133,9 +133,9 @@ export interface FileRouteTypes {
     | '/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/analyze'
     | '/assumptions'
+    | '/dashboard'
     | '/followups'
     | '/pipeline'
     | '/projects'
@@ -146,9 +146,9 @@ export interface FileRouteTypes {
     | '/properties'
   id:
     | '__root__'
-    | '/'
     | '/analyze'
     | '/assumptions'
+    | '/dashboard'
     | '/followups'
     | '/pipeline'
     | '/projects'
@@ -160,9 +160,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
+  DashboardRoute: typeof DashboardRoute
   FollowupsRoute: typeof FollowupsRoute
   PipelineRoute: typeof PipelineRoute
   ProjectsRoute: typeof ProjectsRoute
@@ -210,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FollowupsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assumptions': {
       id: '/assumptions'
       path: '/assumptions'
@@ -222,13 +229,6 @@ declare module '@tanstack/react-router' {
       path: '/analyze'
       fullPath: '/analyze'
       preLoaderRoute: typeof AnalyzeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties/': {
@@ -256,9 +256,9 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
+  DashboardRoute: DashboardRoute,
   FollowupsRoute: FollowupsRoute,
   PipelineRoute: PipelineRoute,
   ProjectsRoute: ProjectsRoute,
@@ -271,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
