@@ -186,16 +186,22 @@ function PropertiesList() {
                   <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(p.kaufpreis)}</td>
                   <td className="py-2.5 px-3">{p.wohnflaecheM2 ?? "—"}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(c.preisProM2)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Maklerkosten brutto inkl. USt">{fmtEUR(c.maklerProvisionBrutto)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Kaufnebenkosten gesamt inkl. Makler">{fmtEUR(c.kaufNebenkosten)}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Gesamtkapitalbedarf">{fmtEUR(c.gesamtkosten)}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">
                     {fmtEUR(p.nettomieteMtl)}
                     {p.nettomieteGeschaetzt && <div className="text-[10px] text-warning-foreground">geschätzt</div>}
                   </td>
-                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`}>
+                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`} title="Mindestmiete für positiven Cashflow">
                     {fmtEUR(c.requiredBreakEvenRent)}
                     <div className="text-[10px] text-muted-foreground">{fmtEUR(c.requiredBreakEvenRentPerM2)}/m²</div>
                   </td>
                   <td className="py-2.5 px-3">{fmtPct(c.bruttorendite)}</td>
                   <td className={`py-2.5 px-3 whitespace-nowrap ${c.cashflowMtl < 0 ? "text-destructive" : "text-success"}`}>{fmtEUR(c.cashflowMtl)}</td>
+                  <td className="py-2.5 px-3 text-xs" title="Mietrechtliches Risiko aus Baujahr/Beschreibung">
+                    {(() => { const m = inferMietrecht(p); return <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>{m.risiko}</AmpelBadge>; })()}
+                  </td>
                   <td className="py-2.5 px-3"><AmpelBadge ampel={dq.ampel}>{dq.score}%</AmpelBadge></td>
                   <td className="py-2.5 px-3 text-xs">
                     {p.nextAction ? (
