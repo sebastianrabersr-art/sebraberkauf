@@ -291,7 +291,12 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Maklerkosten & Kaufnebenkosten">
+          <Section title="Maklerkosten & Kaufnebenkosten" actions={
+            <button onClick={applyRegionDefaults} type="button"
+              className="inline-flex items-center gap-1 text-xs border rounded-md px-2.5 py-1 hover:bg-accent">
+              <Wand2 className="size-3.5" /> Standardwerte für Region übernehmen
+            </button>
+          }>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Maklerprovision %">
                 <N value={c.maklerProvisionPct ? c.maklerProvisionPct * 100 : (p.provisionPct != null ? p.provisionPct * 100 : null)} edit={true} on={(v) => u({ provisionPct: v == null ? null : v / 100, provisionLastEdit: "pct", provisionEUR: null, provisionBruttoEUR: null })} />
