@@ -8,6 +8,8 @@ import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
+import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
+import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
@@ -167,6 +169,9 @@ function Detail() {
           if (c.maklerProvisionBrutto === 0 && p.sellerType !== "Privat" && p.makler !== "Nein") warns.push("Maklerkosten fehlen / nicht erfasst");
           if (p.betriebskostenMtl == null) warns.push("Betriebskosten fehlen");
           if (p.ruecklageFonds == null && p.ruecklageMtl == null) warns.push("Rücklage fehlt");
+          const importantQs = getImportantOpenQuestions(p);
+          importantQs.slice(0, 4).forEach((q) => warns.push(`Offene Frage (${q.category}): ${q.text}`));
+          if (importantQs.length > 4) warns.push(`+ ${importantQs.length - 4} weitere offene Fragen`);
           if (warns.length === 0) return null;
           return (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -344,6 +349,10 @@ function Detail() {
             <FinancePanel p={p} />
           </Section>
 
+          <Section title="Advanced Investment-Modell (Objektart, AfA, Projektion, Anschlussfinanzierung)">
+            <AdvancedInvestmentPanel p={p} />
+          </Section>
+
 
           <MietrechtRiskCard p={p} />
 
@@ -469,14 +478,8 @@ function Detail() {
             ))}
           </Section>
 
-          <Section title="Offene Fragen für Besichtigung">
-            <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
-              <li>Rücklage der Eigentümergemeinschaft?</li>
-              <li>Geplante Sanierungen am Haus?</li>
-              <li>Letzte Mieten in der Anlage?</li>
-              <li>Mietrechtliche Einstufung schriftlich?</li>
-              <li>Versteckte Mängel / Feuchtigkeit?</li>
-            </ul>
+          <Section title="Offene Fragen für Besichtigung & Prüfung">
+            <OpenQuestionsPanel p={p} />
           </Section>
         </div>
       </div>

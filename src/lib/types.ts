@@ -214,9 +214,68 @@ export interface Property {
   sellerNotes?: string;
   financeScenarios?: FinanceScenario[];
   activeFinanceId?: string;
+  // Advanced Investment-Modell
+  objektartDetail?: ObjektartDetail;
+  grundstuecksflaecheM2?: number | null;
+  grundwert?: number | null;
+  gebaeudewert?: number | null;
+  anteilGrundPct?: number | null;
+  anteilGebaeudePct?: number | null;
+  bodenwert?: number | null;
+  afa?: AfaSettings;
+  projections?: LongTermProjections;
+  followUpFinance?: FollowUpFinance;
+  // Offene Fragen für Besichtigung
+  openQuestions?: OpenQuestion[];
   createdAt: string;
   updatedAt?: string;
   isDemo?: boolean;
+}
+
+export type ObjektartDetail = "Wohnung" | "Haus" | "Grundstück" | "Zinshaus" | "Sonstiges";
+
+export type AfaMethode = "linear" | "manuell";
+export type AfaLand = "AT" | "DE";
+
+export interface AfaSettings {
+  basis?: number | null;
+  grundAnteilPct?: number | null;
+  gebaeudeAnteilPct?: number | null;
+  satzPct?: number | null;
+  jahresBetrag?: number | null;
+  methode?: AfaMethode;
+  land?: AfaLand;
+}
+
+export interface LongTermProjections {
+  mietsteigerungPct?: number | null;
+  kostensteigerungPct?: number | null;
+  wertsteigerungPct?: number | null;
+  leerstandPct?: number | null;
+  instandhaltungProJahr?: number | null;
+  horizonJahre?: number | null;
+}
+
+export interface FollowUpFinance {
+  aktiv?: boolean;
+  zinssatz?: number | null;
+  restlaufzeitJahre?: number | null;
+  notiz?: string;
+}
+
+export type OpenQuestionCategory =
+  | "Mietrecht" | "Finanzierung" | "Zustand" | "Unterlagen" | "Verkäufer" | "Sonstiges";
+
+export type OpenQuestionStatus = "Offen" | "Geklärt" | "Nicht relevant";
+
+export interface OpenQuestion {
+  id: string;
+  text: string;
+  category: OpenQuestionCategory;
+  status: OpenQuestionStatus;
+  note?: string;
+  important?: boolean;
+  createdAt?: string;
 }
 
 export interface ViewingNote {
