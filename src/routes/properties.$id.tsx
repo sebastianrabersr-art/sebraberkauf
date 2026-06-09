@@ -379,7 +379,6 @@ function Detail() {
           </Section>
 
 
-          <MietrechtRiskCard p={p} />
 
           <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
