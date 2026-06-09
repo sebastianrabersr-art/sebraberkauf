@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
+import { initCloudSync, stopCloudSync } from "@/lib/cloud-sync";
 
 export type Plan = "free" | "plus" | "premium";
 
