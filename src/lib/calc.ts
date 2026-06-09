@@ -1,4 +1,4 @@
-import type { Assumptions, Mietrecht, Property } from "./types";
+import type { Assumptions, FinanceScenario, Mietrecht, Property } from "./types";
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
   eigenkapital: 100000,
