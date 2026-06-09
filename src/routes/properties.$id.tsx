@@ -273,6 +273,7 @@ function Detail() {
               <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
               <F label="Bezirk / Landkreis"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
               <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
+              <F label="Google-Maps-URL (optional, überschreibt automatisch)"><T value={p.googleMapsUrlOverride ?? ""} edit={true} on={(v) => u({ googleMapsUrlOverride: v })} /></F>
               <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
               <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
               <F label="Baujahr"><N value={p.baujahr} edit={true} on={(v) => u({ baujahr: v })} /></F>
