@@ -50,6 +50,12 @@ export interface Calc {
   maxKaufpreisZielRendite: number;
   requiredBreakEvenRent: number;
   requiredBreakEvenRentPerM2: number;
+  maklerProvisionPct: number;
+  maklerProvisionNetto: number;
+  maklerProvisionUst: number;
+  maklerProvisionBrutto: number;
+  maklerProvisionUstPct: number;
+  maklerKostenZahlbar: boolean;
 }
 
 export function calcProperty(p: Property, a: Assumptions): Calc {
