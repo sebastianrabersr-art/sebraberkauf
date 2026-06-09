@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/", label: "Dashboard", icon: BarChart3 },
+  { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/properties", label: "Immobilien", icon: Database },
   { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { to: "/projects", label: "Projekte", icon: FolderKanban },
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
             return (
               <Link key={n.to} to={n.to}
                 className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm transition",
@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ProjectSwitcher compact />
           <div className="flex gap-2 overflow-x-auto">
             {NAV.map((n) => {
-              const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+              const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
               return (
                 <Link key={n.to} to={n.to}
                   className={cn("text-xs whitespace-nowrap px-3 py-1.5 rounded-full",
