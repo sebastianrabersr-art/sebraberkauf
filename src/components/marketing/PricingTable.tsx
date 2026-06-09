@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+
 import { Check } from "lucide-react";
 
 const TIERS = [
@@ -38,12 +38,12 @@ export function PricingTable() {
               <li key={f} className="flex gap-2"><Check className="size-4 text-primary mt-0.5 shrink-0" />{f}</li>
             ))}
           </ul>
-          <Link
-            to={t.to as any}
+          <a
+            href={t.to}
             className={`mt-6 inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium ${t.highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
           >
             {t.cta}
-          </Link>
+          </a>
         </div>
       ))}
     </div>

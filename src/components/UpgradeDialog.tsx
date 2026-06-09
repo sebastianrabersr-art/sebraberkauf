@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
@@ -39,7 +38,7 @@ export function UpgradeDialog({ open, onOpenChange, title, description, recommen
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Später</Button>
           <Button asChild>
-            <Link to="/settings" search={{ tab: "plan" } as any}>Jetzt upgraden</Link>
+            <a href="/settings">Jetzt upgraden</a>
           </Button>
         </DialogFooter>
       </DialogContent>
