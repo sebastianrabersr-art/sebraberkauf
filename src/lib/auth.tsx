@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
+import { initCloudSync, stopCloudSync } from "@/lib/cloud-sync";
 
 export type Plan = "free" | "plus" | "premium";
 
@@ -62,20 +63,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(sess);
       if (event === "SIGNED_OUT") {
         setProfile(null); setSubscription(null);
+        stopCloudSync();
         router.invalidate();
         return;
       }
       if (sess?.user && (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "INITIAL_SESSION")) {
-        // defer DB reads to avoid deadlock
-        setTimeout(() => { fetchProfile(sess.user.id); }, 0);
+        setTimeout(() => {
+          fetchProfile(sess.user.id);
+          initCloudSync(sess.user.id);
+        }, 0);
         if (event === "SIGNED_IN") router.invalidate();
       }
     });
     // Then initial fetch
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session?.user) fetchProfile(data.session.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (data.session?.user) {
+        initCloudSync(data.session.user.id);
+        fetchProfile(data.session.user.id).finally(() => setLoading(false));
+      } else setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps

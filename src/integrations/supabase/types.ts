@@ -14,6 +14,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          property_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id: string
+          property_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          property_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          property_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id: string
+          property_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          property_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -23,6 +93,7 @@ export type Database = {
           email: string | null
           id: string
           language: string
+          legacy_imported_at: string | null
           marketing_opt_in: boolean
           name: string | null
           onboarding_completed: boolean
@@ -37,6 +108,7 @@ export type Database = {
           email?: string | null
           id: string
           language?: string
+          legacy_imported_at?: string | null
           marketing_opt_in?: boolean
           name?: string | null
           onboarding_completed?: boolean
@@ -51,6 +123,7 @@ export type Database = {
           email?: string | null
           id?: string
           language?: string
+          legacy_imported_at?: string | null
           marketing_opt_in?: boolean
           name?: string | null
           onboarding_completed?: boolean
@@ -58,6 +131,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          is_demo: boolean
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id: string
+          is_demo?: boolean
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          is_demo?: boolean
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          is_demo: boolean
+          project_id: string | null
+          status: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id: string
+          is_demo?: boolean
+          project_id?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          is_demo?: boolean
+          project_id?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -166,6 +316,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      viewings: {
+        Row: {
+          checks: Json
+          property_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checks?: Json
+          property_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checks?: Json
+          property_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
