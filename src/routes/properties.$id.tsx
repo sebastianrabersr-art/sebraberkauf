@@ -112,10 +112,14 @@ function Detail() {
             >
               Original-Inserat öffnen <ExternalLink className="size-3.5" />
             </button>
-            {mapsUrl && (
+            {mapsUrl ? (
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
-                <MapPin className="size-3.5" /> Google Maps
+                <MapPin className="size-3.5" /> In Google Maps öffnen
               </a>
+            ) : (
+              <button disabled title="Keine Ortsdaten vorhanden" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 opacity-50 cursor-not-allowed">
+                <MapPin className="size-3.5" /> Adresse fehlt
+              </button>
             )}
             <span className="text-[11px] text-muted-foreground italic px-2">Felder sind inline editierbar</span>
 
