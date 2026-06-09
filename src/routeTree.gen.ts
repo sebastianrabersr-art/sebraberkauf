@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RechnerRouteImport } from './routes/rechner'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -63,6 +64,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioRoute = PortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PipelineRoute = PipelineRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/rechner': typeof RechnerRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/pipeline'
+    | '/portfolio'
     | '/pricing'
     | '/projects'
     | '/rechner'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/pipeline'
+    | '/portfolio'
     | '/pricing'
     | '/projects'
     | '/rechner'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/pipeline'
+    | '/portfolio'
     | '/pricing'
     | '/projects'
     | '/rechner'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
+  PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
   RechnerRoute: typeof RechnerRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio': {
+      id: '/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof PortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pipeline': {
@@ -446,6 +466,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,
+  PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
   RechnerRoute: RechnerRoute,

@@ -239,12 +239,58 @@ export function isValidUrl(s: string | null | undefined): boolean {
   catch { return false; }
 }
 
-export function googleMapsUrl(p: Pick<Property, "adresse" | "bezirk" | "city" | "bundesland" | "land">): string | null {
-  const parts = [p.adresse, p.bezirk, p.city, p.bundesland, p.land].map((x) => (x || "").trim()).filter(Boolean);
-  if (parts.length === 0) return null;
-  const q = encodeURIComponent(parts.join(", "));
+export function googleMapsUrl(p: Pick<Property, "adresse" | "bezirk" | "city" | "bundesland" | "land" | "googleMapsUrlOverride">): string | null {
+  const override = (p.googleMapsUrlOverride || "").trim();
+  if (override) {
+    if (/^https?:\/\//i.test(override)) return override;
+  }
+  // Prefer precise address
+  const hasPrecise = !!(p.adresse && p.adresse.trim().length > 2);
+  const parts = hasPrecise
+    ? [p.adresse, p.bezirk, p.city, p.bundesland, p.land]
+    : [p.bezirk, p.city, p.bundesland, p.land];
+  const cleaned = parts.map((x) => (x || "").trim()).filter((x) => x.length > 0);
+  if (cleaned.length === 0) return null;
+  // encodeURIComponent handles Umlaute, spaces, special chars correctly
+  const q = encodeURIComponent(cleaned.join(", "));
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
+
+export interface ScoreCategory {
+  key: "lage" | "zahlen" | "vermietbarkeit" | "zustand" | "recht" | "wiederverkauf";
+  label: string;
+  max: number;
+  value: number;
+  explain: string;
+  missing?: string[];
+}
+
+export function scoreBreakdown(p: Property, a: Assumptions, c: Calc, s: Score): ScoreCategory[] {
+  const zahlenMissing: string[] = [];
+  if (!p.kaufpreis) zahlenMissing.push("Kaufpreis");
+  if (!p.nettomieteMtl) zahlenMissing.push("Miete");
+  const zustandMissing: string[] = [];
+  if (!p.zustand?.trim()) zustandMissing.push("Zustand");
+  if (!p.baujahr) zustandMissing.push("Baujahr");
+  const rechtMissing: string[] = [];
+  if (!p.mietrecht || p.mietrecht === "unklar – rechtlich prüfen") rechtMissing.push("Mietrechtskategorie");
+  return [
+    { key: "lage", label: "Lage", max: 25, value: p.scoreLage, explain: "Mikro- & Makrolage, Anbindung, Umfeld.",
+      missing: p.bezirk ? undefined : ["Bezirk"] },
+    { key: "zahlen", label: "Zahlen / Rendite", max: 25, value: s.zahlen,
+      explain: `Bruttorendite ${(c.bruttorendite*100).toFixed(2)}% vs. Ziel ${(a.zielBrutto*100).toFixed(1)}%.`,
+      missing: zahlenMissing.length ? zahlenMissing : undefined },
+    { key: "vermietbarkeit", label: "Vermietbarkeit", max: 20, value: p.scoreVermietbarkeit,
+      explain: "Nachfrage, Zielmiete, Lage zum Mietmarkt.", missing: p.nettomieteMtl ? undefined : ["Mietansatz"] },
+    { key: "zustand", label: "Zustand / Sanierungsrisiko", max: 15, value: p.scoreZustand,
+      explain: "Allgemeinzustand, Sanierungsbedarf, Alter.", missing: zustandMissing.length ? zustandMissing : undefined },
+    { key: "recht", label: "Mietrecht / rechtliches Risiko", max: 10, value: p.scoreRecht,
+      explain: "MRG/Richtwert, Mietpreisbremse, Befristungen.", missing: rechtMissing.length ? rechtMissing : undefined },
+    { key: "wiederverkauf", label: "Wiederverkaufbarkeit", max: 5, value: p.scoreWiederverkauf,
+      explain: "Marktgängigkeit, Lage, Objekttyp." },
+  ];
+}
+
 
 export interface MietrechtInference {
   kategorie: Mietrecht;
@@ -623,3 +669,49 @@ export const DEFAULT_OPEN_QUESTIONS: { text: string; category: import("./types")
   { text: "Gibt es Einschränkungen bei Vermietung oder Kurzzeitvermietung?", category: "Mietrecht", important: true },
   { text: "Welche Unterlagen fehlen noch?", category: "Unterlagen" },
 ];
+
+import type { Payment } from "./types";
+
+export interface PaymentSummary {
+  einnahmenGesamt: number;
+  ausgabenGesamt: number;
+  nettoCashflow: number;
+  cashflowMonat: number;
+  cashflowJahr: number;
+  offenAnzahl: number;
+  offenSumme: number;
+  mieteEingegangen: number;
+  kreditratenGezahlt: number;
+  zinsenGezahlt: number;
+  tilgungGezahlt: number;
+  reparaturGezahlt: number;
+}
+
+export function summarizePayments(list: Payment[]): PaymentSummary {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const y = String(now.getFullYear());
+  const paid = list.filter((p) => p.status === "bezahlt");
+  const offen = list.filter((p) => p.status === "offen");
+  const sumBy = (arr: Payment[], pred: (p: Payment) => boolean) =>
+    arr.filter(pred).reduce((a, p) => a + (p.amount || 0), 0);
+  const einnahmen = sumBy(paid, (p) => p.direction === "Einnahme");
+  const ausgaben = sumBy(paid, (p) => p.direction === "Ausgabe");
+  const sign = (p: Payment) => (p.direction === "Einnahme" ? 1 : -1);
+  const cashflowMonat = paid.filter((p) => p.date?.startsWith(ym)).reduce((a, p) => a + sign(p) * p.amount, 0);
+  const cashflowJahr = paid.filter((p) => p.date?.startsWith(y)).reduce((a, p) => a + sign(p) * p.amount, 0);
+  return {
+    einnahmenGesamt: einnahmen,
+    ausgabenGesamt: ausgaben,
+    nettoCashflow: einnahmen - ausgaben,
+    cashflowMonat,
+    cashflowJahr,
+    offenAnzahl: offen.length,
+    offenSumme: offen.reduce((a, p) => a + (p.amount || 0), 0),
+    mieteEingegangen: sumBy(paid, (p) => p.category === "Miete"),
+    kreditratenGezahlt: sumBy(paid, (p) => p.category === "Kreditrate"),
+    zinsenGezahlt: sumBy(paid, (p) => p.category === "Zinsen"),
+    tilgungGezahlt: sumBy(paid, (p) => p.category === "Tilgung"),
+    reparaturGezahlt: sumBy(paid, (p) => p.category === "Reparatur / Instandhaltung"),
+  };
+}

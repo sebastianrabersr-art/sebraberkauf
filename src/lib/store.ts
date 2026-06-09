@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_ASSUMPTIONS } from "./calc";
-import type { Activity, ActivityType, Assumptions, Project, Property, PropertyDocument, ViewingNote } from "./types";
+import type { Activity, ActivityType, Assumptions, Payment, Project, Property, PropertyDocument, ViewingNote } from "./types";
 
 export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] = [
   { key: "fenster", label: "Zustand Fenster", group: "Wohnung" },
@@ -93,6 +93,7 @@ interface State {
   viewings: Record<string, ViewingNote>;
   documents: PropertyDocument[];
   activities: Activity[];
+  payments: Payment[];
   addProject: (p?: Partial<Project>) => Project;
   updateProject: (id: string, patch: Partial<Project>) => void;
   updateProjectAssumptions: (id: string, patch: Partial<Assumptions>) => void;
@@ -106,14 +107,15 @@ interface State {
   setViewing: (id: string, key: string, patch: Partial<{ done: boolean; note: string }>) => void;
   findByLink: (link: string, projectId?: string) => Property | undefined;
   deleteDemoData: () => void;
-  // documents
   addDocument: (d: PropertyDocument) => void;
   updateDocument: (id: string, patch: Partial<PropertyDocument>) => void;
   deleteDocument: (id: string) => void;
-  // activities
   addActivity: (a: Activity) => void;
   updateActivity: (id: string, patch: Partial<Activity>) => void;
   deleteActivity: (id: string) => void;
+  addPayment: (p: Payment) => void;
+  updatePayment: (id: string, patch: Partial<Payment>) => void;
+  deletePayment: (id: string) => void;
 }
 
 export const useStore = create<State>()(
@@ -125,6 +127,7 @@ export const useStore = create<State>()(
       viewings: {},
       documents: [],
       activities: [],
+      payments: [],
       addProject: (p) => {
         const proj = makeProject(p);
         set((s) => ({ projects: [proj, ...s.projects], activeProjectId: proj.id }));
@@ -154,6 +157,7 @@ export const useStore = create<State>()(
           viewings: Object.fromEntries(Object.entries(s.viewings).filter(([k]) => k !== id)),
           documents: s.documents.filter((d) => d.propertyId !== id),
           activities: s.activities.filter((a) => a.propertyId !== id),
+          payments: s.payments.filter((x) => x.propertyId !== id),
         })),
       duplicateProperty: (id) => {
         const src = get().properties.find((p) => p.id === id);
@@ -185,15 +189,18 @@ export const useStore = create<State>()(
       addActivity: (a) => set((s) => ({ activities: [a, ...s.activities] })),
       updateActivity: (id, patch) => set((s) => ({ activities: s.activities.map((a) => a.id === id ? { ...a, ...patch, updatedAt: now() } : a) })),
       deleteActivity: (id) => set((s) => ({ activities: s.activities.filter((a) => a.id !== id) })),
+      addPayment: (p) => set((s) => ({ payments: [p, ...s.payments] })),
+      updatePayment: (id, patch) => set((s) => ({ payments: s.payments.map((x) => x.id === id ? { ...x, ...patch, updatedAt: now() } : x) })),
+      deletePayment: (id) => set((s) => ({ payments: s.payments.filter((x) => x.id !== id) })),
     }),
     {
       name: "immo-invest-store-v2",
-      version: 3,
+      version: 4,
       migrate: (persisted: any, _version: number) => {
-        // ensure new collections exist when loading older persisted state
         if (persisted && typeof persisted === "object") {
           persisted.documents = persisted.documents ?? [];
           persisted.activities = persisted.activities ?? [];
+          persisted.payments = persisted.payments ?? [];
         }
         return persisted;
       },

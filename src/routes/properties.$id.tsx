@@ -10,6 +10,9 @@ import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
+import { ScoreBreakdownCard } from "@/components/ScoreBreakdownCard";
+import { PaymentsPanel } from "@/components/PaymentsPanel";
+import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
@@ -109,10 +112,14 @@ function Detail() {
             >
               Original-Inserat öffnen <ExternalLink className="size-3.5" />
             </button>
-            {mapsUrl && (
+            {mapsUrl ? (
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent">
-                <MapPin className="size-3.5" /> Google Maps
+                <MapPin className="size-3.5" /> In Google Maps öffnen
               </a>
+            ) : (
+              <button disabled title="Keine Ortsdaten vorhanden" className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 opacity-50 cursor-not-allowed">
+                <MapPin className="size-3.5" /> Adresse fehlt
+              </button>
             )}
             <span className="text-[11px] text-muted-foreground italic px-2">Felder sind inline editierbar</span>
 
@@ -202,8 +209,8 @@ function Detail() {
           />
           <QuickFact label="Google Maps" value={[p.adresse, p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
             actions={mapsUrl ? (
-              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">Karte öffnen <MapPin className="size-3" /></a>
-            ) : null}
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 text-primary">In Maps öffnen <MapPin className="size-3" /></a>
+            ) : <span className="text-xs text-muted-foreground">Adresse fehlt</span>}
           />
           <QuickFact label="Nächste Aktion" value={p.nextAction || "—"}
             hint={p.nextActionDate ? `bis ${new Date(p.nextActionDate).toLocaleDateString("de-AT")}` : undefined}
@@ -224,6 +231,16 @@ function Detail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {p.status === "Gekauft" && (
+            <>
+              <Section title="Portfolio · Tatsächliche Kaufdaten">
+                <PurchaseInfoPanel p={p} />
+              </Section>
+              <Section title="Zahlungen & Cashflow">
+                <PaymentsPanel p={p} />
+              </Section>
+            </>
+          )}
           <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
@@ -256,6 +273,7 @@ function Detail() {
               <F label="Stadt"><T value={p.city ?? ""} edit={true} on={(v) => u({ city: v })} /></F>
               <F label="Bezirk / Landkreis"><T value={p.bezirk} edit={true} on={(v) => u({ bezirk: v })} /></F>
               <F label="Adresse / Gegend"><T value={p.adresse} edit={true} on={(v) => u({ adresse: v })} /></F>
+              <F label="Google-Maps-URL (optional, überschreibt automatisch)"><T value={p.googleMapsUrlOverride ?? ""} edit={true} on={(v) => u({ googleMapsUrlOverride: v })} /></F>
               <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit={true} on={(v) => u({ wohnflaecheM2: v })} /></F>
               <F label="Zimmer"><N value={p.zimmer} edit={true} on={(v) => u({ zimmer: v })} /></F>
               <F label="Baujahr"><N value={p.baujahr} edit={true} on={(v) => u({ baujahr: v })} /></F>
@@ -427,7 +445,9 @@ function Detail() {
         </div>
 
         <div className="space-y-6">
-          <Section title={`Score ${s.total} / 100`}>
+          <ScoreBreakdownCard p={p} />
+
+          <Section title={`Score-Slider (manuell anpassen) – ${s.total} / 100`}>
             <ScoreRow label="Lage" max={25} value={p.scoreLage} onChange={(v) => true && u({ scoreLage: v })} />
             <ScoreRow label="Zahlen / Rendite" max={25} value={s.zahlen} readonly />
             <ScoreRow label="Vermietbarkeit" max={20} value={p.scoreVermietbarkeit} onChange={(v) => true && u({ scoreVermietbarkeit: v })} />
