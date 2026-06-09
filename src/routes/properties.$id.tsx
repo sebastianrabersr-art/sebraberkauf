@@ -38,11 +38,31 @@ function Detail() {
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
-
   const linkValid = isValidUrl(p.link);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const mapsUrl = googleMapsUrl(p);
   const mietrecht = inferMietrecht(p);
+  const country = countryOf(p.land);
+  const regions = country ? regionsOf(country) : [];
+
+  const applyRegionDefaults = () => {
+    const d = regionDefaultsForProperty(p);
+    if (!d) {
+      toast.error("Bitte zuerst Land und Bundesland auswählen.");
+      return;
+    }
+    u({
+      grunderwerbsteuer: d.grunderwerbsteuer,
+      grundbuchkosten: d.grundbuchkosten,
+      vertragskosten: d.vertragskosten,
+      provisionPct: d.provisionPct,
+      maklerprovisionUstPct: d.maklerprovisionUstPct,
+      provisionLastEdit: "pct",
+      provisionEUR: null,
+      provisionBruttoEUR: null,
+    });
+    toast.success(`Standardwerte für ${d.region.name} übernommen`);
+  };
 
   const openOriginal = () => {
     if (!linkValid) {
