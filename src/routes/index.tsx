@@ -266,13 +266,12 @@ function LinkAnalyzer() {
       )}
 
       {!preview && !loading && (
-        <button
-          type="button"
-          onClick={showDemo}
-          className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        <a
+          href="/demo"
+          className="mt-3 inline-flex text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
         >
           Kein Link zur Hand? Demo ansehen
-        </button>
+        </a>
       )}
 
       {preview && <PreviewCard data={preview} isDemo={isDemo} />}
@@ -322,6 +321,11 @@ function Landing() {
               <p className="mt-3 text-xs text-muted-foreground">
                 Funktioniert mit Immobilienlinks aus Österreich und Deutschland.
               </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <a href="/demo" className="text-sm font-medium text-primary underline underline-offset-4">Demo ansehen</a>
+                <a href="/pricing" className="text-sm font-medium text-primary underline underline-offset-4">Preise ansehen</a>
+                <a href="/rechner" className="text-sm font-medium text-primary underline underline-offset-4">Rechner nutzen</a>
+              </div>
             </div>
           </div>
         </div>

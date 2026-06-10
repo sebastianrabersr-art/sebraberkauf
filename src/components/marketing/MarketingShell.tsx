@@ -16,6 +16,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </a>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="/#features" className="text-muted-foreground hover:text-foreground">Features</a>
+            <a href="/demo" className="text-muted-foreground hover:text-foreground">Demo</a>
             <a href="/rechner" className="text-muted-foreground hover:text-foreground">Rechner</a>
             <a href="/ratgeber" className="text-muted-foreground hover:text-foreground">Ratgeber</a>
             <a href="/pricing" className="text-muted-foreground hover:text-foreground">Preise</a>
@@ -45,6 +46,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <a href="/impressum" className="hover:text-foreground">Impressum</a>
             <a href="/datenschutz" className="hover:text-foreground">Datenschutz</a>
             <a href="/agb" className="hover:text-foreground">AGB</a>
+            <a href="/widerruf" className="hover:text-foreground">Widerruf</a>
+            <a href="/kontakt" className="hover:text-foreground">Kontakt</a>
           </nav>
           <span className="w-full md:w-auto md:text-right">Hinweis: kauf ma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
         </div>

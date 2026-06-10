@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WiderrufRouteImport } from './routes/widerruf'
 import { Route as ViewingRouteImport } from './routes/viewing'
 import { Route as VergleichRouteImport } from './routes/vergleich'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -19,14 +20,17 @@ import { Route as RechnerRouteImport } from './routes/rechner'
 import { Route as RatgeberRouteImport } from './routes/ratgeber'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PreiseRouteImport } from './routes/preise'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KontaktRouteImport } from './routes/kontakt'
 import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as FromCalcRouteImport } from './routes/from-calc'
 import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
@@ -47,6 +51,11 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
+const WiderrufRoute = WiderrufRouteImport.update({
+  id: '/widerruf',
+  path: '/widerruf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ViewingRoute = ViewingRouteImport.update({
   id: '/viewing',
   path: '/viewing',
@@ -97,6 +106,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreiseRoute = PreiseRouteImport.update({
+  id: '/preise',
+  path: '/preise',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
@@ -117,6 +131,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KontaktRoute = KontaktRouteImport.update({
+  id: '/kontakt',
+  path: '/kontakt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImpressumRoute = ImpressumRouteImport.update({
   id: '/impressum',
   path: '/impressum',
@@ -135,6 +154,11 @@ const FollowupsRoute = FollowupsRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatenschutzRoute = DatenschutzRouteImport.update({
@@ -243,14 +267,17 @@ export interface FileRoutesByFullPath {
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
   '/datenschutz': typeof DatenschutzRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
   '/impressum': typeof ImpressumRoute
+  '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
   '/portfolio': typeof PortfolioRouteWithChildren
+  '/preise': typeof PreiseRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/ratgeber': typeof RatgeberRouteWithChildren
@@ -261,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -282,13 +310,16 @@ export interface FileRoutesByTo {
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
   '/datenschutz': typeof DatenschutzRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
   '/impressum': typeof ImpressumRoute
+  '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
+  '/preise': typeof PreiseRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -297,6 +328,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -319,14 +351,17 @@ export interface FileRoutesById {
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
   '/datenschutz': typeof DatenschutzRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
   '/impressum': typeof ImpressumRoute
+  '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
   '/portfolio': typeof PortfolioRouteWithChildren
+  '/preise': typeof PreiseRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/ratgeber': typeof RatgeberRouteWithChildren
@@ -337,6 +372,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -360,14 +396,17 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/dashboard'
     | '/datenschutz'
+    | '/demo'
     | '/faq'
     | '/followups'
     | '/from-calc'
     | '/impressum'
+    | '/kontakt'
     | '/login'
     | '/onboarding'
     | '/pipeline'
     | '/portfolio'
+    | '/preise'
     | '/pricing'
     | '/projects'
     | '/ratgeber'
@@ -378,6 +417,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
+    | '/widerruf'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
@@ -399,13 +439,16 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/dashboard'
     | '/datenschutz'
+    | '/demo'
     | '/faq'
     | '/followups'
     | '/from-calc'
     | '/impressum'
+    | '/kontakt'
     | '/login'
     | '/onboarding'
     | '/pipeline'
+    | '/preise'
     | '/pricing'
     | '/projects'
     | '/reset-password'
@@ -414,6 +457,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
+    | '/widerruf'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
@@ -435,14 +479,17 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/dashboard'
     | '/datenschutz'
+    | '/demo'
     | '/faq'
     | '/followups'
     | '/from-calc'
     | '/impressum'
+    | '/kontakt'
     | '/login'
     | '/onboarding'
     | '/pipeline'
     | '/portfolio'
+    | '/preise'
     | '/pricing'
     | '/projects'
     | '/ratgeber'
@@ -453,6 +500,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
+    | '/widerruf'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
@@ -475,14 +523,17 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   DashboardRoute: typeof DashboardRoute
   DatenschutzRoute: typeof DatenschutzRoute
+  DemoRoute: typeof DemoRoute
   FaqRoute: typeof FaqRoute
   FollowupsRoute: typeof FollowupsRoute
   FromCalcRoute: typeof FromCalcRoute
   ImpressumRoute: typeof ImpressumRoute
+  KontaktRoute: typeof KontaktRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
   PortfolioRoute: typeof PortfolioRouteWithChildren
+  PreiseRoute: typeof PreiseRoute
   PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
   RatgeberRoute: typeof RatgeberRouteWithChildren
@@ -493,6 +544,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VergleichRoute: typeof VergleichRoute
   ViewingRoute: typeof ViewingRoute
+  WiderrufRoute: typeof WiderrufRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   PropertiesNewRoute: typeof PropertiesNewRoute
@@ -503,6 +555,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/widerruf': {
+      id: '/widerruf'
+      path: '/widerruf'
+      fullPath: '/widerruf'
+      preLoaderRoute: typeof WiderrufRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/viewing': {
       id: '/viewing'
       path: '/viewing'
@@ -573,6 +632,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preise': {
+      id: '/preise'
+      path: '/preise'
+      fullPath: '/preise'
+      preLoaderRoute: typeof PreiseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portfolio': {
       id: '/portfolio'
       path: '/portfolio'
@@ -601,6 +667,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kontakt': {
+      id: '/kontakt'
+      path: '/kontakt'
+      fullPath: '/kontakt'
+      preLoaderRoute: typeof KontaktRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/impressum': {
       id: '/impressum'
       path: '/impressum'
@@ -627,6 +700,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/datenschutz': {
@@ -814,14 +894,17 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   DashboardRoute: DashboardRoute,
   DatenschutzRoute: DatenschutzRoute,
+  DemoRoute: DemoRoute,
   FaqRoute: FaqRoute,
   FollowupsRoute: FollowupsRoute,
   FromCalcRoute: FromCalcRoute,
   ImpressumRoute: ImpressumRoute,
+  KontaktRoute: KontaktRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,
   PortfolioRoute: PortfolioRouteWithChildren,
+  PreiseRoute: PreiseRoute,
   PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
   RatgeberRoute: RatgeberRouteWithChildren,
@@ -832,6 +915,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VergleichRoute: VergleichRoute,
   ViewingRoute: ViewingRoute,
+  WiderrufRoute: WiderrufRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   PropertiesNewRoute: PropertiesNewRoute,
