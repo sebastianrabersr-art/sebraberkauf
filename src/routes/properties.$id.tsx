@@ -302,7 +302,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Kauf, Miete & Nebenkosten" defaultOpen>
+          <Section title="Kauf & Nebenkosten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
               <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
