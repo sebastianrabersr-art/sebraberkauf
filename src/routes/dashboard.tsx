@@ -263,3 +263,65 @@ function RankTable({ title, rows, metric, onClick }: { title: string; rows: any[
     </div>
   );
 }
+
+function AnalyzeHero() {
+  const navigate = useNavigate();
+  const [url, setUrl] = useState("");
+
+  const start = () => {
+    const u = url.trim();
+    if (!u) {
+      navigate({ to: "/analyze" });
+      return;
+    }
+    if (!isValidUrl(u)) {
+      toast.error("Bitte eine gültige URL (mit https://) einfügen.");
+      return;
+    }
+    try { localStorage.setItem("pending_analyze_url", u); } catch { /* ignore */ }
+    navigate({ to: "/analyze" });
+  };
+
+  return (
+    <div className="mt-2 rounded-3xl border bg-gradient-to-br from-primary/8 via-card to-card p-6 sm:p-8 shadow-sm">
+      <div className="flex items-center gap-2 text-xs font-medium text-primary mb-2">
+        <Sparkles className="size-4" /> Immobilie analysieren
+      </div>
+      <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+        Füge einen Immobilienlink ein – die Analyse startet sofort.
+      </h2>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
+        Kaufpreis, Nebenkosten, Finanzierung, Miete und Cashflow – automatisch berechnet aus deinem Link.
+      </p>
+
+      <div className="mt-5 flex flex-col sm:flex-row gap-2">
+        <div className="flex-1 flex items-center gap-2 border rounded-xl px-4 py-3 bg-background focus-within:ring-2 ring-ring shadow-sm">
+          <LinkIcon className="size-4 text-muted-foreground shrink-0" />
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") start(); }}
+            placeholder="Immobilienlink einfügen (willhaben, ImmoScout, immowelt …)"
+            className="flex-1 outline-none bg-transparent text-sm"
+          />
+        </div>
+        <button
+          onClick={start}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-95 shadow-sm"
+        >
+          <Sparkles className="size-4" /> Analyse starten
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        <Link to="/analyze" className="inline-flex items-center gap-1.5 hover:text-foreground">
+          <FileText className="size-3.5" /> PDF / Exposé hochladen
+        </Link>
+        <Link to="/properties/new" className="inline-flex items-center gap-1.5 hover:text-foreground">
+          <Pencil className="size-3.5" /> Manuell hinzufügen
+        </Link>
+      </div>
+    </div>
+  );
+}
