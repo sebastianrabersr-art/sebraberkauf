@@ -30,6 +30,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RechnerIndexRouteImport } from './routes/rechner.index'
 import { Route as RatgeberIndexRouteImport } from './routes/ratgeber.index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PortfolioIndexRouteImport } from './routes/portfolio.index'
@@ -145,6 +146,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RechnerIndexRoute = RechnerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RechnerRoute,
+} as any)
 const RatgeberIndexRoute = RatgeberIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -207,7 +213,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/ratgeber': typeof RatgeberRouteWithChildren
-  '/rechner': typeof RechnerRoute
+  '/rechner': typeof RechnerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/ratgeber/': typeof RatgeberIndexRoute
+  '/rechner/': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -237,7 +244,6 @@ export interface FileRoutesByTo {
   '/pipeline': typeof PipelineRoute
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
-  '/rechner': typeof RechnerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -252,6 +258,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/ratgeber': typeof RatgeberIndexRoute
+  '/rechner': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -270,7 +277,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
   '/ratgeber': typeof RatgeberRouteWithChildren
-  '/rechner': typeof RechnerRoute
+  '/rechner': typeof RechnerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -285,6 +292,7 @@ export interface FileRoutesById {
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/ratgeber/': typeof RatgeberIndexRoute
+  '/rechner/': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -319,6 +327,7 @@ export interface FileRouteTypes {
     | '/portfolio/'
     | '/properties/'
     | '/ratgeber/'
+    | '/rechner/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -334,7 +343,6 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/pricing'
     | '/projects'
-    | '/rechner'
     | '/reset-password'
     | '/settings'
     | '/signup'
@@ -349,6 +357,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/properties'
     | '/ratgeber'
+    | '/rechner'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/portfolio/'
     | '/properties/'
     | '/ratgeber/'
+    | '/rechner/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -399,7 +409,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
   RatgeberRoute: typeof RatgeberRouteWithChildren
-  RechnerRoute: typeof RechnerRoute
+  RechnerRoute: typeof RechnerRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
@@ -562,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rechner/': {
+      id: '/rechner/'
+      path: '/'
+      fullPath: '/rechner/'
+      preLoaderRoute: typeof RechnerIndexRouteImport
+      parentRoute: typeof RechnerRoute
+    }
     '/ratgeber/': {
       id: '/ratgeber/'
       path: '/'
@@ -656,6 +673,17 @@ const RatgeberRouteWithChildren = RatgeberRoute._addFileChildren(
   RatgeberRouteChildren,
 )
 
+interface RechnerRouteChildren {
+  RechnerIndexRoute: typeof RechnerIndexRoute
+}
+
+const RechnerRouteChildren: RechnerRouteChildren = {
+  RechnerIndexRoute: RechnerIndexRoute,
+}
+
+const RechnerRouteWithChildren =
+  RechnerRoute._addFileChildren(RechnerRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
@@ -671,7 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
   RatgeberRoute: RatgeberRouteWithChildren,
-  RechnerRoute: RechnerRoute,
+  RechnerRoute: RechnerRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
@@ -687,3 +715,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
