@@ -16,6 +16,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </a>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="/#features" className="text-muted-foreground hover:text-foreground">Features</a>
+            <a href="/rechner" className="text-muted-foreground hover:text-foreground">Rechner</a>
             <a href="/ratgeber" className="text-muted-foreground hover:text-foreground">Ratgeber</a>
             <a href="/pricing" className="text-muted-foreground hover:text-foreground">Preise</a>
             <a href="/faq" className="text-muted-foreground hover:text-foreground">FAQ</a>
