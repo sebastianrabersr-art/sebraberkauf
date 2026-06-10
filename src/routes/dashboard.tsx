@@ -3,6 +3,7 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
+import { ScoreInfo } from "@/components/ScoreInfo";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { AlertTriangle, ArrowRight, Bell, Building, FileText, Link as LinkIcon, Pencil, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -138,7 +139,7 @@ function Dashboard() {
 
           <TabsContent value="kandidaten" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-5">
-              <RankTable title="Score" rows={topScore} metric={(r) => `${r.s.total}`} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
+              <RankTable title="Score" titleInfo={<ScoreInfo />} rows={topScore} metric={(r) => `${r.s.total}`} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
               <RankTable title="Cashflow / Monat" rows={topCashflow} metric={(r) => fmtEUR(r.c.cashflowMtl)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
               <RankTable title="Bruttorendite" rows={topRendite} metric={(r) => fmtPct(r.c.bruttorendite)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
             </div>
@@ -237,10 +238,10 @@ function Dashboard() {
   );
 }
 
-function RankTable({ title, rows, metric, onClick }: { title: string; rows: any[]; metric: (r: any) => string; onClick: (id: string) => void }) {
+function RankTable({ title, titleInfo, rows, metric, onClick }: { title: string; titleInfo?: React.ReactNode; rows: any[]; metric: (r: any) => string; onClick: (id: string) => void }) {
   return (
     <div className="rounded-2xl border bg-card p-5">
-      <h3 className="font-semibold text-sm tracking-tight mb-3">{title}</h3>
+      <h3 className="font-semibold text-sm tracking-tight mb-3 inline-flex items-center gap-1.5">{title}{titleInfo}</h3>
       <div className="space-y-1">
         {rows.map((r, i) => (
           <button key={r.p.id} onClick={() => onClick(r.p.id)} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 text-left transition-colors">

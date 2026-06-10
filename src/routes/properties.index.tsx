@@ -3,6 +3,7 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
+import { ScoreInfo } from "@/components/ScoreInfo";
 import { useMemo, useState } from "react";
 import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,10 +50,11 @@ function PropertiesList() {
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
 
+  const EXCLUDED_DEFAULT = ["Gekauft", "Abgelehnt"];
   const rows = useMemo(() => {
     return properties
       .filter((p) => (scopeAll ? true : p.projectId === activeProject.id))
-      .filter((p) => (statusFilter === "all" ? true : p.status === statusFilter))
+      .filter((p) => (statusFilter === "all" ? !EXCLUDED_DEFAULT.includes(p.status) : statusFilter === "all-inkl" ? true : p.status === statusFilter))
       .filter((p) => (mietrechtFilter === "all" ? true : p.mietrecht === mietrechtFilter))
       .filter((p) => (bezirkFilter ? (p.bezirk || "").toLowerCase().includes(bezirkFilter.toLowerCase()) : true))
       .filter((p) => (search ? (p.title + p.bezirk + p.adresse + p.platform).toLowerCase().includes(search.toLowerCase()) : true))
@@ -82,8 +84,8 @@ function PropertiesList() {
   return (
     <AppShell>
       <PageHeader
-        title="Immobilien-Datenbank"
-        description={`${rows.length} Objekte${scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}.`}
+        title="Kaufkandidaten"
+        description={`${rows.length} Objekt${rows.length === 1 ? "" : "e"} in Prüfung${scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}. Gekaufte Immobilien findest du im Portfolio.`}
         actions={
           <div className="flex gap-2 flex-wrap">
             <Link to="/properties/new" className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
@@ -107,7 +109,8 @@ function PropertiesList() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
         <input placeholder="Suche…" value={search} onChange={(e) => setSearch(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm col-span-2" />
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
-          <option value="all">Status: alle</option>
+          <option value="all">Status: aktive Kandidaten</option>
+          <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
           {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
@@ -143,7 +146,7 @@ function PropertiesList() {
             <thead className="bg-muted/50 text-left">
               <tr className="border-b">
                 {[
-                  ["Score","Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf"],
+                  ["Score","__score__"],
                   ["Status","Aktueller CRM-Status"],
                   ["Prio","Priorität für deine Pipeline"],
                   ["Titel","Inserats-Titel"],
@@ -162,7 +165,9 @@ function PropertiesList() {
                   ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder"],
                   ["Nächste Aktion",""],["Verkäufer",""],["Links",""],["",""],
                 ].map(([h,tip]) => (
-                  <th key={h} title={tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                  <th key={h} title={tip === "__score__" ? undefined : tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1">{h}{tip === "__score__" && <ScoreInfo />}</span>
+                  </th>
                 ))}
               </tr>
             </thead>
