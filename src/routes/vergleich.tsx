@@ -395,10 +395,10 @@ function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full border bg-muted/40 px-2 py-0.5">{children}</span>;
 }
 
-function ChartBox({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
+function ChartBox({ title, info, children, wide }: { title: string; info?: React.ReactNode; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className={`rounded-xl border bg-card p-4 ${wide ? "md:col-span-2" : ""}`}>
-      <div className="text-sm font-medium mb-2">{title}</div>
+      <div className="text-sm font-medium mb-2 inline-flex items-center gap-1.5">{title}{info}</div>
       {children}
     </div>
   );
