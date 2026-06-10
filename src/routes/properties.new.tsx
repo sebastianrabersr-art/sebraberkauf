@@ -95,6 +95,13 @@ function NewPropertyPage() {
         </div>
         <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen. Tipp: „Leeres Objekt für PDF-Upload" rechts oben legt dir direkt eine Hülle an, in die du anschließend das Makler-PDF einlesen kannst.</p>
       </div>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Limit erreicht"
+        description={`Dein Plan erlaubt max. ${limits.properties} Immobilie${limits.properties === 1 ? "" : "n"}. Upgrade, um mehr anzulegen.`}
+        recommendPlan={subscription?.plan === "plus" ? "premium" : "plus"}
+      />
     </AppShell>
   );
 }
