@@ -1,19 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { PricingTable } from "@/components/marketing/PricingTable";
 import { FaqList } from "@/components/marketing/FaqList";
+import { extractProperty, detectCountry, detectPlatform } from "@/lib/extract.functions";
+import { isValidUrl } from "@/lib/calc";
 import {
   ArrowRight,
   Calculator,
   Check,
-  ChevronRight,
   FileText,
   Link2,
-  Play,
+  Loader2,
+  Sparkles,
   ShieldCheck,
   TrendingUp,
+  TrendingDown,
+  Minus,
   Wallet,
-  X,
+  AlertTriangle,
   GitCompareArrows,
 } from "lucide-react";
 
