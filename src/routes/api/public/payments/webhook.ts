@@ -20,7 +20,6 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
   const item = subscription.items?.data?.[0];
   const lookupKey: string | null = item?.price?.lookup_key ?? null;
   const { plan, interval } = planFromPriceId(lookupKey);
-  const limits = limitsForPlan(plan);
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
