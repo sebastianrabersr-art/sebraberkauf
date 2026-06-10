@@ -48,30 +48,6 @@ function Feature({ icon: Icon, title, children }: any) {
   );
 }
 
-const DEMO_PREVIEW: AnalyzeResult = {
-  success: true,
-  source_url: "",
-  platform: "Demo",
-  title: "Demo: 2-Zimmer-Altbau, 1070 Wien",
-  purchase_price: 285000,
-  living_area_m2: 54,
-  property_type: "Wohnung",
-  rooms: 2,
-  address: "",
-  city: "Wien",
-  district: "1070",
-  region: "Wien",
-  country: "Österreich",
-  price_per_m2: Math.round(285000 / 54),
-  monthly_operating_costs: null,
-  year_built: null,
-  condition: "",
-  description: "Demo-Datensatz – nur zur Veranschaulichung.",
-  images: [],
-  missing_fields: ["Betriebskosten", "Baujahr"],
-  data_quality_score: 55,
-};
-
 function fmtEUR(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -82,7 +58,7 @@ function estimateNebenkostenPct(country: string): number {
   return 0.10;
 }
 
-function PreviewCard({ data, isDemo }: { data: AnalyzeResult; isDemo: boolean }) {
+function PreviewCard({ data }: { data: AnalyzeResult }) {
   const price = data.purchase_price;
   const area = data.living_area_m2;
   const pricePerM2 = data.price_per_m2 ?? (price && area ? Math.round(price / area) : null);
@@ -106,7 +82,7 @@ function PreviewCard({ data, isDemo }: { data: AnalyzeResult; isDemo: boolean })
     <div className="mt-5 rounded-2xl border bg-card p-5 text-left shadow-sm">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">{isDemo ? "Demo-Vorschau" : "Erste Analyse"}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Erste Analyse</div>
           <div className="font-semibold truncate">{data.title || "Immobilie"}</div>
         </div>
         {data.platform && (
