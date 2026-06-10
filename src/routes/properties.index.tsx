@@ -49,10 +49,11 @@ function PropertiesList() {
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
 
+  const EXCLUDED_DEFAULT = ["Gekauft", "Abgelehnt"];
   const rows = useMemo(() => {
     return properties
       .filter((p) => (scopeAll ? true : p.projectId === activeProject.id))
-      .filter((p) => (statusFilter === "all" ? true : p.status === statusFilter))
+      .filter((p) => (statusFilter === "all" ? !EXCLUDED_DEFAULT.includes(p.status) : statusFilter === "all-inkl" ? true : p.status === statusFilter))
       .filter((p) => (mietrechtFilter === "all" ? true : p.mietrecht === mietrechtFilter))
       .filter((p) => (bezirkFilter ? (p.bezirk || "").toLowerCase().includes(bezirkFilter.toLowerCase()) : true))
       .filter((p) => (search ? (p.title + p.bezirk + p.adresse + p.platform).toLowerCase().includes(search.toLowerCase()) : true))
