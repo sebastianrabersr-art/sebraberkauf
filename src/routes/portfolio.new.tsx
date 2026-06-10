@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { ObjektartDetail, PurchaseInfo } from "@/lib/types";
+import { planLimits, useAuth } from "@/lib/auth";
+import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/portfolio/new")({
   head: () => ({ meta: [{ title: "Gekaufte Immobilie hinzufügen – Portfolio" }] }),
