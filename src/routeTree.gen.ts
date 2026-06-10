@@ -23,6 +23,7 @@ import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FromCalcRouteImport } from './routes/from-calc'
 import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -110,6 +111,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FromCalcRoute = FromCalcRouteImport.update({
+  id: '/from-calc',
+  path: '/from-calc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FollowupsRoute = FollowupsRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/from-calc': typeof FromCalcRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/from-calc': typeof FromCalcRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
+  '/from-calc': typeof FromCalcRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/faq'
     | '/followups'
+    | '/from-calc'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/faq'
     | '/followups'
+    | '/from-calc'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/faq'
     | '/followups'
+    | '/from-calc'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -414,6 +426,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FaqRoute: typeof FaqRoute
   FollowupsRoute: typeof FollowupsRoute
+  FromCalcRoute: typeof FromCalcRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
@@ -533,6 +546,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/from-calc': {
+      id: '/from-calc'
+      path: '/from-calc'
+      fullPath: '/from-calc'
+      preLoaderRoute: typeof FromCalcRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/followups': {
@@ -713,6 +733,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FaqRoute: FaqRoute,
   FollowupsRoute: FollowupsRoute,
+  FromCalcRoute: FromCalcRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,

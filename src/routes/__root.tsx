@@ -92,7 +92,7 @@ function GatedOutlet() {
     }
     return null;
   }
-  if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
+  if (profile && !profile.onboarding_completed && pathname !== "/onboarding" && pathname !== "/from-calc") {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
