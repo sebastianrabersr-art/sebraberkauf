@@ -6,9 +6,10 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { setAnalyticsContext, trackPageView } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 
@@ -73,7 +74,16 @@ function RootComponent() {
 
 function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { session, profile, loading } = useAuth();
+  const { session, profile, subscription, loading } = useAuth();
+
+  // Keep analytics context fresh + emit page_view per route change.
+  useEffect(() => {
+    setAnalyticsContext({ loggedIn: !!session, plan: subscription?.plan ?? null });
+  }, [session, subscription?.plan]);
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
+
   const isPublic =
     PUBLIC_PATHS.some((p) => p === pathname) ||
     pathname.startsWith("/legal") ||
