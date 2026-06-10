@@ -32,6 +32,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RatgeberIndexRouteImport } from './routes/ratgeber.index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PortfolioIndexRouteImport } from './routes/portfolio.index'
+import { Route as RatgeberSlugRouteImport } from './routes/ratgeber.$slug'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
@@ -153,6 +154,11 @@ const PortfolioIndexRoute = PortfolioIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PortfolioRoute,
 } as any)
+const RatgeberSlugRoute = RatgeberSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => RatgeberRoute,
+} as any)
 const PropertiesNewRoute = PropertiesNewRouteImport.update({
   id: '/properties/new',
   path: '/properties/new',
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/ratgeber/': typeof RatgeberIndexRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio': typeof PortfolioIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/ratgeber': typeof RatgeberIndexRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/ratgeber/': typeof RatgeberIndexRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio/'
     | '/properties/'
     | '/ratgeber/'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio'
     | '/properties'
     | '/ratgeber'
@@ -354,6 +365,7 @@ export interface FileRouteTypes {
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio/'
     | '/properties/'
     | '/ratgeber/'
@@ -551,6 +563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortfolioIndexRouteImport
       parentRoute: typeof PortfolioRoute
     }
+    '/ratgeber/$slug': {
+      id: '/ratgeber/$slug'
+      path: '/$slug'
+      fullPath: '/ratgeber/$slug'
+      preLoaderRoute: typeof RatgeberSlugRouteImport
+      parentRoute: typeof RatgeberRoute
+    }
     '/properties/new': {
       id: '/properties/new'
       path: '/properties/new'
@@ -604,10 +623,12 @@ const PortfolioRouteWithChildren = PortfolioRoute._addFileChildren(
 )
 
 interface RatgeberRouteChildren {
+  RatgeberSlugRoute: typeof RatgeberSlugRoute
   RatgeberIndexRoute: typeof RatgeberIndexRoute
 }
 
 const RatgeberRouteChildren: RatgeberRouteChildren = {
+  RatgeberSlugRoute: RatgeberSlugRoute,
   RatgeberIndexRoute: RatgeberIndexRoute,
 }
 
