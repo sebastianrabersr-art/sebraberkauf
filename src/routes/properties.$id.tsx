@@ -413,11 +413,11 @@ function Detail() {
             />
           </Section>
 
-          <Section title="CRM · Verkäufer & Follow-up">
+          <Section title="Verkäufer & Makler">
             <CrmPanel p={p} edit={true} u={u} />
           </Section>
 
-          <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
+          <Section title="Mietrecht – ausführliche Einschätzung">
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xs uppercase tracking-wide text-muted-foreground">Kategorie</span>
@@ -441,6 +441,11 @@ function Detail() {
           <Section title="Aktivitäten / Verlauf">
             <ActivitiesPanel propertyId={p.id} />
           </Section>
+
+          <Section title="Advanced: AfA, Projektion & Anschlussfinanzierung">
+            <AdvancedInvestmentPanel p={p} />
+          </Section>
+
 
           <ViewingChecklist propertyId={p.id} viewings={viewings} setViewing={setViewing} />
         </div>
