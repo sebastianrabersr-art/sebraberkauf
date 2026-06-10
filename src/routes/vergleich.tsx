@@ -45,6 +45,10 @@ function ComparePage() {
       </AppShell>
     );
   }
+  return <ComparePageInner />;
+}
+
+function ComparePageInner() {
   const { projects, properties } = useStore();
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
