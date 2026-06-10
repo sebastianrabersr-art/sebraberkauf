@@ -83,8 +83,8 @@ function PropertiesList() {
   return (
     <AppShell>
       <PageHeader
-        title="Immobilien-Datenbank"
-        description={`${rows.length} Objekte${scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}.`}
+        title="Kaufkandidaten"
+        description={`${rows.length} Objekt${rows.length === 1 ? "" : "e"} in Prüfung${scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}. Gekaufte Immobilien findest du im Portfolio.`}
         actions={
           <div className="flex gap-2 flex-wrap">
             <Link to="/properties/new" className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
