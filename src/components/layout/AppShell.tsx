@@ -8,16 +8,16 @@ import { planLabel, useAuth } from "@/lib/auth";
 const NAV_PRIMARY: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/properties", label: "Kaufkandidaten", icon: Database },
-  { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { to: "/vergleich", label: "Vergleich", icon: GitCompareArrows },
-  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
+  { to: "/rechner", label: "Rechner", icon: Calculator },
 ];
 
 const NAV_SECONDARY: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
+  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/projects", label: "Projekte", icon: FolderKanban },
-  { to: "/rechner", label: "Rechner", icon: Calculator },
   { to: "/followups", label: "Follow-ups", icon: Bell },
-  { to: "/viewing", label: "Besichtigung", icon: ClipboardCheck },
+  { to: "/viewing", label: "Besichtigungen", icon: ClipboardCheck },
   { to: "/assumptions", label: "Einstellungen", icon: Settings },
 ];
 
