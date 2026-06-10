@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 type EmailSupabaseClient = {
   from: (table: string) => any
-  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data?: any; error?: any }>
+  rpc: (fn: string, args?: Record<string, unknown>) => any
 }
 
 const MAX_RETRIES = 5
