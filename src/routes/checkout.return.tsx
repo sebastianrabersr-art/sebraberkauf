@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, XCircle, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, planLabel } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/checkout/return")({
   validateSearch: (search: Record<string, unknown>): { session_id?: string } => ({
@@ -55,6 +56,10 @@ function CheckoutReturn() {
   }
 
   const upgraded = subscription?.plan && subscription.plan !== "free";
+
+  useEffect(() => {
+    if (upgraded) track("checkout_completed", { plan: subscription?.plan ?? null });
+  }, [upgraded, subscription?.plan]);
 
   if (upgraded) {
     return (

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PLAN_PRICING, type Plan } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 type Interval = "monthly" | "yearly";
 type PriceKey = `${Exclude<Plan, "free">}_${"monthly" | "yearly"}`;
@@ -44,6 +45,8 @@ export function useStripeCheckout() {
   const [step, setStep] = useState<"summary" | "pay">("summary");
 
   const openCheckout = useCallback((o: CheckoutOptions) => {
+    const parsed = parsePriceKey(o.priceId);
+    if (parsed) track("checkout_started", { plan: parsed.plan, interval: parsed.interval });
     setOpts(o);
     setStep("summary");
   }, []);
