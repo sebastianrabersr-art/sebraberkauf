@@ -63,6 +63,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
+        // Nur Karte + PayPal anbieten (Link, Amazon Pay etc. ausblenden).
+        // Zusätzlich muss PayPal im Stripe-Dashboard unter
+        // Settings → Payment methods aktiviert sein.
+        payment_method_types: ["card", "paypal"],
         metadata: { userId: context.userId },
         subscription_data: { metadata: { userId: context.userId } },
       });
