@@ -32,6 +32,19 @@ interface Row {
 }
 
 function ComparePage() {
+  const { subscription } = useAuth();
+  if (!planLimits(subscription?.plan).compare) {
+    return (
+      <AppShell>
+        <PageHeader title="Vergleich" description="2–4 Immobilien nebeneinander vergleichen." />
+        <FeatureLocked
+          title="Vergleich ist in Plus & Premium enthalten"
+          description="Mit Plus kannst du mehrere Immobilien direkt nebeneinander vergleichen und die beste Wahl treffen."
+          recommendPlan="plus"
+        />
+      </AppShell>
+    );
+  }
   const { projects, properties } = useStore();
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
