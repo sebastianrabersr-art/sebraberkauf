@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
 import { Route as VergleichRouteImport } from './routes/vergleich'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RechnerRouteImport } from './routes/rechner'
+import { Route as RatgeberRouteImport } from './routes/ratgeber'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
@@ -28,8 +30,10 @@ import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RatgeberIndexRouteImport } from './routes/ratgeber.index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PortfolioIndexRouteImport } from './routes/portfolio.index'
+import { Route as RatgeberSlugRouteImport } from './routes/ratgeber.$slug'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
@@ -44,6 +48,11 @@ const ViewingRoute = ViewingRouteImport.update({
 const VergleichRoute = VergleichRouteImport.update({
   id: '/vergleich',
   path: '/vergleich',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -64,6 +73,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const RechnerRoute = RechnerRouteImport.update({
   id: '/rechner',
   path: '/rechner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatgeberRoute = RatgeberRouteImport.update({
+  id: '/ratgeber',
+  path: '/ratgeber',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -131,6 +145,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RatgeberIndexRoute = RatgeberIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RatgeberRoute,
+} as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -140,6 +159,11 @@ const PortfolioIndexRoute = PortfolioIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PortfolioRoute,
+} as any)
+const RatgeberSlugRoute = RatgeberSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => RatgeberRoute,
 } as any)
 const PropertiesNewRoute = PropertiesNewRouteImport.update({
   id: '/properties/new',
@@ -182,18 +206,22 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
+  '/ratgeber': typeof RatgeberRouteWithChildren
   '/rechner': typeof RechnerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/ratgeber/': typeof RatgeberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -213,14 +241,17 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio': typeof PortfolioIndexRoute
   '/properties': typeof PropertiesIndexRoute
+  '/ratgeber': typeof RatgeberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -238,18 +269,22 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRouteWithChildren
   '/pricing': typeof PricingRoute
   '/projects': typeof ProjectsRoute
+  '/ratgeber': typeof RatgeberRouteWithChildren
   '/rechner': typeof RechnerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
+  '/ratgeber/$slug': typeof RatgeberSlugRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/ratgeber/': typeof RatgeberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -268,18 +303,22 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/projects'
+    | '/ratgeber'
     | '/rechner'
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio/'
     | '/properties/'
+    | '/ratgeber/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -299,14 +338,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio'
     | '/properties'
+    | '/ratgeber'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -323,18 +365,22 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/projects'
+    | '/ratgeber'
     | '/rechner'
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
+    | '/ratgeber/$slug'
     | '/portfolio/'
     | '/properties/'
+    | '/ratgeber/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -352,10 +398,12 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRouteWithChildren
   PricingRoute: typeof PricingRoute
   ProjectsRoute: typeof ProjectsRoute
+  RatgeberRoute: typeof RatgeberRouteWithChildren
   RechnerRoute: typeof RechnerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VergleichRoute: typeof VergleichRoute
   ViewingRoute: typeof ViewingRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -379,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/vergleich'
       fullPath: '/vergleich'
       preLoaderRoute: typeof VergleichRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -407,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/rechner'
       fullPath: '/rechner'
       preLoaderRoute: typeof RechnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ratgeber': {
+      id: '/ratgeber'
+      path: '/ratgeber'
+      fullPath: '/ratgeber'
+      preLoaderRoute: typeof RatgeberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -500,6 +562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ratgeber/': {
+      id: '/ratgeber/'
+      path: '/'
+      fullPath: '/ratgeber/'
+      preLoaderRoute: typeof RatgeberIndexRouteImport
+      parentRoute: typeof RatgeberRoute
+    }
     '/properties/': {
       id: '/properties/'
       path: '/properties'
@@ -513,6 +582,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/portfolio/'
       preLoaderRoute: typeof PortfolioIndexRouteImport
       parentRoute: typeof PortfolioRoute
+    }
+    '/ratgeber/$slug': {
+      id: '/ratgeber/$slug'
+      path: '/$slug'
+      fullPath: '/ratgeber/$slug'
+      preLoaderRoute: typeof RatgeberSlugRouteImport
+      parentRoute: typeof RatgeberRoute
     }
     '/properties/new': {
       id: '/properties/new'
@@ -566,6 +642,20 @@ const PortfolioRouteWithChildren = PortfolioRoute._addFileChildren(
   PortfolioRouteChildren,
 )
 
+interface RatgeberRouteChildren {
+  RatgeberSlugRoute: typeof RatgeberSlugRoute
+  RatgeberIndexRoute: typeof RatgeberIndexRoute
+}
+
+const RatgeberRouteChildren: RatgeberRouteChildren = {
+  RatgeberSlugRoute: RatgeberSlugRoute,
+  RatgeberIndexRoute: RatgeberIndexRoute,
+}
+
+const RatgeberRouteWithChildren = RatgeberRoute._addFileChildren(
+  RatgeberRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyzeRoute: AnalyzeRoute,
@@ -580,10 +670,12 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRouteWithChildren,
   PricingRoute: PricingRoute,
   ProjectsRoute: ProjectsRoute,
+  RatgeberRoute: RatgeberRouteWithChildren,
   RechnerRoute: RechnerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   VergleichRoute: VergleichRoute,
   ViewingRoute: ViewingRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,

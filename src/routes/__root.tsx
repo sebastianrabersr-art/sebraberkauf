@@ -74,7 +74,11 @@ function RootComponent() {
 function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, profile, loading } = useAuth();
-  const isPublic = PUBLIC_PATHS.some((p) => p === pathname) || pathname.startsWith("/legal");
+  const isPublic =
+    PUBLIC_PATHS.some((p) => p === pathname) ||
+    pathname.startsWith("/legal") ||
+    pathname === "/ratgeber" ||
+    pathname.startsWith("/ratgeber/");
 
   if (isPublic) return <Outlet />;
   if (loading) {
