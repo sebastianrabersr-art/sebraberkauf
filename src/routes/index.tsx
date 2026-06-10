@@ -185,22 +185,26 @@ function LinkAnalyzer() {
     if (!trimmed) { setError("Bitte einen Immobilienlink einfügen."); return; }
     if (!isValidUrl(trimmed)) { setError("Bitte eine gültige URL mit https:// einfügen."); return; }
     setLoading(true);
+    track("landing_link_submitted", { platform: platform || "unknown" });
     try {
       const res = await analyze({ data: { url: trimmed, source: "landingpage" } });
       if (!res.success) {
         persistPending(trimmed);
         setFailedUrl(trimmed);
         setError(res.error || "Analyse aktuell nicht möglich.");
+        track("landing_preview_failed", { platform: platform || "unknown", error_code: res.error?.slice(0, 40) || "unknown" });
         return;
       }
       persistPending(trimmed);
       try { localStorage.setItem("pending_analyze_preview", JSON.stringify(res)); } catch { /* ignore */ }
       setPreview(res);
       setIsDemo(false);
+      track("landing_preview_shown", { platform: platform || "unknown", ok: true });
     } catch (err) {
       persistPending(trimmed);
       setFailedUrl(trimmed);
       setError(err instanceof Error ? err.message : "Analyse aktuell nicht möglich.");
+      track("landing_preview_failed", { platform: platform || "unknown", error_code: "exception" });
     } finally {
       setLoading(false);
     }
