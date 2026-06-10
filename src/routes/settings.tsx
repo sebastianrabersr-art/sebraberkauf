@@ -8,12 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { createPortalSession } from "@/utils/payments.functions";
+import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Einstellungen – kauf ma" }] }),
   component: SettingsPage,
 });
+
+type PriceKey = "plus_monthly" | "plus_yearly" | "premium_monthly" | "premium_yearly";
 
 function SettingsPage() {
   const { user, profile, subscription, refresh } = useAuth();
@@ -21,6 +26,9 @@ function SettingsPage() {
   const [marketing, setMarketing] = useState(profile?.marketing_opt_in ?? false);
   const [settings, setSettings] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
+  const [portalBusy, setPortalBusy] = useState(false);
+  const { openCheckout, checkoutDialog } = useStripeCheckout();
 
   useEffect(() => { setName(profile?.name ?? ""); setMarketing(profile?.marketing_opt_in ?? false); }, [profile]);
 
@@ -50,6 +58,33 @@ function SettingsPage() {
 
   const setS = (k: string, v: any) => setSettings((p: any) => ({ ...(p ?? { user_id: user!.id }), [k]: v }));
 
+  const upgrade = (plan: "plus" | "premium") => {
+    if (!isStripeConfigured()) return toast.error("Zahlungen sind noch nicht konfiguriert.");
+    const priceId: PriceKey = `${plan}_${cycle === "monthly" ? "monthly" : "yearly"}` as PriceKey;
+    openCheckout({
+      priceId,
+      title: `Upgrade auf ${plan === "plus" ? "Plus" : "Premium"}`,
+    });
+  };
+
+  const openPortal = async () => {
+    setPortalBusy(true);
+    try {
+      const res = await createPortalSession({
+        data: { returnUrl: `${window.location.origin}/settings`, environment: getStripeEnvironment() },
+      });
+      if ("error" in res) throw new Error(res.error);
+      window.open(res.url, "_blank");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Portal konnte nicht geöffnet werden.");
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
+  const currentPlan = subscription?.plan ?? "free";
+  const hasActiveSub = currentPlan !== "free" && subscription?.subscription_status && ["active", "trialing", "past_due"].includes(subscription.subscription_status);
+
   return (
     <AppShell>
       <PageHeader title="Einstellungen" description="Profil, Standardwerte und Abo" />
@@ -60,32 +95,57 @@ function SettingsPage() {
             <div>
               <h2 className="font-semibold flex items-center gap-2"><Sparkles className="size-4 text-primary" /> Abo & Plan</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Aktueller Plan: <strong>{planLabel(subscription?.plan)}</strong>
+                Aktueller Plan: <strong>{planLabel(currentPlan)}</strong>
+                {subscription?.subscription_status && subscription.subscription_status !== "active" && currentPlan !== "free" && (
+                  <span className="ml-2 text-xs">({subscription.subscription_status})</span>
+                )}
               </p>
               <ul className="text-xs text-muted-foreground mt-2 space-y-0.5">
-                <li>Immobilien: {planLimits(subscription?.plan).properties ?? "unbegrenzt"}</li>
-                <li>Projekte: {planLimits(subscription?.plan).projects ?? "unbegrenzt"}</li>
-                <li>Vergleich: {planLimits(subscription?.plan).compare ? "enthalten" : "nicht enthalten"}</li>
-                <li>Portfolio: {planLimits(subscription?.plan).portfolio ? "enthalten" : "nicht enthalten"}</li>
+                <li>Immobilien: {planLimits(currentPlan).properties ?? "unbegrenzt"}</li>
+                <li>Projekte: {planLimits(currentPlan).projects ?? "unbegrenzt"}</li>
+                <li>Vergleich: {planLimits(currentPlan).compare ? "enthalten" : "nicht enthalten"}</li>
+                <li>Portfolio: {planLimits(currentPlan).portfolio ? "enthalten" : "nicht enthalten"}</li>
               </ul>
             </div>
-            {subscription?.plan !== "premium" && (
-              <div className="grid sm:grid-cols-2 gap-3 w-full sm:w-auto">
-                {(["plus", "premium"] as const).filter((id) => id !== subscription?.plan).map((id) => (
-                  <div key={id} className="rounded-lg border p-3 text-sm">
-                    <div className="font-medium">{id === "plus" ? "Plus" : "Premium"}</div>
-                    <div className="text-muted-foreground text-xs">
-                      {PLAN_PRICING[id].monthly.toString().replace(".", ",")} € / Monat ·{" "}
-                      {PLAN_PRICING[id].yearly.toString().replace(".", ",")} € / Jahr
-                    </div>
-                    <Button size="sm" className="mt-2 w-full" onClick={() => toast.info("Zahlung wird in Kürze freigeschaltet.")}>
-                      Upgrade auf {id === "plus" ? "Plus" : "Premium"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+            {hasActiveSub && (
+              <Button variant="outline" onClick={openPortal} disabled={portalBusy}>
+                {portalBusy && <Loader2 className="size-4 mr-2 animate-spin" />}Abo verwalten
+              </Button>
             )}
           </div>
+
+          {currentPlan !== "premium" && (
+            <div className="mt-5">
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  onClick={() => setCycle("monthly")}
+                  className={`px-3 py-1 rounded-full text-xs border ${cycle === "monthly" ? "bg-foreground text-background" : "bg-card"}`}
+                >Monatlich</button>
+                <button
+                  onClick={() => setCycle("yearly")}
+                  className={`px-3 py-1 rounded-full text-xs border ${cycle === "yearly" ? "bg-foreground text-background" : "bg-card"}`}
+                >Jährlich · spare</button>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {(["plus", "premium"] as const).filter((id) => id !== currentPlan).map((id) => {
+                  const p = PLAN_PRICING[id];
+                  const price = cycle === "monthly" ? p.monthly : p.yearly;
+                  const period = cycle === "monthly" ? "Monat" : "Jahr";
+                  return (
+                    <div key={id} className="rounded-lg border p-4 text-sm">
+                      <div className="font-medium">{id === "plus" ? "Plus" : "Premium"}</div>
+                      <div className="text-muted-foreground text-xs mt-1">
+                        {price.toString().replace(".", ",")} € / {period}
+                      </div>
+                      <Button size="sm" className="mt-3 w-full" onClick={() => upgrade(id)}>
+                        Upgrade auf {id === "plus" ? "Plus" : "Premium"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="rounded-xl border bg-card p-6">
@@ -151,6 +211,7 @@ function SettingsPage() {
           <Button className="mt-4" disabled={busy} onClick={saveSettings}>Benachrichtigungen speichern</Button>
         </section>
       </div>
+      {checkoutDialog}
     </AppShell>
   );
 }

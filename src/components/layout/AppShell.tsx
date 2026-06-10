@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { planLabel, useAuth } from "@/lib/auth";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 const NAV_PRIMARY: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -112,6 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </div>
         </div>
+        <PaymentTestModeBanner />
         <div className="p-6 md:p-10 max-w-[1400px] mx-auto">{children}</div>
       </main>
     </div>

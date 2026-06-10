@@ -33,6 +33,8 @@ import { Route as PortfolioIndexRouteImport } from './routes/portfolio.index'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const ViewingRoute = ViewingRouteImport.update({
   id: '/viewing',
@@ -154,6 +156,17 @@ const PortfolioNewRoute = PortfolioNewRouteImport.update({
   path: '/new',
   getParentRoute: () => PortfolioRoute,
 } as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -175,11 +188,13 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -200,11 +215,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/portfolio': typeof PortfolioIndexRoute
   '/properties': typeof PropertiesIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -227,11 +244,13 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
   '/portfolio/': typeof PortfolioIndexRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -255,11 +274,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/vergleich'
     | '/viewing'
+    | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/portfolio/'
     | '/properties/'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -280,11 +301,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/vergleich'
     | '/viewing'
+    | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/portfolio'
     | '/properties'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -306,11 +329,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/vergleich'
     | '/viewing'
+    | '/checkout/return'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
     | '/portfolio/'
     | '/properties/'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -333,9 +358,11 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   VergleichRoute: typeof VergleichRoute
   ViewingRoute: typeof ViewingRoute
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   PropertiesNewRoute: typeof PropertiesNewRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -508,6 +535,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortfolioNewRouteImport
       parentRoute: typeof PortfolioRoute
     }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -545,9 +586,11 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   VergleichRoute: VergleichRoute,
   ViewingRoute: ViewingRoute,
+  CheckoutReturnRoute: CheckoutReturnRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   PropertiesNewRoute: PropertiesNewRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
