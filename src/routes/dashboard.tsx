@@ -138,7 +138,7 @@ function Dashboard() {
 
           <TabsContent value="kandidaten" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-5">
-              <RankTable title="Score" rows={topScore} metric={(r) => `${r.s.total}`} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
+              <RankTable title="Score" titleInfo={<ScoreInfo />} rows={topScore} metric={(r) => `${r.s.total}`} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
               <RankTable title="Cashflow / Monat" rows={topCashflow} metric={(r) => fmtEUR(r.c.cashflowMtl)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
               <RankTable title="Bruttorendite" rows={topRendite} metric={(r) => fmtPct(r.c.bruttorendite)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
             </div>
