@@ -370,17 +370,12 @@ function Detail() {
             </p>
           </Section>
 
-          <Section title="Finanzierung & Bank-Zahlungsplan" defaultOpen>
+          <Section title="Finanzierung & Bank" defaultOpen>
             <FinancePanel p={p} />
           </Section>
 
-          <Section title="Advanced Investment-Modell (Objektart, AfA, Projektion, Anschlussfinanzierung)">
-            <AdvancedInvestmentPanel p={p} />
-          </Section>
+          <Section title="Risiken & Mietrecht">
 
-
-
-          <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
                 <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
