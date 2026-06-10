@@ -66,6 +66,13 @@ function ProjectsPage() {
           />
         ))}
       </div>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Limit erreicht"
+        description={`Dein Plan erlaubt max. ${limits.projects} Projekt${limits.projects === 1 ? "" : "e"}. Premium schaltet unbegrenzt Projekte frei.`}
+        recommendPlan="premium"
+      />
     </AppShell>
   );
 }
