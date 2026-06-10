@@ -47,96 +47,243 @@ function Feature({ icon: Icon, title, children }: any) {
   );
 }
 
-function HeroMockup() {
+type PreviewData = {
+  title: string;
+  url: string;
+  platform: string;
+  country: string;
+  purchase_price: number | null;
+  living_area_m2: number | null;
+  estimated_rent_monthly: number | null;
+  missing_data: string[];
+};
+
+const DEMO_PREVIEW: PreviewData = {
+  title: "Demo: 2-Zimmer-Altbau, 1070 Wien",
+  url: "",
+  platform: "Demo",
+  country: "Österreich",
+  purchase_price: 285000,
+  living_area_m2: 54,
+  estimated_rent_monthly: 920,
+  missing_data: ["Betriebskosten", "Baujahr"],
+};
+
+function fmtEUR(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+}
+
+function estimateNebenkostenPct(country: string): number {
+  // Grobe Schätzung: AT ~10 %, DE ~12 %
+  if (country === "Deutschland") return 0.12;
+  return 0.10;
+}
+
+function cashflowTendency(price: number | null, rent: number | null): "positiv" | "neutral" | "negativ" | "unbekannt" {
+  if (!price || !rent) return "unbekannt";
+  // Sehr grobe Heuristik: Rate ~ 4,5 % p.a. auf 100 % Finanzierung / 12
+  const rateApprox = (price * 0.045) / 12;
+  const diff = rent - rateApprox;
+  if (diff > 100) return "positiv";
+  if (diff > -100) return "neutral";
+  return "negativ";
+}
+
+function PreviewCard({ data, isDemo }: { data: PreviewData; isDemo: boolean }) {
+  const price = data.purchase_price;
+  const area = data.living_area_m2;
+  const pricePerM2 = price && area ? Math.round(price / area) : null;
+  const nebenPct = estimateNebenkostenPct(data.country);
+  const neben = price ? Math.round(price * nebenPct) : null;
+  const total = price && neben ? price + neben : null;
+  const tendency = cashflowTendency(price, data.estimated_rent_monthly);
+
+  const handleCtaClick = () => {
+    if (data.url) {
+      try { localStorage.setItem("pending_analyze_url", data.url); } catch { /* ignore */ }
+    }
+  };
+
+  const TendencyIcon = tendency === "positiv" ? TrendingUp : tendency === "negativ" ? TrendingDown : Minus;
+  const tendencyClass =
+    tendency === "positiv" ? "text-success bg-success/10" :
+    tendency === "negativ" ? "text-destructive bg-destructive/10" :
+    tendency === "neutral" ? "text-warning bg-warning/10" :
+    "text-muted-foreground bg-muted";
+
   return (
-    <div className="relative w-full max-w-lg mx-auto lg:mx-0 perspective-1000">
-      {/* Main app window */}
-      <div className="relative bg-card rounded-2xl border shadow-2xl shadow-primary/5 overflow-hidden">
-        {/* Title bar */}
-        <div className="px-4 py-3 border-b flex items-center gap-2 bg-muted/30">
-          <div className="flex gap-1.5">
-            <div className="size-2.5 rounded-full bg-destructive/80" />
-            <div className="size-2.5 rounded-full bg-warning/80" />
-            <div className="size-2.5 rounded-full bg-success/80" />
-          </div>
-          <div className="flex-1 text-center">
-            <span className="text-[11px] text-muted-foreground font-medium">kauf ma – Eigentumswohnung Wien</span>
-          </div>
+    <div className="mt-5 rounded-2xl border bg-card p-5 text-left shadow-sm">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">{isDemo ? "Demo-Vorschau" : "Erste Vorschau"}</div>
+          <div className="font-semibold truncate">{data.title || "Immobilie"}</div>
         </div>
-        {/* Content */}
-        <div className="p-5 space-y-4">
-          {/* Score bar */}
-          <div className="flex items-center gap-3">
-            <div className="size-12 rounded-xl bg-primary/10 text-primary grid place-items-center font-bold text-lg">7.8</div>
-            <div className="flex-1">
-              <div className="text-sm font-medium">Gesamtbewertung</div>
-              <div className="flex gap-1 mt-1.5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= 4 ? "bg-primary" : "bg-muted"}`} />
-                ))}
-              </div>
-            </div>
-            <div className="text-xs font-medium text-success bg-success/10 px-2 py-1 rounded-full">Interessant</div>
-          </div>
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-muted/40 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Bruttorendite</div>
-              <div className="text-lg font-semibold mt-0.5">4.8 %</div>
-            </div>
-            <div className="rounded-xl bg-muted/40 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Monatl. Cashflow</div>
-              <div className="text-lg font-semibold mt-0.5 text-success">+ 312 €</div>
-            </div>
-            <div className="rounded-xl bg-muted/40 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Kaufpreis / m²</div>
-              <div className="text-lg font-semibold mt-0.5">4.120 €</div>
-            </div>
-            <div className="rounded-xl bg-muted/40 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Mietrecht-Risiko</div>
-              <div className="flex items-center gap-1.5 mt-1">
-                <div className="size-2.5 rounded-full bg-warning" />
-                <span className="text-sm font-medium">Mittel</span>
-              </div>
-            </div>
-          </div>
-          {/* Mini chart */}
-          <div className="rounded-xl bg-muted/40 p-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Zahlungsplan (10 Jahre)</div>
-            <div className="flex items-end gap-1 h-16">
-              {[40, 55, 48, 62, 58, 70, 65, 78, 72, 85].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t-sm bg-primary/70" style={{ height: `${h}%` }} />
-              ))}
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-              <span>Jahr 1</span>
-              <span>Jahr 10</span>
-            </div>
+        {data.platform && (
+          <span className="text-[10px] px-2 py-1 rounded-full bg-muted shrink-0">{data.platform}</span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <Stat label="Kaufpreis" value={fmtEUR(price)} />
+        <Stat label="Wohnfläche" value={area ? `${area} m²` : "—"} />
+        <Stat label="Preis / m²" value={pricePerM2 ? fmtEUR(pricePerM2) : "—"} />
+        <Stat label={`Nebenkosten (≈${Math.round(nebenPct * 100)} %)`} value={fmtEUR(neben)} />
+        <Stat label="Gesamtkapital" value={fmtEUR(total)} highlight />
+        <div className="rounded-xl bg-muted/40 p-3">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Cashflow-Tendenz</div>
+          <div className={`mt-1 inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${tendencyClass}`}>
+            <TendencyIcon className="size-3" />
+            <span className="capitalize">{tendency}</span>
           </div>
         </div>
       </div>
-      {/* Floating cards */}
-      <div className="absolute -top-4 -right-4 bg-card rounded-xl border shadow-lg p-3 max-w-[180px] animate-float">
-        <div className="flex items-center gap-2">
-          <div className="size-6 rounded-lg bg-success/10 grid place-items-center">
-            <Check className="size-3.5 text-success" />
+
+      {data.missing_data && data.missing_data.length > 0 && (
+        <div className="mt-4 rounded-lg border border-warning/40 bg-warning/5 p-3 flex items-start gap-2 text-xs">
+          <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium text-foreground">Fehlende Daten</div>
+            <div className="text-muted-foreground mt-0.5">{data.missing_data.slice(0, 6).join(", ")}</div>
           </div>
-          <span className="text-xs font-medium">Kaufnebenkosten OK</span>
         </div>
-        <div className="text-[10px] text-muted-foreground mt-1">Grunderwerbsteuer & Notar berücksichtigt</div>
-      </div>
-      <div className="absolute -bottom-3 -left-4 bg-card rounded-xl border shadow-lg p-3 max-w-[190px] animate-float-delayed">
-        <div className="flex items-center gap-2">
-          <div className="size-6 rounded-lg bg-primary/10 grid place-items-center">
-            <Link2 className="size-3.5 text-primary" />
-          </div>
-          <span className="text-xs font-medium">willhaben importiert</span>
-        </div>
-        <div className="text-[10px] text-muted-foreground mt-1">Alle Daten automatisch erkannt</div>
-      </div>
+      )}
+
+      <a
+        href="/signup"
+        onClick={handleCtaClick}
+        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+      >
+        Account erstellen und vollständige Analyse sehen
+        <ArrowRight className="size-4" />
+      </a>
+      <p className="mt-2 text-[11px] text-muted-foreground text-center">
+        Inkl. Finanzierungs-Szenarien, Mietrecht-Risiko, Vergleich & CRM. Keine Kreditkarte.
+      </p>
     </div>
   );
 }
+
+function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl p-3 ${highlight ? "bg-primary/10" : "bg-muted/40"}`}>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-base font-semibold mt-0.5 ${highlight ? "text-primary" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+function LinkAnalyzer() {
+  const extract = useServerFn(extractProperty);
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const platform = detectPlatform(url);
+  const country = detectCountry(url);
+
+  const run = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError(null);
+    setPreview(null);
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setError("Bitte einen Immobilienlink einfügen.");
+      return;
+    }
+    if (!isValidUrl(trimmed)) {
+      setError("Bitte eine gültige URL mit https:// einfügen.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await extract({ data: { url: trimmed } });
+      if (!res.ok) {
+        // Fallback: Demo-Vorschau zeigen, Link merken
+        try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
+        setPreview({ ...DEMO_PREVIEW, url: trimmed, platform: platform || "Demo", country: country || DEMO_PREVIEW.country });
+        setIsDemo(true);
+        setError("Inserat konnte nicht direkt ausgelesen werden – wir zeigen eine Demo-Vorschau. Nach dem Login analysieren wir den Link vollständig.");
+        return;
+      }
+      try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
+      setPreview({
+        title: res.data.title || `Inserat (${res.data.platform || platform || "unbekannt"})`,
+        url: trimmed,
+        platform: res.data.platform || platform,
+        country: res.data.country || country,
+        purchase_price: res.data.purchase_price,
+        living_area_m2: res.data.living_area_m2,
+        estimated_rent_monthly: res.data.estimated_rent_monthly,
+        missing_data: res.data.missing_data || [],
+      });
+      setIsDemo(false);
+    } catch (err) {
+      try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
+      setPreview({ ...DEMO_PREVIEW, url: trimmed, platform: platform || "Demo", country: country || DEMO_PREVIEW.country });
+      setIsDemo(true);
+      setError(err instanceof Error ? err.message : "Vorschau aktuell nicht möglich – Demo wird angezeigt.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showDemo = () => {
+    setPreview(DEMO_PREVIEW);
+    setIsDemo(true);
+    setError(null);
+  };
+
+  return (
+    <div>
+      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-2xl border bg-card p-2 shadow-lg shadow-primary/5">
+        <div className="flex-1 flex items-center gap-2 px-3">
+          <Link2 className="size-4 text-muted-foreground shrink-0" />
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Immobilienlink einfügen"
+            className="flex-1 outline-none bg-transparent text-sm py-3 min-w-0"
+            aria-label="Immobilienlink"
+          />
+          {platform && <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted hidden sm:inline">{platform}</span>}
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+        >
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          Kostenlos analysieren
+        </button>
+      </form>
+
+      {error && (
+        <div className="mt-3 text-xs text-muted-foreground text-left bg-warning/5 border border-warning/30 rounded-lg p-2.5 flex items-start gap-2">
+          <AlertTriangle className="size-3.5 text-warning shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {!preview && !loading && (
+        <button
+          type="button"
+          onClick={showDemo}
+          className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        >
+          Kein Link zur Hand? Demo-Vorschau ansehen
+        </button>
+      )}
+
+      {preview && <PreviewCard data={preview} isDemo={isDemo} />}
+    </div>
+  );
+}
+
+
 
 function Landing() {
   return (
