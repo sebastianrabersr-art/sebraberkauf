@@ -3,6 +3,7 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
+import { ScoreInfo } from "@/components/ScoreInfo";
 import { useMemo, useState } from "react";
 import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
