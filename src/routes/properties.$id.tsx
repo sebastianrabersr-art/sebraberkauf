@@ -248,7 +248,7 @@ function Detail() {
               </Section>
             </>
           )}
-          <Section title="Objektdaten" defaultOpen>
+          <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
