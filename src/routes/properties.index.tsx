@@ -108,7 +108,8 @@ function PropertiesList() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
         <input placeholder="Suche…" value={search} onChange={(e) => setSearch(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm col-span-2" />
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
-          <option value="all">Status: alle</option>
+          <option value="all">Status: aktive Kandidaten</option>
+          <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
           {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
