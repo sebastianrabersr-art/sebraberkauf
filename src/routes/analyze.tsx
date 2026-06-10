@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.functions";
@@ -30,6 +30,18 @@ function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [needsText, setNeedsText] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+
+  // Pick up a link the visitor pasted on the landing page before signup
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem("pending_analyze_url");
+      if (pending && !url) {
+        localStorage.removeItem("pending_analyze_url");
+        setUrl(pending);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const platform = detectPlatform(url);
   const country = detectCountry(url);
