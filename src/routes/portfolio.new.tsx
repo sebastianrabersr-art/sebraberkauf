@@ -146,6 +146,19 @@ function NewPortfolioProperty() {
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
 
+  if (locked) {
+    return (
+      <AppShell>
+        <PageHeader title="Gekaufte Immobilie hinzufügen" description="" />
+        <FeatureLocked
+          title="Portfolio ist in Premium enthalten"
+          description="Mit Premium erfasst du bereits gekaufte Objekte und verfolgst Zahlungen sowie Cashflow."
+          recommendPlan="premium"
+        />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <PageHeader
