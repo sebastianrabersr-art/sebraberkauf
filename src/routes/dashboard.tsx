@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowRight, Bell, Building, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Building, FileText, Link as LinkIcon, Pencil, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -113,14 +115,15 @@ function Dashboard() {
         }
       />
 
-      {/* Top KPIs — nur die wichtigsten 6 */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard label="In Prüfung" value={String(total)} icon={Building} tone="primary" />
+      {/* Hero: Immobilie analysieren – Hauptaktion */}
+      <AnalyzeHero />
+
+      {/* Top KPIs — die wichtigsten 4 */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        <KpiCard label="Immobilien in Prüfung" value={String(total)} icon={Building} tone="primary" />
         <KpiCard label="Beste Immobilie" value={best ? `${best.s.total}` : "—"} sub={best?.p.title?.slice(0, 28)} icon={TrendingUp} tone="success" />
-        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} />
-        <KpiCard label="Ø Cashflow / Monat" value={fmtEUR(avgCashflow)} icon={Wallet} tone={avgCashflow >= 0 ? "success" : "danger"} />
-        <KpiCard label="Kritische Objekte" value={String(kritisch)} icon={AlertTriangle} tone={kritisch > 0 ? "warning" : "default"} />
         <KpiCard label="Offene Follow-ups" value={String(offeneFollowups)} icon={Bell} tone={offeneFollowups > 0 ? "primary" : "default"} />
+        <KpiCard label="Kritische Objekte" value={String(kritisch)} icon={AlertTriangle} tone={kritisch > 0 ? "warning" : "default"} />
       </div>
 
       {/* Strukturierte Bereiche in Tabs */}
@@ -256,6 +259,68 @@ function RankTable({ title, rows, metric, onClick }: { title: string; rows: any[
         {rows.length === 0 && (
           <div className="py-6 text-center text-muted-foreground text-sm">Keine Objekte.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function AnalyzeHero() {
+  const navigate = useNavigate();
+  const [url, setUrl] = useState("");
+
+  const start = () => {
+    const u = url.trim();
+    if (!u) {
+      navigate({ to: "/analyze" });
+      return;
+    }
+    if (!isValidUrl(u)) {
+      toast.error("Bitte eine gültige URL (mit https://) einfügen.");
+      return;
+    }
+    try { localStorage.setItem("pending_analyze_url", u); } catch { /* ignore */ }
+    navigate({ to: "/analyze" });
+  };
+
+  return (
+    <div className="mt-2 rounded-3xl border bg-gradient-to-br from-primary/8 via-card to-card p-6 sm:p-8 shadow-sm">
+      <div className="flex items-center gap-2 text-xs font-medium text-primary mb-2">
+        <Sparkles className="size-4" /> Immobilie analysieren
+      </div>
+      <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+        Füge einen Immobilienlink ein – die Analyse startet sofort.
+      </h2>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
+        Kaufpreis, Nebenkosten, Finanzierung, Miete und Cashflow – automatisch berechnet aus deinem Link.
+      </p>
+
+      <div className="mt-5 flex flex-col sm:flex-row gap-2">
+        <div className="flex-1 flex items-center gap-2 border rounded-xl px-4 py-3 bg-background focus-within:ring-2 ring-ring shadow-sm">
+          <LinkIcon className="size-4 text-muted-foreground shrink-0" />
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") start(); }}
+            placeholder="Immobilienlink einfügen (willhaben, ImmoScout, immowelt …)"
+            className="flex-1 outline-none bg-transparent text-sm"
+          />
+        </div>
+        <button
+          onClick={start}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-95 shadow-sm"
+        >
+          <Sparkles className="size-4" /> Analyse starten
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        <Link to="/analyze" className="inline-flex items-center gap-1.5 hover:text-foreground">
+          <FileText className="size-3.5" /> PDF / Exposé hochladen
+        </Link>
+        <Link to="/properties/new" className="inline-flex items-center gap-1.5 hover:text-foreground">
+          <Pencil className="size-3.5" /> Manuell hinzufügen
+        </Link>
       </div>
     </div>
   );

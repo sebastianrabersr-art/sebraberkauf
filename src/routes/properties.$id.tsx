@@ -133,27 +133,27 @@ function Detail() {
         }
       />
 
-      {/* Investment Summary – nur die wirklich wichtigen KPIs */}
+      {/* Investment Summary – die wichtigsten Zahlen, einfach erklärt */}
       <div className="rounded-2xl border bg-card p-6 mb-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
-            <h2 className="font-semibold tracking-tight">Investment Summary</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Die wichtigsten Kennzahlen auf einen Blick</p>
+            <h2 className="font-semibold tracking-tight">Die wichtigsten Zahlen</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Schnelle Einschätzung auf einen Blick</p>
           </div>
-          <AmpelBadge ampel={s.ampel}>Entscheidung: {s.entscheidung}</AmpelBadge>
+          <AmpelBadge ampel={s.ampel}>Einschätzung: {s.entscheidung}</AmpelBadge>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis brutto inkl. USt falls relevant." />
-          <Stat label="Gesamtkapitalbedarf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Kaufnebenkosten + Sanierung + Einrichtung + Reserve." />
-          <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Erzielbare Nettomiete pro Monat." />
-          <Stat label="Break-even-Miete" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Benötigte Nettomiete für positiven Cashflow." />
-          <Stat label="Cashflow / Monat" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Miete – Rate – BK – Rücklage – Leerstand." />
-          <Stat label="Nettorendite" value={fmtPct(c.nettorendite)} tip="Jahresnettomieten / Gesamtkapitalbedarf." />
-          <Stat label="Score" value={`${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung." />
-          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung." />
-          <Stat label="Datenqualität" value={`${dq.score}%`} hint={dq.level} tone={dq.ampel === "green" ? "good" : dq.ampel === "red" ? "bad" : "neutral"} tip="Anteil ausgefüllter Pflichtfelder." />
-          <Stat label="Status" value={p.status} tip="Aktueller Bearbeitungsstand." />
+          <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis brutto laut Inserat." />
+          <Stat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} tip="Grunderwerbsteuer, Grundbuch, Notar/Vertrag, Maklerprovision usw." />
+          <Stat label="Gesamtkosten beim Kauf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Nebenkosten + Sanierung + Einrichtung + Reserve." />
+          <Stat label="Monatliche Zahlung" value={fmtEUR(c.kreditRateMtl)} tip="Annuität: monatliche Rate an die Bank (Zins + Tilgung)." />
+          <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Nettokaltmiete pro Monat." />
+          <Stat label="Benötigte Miete" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Break-even-Miete: ab dieser Miete ist der monatliche Geldfluss positiv." />
+          <Stat label="Geldfluss pro Monat" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Cashflow: Miete minus Rate, Betriebskosten, Rücklage und Leerstand." />
+          <Stat label="Einschätzung" value={`${s.entscheidung}`} hint={`Score ${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht und Wiederverkauf." />
+          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung aus Baujahr und Beschreibung." />
         </div>
+
 
         {/* Warnungen: nur die wichtigsten 3 zeigen, Rest einklappbar */}
         {(() => {
@@ -248,7 +248,7 @@ function Detail() {
               </Section>
             </>
           )}
-          <Section title="Objektdaten" defaultOpen>
+          <Section title="Objektdaten">
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Titel"><T value={p.title} edit={true} on={(v) => u({ title: v })} /></F>
               <F label="Original-Link">
@@ -302,7 +302,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Kauf, Miete & Nebenkosten" defaultOpen>
+          <Section title="Kauf & Nebenkosten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
               <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
               <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
@@ -321,7 +321,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Maklerkosten & Kaufnebenkosten" actions={
+          <Section title="Detaillierte Kaufnebenkosten & Maklerkosten" actions={
             <button onClick={applyRegionDefaults} type="button"
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2.5 py-1 hover:bg-accent">
               <Wand2 className="size-3.5" /> Standardwerte für Region übernehmen
@@ -370,17 +370,12 @@ function Detail() {
             </p>
           </Section>
 
-          <Section title="Finanzierung & Bank-Zahlungsplan" defaultOpen>
+          <Section title="Finanzierung & Bank" defaultOpen>
             <FinancePanel p={p} />
           </Section>
 
-          <Section title="Advanced Investment-Modell (Objektart, AfA, Projektion, Anschlussfinanzierung)">
-            <AdvancedInvestmentPanel p={p} />
-          </Section>
+          <Section title="Risiken & Mietrecht">
 
-
-
-          <Section title="Mietrecht & Risiko">
             <div className="grid md:grid-cols-2 gap-3">
               <F label="Mietrechtliche Einschätzung">
                 <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
@@ -418,11 +413,11 @@ function Detail() {
             />
           </Section>
 
-          <Section title="CRM · Verkäufer & Follow-up">
+          <Section title="Verkäufer & Makler">
             <CrmPanel p={p} edit={true} u={u} />
           </Section>
 
-          <Section title="Mietrecht-Einschätzung (automatisch aus Baujahr / Beschreibung)">
+          <Section title="Mietrecht – ausführliche Einschätzung">
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xs uppercase tracking-wide text-muted-foreground">Kategorie</span>
@@ -446,6 +441,11 @@ function Detail() {
           <Section title="Aktivitäten / Verlauf">
             <ActivitiesPanel propertyId={p.id} />
           </Section>
+
+          <Section title="Advanced: AfA, Projektion & Anschlussfinanzierung">
+            <AdvancedInvestmentPanel p={p} />
+          </Section>
+
 
           <ViewingChecklist propertyId={p.id} viewings={viewings} setViewing={setViewing} />
         </div>
