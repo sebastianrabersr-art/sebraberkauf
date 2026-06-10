@@ -19,14 +19,6 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
   }
   const item = subscription.items?.data?.[0];
   const lookupKey: string | null = item?.price?.lookup_key ?? null;
-  const userId = subscription.metadata?.userId;
-  if (!userId) {
-    console.error("[webhook] subscription without userId metadata", subscription.id);
-    return;
-  }
-  const item = subscription.items?.data?.[0];
-  const lookupKey: string | null =
-    item?.price?.lookup_key ?? (await extractPriceLookupKey(env, item));
   const { plan, interval } = planFromPriceId(lookupKey);
   const limits = limitsForPlan(plan);
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
