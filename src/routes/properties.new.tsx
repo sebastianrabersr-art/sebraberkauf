@@ -5,6 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { detectPlatform } from "@/lib/extract.functions";
 import { isValidUrl } from "@/lib/calc";
+import { planLimits, useAuth } from "@/lib/auth";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/properties/new")({
   head: () => ({ meta: [{ title: "Neue Immobilie – Immo Invest" }] }),
@@ -13,8 +15,11 @@ export const Route = createFileRoute("/properties/new")({
 
 function NewPropertyPage() {
   const navigate = useNavigate();
-  const { addProperty } = useStore();
+  const { addProperty, properties } = useStore();
   const project = useActiveProject();
+  const { subscription } = useAuth();
+  const limits = planLimits(subscription?.plan);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [bezirk, setBezirk] = useState("");
@@ -23,8 +28,17 @@ function NewPropertyPage() {
   const [zimmer, setZimmer] = useState<number | null>(null);
   const [miete, setMiete] = useState<number | null>(null);
 
+  const checkLimit = () => {
+    if (limits.properties != null && properties.length >= limits.properties) {
+      setUpgradeOpen(true);
+      return false;
+    }
+    return true;
+  };
+
   const submit = () => {
     if (!title.trim()) { toast.error("Bitte Titel angeben."); return; }
+    if (!checkLimit()) return;
     const p = makeEmptyProperty({
       projectId: project.id,
       title: title.trim(),
@@ -44,6 +58,7 @@ function NewPropertyPage() {
   };
 
   const createForPdf = () => {
+    if (!checkLimit()) return;
     const p = makeEmptyProperty({ projectId: project.id, title: "Neues Objekt (PDF)", extractionStatus: "manuell" });
     addProperty(p);
     toast.success("Leere Immobilie angelegt – PDF im Detail hochladen.");
