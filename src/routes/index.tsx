@@ -10,20 +10,18 @@ import { isValidUrl } from "@/lib/calc";
 import {
   ArrowRight,
   Calculator,
-  Check,
   FileText,
   Link2,
   Loader2,
   Sparkles,
   ShieldCheck,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Wallet,
   AlertTriangle,
   GitCompareArrows,
   Upload,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
