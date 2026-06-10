@@ -78,7 +78,9 @@ function GatedOutlet() {
     PUBLIC_PATHS.some((p) => p === pathname) ||
     pathname.startsWith("/legal") ||
     pathname === "/ratgeber" ||
-    pathname.startsWith("/ratgeber/");
+    pathname.startsWith("/ratgeber/") ||
+    pathname === "/rechner" ||
+    pathname.startsWith("/rechner/");
 
   if (isPublic) return <Outlet />;
   if (loading) {
