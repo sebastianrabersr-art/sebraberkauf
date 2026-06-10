@@ -66,8 +66,11 @@ function FromCalcPage() {
       notizen: draft.notizen,
       status: "Interessant",
     });
+    const wasFirst = useStore.getState().properties.filter((x) => !x.isDemo).length === 0;
     addProperty(p);
     clearPendingCalc();
+    track("from_calc_property_created", { calc_type: calc.type });
+    if (wasFirst) track("first_property_created", { source: "from_calc" });
     toast.success("Immobilie aus Berechnung angelegt.");
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
