@@ -48,30 +48,6 @@ function Feature({ icon: Icon, title, children }: any) {
   );
 }
 
-const DEMO_PREVIEW: AnalyzeResult = {
-  success: true,
-  source_url: "",
-  platform: "Demo",
-  title: "Demo: 2-Zimmer-Altbau, 1070 Wien",
-  purchase_price: 285000,
-  living_area_m2: 54,
-  property_type: "Wohnung",
-  rooms: 2,
-  address: "",
-  city: "Wien",
-  district: "1070",
-  region: "Wien",
-  country: "Österreich",
-  price_per_m2: Math.round(285000 / 54),
-  monthly_operating_costs: null,
-  year_built: null,
-  condition: "",
-  description: "Demo-Datensatz – nur zur Veranschaulichung.",
-  images: [],
-  missing_fields: ["Betriebskosten", "Baujahr"],
-  data_quality_score: 55,
-};
-
 function fmtEUR(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -82,7 +58,7 @@ function estimateNebenkostenPct(country: string): number {
   return 0.10;
 }
 
-function PreviewCard({ data, isDemo }: { data: AnalyzeResult; isDemo: boolean }) {
+function PreviewCard({ data }: { data: AnalyzeResult }) {
   const price = data.purchase_price;
   const area = data.living_area_m2;
   const pricePerM2 = data.price_per_m2 ?? (price && area ? Math.round(price / area) : null);
@@ -106,7 +82,7 @@ function PreviewCard({ data, isDemo }: { data: AnalyzeResult; isDemo: boolean })
     <div className="mt-5 rounded-2xl border bg-card p-5 text-left shadow-sm">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">{isDemo ? "Demo-Vorschau" : "Erste Analyse"}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Erste Analyse</div>
           <div className="font-semibold truncate">{data.title || "Immobilie"}</div>
         </div>
         {data.platform && (
@@ -167,7 +143,6 @@ function LinkAnalyzer() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<AnalyzeResult | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
@@ -199,7 +174,6 @@ function LinkAnalyzer() {
       persistPending(trimmed);
       try { localStorage.setItem("pending_analyze_preview", JSON.stringify(res)); } catch { /* ignore */ }
       setPreview(res);
-      setIsDemo(false);
       track("landing_preview_shown", { platform: platform || "unknown", ok: true });
     } catch (err) {
       persistPending(trimmed);
@@ -209,13 +183,6 @@ function LinkAnalyzer() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const showDemo = () => {
-    setPreview(DEMO_PREVIEW);
-    setIsDemo(true);
-    setError(null);
-    setFailedUrl(null);
   };
 
   return (
@@ -266,16 +233,15 @@ function LinkAnalyzer() {
       )}
 
       {!preview && !loading && (
-        <button
-          type="button"
-          onClick={showDemo}
-          className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        <a
+          href="/demo"
+          className="mt-3 inline-flex text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
         >
           Kein Link zur Hand? Demo ansehen
-        </button>
+        </a>
       )}
 
-      {preview && <PreviewCard data={preview} isDemo={isDemo} />}
+      {preview && <PreviewCard data={preview} />}
     </div>
   );
 }
@@ -322,6 +288,11 @@ function Landing() {
               <p className="mt-3 text-xs text-muted-foreground">
                 Funktioniert mit Immobilienlinks aus Österreich und Deutschland.
               </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <a href="/demo" className="text-sm font-medium text-primary underline underline-offset-4">Demo ansehen</a>
+                <a href="/pricing" className="text-sm font-medium text-primary underline underline-offset-4">Preise ansehen</a>
+                <a href="/rechner" className="text-sm font-medium text-primary underline underline-offset-4">Rechner nutzen</a>
+              </div>
             </div>
           </div>
         </div>

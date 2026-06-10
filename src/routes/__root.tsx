@@ -65,7 +65,50 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing", "/faq", "/auth-callback", "/reset-password", "/legal"];
+const PUBLIC_EXACT_PATHS = new Set([
+  "/",
+  "/demo",
+  "/pricing",
+  "/preise",
+  "/faq",
+  "/impressum",
+  "/datenschutz",
+  "/agb",
+  "/widerruf",
+  "/kontakt",
+  "/login",
+  "/signup",
+  "/auth-callback",
+  "/reset-password",
+]);
+
+const PUBLIC_PREFIXES = ["/rechner", "/ratgeber"];
+const APP_PREFIXES = [
+  "/app",
+  "/dashboard",
+  "/kaufkandidaten",
+  "/vergleich",
+  "/pipeline",
+  "/portfolio",
+  "/projects",
+  "/projekte",
+  "/properties",
+  "/kaufkandidaten",
+  "/settings",
+  "/einstellungen",
+  "/account",
+  "/analyze",
+  "/assumptions",
+  "/checkout/return",
+  "/followups",
+  "/from-calc",
+  "/onboarding",
+  "/viewing",
+];
+
+function matchesPath(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -82,9 +125,11 @@ function RootComponent() {
 function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, profile, loading } = useAuth();
-  const isPublic = PUBLIC_PATHS.some((p) => p === pathname) || pathname.startsWith("/legal");
+  const isPublic = PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PREFIXES.some((p) => matchesPath(pathname, p));
+  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));
 
   if (isPublic) return <Outlet />;
+  if (!needsAuth) return <Outlet />;
   if (loading) {
     return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Lade…</div>;
   }
