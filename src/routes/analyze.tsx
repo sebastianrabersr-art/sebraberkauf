@@ -31,6 +31,18 @@ function AnalyzePage() {
   const [needsText, setNeedsText] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
 
+  // Pick up a link the visitor pasted on the landing page before signup
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem("pending_analyze_url");
+      if (pending && !url) {
+        localStorage.removeItem("pending_analyze_url");
+        setUrl(pending);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const platform = detectPlatform(url);
   const country = detectCountry(url);
 
