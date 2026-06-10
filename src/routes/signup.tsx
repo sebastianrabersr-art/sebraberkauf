@@ -43,6 +43,7 @@ function Signup() {
     });
     setBusy(false);
     if (error) return toast.error(error.message);
+    track("signup_completed", { source: "email" });
     toast.success("Account erstellt! Du kannst jetzt loslegen.");
     window.location.href = nextAfterAuth();
   };
@@ -51,7 +52,10 @@ function Signup() {
     const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth-callback" });
     if (res.error) toast.error(res.error.message || "Registrierung fehlgeschlagen");
     if (res.redirected) return;
-    if (!res.error) window.location.href = nextAfterAuth();
+    if (!res.error) {
+      track("signup_completed", { source: "google" });
+      window.location.href = nextAfterAuth();
+    }
   };
 
   return (

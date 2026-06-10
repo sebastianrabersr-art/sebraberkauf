@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { submitCalcLead } from "@/lib/leads.functions";
 import { savePendingCalc, type PendingCalc } from "@/lib/pendingCalc";
 import { useAuth } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 export function SaveCalcCTA({ snapshot }: { snapshot: PendingCalc }) {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export function SaveCalcCTA({ snapshot }: { snapshot: PendingCalc }) {
   const [mailOpen, setMailOpen] = useState(false);
 
   const handleSave = () => {
+    track("calculator_used", { calc_type: snapshot.type });
+    track("calculator_saved", { calc_type: snapshot.type });
     savePendingCalc(snapshot);
     if (session) {
       navigate({ to: "/from-calc" });

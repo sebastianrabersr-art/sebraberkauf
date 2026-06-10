@@ -8,6 +8,7 @@ import { detectPlatform } from "@/lib/extract.functions";
 import { fmtEUR } from "@/lib/calc";
 import { toast } from "sonner";
 import { ArrowRight, Calculator, Home } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/from-calc")({
   head: () => ({ meta: [{ title: "Berechnung übernehmen – kauf ma" }] }),
