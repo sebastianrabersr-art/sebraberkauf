@@ -141,6 +141,12 @@ function KaufNebenCalculator() {
       intro={meta.intro}
       breadcrumbSlug="kaufnebenkosten"
       faq={meta.faq}
+      snapshot={{
+        type: "kaufnebenkosten",
+        createdAt: new Date().toISOString(),
+        inputs: { land, region, kp, maklerPct, vertragPct, gbPct, grestPct, sonst },
+        result: { total, gesamt, pct },
+      }}
       inputs={
         <>
           <SelectInput
@@ -218,6 +224,12 @@ function RenditeCalculator() {
       intro={meta.intro}
       breadcrumbSlug="rendite"
       faq={meta.faq}
+      snapshot={{
+        type: "rendite",
+        createdAt: new Date().toISOString(),
+        inputs: { kp, nk, jahresmiete, laufend, ek },
+        result: { brutto, netto, ekRendite },
+      }}
       inputs={
         <>
           <NumInput label="Kaufpreis" value={kp} onChange={setKp} suffix="€" />
@@ -279,6 +291,12 @@ function CashflowCalculator() {
       intro={meta.intro}
       breadcrumbSlug="cashflow"
       faq={meta.faq}
+      snapshot={{
+        type: "cashflow",
+        createdAt: new Date().toISOString(),
+        inputs: { miete, rate, bk, ruecklage, leerstand, sonst },
+        result: { cfMonth: cf, cfYear, breakEven },
+      }}
       inputs={
         <>
           <NumInput label="Erwartete Monatsmiete" value={miete} onChange={setMiete} suffix="€/M" />

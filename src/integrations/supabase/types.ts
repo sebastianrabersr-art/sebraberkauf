@@ -49,6 +49,36 @@ export type Database = {
           },
         ]
       }
+      calc_email_leads: {
+        Row: {
+          calc_payload: Json | null
+          calc_type: string | null
+          consent: boolean
+          created_at: string
+          email: string
+          id: string
+          user_agent: string | null
+        }
+        Insert: {
+          calc_payload?: Json | null
+          calc_type?: string | null
+          consent?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          user_agent?: string | null
+        }
+        Update: {
+          calc_payload?: Json | null
+          calc_type?: string | null
+          consent?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string

@@ -1,7 +1,9 @@
 import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { SaveCalcCTA } from "@/components/marketing/SaveCalcCTA";
+import type { PendingCalc } from "@/lib/pendingCalc";
 
 export type CalcFaqItem = { q: string; a: string };
 
@@ -14,6 +16,7 @@ export function PublicCalcLayout({
   explanation,
   faq,
   breadcrumbSlug,
+  snapshot,
 }: {
   category: string;
   h1: string;
@@ -23,6 +26,7 @@ export function PublicCalcLayout({
   explanation?: ReactNode;
   faq?: CalcFaqItem[];
   breadcrumbSlug: string;
+  snapshot: PendingCalc;
 }) {
   return (
     <MarketingShell>
@@ -52,16 +56,7 @@ export function PublicCalcLayout({
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-8 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-          <div>
-            <div className="font-semibold">Berechnung speichern und Immobilie vollständig analysieren</div>
-            <p className="text-sm text-muted-foreground mt-1">Link eines Inserats einfügen – Rendite, Cashflow, Mietrecht-Risiko in Sekunden.</p>
-          </div>
-          <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 shrink-0">
-            Kostenlos starten <ArrowRight className="size-4" />
-          </Link>
-        </div>
+        <SaveCalcCTA snapshot={snapshot} />
 
         {explanation && (
           <section className="mt-10">

@@ -20,6 +20,14 @@ function Signup() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const nextAfterAuth = () => {
+    try {
+      if (localStorage.getItem("pending_calc_v1")) return "/from-calc";
+      if (localStorage.getItem("pending_analyze_url")) return "/analyze";
+    } catch {}
+    return "/onboarding";
+  };
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -33,16 +41,14 @@ function Signup() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Account erstellt! Du kannst jetzt loslegen.");
-    const pending = (() => { try { return localStorage.getItem("pending_analyze_url"); } catch { return null; } })();
-    window.location.href = pending ? "/analyze" : "/onboarding";
+    window.location.href = nextAfterAuth();
   };
 
   const handleGoogle = async () => {
     const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth-callback" });
     if (res.error) toast.error(res.error.message || "Registrierung fehlgeschlagen");
     if (res.redirected) return;
-    const pending = (() => { try { return localStorage.getItem("pending_analyze_url"); } catch { return null; } })();
-    if (!res.error) window.location.href = pending ? "/analyze" : "/onboarding";
+    if (!res.error) window.location.href = nextAfterAuth();
   };
 
   return (
