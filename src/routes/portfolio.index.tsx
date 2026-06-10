@@ -16,6 +16,16 @@ function Portfolio() {
   const { properties, payments } = useStore();
   const navigate = useNavigate();
   const { subscription } = useAuth();
+  const rows = useMemo(() => {
+    return properties
+      .filter((p) => p.status === "Gekauft")
+      .map((p) => {
+        const list = payments.filter((x) => x.propertyId === p.id);
+        const sum = summarizePayments(list);
+        return { p, sum };
+      });
+  }, [properties, payments]);
+
   if (!planLimits(subscription?.plan).portfolio) {
     return (
       <AppShell>
@@ -28,15 +38,6 @@ function Portfolio() {
       </AppShell>
     );
   }
-  const rows = useMemo(() => {
-    return properties
-      .filter((p) => p.status === "Gekauft")
-      .map((p) => {
-        const list = payments.filter((x) => x.propertyId === p.id);
-        const sum = summarizePayments(list);
-        return { p, sum };
-      });
-  }, [properties, payments]);
 
   const addBtn = (
     <button
