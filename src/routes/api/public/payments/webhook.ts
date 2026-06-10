@@ -11,20 +11,14 @@ function isoOrNull(unix: number | null | undefined): string | null {
   return unix ? new Date(unix * 1000).toISOString() : null;
 }
 
-async function extractPriceLookupKey(env: StripeEnv, item: any): Promise<string | null> {
-  if (item?.price?.lookup_key) return item.price.lookup_key as string;
-  if (item?.price?.id) {
-    try {
-      const stripe = createStripeClient(env);
-      // Fall back to retrieving price for lookup_key (already expanded in most events).
-      const list = await stripe.prices.list({ limit: 1 } as any);
-      void list; // no-op, just to keep types
-    } catch { /* ignore */ }
-  }
-  return null;
-}
-
 async function upsertSubscription(subscription: any, env: StripeEnv) {
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.error("[webhook] subscription without userId metadata", subscription.id);
+    return;
+  }
+  const item = subscription.items?.data?.[0];
+  const lookupKey: string | null = item?.price?.lookup_key ?? null;
   const userId = subscription.metadata?.userId;
   if (!userId) {
     console.error("[webhook] subscription without userId metadata", subscription.id);
