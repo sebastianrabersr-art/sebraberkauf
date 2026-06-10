@@ -31,7 +31,8 @@ const now = () => new Date().toISOString();
 
 function makeProject(partial: Partial<Project> = {}): Project {
   return {
-    id: crypto.randomUUID(), name: "Neues Projekt", description: "",
+    id: partial.id ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : "proj-tmp"),
+    name: "Neues Projekt", description: "",
     investmentGoal: "", locationFocus: "Wien", budgetMin: null, budgetMax: null,
     maxNegativeCashflow: null, preferredSizeMin: null, preferredSizeMax: null,
     preferredDistricts: "", status: "Aktiv", assumptions: { ...DEFAULT_ASSUMPTIONS },
