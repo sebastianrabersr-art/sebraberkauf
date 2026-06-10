@@ -11,6 +11,7 @@ import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { ScoreBreakdownCard } from "@/components/ScoreBreakdownCard";
+import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { ALL_MIETRECHTE, ALL_STATUSES, type Mietrecht, type Property, type PropertyStatus } from "@/lib/types";
