@@ -298,7 +298,7 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
 
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-4">
-        <ChartBox title="Score je Immobilie">
+        <ChartBox title="Score je Immobilie" info={<ScoreInfo />}>
           <SimpleBar data={chartData} dataKey="score" />
         </ChartBox>
         <ChartBox title="Cashflow (mtl.) je Immobilie">
