@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ViewingRouteImport } from './routes/viewing'
 import { Route as VergleichRouteImport } from './routes/vergleich'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -47,6 +48,11 @@ const ViewingRoute = ViewingRouteImport.update({
 const VergleichRoute = VergleichRouteImport.update({
   id: '/vergleich',
   path: '/vergleich',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/vergleich': typeof VergleichRoute
   '/viewing': typeof ViewingRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/sitemap.xml'
     | '/vergleich'
     | '/viewing'
     | '/checkout/return'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VergleichRoute: typeof VergleichRoute
   ViewingRoute: typeof ViewingRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/vergleich'
       fullPath: '/vergleich'
       preLoaderRoute: typeof VergleichRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -655,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   VergleichRoute: VergleichRoute,
   ViewingRoute: ViewingRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
