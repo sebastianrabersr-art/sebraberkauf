@@ -145,7 +145,7 @@ function PropertiesList() {
             <thead className="bg-muted/50 text-left">
               <tr className="border-b">
                 {[
-                  ["Score","Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht, Wiederverkauf"],
+                  ["Score","__score__"],
                   ["Status","Aktueller CRM-Status"],
                   ["Prio","Priorität für deine Pipeline"],
                   ["Titel","Inserats-Titel"],
@@ -164,7 +164,9 @@ function PropertiesList() {
                   ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder"],
                   ["Nächste Aktion",""],["Verkäufer",""],["Links",""],["",""],
                 ].map(([h,tip]) => (
-                  <th key={h} title={tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                  <th key={h} title={tip === "__score__" ? undefined : tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1">{h}{tip === "__score__" && <ScoreInfo />}</span>
+                  </th>
                 ))}
               </tr>
             </thead>
