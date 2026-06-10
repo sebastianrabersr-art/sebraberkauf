@@ -77,23 +77,13 @@ const num = (s: string): number | null => (s.trim() === "" ? null : Number(s.rep
 
 function NewPortfolioProperty() {
   const { subscription } = useAuth();
-  if (!planLimits(subscription?.plan).portfolio) {
-    return (
-      <AppShell>
-        <PageHeader title="Gekaufte Immobilie hinzufügen" description="" />
-        <FeatureLocked
-          title="Portfolio ist in Premium enthalten"
-          description="Mit Premium erfasst du bereits gekaufte Objekte und verfolgst Zahlungen sowie Cashflow."
-          recommendPlan="premium"
-        />
-      </AppShell>
-    );
-  }
   const navigate = useNavigate();
   const project = useActiveProject();
   const { addProperty } = useStore();
   const [f, setF] = useState<Form>(empty);
   const u = (patch: Partial<Form>) => setF((x) => ({ ...x, ...patch }));
+
+  const locked = !planLimits(subscription?.plan).portfolio;
 
   const submit = () => {
     if (!f.title.trim()) { toast.error("Bitte Titel angeben."); return; }
