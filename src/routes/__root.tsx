@@ -6,10 +6,9 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { setAnalyticsContext, trackPageView } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 
@@ -20,6 +19,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "kauf ma – Immobilien-Rechner & CRM" },
       { name: "description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
+      { property: "og:title", content: "kauf ma – Immobilien-Rechner & CRM" },
+      { name: "twitter:title", content: "kauf ma – Immobilien-Rechner & CRM" },
+      { property: "og:description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
+      { name: "twitter:description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/51532ee0-3a7b-4d03-a1c6-62ca00f544f5/id-preview-cfcaa651--0b41fa67-2b89-4ed5-b794-1a44c3f28cfd.lovable.app-1781106350122.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/51532ee0-3a7b-4d03-a1c6-62ca00f544f5/id-preview-cfcaa651--0b41fa67-2b89-4ed5-b794-1a44c3f28cfd.lovable.app-1781106350122.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -58,7 +65,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing", "/faq", "/auth-callback", "/reset-password", "/legal", "/impressum", "/datenschutz", "/agb"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing", "/faq", "/auth-callback", "/reset-password", "/legal"];
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -74,23 +81,8 @@ function RootComponent() {
 
 function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { session, profile, subscription, loading } = useAuth();
-
-  // Keep analytics context fresh + emit page_view per route change.
-  useEffect(() => {
-    setAnalyticsContext({ loggedIn: !!session, plan: subscription?.plan ?? null });
-  }, [session, subscription?.plan]);
-  useEffect(() => {
-    trackPageView(pathname);
-  }, [pathname]);
-
-  const isPublic =
-    PUBLIC_PATHS.some((p) => p === pathname) ||
-    pathname.startsWith("/legal") ||
-    pathname === "/ratgeber" ||
-    pathname.startsWith("/ratgeber/") ||
-    pathname === "/rechner" ||
-    pathname.startsWith("/rechner/");
+  const { session, profile, loading } = useAuth();
+  const isPublic = PUBLIC_PATHS.some((p) => p === pathname) || pathname.startsWith("/legal");
 
   if (isPublic) return <Outlet />;
   if (loading) {
@@ -102,7 +94,7 @@ function GatedOutlet() {
     }
     return null;
   }
-  if (profile && !profile.onboarding_completed && pathname !== "/onboarding" && pathname !== "/from-calc") {
+  if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
