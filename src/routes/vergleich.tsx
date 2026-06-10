@@ -12,6 +12,8 @@ import { ExternalLink, RotateCcw, GitCompareArrows } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
+import { planLimits, useAuth } from "@/lib/auth";
+import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/vergleich")({
   head: () => ({ meta: [{ title: "Vergleich – Immobilien gegenüberstellen" }] }),
