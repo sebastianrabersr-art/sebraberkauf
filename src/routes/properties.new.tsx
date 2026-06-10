@@ -7,6 +7,7 @@ import { detectPlatform } from "@/lib/extract.functions";
 import { isValidUrl } from "@/lib/calc";
 import { planLimits, useAuth } from "@/lib/auth";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/properties/new")({
   head: () => ({ meta: [{ title: "Neue Immobilie – Immo Invest" }] }),
@@ -52,7 +53,9 @@ function NewPropertyPage() {
       nettomieteMtl: miete,
       nettomieteGeschaetzt: !!miete,
     });
+    const wasFirst = properties.filter((x) => !x.isDemo).length === 0;
     addProperty(p);
+    if (wasFirst) track("first_property_created", { source: "manual" });
     toast.success("Immobilie angelegt.");
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };

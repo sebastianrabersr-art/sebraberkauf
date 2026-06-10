@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check } from "lucide-react";
 import { PLAN_PRICING } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 interface Props {
   open: boolean;
@@ -27,6 +29,7 @@ const FEATURES = {
 export function UpgradeDialog({ open, onOpenChange, title, description, recommendPlan = "plus" }: Props) {
   const p = PLAN_PRICING[recommendPlan];
   const name = recommendPlan === "plus" ? "Plus" : "Premium";
+  useEffect(() => { if (open) track("upgrade_modal_shown", { plan: recommendPlan }); }, [open, recommendPlan]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
