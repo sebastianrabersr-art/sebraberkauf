@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowRight, Bell, Building, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Building, FileText, Link as LinkIcon, Pencil, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
