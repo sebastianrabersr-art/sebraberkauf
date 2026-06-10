@@ -41,7 +41,12 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <footer className="border-t mt-16">
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground flex flex-wrap gap-6 justify-between">
           <span>© {new Date().getFullYear()} kauf ma</span>
-          <span>Hinweis: kauf ma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2">
+            <a href="/impressum" className="hover:text-foreground">Impressum</a>
+            <a href="/datenschutz" className="hover:text-foreground">Datenschutz</a>
+            <a href="/agb" className="hover:text-foreground">AGB</a>
+          </nav>
+          <span className="w-full md:w-auto md:text-right">Hinweis: kauf ma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
         </div>
       </footer>
     </div>

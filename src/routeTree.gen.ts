@@ -23,13 +23,16 @@ import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as FromCalcRouteImport } from './routes/from-calc'
 import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
+import { Route as AgbRouteImport } from './routes/agb'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RechnerIndexRouteImport } from './routes/rechner.index'
 import { Route as RatgeberIndexRouteImport } from './routes/ratgeber.index'
@@ -113,6 +116,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FromCalcRoute = FromCalcRouteImport.update({
   id: '/from-calc',
   path: '/from-calc',
@@ -126,6 +134,11 @@ const FollowupsRoute = FollowupsRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatenschutzRoute = DatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -146,6 +159,11 @@ const AssumptionsRoute = AssumptionsRouteImport.update({
 const AnalyzeRoute = AnalyzeRouteImport.update({
   id: '/analyze',
   path: '/analyze',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgbRoute = AgbRouteImport.update({
+  id: '/agb',
+  path: '/agb',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -212,13 +230,16 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -247,13 +268,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -280,13 +304,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
   '/dashboard': typeof DashboardRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pipeline': typeof PipelineRoute
@@ -317,13 +344,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agb'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
     | '/dashboard'
+    | '/datenschutz'
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/impressum'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -352,13 +382,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agb'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
     | '/dashboard'
+    | '/datenschutz'
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/impressum'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -384,13 +417,16 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agb'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
     | '/dashboard'
+    | '/datenschutz'
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/impressum'
     | '/login'
     | '/onboarding'
     | '/pipeline'
@@ -420,13 +456,16 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgbRoute: typeof AgbRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   DashboardRoute: typeof DashboardRoute
+  DatenschutzRoute: typeof DatenschutzRoute
   FaqRoute: typeof FaqRoute
   FollowupsRoute: typeof FollowupsRoute
   FromCalcRoute: typeof FromCalcRoute
+  ImpressumRoute: typeof ImpressumRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PipelineRoute: typeof PipelineRoute
@@ -548,6 +587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/from-calc': {
       id: '/from-calc'
       path: '/from-calc'
@@ -567,6 +613,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -595,6 +648,13 @@ declare module '@tanstack/react-router' {
       path: '/analyze'
       fullPath: '/analyze'
       preLoaderRoute: typeof AnalyzeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agb': {
+      id: '/agb'
+      path: '/agb'
+      fullPath: '/agb'
+      preLoaderRoute: typeof AgbRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -727,13 +787,16 @@ const RechnerRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgbRoute: AgbRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   DashboardRoute: DashboardRoute,
+  DatenschutzRoute: DatenschutzRoute,
   FaqRoute: FaqRoute,
   FollowupsRoute: FollowupsRoute,
   FromCalcRoute: FromCalcRoute,
+  ImpressumRoute: ImpressumRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PipelineRoute: PipelineRoute,
