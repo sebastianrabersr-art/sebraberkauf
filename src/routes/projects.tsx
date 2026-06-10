@@ -6,6 +6,8 @@ import { fmtEUR } from "@/lib/calc";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { planLimits, useAuth } from "@/lib/auth";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({ meta: [{ title: "Projekte – Immo Invest" }] }),
