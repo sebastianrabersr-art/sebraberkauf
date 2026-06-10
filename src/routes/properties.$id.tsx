@@ -321,7 +321,7 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Maklerkosten & Kaufnebenkosten" actions={
+          <Section title="Detaillierte Kaufnebenkosten & Maklerkosten" actions={
             <button onClick={applyRegionDefaults} type="button"
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2.5 py-1 hover:bg-accent">
               <Wand2 className="size-3.5" /> Standardwerte für Region übernehmen
