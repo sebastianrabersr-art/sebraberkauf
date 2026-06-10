@@ -115,14 +115,15 @@ function Dashboard() {
         }
       />
 
-      {/* Top KPIs — nur die wichtigsten 6 */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard label="In Prüfung" value={String(total)} icon={Building} tone="primary" />
+      {/* Hero: Immobilie analysieren – Hauptaktion */}
+      <AnalyzeHero />
+
+      {/* Top KPIs — die wichtigsten 4 */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        <KpiCard label="Immobilien in Prüfung" value={String(total)} icon={Building} tone="primary" />
         <KpiCard label="Beste Immobilie" value={best ? `${best.s.total}` : "—"} sub={best?.p.title?.slice(0, 28)} icon={TrendingUp} tone="success" />
-        <KpiCard label="Ø Score" value={fmtNum(avgScore, 1)} icon={Target} />
-        <KpiCard label="Ø Cashflow / Monat" value={fmtEUR(avgCashflow)} icon={Wallet} tone={avgCashflow >= 0 ? "success" : "danger"} />
-        <KpiCard label="Kritische Objekte" value={String(kritisch)} icon={AlertTriangle} tone={kritisch > 0 ? "warning" : "default"} />
         <KpiCard label="Offene Follow-ups" value={String(offeneFollowups)} icon={Bell} tone={offeneFollowups > 0 ? "primary" : "default"} />
+        <KpiCard label="Kritische Objekte" value={String(kritisch)} icon={AlertTriangle} tone={kritisch > 0 ? "warning" : "default"} />
       </div>
 
       {/* Strukturierte Bereiche in Tabs */}
