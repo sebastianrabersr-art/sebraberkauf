@@ -147,75 +147,35 @@ function Landing() {
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent pointer-events-none" />
         
         <div className="max-w-6xl mx-auto px-6 pt-12 pb-20 md:pt-20 md:pb-28">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left: Text */}
-            <div className="text-center lg:text-left">
-              {/* Trust badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3.5 py-1.5 text-xs text-muted-foreground mb-6 shadow-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-                </span>
-                Für private Käufer und Anleger in Österreich & Deutschland
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1]">
-                Immobilie gefunden?{" "}
-                <span className="text-primary">Link einfügen.</span>{" "}
-                Sofort wissen, ob sie sich lohnt.
-              </h1>
-
-              {/* Subheadline */}
-              <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Berechne Kaufpreis, Nebenkosten, Finanzierung, Miete, Rendite und Cashflow in wenigen Minuten –{" "}
-                <strong className="text-foreground">ohne Excel-Chaos</strong>{" "}
-                und ohne großes Immobilien-Vorwissen.
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="mt-8 flex gap-3 justify-center lg:justify-start flex-wrap">
-                <a
-                  href="/signup"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
-                >
-                  Kostenlos starten <ArrowRight className="size-4" />
-                </a>
-                <a
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 rounded-xl border bg-card px-7 py-3.5 font-medium text-sm hover:bg-accent transition-colors"
-                >
-                  <Play className="size-3.5" /> Demo ansehen
-                </a>
-              </div>
-
-              {/* Micro trust */}
-              <p className="mt-3 text-xs text-muted-foreground">
-                Keine Kreditkarte. 1 Immobilie gratis. Jederzeit upgraden.
-              </p>
-
-              {/* Hero bullets */}
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 max-w-lg mx-auto lg:mx-0">
-                {[
-                  "Inserat-Link einfügen",
-                  "Daten automatisch übernehmen",
-                  "Cashflow & Rendite berechnen",
-                  "Immobilien vergleichen",
-                  "Risiken erkennen",
-                ].map((text) => (
-                  <div key={text} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="size-5 rounded-full bg-success/10 grid place-items-center shrink-0">
-                      <Check className="size-3 text-success" />
-                    </div>
-                    {text}
-                  </div>
-                ))}
-              </div>
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Trust badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3.5 py-1.5 text-xs text-muted-foreground mb-6 shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+              </span>
+              Für private Käufer und Anleger in Österreich & Deutschland
             </div>
 
-            {/* Right: Mockup */}
-            <div className="hidden lg:block">
-              <HeroMockup />
+            {/* Headline */}
+            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1]">
+              Immobilie gefunden?{" "}
+              <span className="text-primary">Link einfügen</span>{" "}
+              und sofort prüfen.
+            </h1>
+
+            {/* Subheadline */}
+            <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Erhalte erste Kennzahlen zu Kaufpreis, Nebenkosten, Finanzierung, Miete und Cashflow –{" "}
+              <strong className="text-foreground">ohne Excel</strong> und ohne Vorwissen.
+            </p>
+
+            {/* Link input — central element */}
+            <div className="mt-8 max-w-2xl mx-auto">
+              <LinkAnalyzer />
+              <p className="mt-3 text-xs text-muted-foreground">
+                Funktioniert mit Immobilienlinks aus Österreich und Deutschland.
+              </p>
             </div>
           </div>
         </div>
