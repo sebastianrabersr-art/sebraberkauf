@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.functions";
