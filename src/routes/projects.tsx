@@ -19,6 +19,9 @@ const STATUSES: ProjectStatus[] = ["Aktiv", "Pausiert", "Abgeschlossen"];
 function ProjectsPage() {
   const { projects, activeProjectId, addProject, updateProject, deleteProject, setActiveProject } = useStore();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { subscription } = useAuth();
+  const limits = planLimits(subscription?.plan);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   return (
     <AppShell>
@@ -28,6 +31,10 @@ function ProjectsPage() {
         actions={
           <button
             onClick={() => {
+              if (limits.projects != null && projects.length >= limits.projects) {
+                setUpgradeOpen(true);
+                return;
+              }
               const p = addProject({ name: "Neues Projekt" });
               setEditingId(p.id);
               toast.success("Projekt erstellt.");
