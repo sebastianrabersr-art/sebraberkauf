@@ -103,6 +103,7 @@ function Detail() {
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <AmpelBadge ampel={s.ampel}>{s.entscheidung} · Score {s.total}</AmpelBadge>
+            <ScoreInfo />
             <AmpelBadge ampel={dq.ampel}>DQ {dq.score}% · {dq.level}</AmpelBadge>
             <button
               onClick={openOriginal}
