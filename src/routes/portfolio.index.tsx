@@ -4,6 +4,8 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import { fmtEUR, summarizePayments } from "@/lib/calc";
 import { Building2, Plus } from "lucide-react";
+import { planLimits, useAuth } from "@/lib/auth";
+import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/portfolio/")({
   head: () => ({ meta: [{ title: "Portfolio – Bestand" }] }),
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/portfolio/")({
 function Portfolio() {
   const { properties, payments } = useStore();
   const navigate = useNavigate();
+  const { subscription } = useAuth();
   const rows = useMemo(() => {
     return properties
       .filter((p) => p.status === "Gekauft")
@@ -22,6 +25,19 @@ function Portfolio() {
         return { p, sum };
       });
   }, [properties, payments]);
+
+  if (!planLimits(subscription?.plan).portfolio) {
+    return (
+      <AppShell>
+        <PageHeader title="Portfolio" description="Bestand: bereits gekaufte Immobilien." />
+        <FeatureLocked
+          title="Portfolio ist in Premium enthalten"
+          description="Mit Premium verwaltest du deinen Bestand, trackst Zahlungen und siehst den realen Cashflow nach dem Kauf."
+          recommendPlan="premium"
+        />
+      </AppShell>
+    );
+  }
 
   const addBtn = (
     <button

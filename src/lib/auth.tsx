@@ -114,8 +114,26 @@ export function planLabel(p?: Plan | null) {
   return "Kostenlos";
 }
 
-export function planLimits(plan: Plan | undefined | null): { properties: number | null; projects: number | null } {
-  if (plan === "plus") return { properties: 10, projects: null };
-  if (plan === "premium") return { properties: null, projects: null };
-  return { properties: 1, projects: 1 };
+export interface PlanCapabilities {
+  properties: number | null; // null = unlimited
+  projects: number | null;
+  compare: boolean;
+  portfolio: boolean;
+}
+
+export function planLimits(plan: Plan | undefined | null): PlanCapabilities {
+  if (plan === "plus") return { properties: 5, projects: 1, compare: true, portfolio: false };
+  if (plan === "premium") return { properties: null, projects: null, compare: true, portfolio: true };
+  return { properties: 1, projects: 1, compare: false, portfolio: false };
+}
+
+export const PLAN_PRICING = {
+  free: { monthly: 0, yearly: 0 },
+  plus: { monthly: 4.99, yearly: 54.99 },
+  premium: { monthly: 19.99, yearly: 199.99 },
+} as const;
+
+export function usePlan(): Plan {
+  const { subscription } = useAuth();
+  return (subscription?.plan as Plan) ?? "free";
 }

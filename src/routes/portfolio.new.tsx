@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { ObjektartDetail, PurchaseInfo } from "@/lib/types";
+import { planLimits, useAuth } from "@/lib/auth";
+import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/portfolio/new")({
   head: () => ({ meta: [{ title: "Gekaufte Immobilie hinzufügen – Portfolio" }] }),
@@ -74,11 +76,14 @@ const empty: Form = {
 const num = (s: string): number | null => (s.trim() === "" ? null : Number(s.replace(",", ".")));
 
 function NewPortfolioProperty() {
+  const { subscription } = useAuth();
   const navigate = useNavigate();
   const project = useActiveProject();
   const { addProperty } = useStore();
   const [f, setF] = useState<Form>(empty);
   const u = (patch: Partial<Form>) => setF((x) => ({ ...x, ...patch }));
+
+  const locked = !planLimits(subscription?.plan).portfolio;
 
   const submit = () => {
     if (!f.title.trim()) { toast.error("Bitte Titel angeben."); return; }
@@ -140,6 +145,19 @@ function NewPortfolioProperty() {
     toast.success("Gekaufte Immobilie ins Portfolio aufgenommen.");
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
+
+  if (locked) {
+    return (
+      <AppShell>
+        <PageHeader title="Gekaufte Immobilie hinzufügen" description="" />
+        <FeatureLocked
+          title="Portfolio ist in Premium enthalten"
+          description="Mit Premium erfasst du bereits gekaufte Objekte und verfolgst Zahlungen sowie Cashflow."
+          recommendPlan="premium"
+        />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

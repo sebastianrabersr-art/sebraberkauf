@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/integrations/supabase/client";
-import { planLabel, useAuth } from "@/lib/auth";
+import { planLabel, planLimits, PLAN_PRICING, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,13 +56,34 @@ function SettingsPage() {
 
       <div className="space-y-6 max-w-3xl">
         <section className="rounded-xl border bg-card p-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h2 className="font-semibold flex items-center gap-2"><Sparkles className="size-4 text-primary" /> Abo & Plan</h2>
-              <p className="text-sm text-muted-foreground mt-1">Aktueller Plan: <strong>{planLabel(subscription?.plan)}</strong> · Limit: {subscription?.property_limit ?? "∞"} Immobilien</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Aktueller Plan: <strong>{planLabel(subscription?.plan)}</strong>
+              </p>
+              <ul className="text-xs text-muted-foreground mt-2 space-y-0.5">
+                <li>Immobilien: {planLimits(subscription?.plan).properties ?? "unbegrenzt"}</li>
+                <li>Projekte: {planLimits(subscription?.plan).projects ?? "unbegrenzt"}</li>
+                <li>Vergleich: {planLimits(subscription?.plan).compare ? "enthalten" : "nicht enthalten"}</li>
+                <li>Portfolio: {planLimits(subscription?.plan).portfolio ? "enthalten" : "nicht enthalten"}</li>
+              </ul>
             </div>
             {subscription?.plan !== "premium" && (
-              <Button onClick={() => toast.info("Stripe-Checkout wird in Kürze freigeschaltet.")}>Upgrade</Button>
+              <div className="grid sm:grid-cols-2 gap-3 w-full sm:w-auto">
+                {(["plus", "premium"] as const).filter((id) => id !== subscription?.plan).map((id) => (
+                  <div key={id} className="rounded-lg border p-3 text-sm">
+                    <div className="font-medium">{id === "plus" ? "Plus" : "Premium"}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {PLAN_PRICING[id].monthly.toString().replace(".", ",")} € / Monat ·{" "}
+                      {PLAN_PRICING[id].yearly.toString().replace(".", ",")} € / Jahr
+                    </div>
+                    <Button size="sm" className="mt-2 w-full" onClick={() => toast.info("Zahlung wird in Kürze freigeschaltet.")}>
+                      Upgrade auf {id === "plus" ? "Plus" : "Premium"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </section>

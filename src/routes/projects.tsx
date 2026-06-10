@@ -6,6 +6,8 @@ import { fmtEUR } from "@/lib/calc";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { planLimits, useAuth } from "@/lib/auth";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({ meta: [{ title: "Projekte – Immo Invest" }] }),
@@ -17,6 +19,9 @@ const STATUSES: ProjectStatus[] = ["Aktiv", "Pausiert", "Abgeschlossen"];
 function ProjectsPage() {
   const { projects, activeProjectId, addProject, updateProject, deleteProject, setActiveProject } = useStore();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { subscription } = useAuth();
+  const limits = planLimits(subscription?.plan);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   return (
     <AppShell>
@@ -26,6 +31,10 @@ function ProjectsPage() {
         actions={
           <button
             onClick={() => {
+              if (limits.projects != null && projects.length >= limits.projects) {
+                setUpgradeOpen(true);
+                return;
+              }
               const p = addProject({ name: "Neues Projekt" });
               setEditingId(p.id);
               toast.success("Projekt erstellt.");
@@ -57,6 +66,13 @@ function ProjectsPage() {
           />
         ))}
       </div>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Limit erreicht"
+        description={`Dein Plan erlaubt max. ${limits.projects} Projekt${limits.projects === 1 ? "" : "e"}. Premium schaltet unbegrenzt Projekte frei.`}
+        recommendPlan="premium"
+      />
     </AppShell>
   );
 }
