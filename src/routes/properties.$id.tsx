@@ -133,27 +133,27 @@ function Detail() {
         }
       />
 
-      {/* Investment Summary – nur die wirklich wichtigen KPIs */}
+      {/* Investment Summary – die wichtigsten Zahlen, einfach erklärt */}
       <div className="rounded-2xl border bg-card p-6 mb-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
-            <h2 className="font-semibold tracking-tight">Investment Summary</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Die wichtigsten Kennzahlen auf einen Blick</p>
+            <h2 className="font-semibold tracking-tight">Die wichtigsten Zahlen</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Schnelle Einschätzung auf einen Blick</p>
           </div>
-          <AmpelBadge ampel={s.ampel}>Entscheidung: {s.entscheidung}</AmpelBadge>
+          <AmpelBadge ampel={s.ampel}>Einschätzung: {s.entscheidung}</AmpelBadge>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis brutto inkl. USt falls relevant." />
-          <Stat label="Gesamtkapitalbedarf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Kaufnebenkosten + Sanierung + Einrichtung + Reserve." />
-          <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Erzielbare Nettomiete pro Monat." />
-          <Stat label="Break-even-Miete" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Benötigte Nettomiete für positiven Cashflow." />
-          <Stat label="Cashflow / Monat" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Miete – Rate – BK – Rücklage – Leerstand." />
-          <Stat label="Nettorendite" value={fmtPct(c.nettorendite)} tip="Jahresnettomieten / Gesamtkapitalbedarf." />
-          <Stat label="Score" value={`${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung." />
-          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung." />
-          <Stat label="Datenqualität" value={`${dq.score}%`} hint={dq.level} tone={dq.ampel === "green" ? "good" : dq.ampel === "red" ? "bad" : "neutral"} tip="Anteil ausgefüllter Pflichtfelder." />
-          <Stat label="Status" value={p.status} tip="Aktueller Bearbeitungsstand." />
+          <Stat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} tip="Kaufpreis brutto laut Inserat." />
+          <Stat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} tip="Grunderwerbsteuer, Grundbuch, Notar/Vertrag, Maklerprovision usw." />
+          <Stat label="Gesamtkosten beim Kauf" value={fmtEUR(c.gesamtkosten)} tip="Kaufpreis + Nebenkosten + Sanierung + Einrichtung + Reserve." />
+          <Stat label="Monatliche Zahlung" value={fmtEUR(c.kreditRateMtl)} tip="Annuität: monatliche Rate an die Bank (Zins + Tilgung)." />
+          <Stat label="Erwartete Miete" value={fmtEUR(p.nettomieteMtl)} hint={p.nettomieteGeschaetzt ? "geschätzt" : "lt. Inserat"} tip="Nettokaltmiete pro Monat." />
+          <Stat label="Benötigte Miete" value={fmtEUR(c.requiredBreakEvenRent)} hint={`${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²`} tone={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "good" : "bad"} tip="Break-even-Miete: ab dieser Miete ist der monatliche Geldfluss positiv." />
+          <Stat label="Geldfluss pro Monat" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} hint={`${fmtEUR(c.cashflowJahr)}/Jahr`} tip="Cashflow: Miete minus Rate, Betriebskosten, Rücklage und Leerstand." />
+          <Stat label="Einschätzung" value={`${s.entscheidung}`} hint={`Score ${s.total}/100`} tone={s.ampel === "green" ? "good" : s.ampel === "red" ? "bad" : "neutral"} tip="Gesamtbewertung aus Lage, Zahlen, Vermietbarkeit, Zustand, Recht und Wiederverkauf." />
+          <Stat label="Mietrecht-Risiko" value={mietrecht.kategorie} hint={`Risiko ${mietrecht.risiko}`} tone={mietrecht.risiko === "niedrig" ? "good" : mietrecht.risiko === "hoch" ? "bad" : "neutral"} tip="Automatische Einschätzung aus Baujahr und Beschreibung." />
         </div>
+
 
         {/* Warnungen: nur die wichtigsten 3 zeigen, Rest einklappbar */}
         {(() => {
