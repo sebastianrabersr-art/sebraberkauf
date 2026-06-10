@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR, fmtPct, pmt } from "@/lib/calc";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calculator, Coins, Home, PiggyBank, TrendingUp, Wallet } from "lucide-react";
 import type { Property } from "@/lib/types";
