@@ -34,8 +34,10 @@ function Login() {
   }, [redirect]);
 
   const go = (to: string) => {
+    let target = to;
+    try { if (localStorage.getItem("pending_calc_v1")) target = "/from-calc"; } catch {}
     // Full reload so AuthProvider re-bootstraps cleanly with persisted session
-    window.location.replace(to);
+    window.location.replace(target);
   };
 
   const handleEmail = async (e: React.FormEvent) => {

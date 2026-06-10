@@ -14,8 +14,11 @@ function Callback() {
     const finish = (hasSession: boolean) => {
       if (done) return;
       done = true;
-      const target = hasSession ? (redirect || "/dashboard") : "/login";
-      window.location.replace(target);
+      let target = redirect || "/dashboard";
+      try {
+        if (hasSession && localStorage.getItem("pending_calc_v1")) target = "/from-calc";
+      } catch {}
+      window.location.replace(hasSession ? target : "/login");
     };
 
     // 1) Listen for SIGNED_IN in case the broker is still processing the URL
