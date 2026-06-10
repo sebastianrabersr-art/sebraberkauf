@@ -93,6 +93,7 @@ const APP_PREFIXES = [
   "/projects",
   "/projekte",
   "/properties",
+  "/kaufkandidaten",
   "/settings",
   "/einstellungen",
   "/account",
