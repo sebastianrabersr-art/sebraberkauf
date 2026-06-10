@@ -4,24 +4,24 @@ import { useState } from "react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { PricingTable } from "@/components/marketing/PricingTable";
 import { FaqList } from "@/components/marketing/FaqList";
-import { extractProperty, detectCountry, detectPlatform } from "@/lib/extract.functions";
+import { detectPlatform } from "@/lib/extract.functions";
+import { analyzePropertyUrl, type AnalyzeResult } from "@/lib/analyze.functions";
 import { isValidUrl } from "@/lib/calc";
 import {
   ArrowRight,
   Calculator,
-  Check,
   FileText,
   Link2,
   Loader2,
   Sparkles,
   ShieldCheck,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Wallet,
   AlertTriangle,
   GitCompareArrows,
+  Upload,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -47,26 +47,28 @@ function Feature({ icon: Icon, title, children }: any) {
   );
 }
 
-type PreviewData = {
-  title: string;
-  url: string;
-  platform: string;
-  country: string;
-  purchase_price: number | null;
-  living_area_m2: number | null;
-  estimated_rent_monthly: number | null;
-  missing_data: string[];
-};
-
-const DEMO_PREVIEW: PreviewData = {
-  title: "Demo: 2-Zimmer-Altbau, 1070 Wien",
-  url: "",
+const DEMO_PREVIEW: AnalyzeResult = {
+  success: true,
+  source_url: "",
   platform: "Demo",
-  country: "Österreich",
+  title: "Demo: 2-Zimmer-Altbau, 1070 Wien",
   purchase_price: 285000,
   living_area_m2: 54,
-  estimated_rent_monthly: 920,
-  missing_data: ["Betriebskosten", "Baujahr"],
+  property_type: "Wohnung",
+  rooms: 2,
+  address: "",
+  city: "Wien",
+  district: "1070",
+  region: "Wien",
+  country: "Österreich",
+  price_per_m2: Math.round(285000 / 54),
+  monthly_operating_costs: null,
+  year_built: null,
+  condition: "",
+  description: "Demo-Datensatz – nur zur Veranschaulichung.",
+  images: [],
+  missing_fields: ["Betriebskosten", "Baujahr"],
+  data_quality_score: 55,
 };
 
 function fmtEUR(n: number | null | undefined): string {
@@ -75,48 +77,35 @@ function fmtEUR(n: number | null | undefined): string {
 }
 
 function estimateNebenkostenPct(country: string): number {
-  // Grobe Schätzung: AT ~10 %, DE ~12 %
   if (country === "Deutschland") return 0.12;
   return 0.10;
 }
 
-function cashflowTendency(price: number | null, rent: number | null): "positiv" | "neutral" | "negativ" | "unbekannt" {
-  if (!price || !rent) return "unbekannt";
-  // Sehr grobe Heuristik: Rate ~ 4,5 % p.a. auf 100 % Finanzierung / 12
-  const rateApprox = (price * 0.045) / 12;
-  const diff = rent - rateApprox;
-  if (diff > 100) return "positiv";
-  if (diff > -100) return "neutral";
-  return "negativ";
-}
-
-function PreviewCard({ data, isDemo }: { data: PreviewData; isDemo: boolean }) {
+function PreviewCard({ data, isDemo }: { data: AnalyzeResult; isDemo: boolean }) {
   const price = data.purchase_price;
   const area = data.living_area_m2;
-  const pricePerM2 = price && area ? Math.round(price / area) : null;
+  const pricePerM2 = data.price_per_m2 ?? (price && area ? Math.round(price / area) : null);
   const nebenPct = estimateNebenkostenPct(data.country);
   const neben = price ? Math.round(price * nebenPct) : null;
   const total = price && neben ? price + neben : null;
-  const tendency = cashflowTendency(price, data.estimated_rent_monthly);
+  const quality = data.data_quality_score;
+  const qualityClass = quality >= 70 ? "text-success bg-success/10" : quality >= 40 ? "text-warning bg-warning/10" : "text-destructive bg-destructive/10";
+  const location = [data.district, data.city].filter(Boolean).join(" · ") || data.region || "—";
 
   const handleCtaClick = () => {
-    if (data.url) {
-      try { localStorage.setItem("pending_analyze_url", data.url); } catch { /* ignore */ }
+    if (data.source_url) {
+      try {
+        localStorage.setItem("pending_analyze_url", data.source_url);
+        localStorage.setItem("pending_analyze_preview", JSON.stringify(data));
+      } catch { /* ignore */ }
     }
   };
-
-  const TendencyIcon = tendency === "positiv" ? TrendingUp : tendency === "negativ" ? TrendingDown : Minus;
-  const tendencyClass =
-    tendency === "positiv" ? "text-success bg-success/10" :
-    tendency === "negativ" ? "text-destructive bg-destructive/10" :
-    tendency === "neutral" ? "text-warning bg-warning/10" :
-    "text-muted-foreground bg-muted";
 
   return (
     <div className="mt-5 rounded-2xl border bg-card p-5 text-left shadow-sm">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">{isDemo ? "Demo-Vorschau" : "Erste Vorschau"}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">{isDemo ? "Demo-Vorschau" : "Erste Analyse"}</div>
           <div className="font-semibold truncate">{data.title || "Immobilie"}</div>
         </div>
         {data.platform && (
@@ -128,23 +117,22 @@ function PreviewCard({ data, isDemo }: { data: PreviewData; isDemo: boolean }) {
         <Stat label="Kaufpreis" value={fmtEUR(price)} />
         <Stat label="Wohnfläche" value={area ? `${area} m²` : "—"} />
         <Stat label="Preis / m²" value={pricePerM2 ? fmtEUR(pricePerM2) : "—"} />
+        <Stat label="Stadt / Bezirk" value={location} />
         <Stat label={`Nebenkosten (≈${Math.round(nebenPct * 100)} %)`} value={fmtEUR(neben)} />
         <Stat label="Gesamtkapital" value={fmtEUR(total)} highlight />
-        <div className="rounded-xl bg-muted/40 p-3">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Cashflow-Tendenz</div>
-          <div className={`mt-1 inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${tendencyClass}`}>
-            <TendencyIcon className="size-3" />
-            <span className="capitalize">{tendency}</span>
-          </div>
-        </div>
       </div>
 
-      {data.missing_data && data.missing_data.length > 0 && (
-        <div className="mt-4 rounded-lg border border-warning/40 bg-warning/5 p-3 flex items-start gap-2 text-xs">
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+        <div className="text-xs text-muted-foreground">Datenqualität</div>
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${qualityClass}`}>{quality}%</span>
+      </div>
+
+      {data.missing_fields && data.missing_fields.length > 0 && (
+        <div className="mt-3 rounded-lg border border-warning/40 bg-warning/5 p-3 flex items-start gap-2 text-xs">
           <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
           <div>
             <div className="font-medium text-foreground">Fehlende Daten</div>
-            <div className="text-muted-foreground mt-0.5">{data.missing_data.slice(0, 6).join(", ")}</div>
+            <div className="text-muted-foreground mt-0.5">{data.missing_fields.slice(0, 6).join(", ")}</div>
           </div>
         </div>
       )}
@@ -174,57 +162,45 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
 }
 
 function LinkAnalyzer() {
-  const extract = useServerFn(extractProperty);
+  const analyze = useServerFn(analyzePropertyUrl);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [preview, setPreview] = useState<AnalyzeResult | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
   const platform = detectPlatform(url);
-  const country = detectCountry(url);
+
+  const persistPending = (u: string) => {
+    try { localStorage.setItem("pending_analyze_url", u); } catch { /* ignore */ }
+  };
 
   const run = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError(null);
     setPreview(null);
+    setFailedUrl(null);
     const trimmed = url.trim();
-    if (!trimmed) {
-      setError("Bitte einen Immobilienlink einfügen.");
-      return;
-    }
-    if (!isValidUrl(trimmed)) {
-      setError("Bitte eine gültige URL mit https:// einfügen.");
-      return;
-    }
+    if (!trimmed) { setError("Bitte einen Immobilienlink einfügen."); return; }
+    if (!isValidUrl(trimmed)) { setError("Bitte eine gültige URL mit https:// einfügen."); return; }
     setLoading(true);
     try {
-      const res = await extract({ data: { url: trimmed } });
-      if (!res.ok) {
-        // Fallback: Demo-Vorschau zeigen, Link merken
-        try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
-        setPreview({ ...DEMO_PREVIEW, url: trimmed, platform: platform || "Demo", country: country || DEMO_PREVIEW.country });
-        setIsDemo(true);
-        setError("Inserat konnte nicht direkt ausgelesen werden – wir zeigen eine Demo-Vorschau. Nach dem Login analysieren wir den Link vollständig.");
+      const res = await analyze({ data: { url: trimmed, source: "landingpage" } });
+      if (!res.success) {
+        persistPending(trimmed);
+        setFailedUrl(trimmed);
+        setError(res.error || "Analyse aktuell nicht möglich.");
         return;
       }
-      try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
-      setPreview({
-        title: res.data.title || `Inserat (${res.data.platform || platform || "unbekannt"})`,
-        url: trimmed,
-        platform: res.data.platform || platform,
-        country: res.data.country || country,
-        purchase_price: res.data.purchase_price,
-        living_area_m2: res.data.living_area_m2,
-        estimated_rent_monthly: res.data.estimated_rent_monthly,
-        missing_data: res.data.missing_data || [],
-      });
+      persistPending(trimmed);
+      try { localStorage.setItem("pending_analyze_preview", JSON.stringify(res)); } catch { /* ignore */ }
+      setPreview(res);
       setIsDemo(false);
     } catch (err) {
-      try { localStorage.setItem("pending_analyze_url", trimmed); } catch { /* ignore */ }
-      setPreview({ ...DEMO_PREVIEW, url: trimmed, platform: platform || "Demo", country: country || DEMO_PREVIEW.country });
-      setIsDemo(true);
-      setError(err instanceof Error ? err.message : "Vorschau aktuell nicht möglich – Demo wird angezeigt.");
+      persistPending(trimmed);
+      setFailedUrl(trimmed);
+      setError(err instanceof Error ? err.message : "Analyse aktuell nicht möglich.");
     } finally {
       setLoading(false);
     }
@@ -234,6 +210,7 @@ function LinkAnalyzer() {
     setPreview(DEMO_PREVIEW);
     setIsDemo(true);
     setError(null);
+    setFailedUrl(null);
   };
 
   return (
@@ -257,14 +234,29 @@ function LinkAnalyzer() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          Kostenlos analysieren
+          {loading ? "Immobilie wird analysiert…" : "Kostenlos analysieren"}
         </button>
       </form>
 
       {error && (
-        <div className="mt-3 text-xs text-muted-foreground text-left bg-warning/5 border border-warning/30 rounded-lg p-2.5 flex items-start gap-2">
+        <div className="mt-3 text-xs text-left bg-warning/5 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
           <AlertTriangle className="size-3.5 text-warning shrink-0 mt-0.5" />
-          <span>{error}</span>
+          <div className="space-y-2">
+            <div className="text-foreground">{error}</div>
+            {failedUrl && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-md bg-primary text-primary-foreground px-2.5 py-1.5 font-medium hover:bg-primary/90">
+                  <ArrowRight className="size-3" /> Trotzdem in App öffnen
+                </a>
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-md border bg-card px-2.5 py-1.5 font-medium hover:bg-muted">
+                  <FileText className="size-3" /> Inseratstext einfügen
+                </a>
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-md border bg-card px-2.5 py-1.5 font-medium hover:bg-muted">
+                  <Upload className="size-3" /> PDF hochladen
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -274,7 +266,7 @@ function LinkAnalyzer() {
           onClick={showDemo}
           className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
         >
-          Kein Link zur Hand? Demo-Vorschau ansehen
+          Kein Link zur Hand? Demo ansehen
         </button>
       )}
 
@@ -282,6 +274,8 @@ function LinkAnalyzer() {
     </div>
   );
 }
+
+
 
 
 
