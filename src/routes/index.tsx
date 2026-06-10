@@ -143,7 +143,6 @@ function LinkAnalyzer() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<AnalyzeResult | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
@@ -175,7 +174,6 @@ function LinkAnalyzer() {
       persistPending(trimmed);
       try { localStorage.setItem("pending_analyze_preview", JSON.stringify(res)); } catch { /* ignore */ }
       setPreview(res);
-      setIsDemo(false);
       track("landing_preview_shown", { platform: platform || "unknown", ok: true });
     } catch (err) {
       persistPending(trimmed);
@@ -185,13 +183,6 @@ function LinkAnalyzer() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const showDemo = () => {
-    setPreview(DEMO_PREVIEW);
-    setIsDemo(true);
-    setError(null);
-    setFailedUrl(null);
   };
 
   return (
@@ -250,7 +241,7 @@ function LinkAnalyzer() {
         </a>
       )}
 
-      {preview && <PreviewCard data={preview} isDemo={isDemo} />}
+      {preview && <PreviewCard data={preview} />}
     </div>
   );
 }
