@@ -1,15 +1,18 @@
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { PLAN_PRICING } from "@/lib/auth";
+import { PLAN_PRICING, useAuth } from "@/lib/auth";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useNavigate } from "@tanstack/react-router";
+import { isStripeConfigured } from "@/lib/stripe";
+import { toast } from "sonner";
 
 type Cycle = "monthly" | "yearly";
 
 const TIERS = [
   {
-    id: "free",
+    id: "free" as const,
     name: "Kostenlos",
     cta: "Kostenlos starten",
-    to: "/signup",
     highlight: false,
     features: [
       "1 Immobilie",
@@ -23,10 +26,9 @@ const TIERS = [
     ],
   },
   {
-    id: "plus",
+    id: "plus" as const,
     name: "Plus",
     cta: "Plus starten",
-    to: "/signup?plan=plus",
     highlight: true,
     features: [
       "Bis zu 5 Immobilien",
@@ -40,10 +42,9 @@ const TIERS = [
     ],
   },
   {
-    id: "premium",
+    id: "premium" as const,
     name: "Premium",
     cta: "Premium starten",
-    to: "/signup?plan=premium",
     highlight: false,
     features: [
       "Unbegrenzt Immobilien",
@@ -54,7 +55,7 @@ const TIERS = [
       "Advanced-Berechnungen",
     ],
   },
-] as const;
+];
 
 function priceFor(id: "free" | "plus" | "premium", cycle: Cycle) {
   const p = PLAN_PRICING[id];
@@ -65,26 +66,47 @@ function priceFor(id: "free" | "plus" | "premium", cycle: Cycle) {
 
 export function PricingTable() {
   const [cycle, setCycle] = useState<Cycle>("monthly");
+  const { user, subscription } = useAuth();
+  const navigate = useNavigate();
+  const { openCheckout, checkoutDialog } = useStripeCheckout();
+
+  const handleCta = (id: "free" | "plus" | "premium") => {
+    if (id === "free") {
+      navigate({ to: user ? "/dashboard" : "/signup" });
+      return;
+    }
+    if (!user) {
+      navigate({ to: "/signup", search: { plan: id } as any });
+      return;
+    }
+    if (subscription?.plan === id) {
+      toast.info(`Du bist bereits auf ${id === "plus" ? "Plus" : "Premium"}.`);
+      return;
+    }
+    if (!isStripeConfigured()) return toast.error("Zahlungen sind noch nicht konfiguriert.");
+    openCheckout({
+      priceId: `${id}_${cycle === "monthly" ? "monthly" : "yearly"}`,
+      title: `Upgrade auf ${id === "plus" ? "Plus" : "Premium"}`,
+    });
+  };
+
   return (
     <div>
       <div className="flex items-center justify-center gap-3 mb-8">
         <button
           onClick={() => setCycle("monthly")}
           className={`px-4 py-1.5 rounded-full text-sm border ${cycle === "monthly" ? "bg-foreground text-background" : "bg-card"}`}
-        >
-          Monatlich
-        </button>
+        >Monatlich</button>
         <button
           onClick={() => setCycle("yearly")}
           className={`px-4 py-1.5 rounded-full text-sm border ${cycle === "yearly" ? "bg-foreground text-background" : "bg-card"}`}
-        >
-          Jährlich · spare mit jährlicher Zahlung
-        </button>
+        >Jährlich · spare mit jährlicher Zahlung</button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         {TIERS.map((t) => {
           const price = priceFor(t.id, cycle);
+          const isCurrent = user && subscription?.plan === t.id;
           return (
             <div key={t.id} className={`rounded-2xl border p-6 bg-card flex flex-col ${t.highlight ? "ring-2 ring-primary shadow-lg" : ""}`}>
               {t.highlight && <div className="text-xs font-medium uppercase text-primary mb-2">Empfohlen</div>}
@@ -101,16 +123,18 @@ export function PricingTable() {
                   <li key={f} className="flex gap-2"><Check className="size-4 text-primary mt-0.5 shrink-0" />{f}</li>
                 ))}
               </ul>
-              <a
-                href={t.to}
-                className={`mt-6 inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium ${t.highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+              <button
+                onClick={() => handleCta(t.id)}
+                disabled={!!isCurrent}
+                className={`mt-6 inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-60 ${t.highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
               >
-                {t.cta}
-              </a>
+                {isCurrent ? "Aktueller Plan" : t.cta}
+              </button>
             </div>
           );
         })}
       </div>
+      {checkoutDialog}
     </div>
   );
 }
