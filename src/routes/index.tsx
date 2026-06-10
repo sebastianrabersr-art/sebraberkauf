@@ -7,6 +7,7 @@ import { FaqList } from "@/components/marketing/FaqList";
 import { detectPlatform } from "@/lib/extract.functions";
 import { analyzePropertyUrl, type AnalyzeResult } from "@/lib/analyze.functions";
 import { isValidUrl } from "@/lib/calc";
+import { track } from "@/lib/analytics";
 import {
   ArrowRight,
   Calculator,
