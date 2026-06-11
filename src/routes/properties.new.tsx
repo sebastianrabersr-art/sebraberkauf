@@ -8,6 +8,7 @@ import { isValidUrl } from "@/lib/calc";
 import { planLimits, useAuth } from "@/lib/auth";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { track } from "@/lib/analytics";
+import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
 
 export const Route = createFileRoute("/properties/new")({
   head: () => ({ meta: [{ title: "Neue Immobilie – Immo Invest" }] }),
@@ -24,10 +25,19 @@ function NewPropertyPage() {
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [bezirk, setBezirk] = useState("");
+  const [propertyType, setPropertyType] = useState<PropertyType>("apartment");
   const [kaufpreis, setKaufpreis] = useState<number | null>(null);
+  const [housePurchasePrice, setHousePurchasePrice] = useState<number | null>(null);
+  const [landPurchasePrice, setLandPurchasePrice] = useState<number | null>(null);
+  const [landAreaSqm, setLandAreaSqm] = useState<number | null>(null);
   const [m2, setM2] = useState<number | null>(null);
   const [zimmer, setZimmer] = useState<number | null>(null);
   const [miete, setMiete] = useState<number | null>(null);
+
+  const isHouseSeparate = propertyType === "house_with_separate_land";
+  const isHouse = propertyType === "house_with_land" || propertyType === "house_with_separate_land";
+  const isLand = propertyType === "land_only";
+  const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
   const checkLimit = () => {
     if (limits.properties != null && properties.length >= limits.properties) {
@@ -47,9 +57,15 @@ function NewPropertyPage() {
       platform: detectPlatform(link),
       extractionStatus: "manuell",
       bezirk: bezirk.trim(),
-      kaufpreis,
-      wohnflaecheM2: m2,
-      zimmer,
+      propertyType,
+      kaufpreis: isHouseSeparate ? (computedTotal && computedTotal > 0 ? computedTotal : kaufpreis) : kaufpreis,
+      housePurchasePrice: isHouseSeparate ? housePurchasePrice : null,
+      landPurchasePrice: isHouseSeparate ? landPurchasePrice : null,
+      totalPurchasePrice: isHouseSeparate && computedTotal ? computedTotal : null,
+      landAreaSqm: (isHouse || isLand) ? landAreaSqm : null,
+      wohnflaecheM2: isLand ? null : m2,
+      livingAreaSqm: isHouse ? m2 : null,
+      zimmer: isLand ? null : zimmer,
       nettomieteMtl: miete,
       nettomieteGeschaetzt: !!miete,
     });
@@ -85,12 +101,48 @@ function NewPropertyPage() {
           <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
           {link && !isValidUrl(link) && <p className="text-xs text-destructive mt-1">Ungültige URL.</p>}
         </Row>
+        <Row label="Objektart">
+          <select
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value as PropertyType)}
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </Row>
         <div className="grid grid-cols-2 gap-3">
           <Row label="Bezirk"><input value={bezirk} onChange={(e) => setBezirk(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
-          <Row label="Kaufpreis €"><N value={kaufpreis} on={setKaufpreis} /></Row>
-          <Row label="Wohnfläche m²"><N value={m2} on={setM2} /></Row>
-          <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
-          <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
+          {isHouseSeparate ? (
+            <>
+              <Row label="Kaufpreis Haus €"><N value={housePurchasePrice} on={setHousePurchasePrice} /></Row>
+              <Row label="Kaufpreis Grundstück €"><N value={landPurchasePrice} on={setLandPurchasePrice} /></Row>
+              <Row label="Gesamtkaufpreis €">
+                <input
+                  type="number"
+                  value={computedTotal ?? ""}
+                  readOnly
+                  className="w-full rounded-md border bg-muted px-3 py-2 text-sm"
+                />
+              </Row>
+            </>
+          ) : (
+            <Row label={isLand ? "Kaufpreis Grundstück €" : "Kaufpreis €"}>
+              <N value={kaufpreis} on={setKaufpreis} />
+            </Row>
+          )}
+          {(isHouse || isLand) && (
+            <Row label="Grundstücksfläche m²"><N value={landAreaSqm} on={setLandAreaSqm} /></Row>
+          )}
+          {!isLand && (
+            <>
+              <Row label={isHouse ? "Wohnfläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
+              <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
+              <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
+            </>
+          )}
+          {isLand && (
+            <Row label="Erwartete Miete €/Mt (optional)"><N value={miete} on={setMiete} /></Row>
+          )}
         </div>
         <div className="flex gap-2 pt-2">
           <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>

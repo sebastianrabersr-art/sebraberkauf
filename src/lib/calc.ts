@@ -260,19 +260,54 @@ function calcInvestmentKpis(
 }
 
 /**
+ * Liefert den effektiven Gesamt-Kaufpreis – abhängig vom propertyType:
+ *
+ * - apartment / commercial / house_with_land:
+ *     `totalPurchasePrice` (falls explizit gesetzt) sonst `kaufpreis`.
+ * - house_with_separate_land:
+ *     `housePurchasePrice + landPurchasePrice`, fällt zurück auf
+ *     `totalPurchasePrice`/`kaufpreis`, falls nur einer der Werte gesetzt ist.
+ * - land_only:
+ *     `kaufpreis` (oder ersatzweise `landPurchasePrice` / `totalPurchasePrice`).
+ *
+ * Bestandsdaten ohne propertyType werden wie "apartment" behandelt.
+ */
+export function resolveTotalPurchasePrice(p: Property): number {
+  const t = p.propertyType ?? "apartment";
+  if (t === "house_with_separate_land") {
+    const haus = p.housePurchasePrice ?? 0;
+    const grund = p.landPurchasePrice ?? 0;
+    const sum = haus + grund;
+    if (sum > 0) return sum;
+    return p.totalPurchasePrice ?? p.kaufpreis ?? 0;
+  }
+  if (t === "land_only") {
+    return p.kaufpreis ?? p.landPurchasePrice ?? p.totalPurchasePrice ?? 0;
+  }
+  return p.totalPurchasePrice ?? p.kaufpreis ?? 0;
+}
+
+/**
  * Hauptfunktion – komponiert die obigen Bausteine zum Calc-Objekt.
  * Die Felder bleiben 1:1 wie bisher, damit kein UI-Code bricht.
  */
 export function calcProperty(p: Property, a: Assumptions): Calc {
-  const kaufpreis = p.kaufpreis ?? 0;
-  const m2 = p.wohnflaecheM2 ?? 0;
+  // Effektiver Kaufpreis nach propertyType-Logik. Wir reichen ein
+  // "normalisiertes" Property an die internen Helfer weiter, damit
+  // Pauschalsätze, LTV, Renditen etc. konsistent mit derselben Zahl rechnen.
+  const effectiveKaufpreis = resolveTotalPurchasePrice(p);
+  const pn: Property = { ...p, kaufpreis: effectiveKaufpreis };
+
+  // Wohnfläche: bei Häusern/Gewerbe nehmen wir alternativ livingAreaSqm
+  // bzw. usableAreaSqm, damit Preis/m² und Rücklagen-Pauschale sinnvoll bleiben.
+  const m2 = p.wohnflaecheM2 ?? p.livingAreaSqm ?? p.usableAreaSqm ?? 0;
   const miete = p.nettomieteMtl ?? 0;
 
-  const purchase = calcPurchaseCosts(p, a);
-  const financing = calcFinancing(p, a, purchase.gesamtkosten);
-  const rental = calcRentalCosts(p, a, miete, m2);
-  const kpis = calcInvestmentKpis(p, a, {
-    kaufpreis, m2, miete,
+  const purchase = calcPurchaseCosts(pn, a);
+  const financing = calcFinancing(pn, a, purchase.gesamtkosten);
+  const rental = calcRentalCosts(pn, a, miete, m2);
+  const kpis = calcInvestmentKpis(pn, a, {
+    kaufpreis: effectiveKaufpreis, m2, miete,
     gesamtkosten: purchase.gesamtkosten,
     eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
     kreditBetrag: financing.kreditBetrag,
@@ -282,6 +317,8 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     leerstandMtl: rental.leerstandMtl,
     leerstandPct: rental.leerstandPct,
   });
+
+
 
   return {
     nebenkostenPct: purchase.nebenkostenPct,
