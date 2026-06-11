@@ -292,9 +292,10 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
+function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl, u }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>; project?: string; linkValid: boolean; mapsUrl: string | null;
+  u: (patch: Partial<Property>) => void;
 }) {
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
