@@ -306,7 +306,57 @@ function Detail() {
 
           <Section title="Kauf & Nebenkosten" defaultOpen>
             <div className="grid md:grid-cols-3 gap-3">
-              <F label="Kaufpreis €"><N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} /></F>
+              <F label="Objektart">
+                <select
+                  value={p.propertyType ?? "apartment"}
+                  onChange={(e) => u({ propertyType: e.target.value as PropertyType })}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </F>
+              {(p.propertyType ?? "apartment") === "house_with_separate_land" ? (
+                <>
+                  <F label="Kaufpreis Haus €"><N value={p.housePurchasePrice ?? null} edit={true} on={(v) => {
+                    const land = p.landPurchasePrice ?? 0;
+                    const sum = (v ?? 0) + land;
+                    u({ housePurchasePrice: v, totalPurchasePrice: sum || null, kaufpreis: sum || p.kaufpreis });
+                  }} /></F>
+                  <F label="Kaufpreis Grundstück €"><N value={p.landPurchasePrice ?? null} edit={true} on={(v) => {
+                    const haus = p.housePurchasePrice ?? 0;
+                    const sum = haus + (v ?? 0);
+                    u({ landPurchasePrice: v, totalPurchasePrice: sum || null, kaufpreis: sum || p.kaufpreis });
+                  }} /></F>
+                  <F label="Gesamtkaufpreis €"><Ro>{fmtEUR((p.housePurchasePrice ?? 0) + (p.landPurchasePrice ?? 0))}</Ro></F>
+                </>
+              ) : (
+                <F label={(p.propertyType ?? "apartment") === "land_only" ? "Kaufpreis Grundstück €" : "Kaufpreis €"}>
+                  <N value={p.kaufpreis} edit={true} on={(v) => u({ kaufpreis: v })} />
+                </F>
+              )}
+              {((p.propertyType ?? "apartment") === "house_with_land"
+                || (p.propertyType ?? "apartment") === "house_with_separate_land"
+                || (p.propertyType ?? "apartment") === "land_only") && (
+                <F label="Grundstücksfläche m²"><N value={p.landAreaSqm ?? null} edit={true} on={(v) => u({ landAreaSqm: v })} /></F>
+              )}
+              {((p.propertyType ?? "apartment") === "house_with_land"
+                || (p.propertyType ?? "apartment") === "house_with_separate_land"
+                || (p.propertyType ?? "apartment") === "commercial") && (
+                <>
+                  <F label="Wohnfläche m² (Haus)"><N value={p.livingAreaSqm ?? null} edit={true} on={(v) => u({ livingAreaSqm: v })} /></F>
+                  <F label="Nutzfläche m²"><N value={p.usableAreaSqm ?? null} edit={true} on={(v) => u({ usableAreaSqm: v })} /></F>
+                </>
+              )}
+              {(p.propertyType ?? "apartment") === "commercial" && (
+                <div className="md:col-span-3 text-xs text-muted-foreground border-l-2 border-warning pl-3">
+                  Hinweis: Steuer- und Mietrechtsannahmen sind für Gewerbeimmobilien vereinfacht – bitte gesondert prüfen.
+                </div>
+              )}
+              {(p.propertyType ?? "apartment") === "land_only" && (
+                <div className="md:col-span-3 text-xs text-muted-foreground border-l-2 border-warning pl-3">
+                  Hinweis: Bei reinem Grundstück wird keine Rendite berechnet, solange keine Miete oder ein Verkaufsszenario eingetragen ist.
+                </div>
+              )}
               <F label="Sanierung €"><N value={p.sanierung} edit={true} on={(v) => u({ sanierung: v ?? 0 })} /></F>
               <F label="Einrichtung €"><N value={p.einrichtung} edit={true} on={(v) => u({ einrichtung: v ?? 0 })} /></F>
               <F label="Reserve €"><N value={p.reserve} edit={true} on={(v) => u({ reserve: v ?? 0 })} /></F>
