@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { AppShell, PageHeader } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/lib/auth";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR, fmtPct, pmt } from "@/lib/calc";
@@ -56,43 +56,41 @@ const CARDS = [
 function PublicRechnerHub() {
   return (
     <MarketingShell>
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <h1 className="text-4xl font-bold text-center">Immobilienrechner</h1>
-        <p className="text-muted-foreground text-center mt-3 max-w-2xl mx-auto">
+      <section className="max-w-6xl mx-auto px-6 py-16 bg-[#F5F3EE]">
+        <h1 className="font-display text-[28px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>Rechner</h1>
+        <p className="text-[13px] text-[#78716C] mt-1.5 max-w-2xl">
           Die wichtigsten Rechner für deinen Immobilienkauf – kostenlos, ohne Anmeldung. Schnelle Antworten auf konkrete Fragen.
         </p>
 
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="mt-8 grid sm:grid-cols-2 gap-4">
           {CARDS.map((c) => (
-            <div key={c.slug} className="rounded-2xl border bg-card p-6 flex flex-col">
-              <div className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center">
-                <c.icon className="size-5" />
-              </div>
-              <h2 className="mt-4 text-lg font-semibold">{c.title}</h2>
-              <p className="text-sm text-muted-foreground mt-2 flex-1">{c.benefit}</p>
+            <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-[#2D6A4F]">
+              <c.icon className="size-9 text-[#2D6A4F]" strokeWidth={1.5} />
+              <h2 className="mt-4 text-[14px] font-semibold text-[#1C1917]">{c.title}</h2>
+              <p className="text-[13px] text-[#78716C] mt-1.5 flex-1">{c.benefit}</p>
               <Link
                 to="/rechner/$slug"
                 params={{ slug: c.slug }}
-                className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90"
+                className="mt-4 text-[13px] text-[#2D6A4F] font-medium hover:underline self-start"
               >
-                Rechner öffnen <ArrowRight className="size-4" />
+                Öffnen →
               </Link>
             </div>
           ))}
         </div>
 
-        <div className="mt-12 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
-          <div className="font-semibold text-lg">Immobilie vollständig analysieren</div>
-          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
+        <div className="mt-10 rounded-[12px] border border-[#EAE6DF] bg-white p-6 text-center">
+          <div className="font-display text-[18px] font-bold text-[#1C1917]">Immobilie vollständig analysieren</div>
+          <p className="text-[13px] text-[#78716C] mt-2 max-w-xl mx-auto">
             Statt einzelner Rechner: Inserat-Link einfügen und automatisch Rendite, Cashflow, Mietrecht-Risiko & Ampel-Bewertung erhalten.
           </p>
-          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-90">
+          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-5 py-2.5 text-[13px] font-medium hover:bg-[#245A41]">
             Kostenlos starten <ArrowRight className="size-4" />
           </Link>
         </div>
 
-        <div className="mt-10 text-center">
-          <Link to="/ratgeber" className="text-sm text-primary hover:underline">
+        <div className="mt-8 text-center">
+          <Link to="/ratgeber" className="text-[13px] text-[#2D6A4F] hover:underline">
             Mehr Hintergrundwissen im Ratgeber →
           </Link>
         </div>
@@ -113,34 +111,36 @@ function AppRechnerHub() {
 
   return (
     <AppShell>
-      <PageHeader
-        title="Rechner"
-        description="Schnelle Antworten auf einzelne Fragen – ohne gleich eine ganze Immobilie analysieren zu müssen."
-      />
+      <div className="mb-6">
+        <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>Rechner</h1>
+        <p className="mt-1 text-[13px] text-[#78716C]">
+          Schnelle Antworten auf einzelne Fragen – ohne gleich eine ganze Immobilie analysieren zu müssen.
+        </p>
+      </div>
 
-      <div className="mb-5 rounded-xl border bg-card p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="text-sm font-medium">Daten vorausfüllen:</div>
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-2">
+        <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Mit Immobilie verknüpfen</label>
         <select
           value={selId}
           onChange={(e) => setSelId(e.target.value)}
-          className="rounded-lg border bg-background px-3 py-2 text-sm flex-1 max-w-sm"
+          className="h-9 rounded-[8px] border border-[#EAE6DF] bg-white px-3 text-[13px] text-[#1C1917] flex-1 max-w-sm focus:outline-none focus:border-[#2D6A4F]"
         >
           <option value="">— manuell eingeben —</option>
           {list.map((p) => (
             <option key={p.id} value={p.id}>{p.title || "Ohne Titel"}</option>
           ))}
         </select>
-        {sel && <div className="text-xs text-muted-foreground">Werte werden aus „{sel.title}" übernommen.</div>}
+        {sel && <div className="text-[12px] text-[#78716C]">Werte aus „{sel.title}" übernommen.</div>}
       </div>
 
       <Tabs defaultValue="nebenkosten" className="w-full">
-        <TabsList className="h-auto p-1 bg-muted/60 flex-wrap">
-          <TabsTrigger value="nebenkosten" className="gap-1.5"><Coins className="size-3.5" />Kaufnebenkosten</TabsTrigger>
-          <TabsTrigger value="finanzierung" className="gap-1.5"><Wallet className="size-3.5" />Finanzierung</TabsTrigger>
-          <TabsTrigger value="cashflow" className="gap-1.5"><Home className="size-3.5" />Miete & Cashflow</TabsTrigger>
-          <TabsTrigger value="rendite" className="gap-1.5"><TrendingUp className="size-3.5" />Rendite</TabsTrigger>
-          <TabsTrigger value="breakeven" className="gap-1.5"><Calculator className="size-3.5" />Break-even-Miete</TabsTrigger>
-          <TabsTrigger value="leistbar" className="gap-1.5"><PiggyBank className="size-3.5" />Leistbarkeit</TabsTrigger>
+        <TabsList className="h-auto p-1 bg-[#FAFAF8] border border-[#EAE6DF] flex-wrap">
+          <TabsTrigger value="nebenkosten" className="gap-1.5 text-[13px]"><Coins className="size-3.5" />Kaufnebenkosten</TabsTrigger>
+          <TabsTrigger value="finanzierung" className="gap-1.5 text-[13px]"><Wallet className="size-3.5" />Finanzierung</TabsTrigger>
+          <TabsTrigger value="cashflow" className="gap-1.5 text-[13px]"><Home className="size-3.5" />Miete & Cashflow</TabsTrigger>
+          <TabsTrigger value="rendite" className="gap-1.5 text-[13px]"><TrendingUp className="size-3.5" />Rendite</TabsTrigger>
+          <TabsTrigger value="breakeven" className="gap-1.5 text-[13px]"><Calculator className="size-3.5" />Break-even-Miete</TabsTrigger>
+          <TabsTrigger value="leistbar" className="gap-1.5 text-[13px]"><PiggyBank className="size-3.5" />Leistbarkeit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="nebenkosten" className="mt-5"><NebenkostenCalc sel={sel} /></TabsContent>
@@ -158,52 +158,58 @@ function AppRechnerHub() {
 
 function CalcShell({ title, hint, result, children }: { title: string; hint?: string; result: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid lg:grid-cols-5 gap-5">
-      <div className="lg:col-span-2 rounded-2xl border bg-card p-6">
-        <div className="text-base font-semibold tracking-tight">{title}</div>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
-        <div className="mt-4 space-y-3">{children}</div>
+    <div className="grid lg:grid-cols-5 gap-5 items-start">
+      <div className="lg:col-span-3 space-y-3">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Deine Angaben</div>
+        <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+          <div className="font-display text-[16px] font-bold tracking-tight text-[#1C1917]">{title}</div>
+          {hint && <p className="text-[12px] text-[#78716C] mt-1">{hint}</p>}
+          <div className="mt-4 space-y-3">{children}</div>
+        </div>
       </div>
-      <div className="lg:col-span-3 rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-6">
-        {result}
+      <div className="lg:col-span-2 lg:sticky lg:top-6">
+        <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-3">Ergebnis</div>
+          {result}
+        </div>
       </div>
     </div>
   );
 }
 
+const numInpCls =
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+
 function NumField({ label, value, onChange, suffix, step }: { label: string; value: number; onChange: (n: number) => void; suffix?: string; step?: number }) {
   return (
     <label className="block">
-      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
-      <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:ring-2 ring-ring/40">
-        <input
-          type="number"
-          step={step}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 outline-none bg-transparent text-sm tabular-nums"
-        />
-        {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
-      </div>
+      <div className="text-[11px] text-[#78716C] mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
+      <input
+        type="number"
+        step={step}
+        value={Number.isFinite(value) ? value : 0}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className={numInpCls}
+      />
     </label>
   );
 }
 
 function Big({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  const c = tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : "";
+  const c = tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#2D6A4F]";
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
-      <div className={`text-3xl font-semibold tabular-nums mt-1 ${c}`}>{value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${c}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
     </div>
   );
 }
 
 function Row({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
   return (
-    <div className="flex items-baseline justify-between border-b last:border-0 py-2">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`font-medium text-sm tabular-nums ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</span>
+    <div className="flex items-baseline justify-between border-b border-[#F5F3EE] last:border-0 py-2">
+      <span className="text-[13px] text-[#78716C]">{label}</span>
+      <span className={`font-medium text-[13px] tabular-nums ${tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#1C1917]"}`}>{value}</span>
     </div>
   );
 }

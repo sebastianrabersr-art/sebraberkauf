@@ -30,29 +30,31 @@ export function PublicCalcLayout({
 }) {
   return (
     <MarketingShell>
-      <section className="max-w-5xl mx-auto px-6 py-12">
-        <nav className="text-sm text-muted-foreground mb-5 flex gap-2 flex-wrap" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-foreground">Start</Link>
+      <section className="max-w-6xl mx-auto px-6 py-12 bg-[#F5F3EE]">
+        <nav className="text-[12px] text-[#A8A29E] mb-5 flex gap-2 flex-wrap" aria-label="Breadcrumb">
+          <Link to="/" className="hover:text-[#1C1917]">Start</Link>
           <span>/</span>
-          <Link to="/rechner" className="hover:text-foreground">Rechner</Link>
+          <Link to="/rechner" className="hover:text-[#1C1917]">Rechner</Link>
           <span>/</span>
-          <span className="text-foreground">{category}</span>
+          <span className="text-[#1C1917]">{category}</span>
         </nav>
 
-        <header className="mb-6">
-          <div className="text-xs uppercase tracking-wide text-primary font-medium mb-2">{category}</div>
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight">{h1}</h1>
-          <p className="text-muted-foreground mt-3 max-w-2xl">{intro}</p>
+        <header className="mb-8">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">{category}</div>
+          <h1 className="font-display text-[28px] sm:text-[32px] font-extrabold leading-tight text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>{h1}</h1>
+          <p className="text-[13px] text-[#78716C] mt-2 max-w-2xl">{intro}</p>
         </header>
 
-        <div className="grid lg:grid-cols-5 gap-5">
-          <div className="lg:col-span-2 rounded-2xl border bg-card p-6">
-            <div className="text-sm font-semibold mb-4">Deine Angaben</div>
-            <div className="space-y-3">{inputs}</div>
+        <div className="grid lg:grid-cols-5 gap-5 items-start">
+          <div className="lg:col-span-3 space-y-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Deine Angaben</div>
+            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 space-y-3">{inputs}</div>
           </div>
-          <div className="lg:col-span-3 rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-6">
-            <div className="text-sm font-semibold mb-4">Ergebnis</div>
-            {result}
+          <div className="lg:col-span-2 lg:sticky lg:top-6">
+            <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-3">Ergebnis</div>
+              {result}
+            </div>
           </div>
         </div>
 
@@ -60,19 +62,19 @@ export function PublicCalcLayout({
 
         {explanation && (
           <section className="mt-10">
-            <h2 className="text-xl font-semibold mb-3">So wird gerechnet</h2>
-            <div className="prose prose-sm max-w-none text-foreground/90 leading-relaxed">{explanation}</div>
+            <h2 className="font-display text-[20px] font-bold mb-3 text-[#1C1917]">So wird gerechnet</h2>
+            <div className="prose prose-sm max-w-none text-[#1C1917]/90 leading-relaxed">{explanation}</div>
           </section>
         )}
 
         {faq && faq.length > 0 && (
           <section id="faq" className="mt-10 scroll-mt-24">
-            <h2 className="text-xl font-semibold mb-4">Häufige Fragen</h2>
+            <h2 className="font-display text-[20px] font-bold mb-4 text-[#1C1917]">Häufige Fragen</h2>
             <div className="space-y-3">
               {faq.map((f, i) => (
-                <div key={i} className="rounded-lg border p-4">
-                  <div className="font-medium">{f.q}</div>
-                  <p className="text-sm text-muted-foreground mt-1.5">{f.a}</p>
+                <div key={i} className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+                  <div className="font-medium text-[14px] text-[#1C1917]">{f.q}</div>
+                  <p className="text-[13px] text-[#78716C] mt-1.5">{f.a}</p>
                 </div>
               ))}
             </div>
@@ -80,21 +82,21 @@ export function PublicCalcLayout({
         )}
 
         <section className="mt-10 grid sm:grid-cols-3 gap-3">
-          <Link to="/ratgeber" className="rounded-lg border p-4 hover:border-primary transition">
-            <div className="text-sm font-medium">Ratgeber lesen</div>
-            <div className="text-xs text-muted-foreground mt-1">Hintergrundwissen zu Kauf, Rendite & Cashflow</div>
+          <Link to="/ratgeber" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+            <div className="text-[13px] font-medium text-[#1C1917]">Ratgeber lesen</div>
+            <div className="text-[12px] text-[#78716C] mt-1">Hintergrundwissen zu Kauf, Rendite & Cashflow</div>
           </Link>
-          <Link to="/pricing" className="rounded-lg border p-4 hover:border-primary transition">
-            <div className="text-sm font-medium">Preise ansehen</div>
-            <div className="text-xs text-muted-foreground mt-1">Gratis, Plus, Premium</div>
+          <Link to="/pricing" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+            <div className="text-[13px] font-medium text-[#1C1917]">Preise ansehen</div>
+            <div className="text-[12px] text-[#78716C] mt-1">Gratis, Plus, Premium</div>
           </Link>
-          <Link to="/signup" className="rounded-lg border p-4 hover:border-primary transition">
-            <div className="text-sm font-medium">Konto anlegen</div>
-            <div className="text-xs text-muted-foreground mt-1">In 30 Sekunden starten</div>
+          <Link to="/signup" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+            <div className="text-[13px] font-medium text-[#1C1917]">Konto anlegen</div>
+            <div className="text-[12px] text-[#78716C] mt-1">In 30 Sekunden starten</div>
           </Link>
         </section>
 
-        <p className="mt-10 text-xs text-muted-foreground border-t pt-6 flex items-start gap-2">
+        <p className="mt-10 text-[12px] text-[#78716C] border-t border-[#EAE6DF] pt-6 flex items-start gap-2">
           <ShieldCheck className="size-4 mt-0.5 shrink-0" />
           <span>Die Berechnung ersetzt keine Rechts-, Steuer- oder Finanzberatung. Werte sind Richtwerte und können je nach Region, Anbieter und individueller Situation abweichen.</span>
         </p>
@@ -104,6 +106,9 @@ export function PublicCalcLayout({
     </MarketingShell>
   );
 }
+
+const inputCls =
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 export function NumInput({
   label,
@@ -120,17 +125,14 @@ export function NumInput({
 }) {
   return (
     <label className="block">
-      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
-      <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:ring-2 ring-ring/40">
-        <input
-          type="number"
-          step={step}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 outline-none bg-transparent text-sm tabular-nums"
-        />
-        {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
-      </div>
+      <div className="text-[11px] text-[#78716C] mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
+      <input
+        type="number"
+        step={step}
+        value={Number.isFinite(value) ? value : 0}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className={inputCls + " tabular-nums"}
+      />
     </label>
   );
 }
@@ -148,11 +150,11 @@ export function SelectInput<T extends string>({
 }) {
   return (
     <label className="block">
-      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
+      <div className="text-[11px] text-[#78716C] mb-1">{label}</div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+        className={inputCls}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -163,20 +165,20 @@ export function SelectInput<T extends string>({
 }
 
 export function BigResult({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  const c = tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : "";
+  const c = tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#2D6A4F]";
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
-      <div className={`text-3xl font-semibold tabular-nums mt-1 ${c}`}>{value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${c}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
     </div>
   );
 }
 
 export function ResultRow({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
   return (
-    <div className="flex items-baseline justify-between border-b last:border-0 py-2">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`font-medium text-sm tabular-nums ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</span>
+    <div className="flex items-baseline justify-between border-b border-[#F5F3EE] last:border-0 py-2">
+      <span className="text-[13px] text-[#78716C]">{label}</span>
+      <span className={`font-medium text-[13px] tabular-nums ${tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#1C1917]"}`}>{value}</span>
     </div>
   );
 }
