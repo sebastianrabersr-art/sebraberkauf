@@ -143,6 +143,15 @@ export interface Property {
   zimmer: number | null;
   badezimmer?: number | null;
   wc?: number | null;
+  // Objekt-Kategorie & zusätzliche Flächen/Preise für Häuser & Grundstücke.
+  // Alle optional – Bestandsdaten ohne propertyType werden als "apartment" behandelt.
+  propertyType?: PropertyType;
+  landAreaSqm?: number | null;        // Grundstücksfläche m²
+  livingAreaSqm?: number | null;      // Wohnfläche m² (parallel zu wohnflaecheM2 für Haus/Gewerbe)
+  usableAreaSqm?: number | null;      // Nutzfläche m² (Keller, Lager, Gewerbe …)
+  housePurchasePrice?: number | null; // Kaufpreis Haus (bei separat gekauftem Grundstück)
+  landPurchasePrice?: number | null;  // Kaufpreis Grundstück (bei separat gekauftem Grundstück)
+  totalPurchasePrice?: number | null; // Optionaler explizit gesetzter Gesamtkaufpreis
   kaufpreis: number | null;
   kaufpreisNetto?: number | null;
   kaufpreisBrutto?: number | null;
