@@ -92,8 +92,26 @@ function Detail() {
     if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
   };
 
+  // Navigate to a tab and optionally scroll to a section id
+  const navTo = (target: TabKey, sectionId?: string) => {
+    setTab(target);
+    if (sectionId) {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId) as HTMLDetailsElement | null;
+        if (el) {
+          if (el.tagName === "DETAILS") el.open = true;
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 60);
+    } else {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 30);
+    }
+  };
+
   // Negative margins to break out of AppShell padding (p-6 md:p-10)
   const breakout = "-mx-6 md:-mx-10";
+
+
 
   return (
     <AppShell>
@@ -158,9 +176,15 @@ function Detail() {
       {/* ============ TWO COLUMN LAYOUT ============ */}
       <div className={`${breakout} flex items-start`}>
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
+          {tab === "uebersicht" && (
+            <>
+              <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("kalkulation")} />
+              <SetupWalkthrough propertyId={p.id} navTo={navTo} />
+            </>
+          )}
           {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} />}
           {tab === "finanzierung" && (
-            <Section title="Finanzierung & Bank" defaultOpen>
+            <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
               <FinancePanel p={p} />
             </Section>
           )}
@@ -370,7 +394,7 @@ function KalkulationTab({ p, c, u, projects, regions, applyRegionDefaults, linkV
           <Section title="Zahlungen & Cashflow" defaultOpen><PaymentsPanel p={p} /></Section>
         </>
       )}
-      <Section title="Objektdaten" defaultOpen>
+      <Section id="sec-objektdaten" title="Objektdaten" defaultOpen>
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Titel"><T value={p.title} edit on={(v) => u({ title: v })} /></F>
           <F label="Original-Link">
@@ -424,7 +448,7 @@ function KalkulationTab({ p, c, u, projects, regions, applyRegionDefaults, linkV
         </div>
       </Section>
 
-      <Section title="Kauf & Nebenkosten" defaultOpen>
+      <Section id="sec-kauf-nebenkosten" title="Kauf & Nebenkosten" defaultOpen>
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Objektart">
             <select value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })} className={selectCls}>
@@ -647,9 +671,9 @@ function OverviewStat({ label, value, sub, tone }: { label: string; value: strin
   );
 }
 
-function AccordionCard({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function AccordionCard({ title, children, defaultOpen = false, id }: { title: string; children: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <span className="text-[13px] font-medium text-[#1C1917]">{title}</span>
         <ChevronRight className="size-4 text-[#A8A29E] transition-transform group-open:rotate-90" />
@@ -672,9 +696,9 @@ function ReadField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Section({ title, children, actions, defaultOpen = false }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean }) {
+function Section({ title, children, actions, defaultOpen = false, id }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-2 min-w-0">
           <ChevronRight className="size-4 text-[#A8A29E] shrink-0 transition-transform group-open:rotate-90" />
@@ -744,3 +768,90 @@ function N({ value, on, edit }: { value: number | null | undefined; on: (v: numb
     />
   );
 }
+
+// ============ DATA CHECK BANNER ============
+function DataCheckBanner({ propertyId, dqScore, onCheck }: { propertyId: string; dqScore: number; onCheck: () => void }) {
+  const key = `pwt:${propertyId}:bannerDismissed`;
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem(key) === "1") setDismissed(true); } catch {}
+  }, [key]);
+  if (dismissed || dqScore >= 100) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-[10px] px-4 py-3" style={{ background: "#FEF3C7", border: "1px solid #FCD34D" }}>
+      <AlertTriangle className="size-4 mt-0.5 shrink-0" style={{ color: "#D97706" }} />
+      <p className="text-[13px] flex-1" style={{ color: "#92400E" }}>
+        Bitte prüfe die importierten Daten bevor du kalkulierst – nicht alle Felder werden automatisch korrekt ausgelesen.
+      </p>
+      <div className="flex items-center gap-3 shrink-0">
+        <button onClick={onCheck} className="text-[13px] font-medium hover:underline" style={{ color: "#92400E" }}>Jetzt prüfen →</button>
+        <button
+          onClick={() => { try { sessionStorage.setItem(key, "1"); } catch {} setDismissed(true); }}
+          className="text-[13px] hover:underline"
+          style={{ color: "#92400E" }}
+        >Ignorieren ✕</button>
+      </div>
+    </div>
+  );
+}
+
+// ============ SETUP WALKTHROUGH ============
+function SetupWalkthrough({ propertyId, navTo }: { propertyId: string; navTo: (tab: TabKey, sectionId?: string) => void }) {
+  const dismissKey = `pwt:${propertyId}:walkthroughDismissed`;
+  const stepKey = (n: number) => `pwt:${propertyId}:step${n}`;
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+  const [checked, setChecked] = useState<boolean[]>([false, false, false, false]);
+
+  useEffect(() => {
+    try {
+      setDismissed(localStorage.getItem(dismissKey) === "1");
+      setChecked([1, 2, 3, 4].map((n) => localStorage.getItem(stepKey(n)) === "1"));
+    } catch { setDismissed(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId]);
+
+  if (dismissed === null) return null;
+  const allDone = checked.every(Boolean);
+  if (dismissed || allDone) return null;
+
+  const steps: { label: string; go: () => void }[] = [
+    { label: "Kaufpreis & Fläche prüfen (Kalkulation → Objektdaten)", go: () => navTo("kalkulation", "sec-objektdaten") },
+    { label: "Erwartete Miete eingeben (Kalkulation → Kauf & Nebenkosten)", go: () => navTo("kalkulation", "sec-kauf-nebenkosten") },
+    { label: "Finanzierung eintragen (Finanzierung Tab)", go: () => navTo("finanzierung", "sec-finanzierung") },
+    { label: "Score & Cashflow prüfen (du bist hier)", go: () => navTo("uebersicht") },
+  ];
+
+  const toggle = (i: number) => {
+    const next = [...checked];
+    next[i] = !next[i];
+    setChecked(next);
+    try { localStorage.setItem(stepKey(i + 1), next[i] ? "1" : "0"); } catch {}
+  };
+
+  return (
+    <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+      <div className="text-[13px] font-semibold text-[#1C1917] mb-3">In 4 Schritten zur ersten Einschätzung</div>
+      <ol className="space-y-2">
+        {steps.map((s, i) => (
+          <li key={i} className="flex items-center gap-3 text-[13px] text-[#78716C]">
+            <input
+              type="checkbox"
+              checked={checked[i]}
+              onChange={() => toggle(i)}
+              className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F] cursor-pointer"
+            />
+            <span className="text-[11px] text-[#A8A29E] font-medium w-4">{i + 1}.</span>
+            <button onClick={s.go} className="text-left hover:text-[#1C1917] hover:underline flex-1">{s.label}</button>
+          </li>
+        ))}
+      </ol>
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={() => { try { localStorage.setItem(dismissKey, "1"); } catch {} setDismissed(true); }}
+          className="text-[12px] text-[#A8A29E] hover:text-[#78716C]"
+        >Walkthrough ausblenden</button>
+      </div>
+    </div>
+  );
+}
+
