@@ -857,8 +857,8 @@ function SetupWalkthrough({ propertyId, navTo }: { propertyId: string; navTo: (t
   if (dismissed || allDone) return null;
 
   const steps: { label: string; go: () => void }[] = [
-    { label: "Kaufpreis & Fläche prüfen (Kalkulation → Objektdaten)", go: () => navTo("kalkulation", "sec-objektdaten") },
-    { label: "Erwartete Miete eingeben (Kalkulation → Kauf & Nebenkosten)", go: () => navTo("kalkulation", "sec-kauf-nebenkosten") },
+    { label: "Kaufpreis & Fläche prüfen (Übersicht → Objektdaten)", go: () => navTo("uebersicht", "sec-objektdaten") },
+    { label: "Erwartete Miete eingeben (Übersicht → Kauf & Nebenkosten)", go: () => navTo("uebersicht", "sec-kauf-nebenkosten") },
     { label: "Finanzierung eintragen (Finanzierung Tab)", go: () => navTo("finanzierung", "sec-finanzierung") },
     { label: "Score & Cashflow prüfen (du bist hier)", go: () => navTo("uebersicht") },
   ];
