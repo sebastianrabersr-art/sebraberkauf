@@ -243,6 +243,7 @@ export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
     missingData: [], scoreLage: 15, scoreVermietbarkeit: 12, scoreZustand: 10,
     scoreRecht: 6, scoreWiederverkauf: 3, notizen: "",
     priority: "Mittel", sellerType: "unklar",
+    bewertung: "Neu", prozessStatus: "",
     createdAt: now(), ...partial,
   };
 }
