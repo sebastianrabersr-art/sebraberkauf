@@ -48,12 +48,12 @@ function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>
-        Vergleich
+        Analyse
       </h1>
       <p className="mt-1 text-[13px] text-[#78716C]">
         {compareLimit > 0
-          ? `Bis zu ${compareLimit} Immobilien auswählen und nebeneinander vergleichen`
-          : "2–4 Immobilien auswählen und nebeneinander vergleichen"}
+          ? `Bis zu ${compareLimit} Immobilien analysieren und die beste Wahl treffen`
+          : "2–4 Immobilien analysieren und die beste Wahl treffen"}
       </p>
     </div>
   );
