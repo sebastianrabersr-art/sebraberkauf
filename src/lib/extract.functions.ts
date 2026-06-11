@@ -334,7 +334,26 @@ Zusätzliche Hinweise für schwierige Fälle:
       }
       const body = await resp.json();
       const content = body?.choices?.[0]?.message?.content ?? "{}";
-      json = typeof content === "string" ? JSON.parse(content) : content;
+      if (typeof content === "string") {
+        let cleaned = content.trim();
+        // Strip markdown code fences
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+        // Extract just the JSON object
+        const first = cleaned.indexOf("{");
+        const last = cleaned.lastIndexOf("}");
+        if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1);
+        try {
+          json = JSON.parse(cleaned);
+        } catch {
+          try {
+            json = JSON.parse(cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]"));
+          } catch {
+            return { ok: false as const, platform, country, url, error: "Antwort konnte nicht geparst werden – bitte erneut versuchen." };
+          }
+        }
+      } else {
+        json = content;
+      }
     } catch (e) {
       return { ok: false as const, platform, country, url, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
     }
