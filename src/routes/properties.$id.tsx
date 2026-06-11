@@ -308,7 +308,14 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl, u }: {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <OverviewStat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} />
+        <OverviewStat
+          label="Kaufpreis"
+          value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)}
+          editable={{
+            current: (p.kaufpreisBrutto ?? p.kaufpreis) ?? null,
+            onCommit: (v) => u(p.kaufpreisBrutto != null ? { kaufpreisBrutto: v } : { kaufpreis: v }),
+          }}
+        />
         <OverviewStat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} />
         <OverviewStat label="Gesamtkapital" value={fmtEUR(c.gesamtkosten)} />
         <OverviewStat label="Monatl. Rate" value={fmtEUR(c.kreditRateMtl)} />
@@ -329,19 +336,25 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl, u }: {
         </div>
       )}
 
-      <AccordionCard title="Objektdaten">
-        <FieldGrid>
-          <ReadField label="Bezirk" value={p.bezirk || "—"} />
-          <ReadField label="Adresse" value={p.adresse || "—"} />
-          <ReadField label="Stadt" value={p.city || "—"} />
-          <ReadField label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} />
-          <ReadField label="Zimmer" value={p.zimmer ? String(p.zimmer) : "—"} />
-          <ReadField label="Baujahr" value={p.baujahr ? String(p.baujahr) : "—"} />
-          <ReadField label="Zustand" value={p.zustand || "—"} />
-          <ReadField label="Stockwerk" value={p.stockwerk || "—"} />
-          <ReadField label="Energieklasse" value={p.energyClass || "—"} />
-        </FieldGrid>
-      </AccordionCard>
+      <div>
+        <div className="flex items-center gap-1.5 mb-1.5 text-[11px]" style={{ color: "#D97706" }}>
+          <AlertTriangle className="size-3" />
+          <span>Bitte nach dem Import prüfen</span>
+        </div>
+        <AccordionCard title="Objektdaten" defaultOpen>
+          <FieldGrid>
+            <ReadField label="Bezirk" value={p.bezirk || "—"} />
+            <ReadField label="Adresse" value={p.adresse || "—"} />
+            <ReadField label="Stadt" value={p.city || "—"} />
+            <ReadField label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} />
+            <ReadField label="Zimmer" value={p.zimmer ? String(p.zimmer) : "—"} />
+            <ReadField label="Baujahr" value={p.baujahr ? String(p.baujahr) : "—"} />
+            <ReadField label="Zustand" value={p.zustand || "—"} />
+            <ReadField label="Stockwerk" value={p.stockwerk || "—"} />
+            <ReadField label="Energieklasse" value={p.energyClass || "—"} />
+          </FieldGrid>
+        </AccordionCard>
+      </div>
 
       <AccordionCard title="Kauf & Nebenkosten">
         <FieldGrid>
@@ -357,14 +370,6 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl, u }: {
         </FieldGrid>
       </AccordionCard>
 
-      <AccordionCard title="Mietrecht-Kurzinfo">
-        <FieldGrid>
-          <ReadField label="Kategorie" value={mietrecht.kategorie} />
-          <ReadField label="Risiko" value={mietrecht.risiko} />
-          <ReadField label="Erfasste Einstufung" value={p.mietrecht} />
-        </FieldGrid>
-        <p className="text-[12px] text-[#78716C] mt-3">{mietrecht.erklaerung}</p>
-      </AccordionCard>
 
       <AccordionCard title="Verkäufer & Makler">
         <FieldGrid>
