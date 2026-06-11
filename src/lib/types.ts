@@ -28,6 +28,59 @@ export const ALL_STATUSES: PropertyStatus[] = [
 
 export type Priority = "Hoch" | "Mittel" | "Niedrig";
 
+export type Bewertung = "Neu" | "Interessant" | "Prüfen" | "Nicht interessant";
+export const ALL_BEWERTUNGEN: Bewertung[] = ["Neu", "Interessant", "Prüfen", "Nicht interessant"];
+
+export type ProzessStatus =
+  | ""
+  | "Kontaktiert"
+  | "Besichtigung"
+  | "Finanzierung"
+  | "Angebot & Verhandlung"
+  | "Gekauft"
+  | "Abgelehnt";
+export const ALL_PROZESS_STATUSES: ProzessStatus[] = [
+  "Kontaktiert", "Besichtigung", "Finanzierung", "Angebot & Verhandlung", "Gekauft", "Abgelehnt",
+];
+
+export function migrateLegacyStatus(status: string | undefined): { bewertung: Bewertung; prozessStatus: ProzessStatus } {
+  const s = (status ?? "").toString();
+  let bewertung: Bewertung = "Neu";
+  let prozessStatus: ProzessStatus = "";
+  switch (s) {
+    case "Neu":
+    case "Daten unvollständig":
+      bewertung = "Neu"; break;
+    case "Prüfen":
+    case "Zurückgestellt":
+      bewertung = "Prüfen"; break;
+    case "Interessant":
+    case "Interessiert":
+      bewertung = "Interessant"; break;
+    case "Verkäufer kontaktiert":
+    case "Antwort erhalten":
+      bewertung = "Interessant"; prozessStatus = "Kontaktiert"; break;
+    case "Besichtigung geplant":
+    case "Besichtigt":
+    case "Besichtigung":
+      bewertung = "Interessant"; prozessStatus = "Besichtigung"; break;
+    case "Unterlagen angefragt":
+    case "Finanzierung prüfen":
+      bewertung = "Interessant"; prozessStatus = "Finanzierung"; break;
+    case "Angebot vorbereitet":
+    case "Angebot abgegeben":
+    case "In Verhandlung":
+    case "Angebot":
+      bewertung = "Interessant"; prozessStatus = "Angebot & Verhandlung"; break;
+    case "Gekauft":
+      bewertung = "Interessant"; prozessStatus = "Gekauft"; break;
+    case "Abgelehnt":
+    case "Verloren":
+      bewertung = "Nicht interessant"; prozessStatus = "Abgelehnt"; break;
+  }
+  return { bewertung, prozessStatus };
+}
+
 export type Mietrecht =
   | "Neubau / freie Miete"
   | "Teilanwendung MRG"
