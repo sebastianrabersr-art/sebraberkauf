@@ -666,12 +666,60 @@ function CrmTab({ p, u, viewings, setViewing }: {
 // ============ HELPER COMPONENTS ============
 const selectCls = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";
 
-function OverviewStat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral" }) {
+function OverviewStat({ label, value, sub, tone, editable }: {
+  label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral";
+  editable?: { current: number | null; onCommit: (v: number | null) => void };
+}) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
+  const [editing, setEditing] = useState(false);
+  const [local, setLocal] = useState<string>(editable?.current == null ? "" : String(editable.current));
+  useEffect(() => {
+    if (!editing) setLocal(editable?.current == null ? "" : String(editable?.current));
+  }, [editable?.current, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    if (!editable) return;
+    const orig = editable.current == null ? "" : String(editable.current);
+    if (local === orig) return;
+    if (local !== "" && isNaN(Number(local))) {
+      toast.error("Ungültige Zahl");
+      setLocal(orig);
+      return;
+    }
+    editable.onCommit(local === "" ? null : Number(local));
+    toast.success("Gespeichert", { duration: 900 });
+  };
+
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="group rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
-      <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
+      {editable && editing ? (
+        <input
+          autoFocus
+          type="number"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            else if (e.key === "Escape") { setLocal(editable.current == null ? "" : String(editable.current)); setEditing(false); }
+          }}
+          className="mt-1 w-full bg-transparent outline-none text-[14px] tabular-nums px-0 py-0.5"
+          style={{ ...bricolage, fontWeight: 700, color, borderBottom: "1.5px solid #2D6A4F" }}
+        />
+      ) : editable ? (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-1 flex items-center gap-1.5 text-left w-full"
+        >
+          <span className="text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</span>
+          <Pencil className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#A8A29E" }} />
+        </button>
+      ) : (
+        <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
+      )}
       {sub && <div className="text-[11px] text-[#A8A29E] mt-0.5">{sub}</div>}
     </div>
   );
