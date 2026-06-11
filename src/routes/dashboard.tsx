@@ -1,14 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, fmtNum, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import { ScoreInfo } from "@/components/ScoreInfo";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowRight, Bell, Building, FileText, Link as LinkIcon, Pencil, Sparkles, Target, TrendingUp, Wallet } from "lucide-react";
+import { ChevronRight, FileText, Pencil, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -20,38 +20,68 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-function KpiCard({ label, value, sub, icon: Icon, tone = "default" }: { label: string; value: string; sub?: string; icon: any; tone?: "default" | "primary" | "success" | "warning" | "danger" }) {
-  const iconTone =
-    tone === "success" ? "bg-success/10 text-success" :
-    tone === "warning" ? "bg-warning/15 text-warning-foreground" :
-    tone === "danger" ? "bg-destructive/10 text-destructive" :
-    tone === "primary" ? "bg-primary/10 text-primary" :
-    "bg-muted text-muted-foreground";
+// Begrüßung passend zur Tageszeit
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 11) return "Guten Morgen";
+  if (h < 18) return "Guten Tag";
+  return "Guten Abend";
+}
+
+function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <div className="rounded-2xl border bg-card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
-          <div className="text-[28px] leading-tight font-semibold mt-2 tabular-nums">{value}</div>
-          {sub && <div className="text-xs text-muted-foreground mt-1 truncate">{sub}</div>}
-        </div>
-        <div className={`size-9 rounded-xl grid place-items-center ${iconTone}`}>
-          <Icon className="size-4.5" />
-        </div>
+    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-4 py-3.5">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div
+        className={`mt-1.5 text-[28px] leading-none tabular-nums ${accent ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}
+        style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}
+      >
+        {value}
       </div>
+      {sub && <div className="mt-1.5 text-[11px] text-[#78716C] truncate">{sub}</div>}
     </div>
   );
 }
 
-function SectionCard({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function CandidateRow({ r, onClick }: { r: any; onClick: () => void }) {
+  const score = r.s.total as number;
+  const scoreColor = score >= 65 ? "#2D6A4F" : "#78716C";
+  const cf = r.c.cashflowMtl as number;
+  const cfColor = cf >= 0 ? "#16A34A" : "#DC2626";
+  const badgeClass =
+    r.s.ampel === "green"
+      ? "bg-[#E8F5EE] text-[#2D6A4F]"
+      : r.s.ampel === "yellow"
+      ? "bg-[#FEF3C7] text-[#92400E]"
+      : "bg-[#FEE2E2] text-[#991B1B]";
   return (
-    <div className="rounded-2xl border bg-card p-6">
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <h3 className="font-semibold text-base tracking-tight">{title}</h3>
-        {action}
+    <button
+      onClick={onClick}
+      className="group w-full flex items-center gap-4 rounded-[10px] border border-[#EAE6DF] bg-white px-4 py-3 hover:bg-[#FAFAF8] transition-colors text-left"
+    >
+      <div
+        className="w-10 tabular-nums text-[18px] leading-none shrink-0"
+        style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, color: scoreColor }}
+      >
+        {score}
       </div>
-      {children}
-    </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "—"}</div>
+        <div className="text-[11px] text-[#A8A29E] truncate">
+          {[r.p.bezirk, r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : null, r.p.quelle].filter(Boolean).join(" · ") || "—"}
+        </div>
+      </div>
+      <span className={`hidden sm:inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${badgeClass}`}>
+        {r.s.entscheidung}
+      </span>
+      <div
+        className="hidden md:block w-24 text-right tabular-nums text-[14px]"
+        style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: cfColor }}
+      >
+        {fmtEUR(cf)}
+      </div>
+      <ChevronRight className="size-4 text-[#A8A29E] group-hover:text-[#2D6A4F] shrink-0" />
+    </button>
   );
 }
 
@@ -60,15 +90,18 @@ function Dashboard() {
   const project = useActiveProject();
   const assumptions = useActiveAssumptions();
   const { properties } = useStore();
+  const { profile } = useAuth();
+
   if (!project) {
     return (
       <AppShell>
         <div className="min-h-[60vh] grid place-items-center text-center p-8">
-          <div className="text-sm text-muted-foreground">Lade dein Projekt…</div>
+          <div className="text-sm text-[#78716C]">Lade dein Projekt…</div>
         </div>
       </AppShell>
     );
   }
+
   const inProject = properties.filter((p) => p.projectId === project.id && p.status !== "Gekauft");
   const rows = inProject.map((p) => {
     const c = calcProperty(p, assumptions);
@@ -77,16 +110,12 @@ function Dashboard() {
     return { p, c, s, dq };
   });
   const total = rows.length;
-  const avgScore = total ? rows.reduce((a, r) => a + r.s.total, 0) / total : 0;
-  const best = rows.slice().sort((a, b) => b.s.total - a.s.total)[0];
-  const avgCashflow = total ? rows.reduce((a, r) => a + r.c.cashflowMtl, 0) / total : 0;
   const kritisch = rows.filter((r) => r.s.ampel === "red" || r.c.cashflowMtl < 0).length;
-  const today = new Date();
-  const offeneFollowups = inProject.filter((p) => p.nextAction && (!p.nextActionDate || new Date(p.nextActionDate) <= new Date(today.getTime() + 7 * 86400000))).length;
+  const best = rows.slice().sort((a, b) => b.s.total - a.s.total)[0];
+  const bestRendite = rows.slice().sort((a, b) => b.c.bruttorendite - a.c.bruttorendite)[0];
 
-  const topScore = rows.slice().sort((a, b) => b.s.total - a.s.total).slice(0, 8);
-  const topCashflow = rows.slice().sort((a, b) => b.c.cashflowMtl - a.c.cashflowMtl).slice(0, 8);
-  const topRendite = rows.slice().sort((a, b) => b.c.bruttorendite - a.c.bruttorendite).slice(0, 8);
+  const topRanked = rows.slice().sort((a, b) => b.s.total - a.s.total);
+  const topVisible = topRanked.slice(0, 4);
   const incomplete = rows.filter((r) => r.dq.score < 70);
   const followups = inProject.filter((p) => !!p.nextAction);
 
@@ -101,58 +130,110 @@ function Dashboard() {
     .filter((r) => r.p.kaufpreis && r.c.bruttorendite > 0)
     .map((r) => ({ x: r.p.kaufpreis, y: r.c.bruttorendite * 100, name: r.p.title, ampel: r.s.ampel }));
 
+  const username = (profile?.name || profile?.email?.split("@")[0] || "willkommen").trim();
+
   return (
     <AppShell>
-      <PageHeader
-        title="Dashboard"
-        description={`${project.name} · ${total} ${total === 1 ? "Objekt" : "Objekte"} in Prüfung`}
-        actions={
-          <Link
-            to="/analyze"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 transition shadow-sm"
-          >
-            <Sparkles className="size-4" /> Neue Immobilie analysieren
-          </Link>
-        }
-      />
-
-      {/* Hero: Immobilie analysieren – Hauptaktion */}
-      <AnalyzeHero />
-
-      {/* Top KPIs — die wichtigsten 4 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        <KpiCard label="Immobilien in Prüfung" value={String(total)} icon={Building} tone="primary" />
-        <KpiCard label="Beste Immobilie" value={best ? `${best.s.total}` : "—"} sub={best?.p.title?.slice(0, 28)} icon={TrendingUp} tone="success" />
-        <KpiCard label="Offene Follow-ups" value={String(offeneFollowups)} icon={Bell} tone={offeneFollowups > 0 ? "primary" : "default"} />
-        <KpiCard label="Kritische Objekte" value={String(kritisch)} icon={AlertTriangle} tone={kritisch > 0 ? "warning" : "default"} />
+      {/* Personalisierte Begrüßung */}
+      <div className="flex flex-col gap-1">
+        <h1
+          className="text-[24px] leading-tight text-[#1C1917]"
+          style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, letterSpacing: "-0.03em" }}
+        >
+          {greeting()}, {username}.
+        </h1>
+        <p className="text-[13px] text-[#A8A29E]">
+          {total} {total === 1 ? "Objekt" : "Objekte"} in Prüfung · {kritisch} kritische {kritisch === 1 ? "Objekt" : "Objekte"}
+        </p>
       </div>
 
-      {/* Strukturierte Bereiche in Tabs */}
-      <div className="mt-8">
+      {/* Haupteingabe – Analyse starten */}
+      <div className="mt-6">
+        <AnalyzeCard />
+      </div>
+
+      {/* Top-Kandidaten – eine einheitliche Liste */}
+      <div className="mt-6">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-3">Top-Kandidaten</div>
+        <div className="flex flex-col gap-2">
+          {topVisible.map((r) => (
+            <CandidateRow key={r.p.id} r={r} onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })} />
+          ))}
+          {topRanked.length > 4 && (
+            <Link
+              to="/properties"
+              className="text-[13px] font-medium text-[#2D6A4F] hover:underline px-1 pt-1"
+            >
+              + Alle Kandidaten anzeigen
+            </Link>
+          )}
+          <Link
+            to="/analyze"
+            className="flex items-center justify-center gap-2 rounded-[10px] border border-dashed border-[1.5px] border-[#D8D3C8] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#A8A29E] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40 transition-colors"
+          >
+            <Plus className="size-4" /> Neue Immobilie analysieren
+          </Link>
+        </div>
+      </div>
+
+      {/* Kompakte Statistik – nur 2 Karten */}
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard
+          label="Objekte in Prüfung"
+          value={String(total)}
+          sub={best ? `Beste: ${best.p.title?.slice(0, 32) || "—"}` : "Noch keine Objekte"}
+        />
+        <StatCard
+          label="Beste Rendite"
+          value={bestRendite ? fmtPct(bestRendite.c.bruttorendite) : "—"}
+          sub={bestRendite?.p.title?.slice(0, 40)}
+          accent
+        />
+      </div>
+
+      {/* Detail-Tabs */}
+      <div className="mt-6">
         <Tabs defaultValue="kandidaten" className="w-full">
-          <TabsList className="h-10 p-1 bg-muted/60">
-            <TabsTrigger value="kandidaten">Top-Kandidaten</TabsTrigger>
-            <TabsTrigger value="risiken">Risiken & Daten</TabsTrigger>
-            <TabsTrigger value="followups">Follow-ups</TabsTrigger>
-            <TabsTrigger value="markt">Markt</TabsTrigger>
+          <TabsList className="h-auto p-0 bg-transparent border-b border-[#EAE6DF] rounded-none w-full justify-start gap-6">
+            {[
+              { v: "kandidaten", l: "Top-Kandidaten" },
+              { v: "risiken", l: "Risiken & Daten" },
+              { v: "followups", l: "Follow-ups" },
+              { v: "markt", l: "Markt" },
+            ].map((t) => (
+              <TabsTrigger
+                key={t.v}
+                value={t.v}
+                className="rounded-none border-0 bg-transparent px-0 py-3 text-[13px] text-[#78716C] data-[state=active]:text-[#1C1917] data-[state=active]:shadow-none relative data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[#2D6A4F]"
+              >
+                {t.l}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="kandidaten" className="mt-6">
-            <div className="grid lg:grid-cols-3 gap-5">
-              <RankTable title="Score" titleInfo={<ScoreInfo />} rows={topScore} metric={(r) => `${r.s.total}`} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
-              <RankTable title="Cashflow / Monat" rows={topCashflow} metric={(r) => fmtEUR(r.c.cashflowMtl)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
-              <RankTable title="Bruttorendite" rows={topRendite} metric={(r) => fmtPct(r.c.bruttorendite)} onClick={(id) => navigate({ to: "/properties/$id", params: { id } })} />
+            <div className="flex flex-col gap-2">
+              {topRanked.length === 0 && (
+                <div className="text-sm text-[#78716C] py-6 text-center">Noch keine Objekte.</div>
+              )}
+              {topRanked.map((r) => (
+                <CandidateRow key={r.p.id} r={r} onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })} />
+              ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="risiken" className="mt-6 space-y-5">
-            <SectionCard title="Unvollständige Daten" action={<span className="text-xs text-muted-foreground">{incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}</span>}>
+          <TabsContent value="risiken" className="mt-6">
+            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[13px] font-semibold text-[#1C1917]">Unvollständige Daten</h3>
+                <span className="text-[11px] text-[#A8A29E]">{incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}</span>
+              </div>
               {incomplete.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-4 text-center">Alles vollständig. ✓</div>
+                <div className="text-sm text-[#78716C] py-4 text-center">Alles vollständig.</div>
               ) : (
                 <div className="overflow-x-auto -mx-2">
                   <table className="w-full text-sm">
-                    <thead className="text-left text-xs text-muted-foreground">
+                    <thead className="text-left text-xs text-[#A8A29E]">
                       <tr>
                         <th className="px-2 py-2 font-medium">Objekt</th>
                         <th className="px-2 py-2 font-medium">Bezirk</th>
@@ -163,73 +244,76 @@ function Dashboard() {
                     </thead>
                     <tbody>
                       {incomplete.map((r) => (
-                        <tr key={r.p.id} className="border-t hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })}>
-                          <td className="px-2 py-2.5 font-medium">{r.p.title || "—"}</td>
-                          <td className="px-2 py-2.5 text-muted-foreground">{r.p.bezirk || "—"}</td>
+                        <tr key={r.p.id} className="border-t border-[#EAE6DF] hover:bg-[#FAFAF8] cursor-pointer" onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })}>
+                          <td className="px-2 py-2.5 font-medium text-[#1C1917]">{r.p.title || "—"}</td>
+                          <td className="px-2 py-2.5 text-[#78716C]">{r.p.bezirk || "—"}</td>
                           <td className="px-2 py-2.5"><AmpelBadge ampel={r.dq.ampel}>{r.dq.score}%</AmpelBadge></td>
-                          <td className="px-2 py-2.5 text-xs text-muted-foreground hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
-                          <td className="px-2 py-2.5 text-right text-primary text-sm">→</td>
+                          <td className="px-2 py-2.5 text-xs text-[#78716C] hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
+                          <td className="px-2 py-2.5 text-right text-[#2D6A4F]">→</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-            </SectionCard>
+            </div>
           </TabsContent>
 
           <TabsContent value="followups" className="mt-6">
-            <SectionCard title="Anstehende Follow-ups">
+            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
+              <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Anstehende Follow-ups</h3>
               {followups.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-4 text-center">Keine offenen Follow-ups.</div>
+                <div className="text-sm text-[#78716C] py-4 text-center">Keine offenen Follow-ups.</div>
               ) : (
                 <div className="space-y-2">
                   {followups.map((p) => (
-                    <Link key={p.id} to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 p-3 rounded-lg border hover:bg-muted/40 transition-colors">
+                    <Link key={p.id} to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[#EAE6DF] hover:bg-[#FAFAF8]">
                       <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{p.title || "—"}</div>
-                        <div className="text-xs text-muted-foreground truncate">{p.nextAction}</div>
+                        <div className="text-sm font-medium text-[#1C1917] truncate">{p.title || "—"}</div>
+                        <div className="text-xs text-[#78716C] truncate">{p.nextAction}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "—"}</div>
+                      <div className="text-xs text-[#78716C] whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "—"}</div>
                     </Link>
                   ))}
                 </div>
               )}
-            </SectionCard>
+            </div>
           </TabsContent>
 
           <TabsContent value="markt" className="mt-6">
-            <div className="grid lg:grid-cols-2 gap-5">
-              <SectionCard title="Score-Verteilung">
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
+                <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Score-Verteilung</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={scoreBuckets} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
-                    <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis fontSize={11} allowDecimals={false} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{ fill: "var(--muted)" }} contentStyle={{ borderRadius: 10, border: "1px solid var(--border)", fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EAE6DF" vertical={false} />
+                    <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
+                    <YAxis fontSize={11} allowDecimals={false} tickLine={false} axisLine={false} stroke="#A8A29E" />
+                    <Tooltip cursor={{ fill: "#FAFAF8" }} contentStyle={{ borderRadius: 10, border: "1px solid #EAE6DF", fontSize: 12 }} />
                     <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                       {scoreBuckets.map((_, i) => (
-                        <Cell key={i} fill={i === 0 ? "var(--destructive)" : i === 1 ? "var(--warning)" : "var(--success)"} />
+                        <Cell key={i} fill={i === 0 ? "#DC2626" : i === 1 ? "#D97706" : "#2D6A4F"} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </SectionCard>
-              <SectionCard title="Kaufpreis vs. Bruttorendite">
+              </div>
+              <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
+                <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Kaufpreis vs. Bruttorendite</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <ScatterChart margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                    <XAxis dataKey="x" name="Kaufpreis" tickFormatter={(v) => `${Math.round(v / 1000)}k`} fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis dataKey="y" name="Bruttorendite %" fontSize={11} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(v: any, n) => (n === "x" ? fmtEUR(v) : `${Number(v).toFixed(2)}%`)} labelFormatter={() => ""} contentStyle={{ borderRadius: 10, border: "1px solid var(--border)", fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EAE6DF" />
+                    <XAxis dataKey="x" name="Kaufpreis" tickFormatter={(v) => `${Math.round(v / 1000)}k`} fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
+                    <YAxis dataKey="y" name="Bruttorendite %" fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
+                    <Tooltip formatter={(v: any, n) => (n === "x" ? fmtEUR(v) : `${Number(v).toFixed(2)}%`)} labelFormatter={() => ""} contentStyle={{ borderRadius: 10, border: "1px solid #EAE6DF", fontSize: 12 }} />
                     <Scatter data={scatter}>
                       {scatter.map((d, i) => (
-                        <Cell key={i} fill={d.ampel === "green" ? "var(--success)" : d.ampel === "yellow" ? "var(--warning)" : "var(--destructive)"} />
+                        <Cell key={i} fill={d.ampel === "green" ? "#2D6A4F" : d.ampel === "yellow" ? "#D97706" : "#DC2626"} />
                       ))}
                     </Scatter>
                   </ScatterChart>
                 </ResponsiveContainer>
-              </SectionCard>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -238,34 +322,7 @@ function Dashboard() {
   );
 }
 
-function RankTable({ title, titleInfo, rows, metric, onClick }: { title: string; titleInfo?: React.ReactNode; rows: any[]; metric: (r: any) => string; onClick: (id: string) => void }) {
-  return (
-    <div className="rounded-2xl border bg-card p-5">
-      <h3 className="font-semibold text-sm tracking-tight mb-3 inline-flex items-center gap-1.5">{title}{titleInfo}</h3>
-      <div className="space-y-1">
-        {rows.map((r, i) => (
-          <button key={r.p.id} onClick={() => onClick(r.p.id)} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 text-left transition-colors">
-            <span className="text-xs text-muted-foreground w-5 tabular-nums">{i + 1}</span>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium truncate">{r.p.title || "—"}</div>
-              <div className="text-[11px] text-muted-foreground truncate">{r.p.bezirk || "—"} · {fmtEUR(r.p.kaufpreis)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm font-semibold tabular-nums">{metric(r)}</div>
-              <div className="text-[10px]"><AmpelBadge ampel={r.s.ampel}>{r.s.entscheidung}</AmpelBadge></div>
-            </div>
-            <ArrowRight className="size-3.5 text-muted-foreground shrink-0" />
-          </button>
-        ))}
-        {rows.length === 0 && (
-          <div className="py-6 text-center text-muted-foreground text-sm">Keine Objekte.</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AnalyzeHero() {
+function AnalyzeCard() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
 
@@ -284,43 +341,40 @@ function AnalyzeHero() {
   };
 
   return (
-    <div className="mt-2 rounded-3xl border bg-gradient-to-br from-primary/8 via-card to-card p-6 sm:p-8 shadow-sm">
-      <div className="flex items-center gap-2 text-xs font-medium text-primary mb-2">
-        <Sparkles className="size-4" /> Immobilie analysieren
+    <div className="rounded-[14px] border border-[#EAE6DF] bg-white p-6">
+      <div className="text-[11px] font-semibold uppercase text-[#2D6A4F]" style={{ letterSpacing: "0.07em" }}>
+        Neue Analyse
       </div>
-      <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-        Füge einen Immobilienlink ein – die Analyse startet sofort.
+      <h2
+        className="mt-2 text-[20px] leading-tight text-[#1C1917]"
+        style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}
+      >
+        Immobilie gefunden? Sofort prüfen.
       </h2>
-      <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
-        Kaufpreis, Nebenkosten, Finanzierung, Miete und Cashflow – automatisch berechnet aus deinem Link.
-      </p>
 
-      <div className="mt-5 flex flex-col sm:flex-row gap-2">
-        <div className="flex-1 flex items-center gap-2 border rounded-xl px-4 py-3 bg-background focus-within:ring-2 ring-ring shadow-sm">
-          <LinkIcon className="size-4 text-muted-foreground shrink-0" />
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") start(); }}
-            placeholder="Immobilienlink einfügen (willhaben, ImmoScout, immowelt …)"
-            className="flex-1 outline-none bg-transparent text-sm"
-          />
-        </div>
+      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") start(); }}
+          placeholder="Immobilienlink einfügen (willhaben, ImmoScout, immowelt …)"
+          className="flex-1 rounded-lg border border-[#EAE6DF] bg-white px-4 py-2.5 text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] outline-none focus:border-[#2D6A4F]/50"
+        />
         <button
           onClick={start}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-95 shadow-sm"
+          className="inline-flex items-center justify-center rounded-lg bg-[#2D6A4F] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#235740] transition-colors"
         >
-          <Sparkles className="size-4" /> Analyse starten
+          Analysieren
         </button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-        <Link to="/analyze" className="inline-flex items-center gap-1.5 hover:text-foreground">
-          <FileText className="size-3.5" /> PDF / Exposé hochladen
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-[#A8A29E]">
+        <Link to="/analyze" className="inline-flex items-center gap-1.5 hover:text-[#2D6A4F]">
+          <FileText className="size-3.5" /> PDF hochladen
         </Link>
-        <Link to="/properties/new" className="inline-flex items-center gap-1.5 hover:text-foreground">
-          <Pencil className="size-3.5" /> Manuell hinzufügen
+        <Link to="/properties/new" className="inline-flex items-center gap-1.5 hover:text-[#2D6A4F]">
+          <Pencil className="size-3.5" /> Manuell eingeben
         </Link>
       </div>
     </div>
