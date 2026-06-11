@@ -36,20 +36,38 @@ const CARDS = [
   {
     slug: "kaufnebenkosten",
     title: "Kaufnebenkosten-Rechner",
-    benefit: "Grunderwerbsteuer, Notar, Makler, Grundbuch: So viel kommt zum Kaufpreis dazu.",
+    benefit: "Grunderwerbsteuer, Notar, Makler und Grundbuch – so viel kommt zum Kaufpreis dazu.",
     icon: Coins,
-  },
-  {
-    slug: "rendite",
-    title: "Rendite-Rechner",
-    benefit: "Brutto, Netto und Eigenkapitalrendite – ehrlich auf einen Blick.",
-    icon: TrendingUp,
   },
   {
     slug: "cashflow",
     title: "Cashflow-Rechner",
-    benefit: "Was bleibt monatlich übrig – nach Kreditrate, Rücklage und Leerstand.",
+    benefit: "Was bleibt monatlich übrig – nach Kreditrate, Betriebskosten, Rücklage und Leerstand.",
     icon: Home,
+  },
+  {
+    slug: "rendite",
+    title: "Rendite-Rechner",
+    benefit: "Brutto-, Netto- und Eigenkapitalrendite – ehrlich auf einen Blick.",
+    icon: TrendingUp,
+  },
+  {
+    slug: "finanzierung",
+    title: "Finanzierungsrechner",
+    benefit: "Monatliche Rate, Restschuld und Gesamtzinskosten für deinen Kredit.",
+    icon: Wallet,
+  },
+  {
+    slug: "breakeven",
+    title: "Break-even-Miete",
+    benefit: "Welche Miete brauchst du, damit die Immobilie monatlich nicht negativ läuft?",
+    icon: Calculator,
+  },
+  {
+    slug: "leistbarkeit",
+    title: "Leistbarkeitsrechner",
+    benefit: "Welchen Kaufpreis kannst du dir bei deiner Wunsch-Monatsrate leisten?",
+    icon: PiggyBank,
   },
 ] as const;
 
