@@ -182,7 +182,7 @@ function Detail() {
               <SetupWalkthrough propertyId={p.id} navTo={navTo} />
             </>
           )}
-          {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} />}
+          {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} u={u} />}
           {tab === "finanzierung" && (
             <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
               <FinancePanel p={p} />
