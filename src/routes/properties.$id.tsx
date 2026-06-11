@@ -17,7 +17,7 @@ import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_MIETRECHTE, ALL_STATUSES, PROPERTY_TYPES, type Mietrecht, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
-import { AlertTriangle, ArrowLeft, ChevronRight, Copy, ExternalLink, MapPin, Trash2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronRight, Copy, ExternalLink, MapPin, Pencil, Trash2, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -182,7 +182,7 @@ function Detail() {
               <SetupWalkthrough propertyId={p.id} navTo={navTo} />
             </>
           )}
-          {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} />}
+          {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} u={u} />}
           {tab === "finanzierung" && (
             <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
               <FinancePanel p={p} />
@@ -292,9 +292,10 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
+function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl, u }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>; project?: string; linkValid: boolean; mapsUrl: string | null;
+  u: (patch: Partial<Property>) => void;
 }) {
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
@@ -307,7 +308,14 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <OverviewStat label="Kaufpreis" value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)} />
+        <OverviewStat
+          label="Kaufpreis"
+          value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)}
+          editable={{
+            current: (p.kaufpreisBrutto ?? p.kaufpreis) ?? null,
+            onCommit: (v) => u(p.kaufpreisBrutto != null ? { kaufpreisBrutto: v } : { kaufpreis: v }),
+          }}
+        />
         <OverviewStat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} />
         <OverviewStat label="Gesamtkapital" value={fmtEUR(c.gesamtkosten)} />
         <OverviewStat label="Monatl. Rate" value={fmtEUR(c.kreditRateMtl)} />
@@ -328,19 +336,25 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
         </div>
       )}
 
-      <AccordionCard title="Objektdaten">
-        <FieldGrid>
-          <ReadField label="Bezirk" value={p.bezirk || "—"} />
-          <ReadField label="Adresse" value={p.adresse || "—"} />
-          <ReadField label="Stadt" value={p.city || "—"} />
-          <ReadField label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} />
-          <ReadField label="Zimmer" value={p.zimmer ? String(p.zimmer) : "—"} />
-          <ReadField label="Baujahr" value={p.baujahr ? String(p.baujahr) : "—"} />
-          <ReadField label="Zustand" value={p.zustand || "—"} />
-          <ReadField label="Stockwerk" value={p.stockwerk || "—"} />
-          <ReadField label="Energieklasse" value={p.energyClass || "—"} />
-        </FieldGrid>
-      </AccordionCard>
+      <div>
+        <div className="flex items-center gap-1.5 mb-1.5 text-[11px]" style={{ color: "#D97706" }}>
+          <AlertTriangle className="size-3" />
+          <span>Bitte nach dem Import prüfen</span>
+        </div>
+        <AccordionCard title="Objektdaten" defaultOpen>
+          <FieldGrid>
+            <ReadField label="Bezirk" value={p.bezirk || "—"} />
+            <ReadField label="Adresse" value={p.adresse || "—"} />
+            <ReadField label="Stadt" value={p.city || "—"} />
+            <ReadField label="Wohnfläche" value={p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : "—"} />
+            <ReadField label="Zimmer" value={p.zimmer ? String(p.zimmer) : "—"} />
+            <ReadField label="Baujahr" value={p.baujahr ? String(p.baujahr) : "—"} />
+            <ReadField label="Zustand" value={p.zustand || "—"} />
+            <ReadField label="Stockwerk" value={p.stockwerk || "—"} />
+            <ReadField label="Energieklasse" value={p.energyClass || "—"} />
+          </FieldGrid>
+        </AccordionCard>
+      </div>
 
       <AccordionCard title="Kauf & Nebenkosten">
         <FieldGrid>
@@ -356,14 +370,6 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
         </FieldGrid>
       </AccordionCard>
 
-      <AccordionCard title="Mietrecht-Kurzinfo">
-        <FieldGrid>
-          <ReadField label="Kategorie" value={mietrecht.kategorie} />
-          <ReadField label="Risiko" value={mietrecht.risiko} />
-          <ReadField label="Erfasste Einstufung" value={p.mietrecht} />
-        </FieldGrid>
-        <p className="text-[12px] text-[#78716C] mt-3">{mietrecht.erklaerung}</p>
-      </AccordionCard>
 
       <AccordionCard title="Verkäufer & Makler">
         <FieldGrid>
@@ -660,12 +666,60 @@ function CrmTab({ p, u, viewings, setViewing }: {
 // ============ HELPER COMPONENTS ============
 const selectCls = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";
 
-function OverviewStat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral" }) {
+function OverviewStat({ label, value, sub, tone, editable }: {
+  label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral";
+  editable?: { current: number | null; onCommit: (v: number | null) => void };
+}) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
+  const [editing, setEditing] = useState(false);
+  const [local, setLocal] = useState<string>(editable?.current == null ? "" : String(editable.current));
+  useEffect(() => {
+    if (!editing) setLocal(editable?.current == null ? "" : String(editable?.current));
+  }, [editable?.current, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    if (!editable) return;
+    const orig = editable.current == null ? "" : String(editable.current);
+    if (local === orig) return;
+    if (local !== "" && isNaN(Number(local))) {
+      toast.error("Ungültige Zahl");
+      setLocal(orig);
+      return;
+    }
+    editable.onCommit(local === "" ? null : Number(local));
+    toast.success("Gespeichert", { duration: 900 });
+  };
+
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="group rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
-      <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
+      {editable && editing ? (
+        <input
+          autoFocus
+          type="number"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            else if (e.key === "Escape") { setLocal(editable.current == null ? "" : String(editable.current)); setEditing(false); }
+          }}
+          className="mt-1 w-full bg-transparent outline-none text-[14px] tabular-nums px-0 py-0.5"
+          style={{ ...bricolage, fontWeight: 700, color, borderBottom: "1.5px solid #2D6A4F" }}
+        />
+      ) : editable ? (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-1 flex items-center gap-1.5 text-left w-full"
+        >
+          <span className="text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</span>
+          <Pencil className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#A8A29E" }} />
+        </button>
+      ) : (
+        <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
+      )}
       {sub && <div className="text-[11px] text-[#A8A29E] mt-0.5">{sub}</div>}
     </div>
   );
