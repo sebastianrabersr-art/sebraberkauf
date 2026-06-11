@@ -62,7 +62,7 @@ function PageHead({ compareLimit }: { compareLimit: number }) {
 const selectCls =
   "h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30";
 
-function ComparePageInner() {
+function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const { projects, properties } = useStore();
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
