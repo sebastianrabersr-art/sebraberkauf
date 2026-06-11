@@ -492,6 +492,10 @@ function Detail() {
             <ActivitiesPanel propertyId={p.id} />
           </Section>
 
+          <Section title="Investor-Charts (Darlehen, Asset, Cash, Szenarien, AfA)">
+            <InvestorChartsPanel p={p} />
+          </Section>
+
           <Section title="Advanced: AfA, Projektion & Anschlussfinanzierung">
             <AdvancedInvestmentPanel p={p} />
           </Section>
