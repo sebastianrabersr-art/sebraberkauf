@@ -647,9 +647,9 @@ function OverviewStat({ label, value, sub, tone }: { label: string; value: strin
   );
 }
 
-function AccordionCard({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function AccordionCard({ title, children, defaultOpen = false, id }: { title: string; children: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <span className="text-[13px] font-medium text-[#1C1917]">{title}</span>
         <ChevronRight className="size-4 text-[#A8A29E] transition-transform group-open:rotate-90" />
