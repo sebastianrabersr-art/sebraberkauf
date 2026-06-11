@@ -190,40 +190,80 @@ async function fetchHtml(url: string, headers: Record<string, string>): Promise<
 }
 
 async function fetchPage(rawUrl: string): Promise<string> {
+  // Strategy 1: Firecrawl (if API key available) — handles JS-rendered pages
+  const fcKey = process.env.FIRECRAWL_API_KEY;
+  if (fcKey) {
+    try {
+      const r = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${fcKey}`,
+        },
+        body: JSON.stringify({
+          url: rawUrl,
+          formats: ["markdown"],
+          onlyMainContent: true,
+          waitFor: 2000,
+        }),
+        signal: AbortSignal.timeout(25000),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        const md: string = j?.data?.markdown || j?.markdown || "";
+        if (md && md.length > 300) {
+          return md.slice(0, 30000);
+        }
+      }
+    } catch { /* fall through to direct fetch */ }
+  }
+
+  // Strategy 2: Direct fetch with browser headers (fallback)
   const url = normalizeUrl(rawUrl);
-  const baseHeaders: Record<string, string> = {
+  const headers: Record<string, string> = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-    Accept: "text/html,application/xhtml+xml",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "de-AT,de;q=0.9,en;q=0.8",
-  };
-
-  // Strategy 1: direct fetch
-  let html = await fetchHtml(url, baseHeaders);
-  let result = html ? extractFromHtml(html) : "";
-  if (result.length >= 500) return result;
-
-  // Strategy 2: stealthier headers
-  const stealthHeaders: Record<string, string> = {
-    ...baseHeaders,
     "Cache-Control": "no-cache",
-    "Pragma": "no-cache",
-    "Referer": "https://www.google.com/",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "cross-site",
   };
-  html = await fetchHtml(url, stealthHeaders);
-  const r2 = html ? extractFromHtml(html) : "";
-  if (r2.length >= 500) return r2;
-  if (r2.length > result.length) result = r2;
+  try {
+    const res = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(15000),
+      redirect: "follow",
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
 
-  // Strategy 3: Google cache fallback
-  const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
-  html = await fetchHtml(cacheUrl, baseHeaders);
-  const r3 = html ? extractFromHtml(html) : "";
-  if (r3.length > result.length) result = r3;
+    // Extract JSON-LD structured data
+    const ldMatches = Array.from(
+      html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
+    ).map((m) => m[1]).join("\n").slice(0, 8000);
 
-  return result;
+    // Extract meta tags
+    const metaTags = Array.from(
+      html.matchAll(/<meta[^>]+(property|name)=["'](og:[^"']+|description)["'][^>]*content=["']([^"']*)["'][^>]*>/gi)
+    ).map((m) => `${m[2]}: ${m[3]}`).join("\n").slice(0, 2000);
+
+    // Extract visible text
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 25000);
+
+    const parts = [
+      ldMatches ? `JSON-LD:\n${ldMatches}` : "",
+      metaTags ? `Meta:\n${metaTags}` : "",
+      text ? `Text:\n${text}` : "",
+    ].filter(Boolean).join("\n\n");
+
+    return parts;
+  } catch { return ""; }
 }
 
 export const extractProperty = createServerFn({ method: "POST" })
@@ -294,7 +334,26 @@ Zusätzliche Hinweise für schwierige Fälle:
       }
       const body = await resp.json();
       const content = body?.choices?.[0]?.message?.content ?? "{}";
-      json = typeof content === "string" ? JSON.parse(content) : content;
+      if (typeof content === "string") {
+        let cleaned = content.trim();
+        // Strip markdown code fences
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+        // Extract just the JSON object
+        const first = cleaned.indexOf("{");
+        const last = cleaned.lastIndexOf("}");
+        if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1);
+        try {
+          json = JSON.parse(cleaned);
+        } catch {
+          try {
+            json = JSON.parse(cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]"));
+          } catch {
+            return { ok: false as const, platform, country, url, error: "Antwort konnte nicht geparst werden – bitte erneut versuchen." };
+          }
+        }
+      } else {
+        json = content;
+      }
     } catch (e) {
       return { ok: false as const, platform, country, url, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
     }
