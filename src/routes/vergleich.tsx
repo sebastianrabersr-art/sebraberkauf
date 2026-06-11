@@ -203,6 +203,15 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                       <div className="text-[11px] text-[#A8A29E] truncate mt-0.5">
                         {[p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
                       </div>
+                      <div className="text-[11px] text-[#A8A29E] truncate mt-1 tabular-nums">
+                        {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
+                      </div>
+                      <div
+                        className="text-[10px] tabular-nums mt-0.5"
+                        style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#DC2626" }}
+                      >
+                        {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
+                      </div>
                     </div>
                     <span className="font-display text-[16px] font-extrabold text-[#1C1917] tabular-nums leading-none">
                       {s.total}
