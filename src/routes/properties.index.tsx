@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
@@ -14,6 +14,14 @@ export const Route = createFileRoute("/properties/")({
 });
 
 type SortKey = "score" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
+
+// Hilfsfunktion: leere/0-Werte als em-dash anzeigen
+function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
+  if (value === null || value === undefined || !Number.isFinite(value) || value === 0) {
+    return <span className="text-[#A8A29E]">—</span>;
+  }
+  return <>{fmt(value)}</>;
+}
 
 function exportCSV(rows: any[]) {
   const headers = ["ID","Projekt","Status","Score","Entscheidung","Link","Titel","Bezirk","Kaufpreis","Fläche","Preis/m²","Zimmer","Baujahr","Miete","Brutto","Netto","Cashflow","LTV","Datenqualität","Mietrecht","Zustand","Fehlend"];
@@ -33,6 +41,14 @@ function exportCSV(rows: any[]) {
   a.download = `immobilien-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
+
+const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
+
+const selectClass =
+  "rounded-lg border border-[#EAE6DF] bg-white px-3 py-2 text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F]/40";
+const inputClass = selectClass;
+
+const COL_NUMERIC = "py-3 px-4 text-right whitespace-nowrap text-[13px] text-[#1C1917]";
 
 function PropertiesList() {
   const navigate = useNavigate();
@@ -83,90 +99,131 @@ function PropertiesList() {
 
   return (
     <AppShell>
-      <PageHeader
-        title="Kaufkandidaten"
-        description={`${rows.length} Objekt${rows.length === 1 ? "" : "e"} in Prüfung${scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}. Gekaufte Immobilien findest du im Portfolio.`}
-        actions={
-          <div className="flex gap-2 flex-wrap">
-            <Link to="/properties/new" className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
-              <Plus className="size-4" /> Manuell hinzufügen
-            </Link>
-            <Link to="/analyze" className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-3 py-2 text-sm">
-              Link analysieren
-            </Link>
-            <button onClick={() => exportCSV(rows)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
-              <Download className="size-4" /> CSV
+      {/* Seitenkopf */}
+      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1
+            className="text-[28px] leading-tight text-[#1C1917]"
+            style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}
+          >
+            Kaufkandidaten
+          </h1>
+          <p className="mt-1.5 text-[13px] text-[#78716C]">
+            {rows.length} Objekt{rows.length === 1 ? "" : "e"} in Prüfung
+            {scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}. Gekaufte Immobilien findest du im Portfolio.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            to="/properties/new"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#EAE6DF] bg-transparent px-3.5 py-2 text-[13px] font-medium text-[#1C1917] hover:bg-[#FAFAF8]"
+          >
+            <Plus className="size-4" /> Manuell hinzufügen
+          </Link>
+          <Link
+            to="/analyze"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#2D6A4F] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#235740]"
+          >
+            Link analysieren
+          </Link>
+          {hasDemo && (
+            <button
+              onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
+              className="rounded-lg border border-[#EAE6DF] px-3 py-2 text-[12px] text-[#DC2626] hover:bg-[#FEE2E2]/40"
+            >
+              Demo-Daten löschen
             </button>
-            {hasDemo && (
-              <button onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}} className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10">
-                Demo-Daten löschen
-              </button>
-            )}
-          </div>
-        }
-      />
+          )}
+        </div>
+      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
-        <input placeholder="Suche…" value={search} onChange={(e) => setSearch(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm col-span-2" />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
-          <option value="all">Status: aktive Kandidaten</option>
-          <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
-          {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className="rounded-md border bg-background px-2 py-2 text-sm">
-          <option value="all">Mietrecht: alle</option>
-          {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm" />
-        <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="rounded-md border bg-background px-2 py-2 text-sm">
-          <option value="score">Sort: Score</option>
-          <option value="kaufpreis">Kaufpreis</option>
-          <option value="preisM2">Preis/m²</option>
-          <option value="brutto">Bruttorendite</option>
-          <option value="netto">Nettorendite</option>
-          <option value="cashflow">Cashflow</option>
-          <option value="dq">Datenqualität</option>
-          <option value="createdAt">Datum</option>
-        </select>
-        <label className="text-xs flex items-center gap-1 px-2 py-2 border rounded-md bg-background">
-          Score≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
-        </label>
-        <label className="text-xs flex items-center gap-1 px-2 py-2 border rounded-md bg-background">
-          DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+      {/* Filterleiste */}
+      <div className="bg-[#FAFAF8] border-b border-[#EAE6DF] -mx-6 px-6 py-2.5 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            placeholder="Suche…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`${inputClass} min-w-[200px] flex-1 sm:max-w-xs`}
+          />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClass}>
+            <option value="all">Status: aktive Kandidaten</option>
+            <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
+            {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className={selectClass}>
+            <option value="all">Mietrecht: alle</option>
+            {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
+          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
+            <option value="score">Sort: Score</option>
+            <option value="kaufpreis">Kaufpreis</option>
+            <option value="preisM2">Preis/m²</option>
+            <option value="brutto">Bruttorendite</option>
+            <option value="netto">Nettorendite</option>
+            <option value="cashflow">Cashflow</option>
+            <option value="dq">Datenqualität</option>
+            <option value="createdAt">Datum</option>
+          </select>
+          <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
+            Score≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+          </label>
+          <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
+            DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+          </label>
+          <button
+            onClick={() => exportCSV(rows)}
+            title="CSV exportieren"
+            className="ml-auto inline-flex items-center justify-center size-9 rounded-lg border border-[#EAE6DF] bg-white text-[#78716C] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/30"
+          >
+            <Download className="size-4" />
+          </button>
+        </div>
+        <label className="inline-flex items-center gap-2 text-[12px] text-[#78716C] mt-2">
+          <input type="checkbox" checked={scopeAll} onChange={(e) => setScopeAll(e.target.checked)} className="accent-[#2D6A4F]" />
+          Alle Projekte anzeigen (sonst nur aktives Projekt)
         </label>
       </div>
-      <label className="inline-flex items-center gap-2 text-xs text-muted-foreground mb-3">
-        <input type="checkbox" checked={scopeAll} onChange={(e) => setScopeAll(e.target.checked)} />
-        Alle Projekte anzeigen (sonst nur aktives Projekt)
-      </label>
 
-      <div className="rounded-xl border bg-card overflow-hidden">
+      {/* Tabelle */}
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr className="border-b">
-                {[
-                  ["Score","__score__"],
-                  ["Status","Aktueller CRM-Status"],
-                  ["Prio","Priorität für deine Pipeline"],
-                  ["Titel","Inserats-Titel"],
-                  ["Bezirk","Wiener Bezirk / Region"],
-                  ["Kaufpreis","Kaufpreis brutto"],
-                  ["m²","Wohnfläche"],
-                  ["€/m²","Preis pro m²"],
-                  ["Makler€","Maklerkosten brutto (Provision + USt)"],
-                  ["NK gesamt","Kaufnebenkosten gesamt (inkl. Maklerkosten)"],
-                  ["Gesamt­kapital","Gesamtkapitalbedarf = Kaufpreis + NK + Sanierung + Einrichtung + Reserve"],
-                  ["Miete","Erwartete Nettomiete"],
-                  ["Min-Miete","Benötigte Nettomiete für positiven Cashflow"],
-                  ["Brutto","Bruttorendite"],
-                  ["Cashflow","Monatlicher Cashflow"],
-                  ["Mietrecht","Mietrechtliches Risiko (automatisch eingeschätzt)"],
-                  ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder"],
-                  ["Nächste Aktion",""],["Verkäufer",""],["Links",""],["",""],
-                ].map(([h,tip]) => (
-                  <th key={h} title={tip === "__score__" ? undefined : tip} className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1">{h}{tip === "__score__" && <ScoreInfo />}</span>
+          <table className="w-full text-[13px] border-collapse">
+            <thead>
+              <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
+                {([
+                  ["Score","__score__","left"],
+                  ["Status","Aktueller CRM-Status","left"],
+                  ["Prio","Priorität für deine Pipeline","left"],
+                  ["Titel","Inserats-Titel","left"],
+                  ["Bezirk","Wiener Bezirk / Region","left"],
+                  ["Kaufpreis","Kaufpreis brutto","right"],
+                  ["m²","Wohnfläche","right"],
+                  ["€/m²","Preis pro m²","right"],
+                  ["Makler€","Maklerkosten brutto (Provision + USt)","right"],
+                  ["NK gesamt","Kaufnebenkosten gesamt (inkl. Maklerkosten)","right"],
+                  ["Gesamtkapital","Gesamtkapitalbedarf = Kaufpreis + NK + Sanierung + Einrichtung + Reserve","right"],
+                  ["Miete","Erwartete Nettomiete","right"],
+                  ["Min-Miete","Benötigte Nettomiete für positiven Cashflow","right"],
+                  ["Brutto","Bruttorendite","right"],
+                  ["Cashflow","Monatlicher Cashflow","right"],
+                  ["Mietrecht","Mietrechtliches Risiko (automatisch eingeschätzt)","left"],
+                  ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder","left"],
+                  ["Nächste Aktion","","left"],
+                  ["Verkäufer","","left"],
+                  ["Links","","left"],
+                  ["","","left"],
+                ] as const).map(([h,tip,align]) => (
+                  <th
+                    key={h}
+                    title={tip === "__score__" ? undefined : tip}
+                    className={`px-4 font-semibold text-[11px] uppercase text-[#A8A29E] whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}
+                    style={{ letterSpacing: "0.07em", height: 44 }}
+                  >
+                    <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end w-full" : ""}`}>
+                      {h}{tip === "__score__" && <ScoreInfo />}
+                    </span>
                   </th>
                 ))}
               </tr>
@@ -174,76 +231,98 @@ function PropertiesList() {
             <tbody>
               {rows.map(({ p, c, s, dq, projectName }) => {
                 const maps = googleMapsUrl(p);
+                const score = s.total as number;
+                const scoreColor = score >= 65 ? "#2D6A4F" : score >= 50 ? "#D97706" : "#A8A29E";
                 return (
-                <tr
-                  key={p.id}
-                  className="border-b last:border-0 hover:bg-accent/30 cursor-pointer"
-                  onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })}
-                >
-                  <td className="py-2.5 px-3"><div className="font-semibold">{s.total}</div><AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge></td>
-                  <td className="py-2.5 px-3 text-xs"><span className="px-2 py-0.5 rounded bg-secondary">{p.status}</span></td>
-                  <td className="py-2.5 px-3 text-xs">{p.priority ?? "—"}</td>
-                  <td className="py-2.5 px-3 max-w-xs">
-                    <div className="font-medium hover:underline">{p.title || "—"}</div>
-                    <div className="text-xs text-muted-foreground truncate">{projectName} · {p.platform}</div>
-                  </td>
-                  <td className="py-2.5 px-3">{p.bezirk || "—"}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(p.kaufpreis)}</td>
-                  <td className="py-2.5 px-3">{p.wohnflaecheM2 ?? "—"}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap">{fmtEUR(c.preisProM2)}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Maklerkosten brutto inkl. USt">{fmtEUR(c.maklerProvisionBrutto)}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Kaufnebenkosten gesamt inkl. Makler">{fmtEUR(c.kaufNebenkosten)}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap text-xs" title="Gesamtkapitalbedarf">{fmtEUR(c.gesamtkosten)}</td>
-                  <td className="py-2.5 px-3 whitespace-nowrap">
-                    {fmtEUR(p.nettomieteMtl)}
-                    {p.nettomieteGeschaetzt && <div className="text-[10px] text-warning-foreground">geschätzt</div>}
-                  </td>
-                  <td className={`py-2.5 px-3 whitespace-nowrap text-xs ${p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-success" : "text-warning-foreground"}`} title="Mindestmiete für positiven Cashflow">
-                    {fmtEUR(c.requiredBreakEvenRent)}
-                    <div className="text-[10px] text-muted-foreground">{fmtEUR(c.requiredBreakEvenRentPerM2)}/m²</div>
-                  </td>
-                  <td className="py-2.5 px-3">{fmtPct(c.bruttorendite)}</td>
-                  <td className={`py-2.5 px-3 whitespace-nowrap ${c.cashflowMtl < 0 ? "text-destructive" : "text-success"}`}>{fmtEUR(c.cashflowMtl)}</td>
-                  <td className="py-2.5 px-3 text-xs" title="Mietrechtliches Risiko aus Baujahr/Beschreibung">
-                    {(() => { const m = inferMietrecht(p); return <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>{m.risiko}</AmpelBadge>; })()}
-                  </td>
-                  <td className="py-2.5 px-3"><AmpelBadge ampel={dq.ampel}>{dq.score}%</AmpelBadge></td>
-                  <td className="py-2.5 px-3 text-xs">
-                    {p.nextAction ? (
-                      <>
-                        <div className="truncate max-w-[140px]">{p.nextAction}</div>
-                        {p.nextActionDate && <div className="text-[10px] text-muted-foreground">{p.nextActionDate}</div>}
-                      </>
-                    ) : "—"}
-                  </td>
-                  <td className="py-2.5 px-3 text-xs">
-                    <div className="truncate max-w-[140px]">{p.sellerName || p.sellerCompany || "—"}</div>
-                    {p.sellerType && p.sellerType !== "unklar" && <div className="text-[10px] text-muted-foreground">{p.sellerType}</div>}
-                  </td>
-                  <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-2">
-                      {isValidUrl(p.link) ? (
-                        <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-primary hover:underline">
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                      {maps && (
-                        <a href={maps} target="_blank" rel="noopener noreferrer" title="Google Maps" className="text-primary hover:underline">
-                          <MapPin className="size-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => { if (confirm("Wirklich löschen?")) { deleteProperty(p.id); toast.success("Gelöscht."); } }} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="size-4" />
-                    </button>
-                  </td>
-                </tr>
-              );
+                  <tr
+                    key={p.id}
+                    className="border-b border-[#F5F3EE] hover:bg-[#FAFAF8] cursor-pointer transition-colors"
+                    onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })}
+                    style={{ minHeight: 64 }}
+                  >
+                    <td className="py-3 px-4 align-middle" style={{ minHeight: 64 }}>
+                      <div className="leading-none tabular-nums" style={{ ...bricolage, fontWeight: 800, fontSize: 20, color: scoreColor }}>{score}</div>
+                      <div className="mt-1.5"><AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge></div>
+                    </td>
+                    <td className="py-3 px-4 align-middle">
+                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-[#78716C]">{p.status}</span>
+                    </td>
+                    <td className="py-3 px-4 align-middle text-[12px] text-[#A8A29E]">{p.priority ?? "—"}</td>
+                    <td className="py-3 px-4 align-middle max-w-sm">
+                      <div
+                        className="text-[14px] text-[#1C1917]"
+                        style={{ fontWeight: 500, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                      >
+                        {p.title || "—"}
+                      </div>
+                      <div className="text-[11px] text-[#A8A29E] truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                    </td>
+                    <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>{p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>{num(c.preisProM2)}</td>
+                    <td className={COL_NUMERIC} style={bricolage} title="Maklerkosten brutto inkl. USt">{num(c.maklerProvisionBrutto)}</td>
+                    <td className={COL_NUMERIC} style={bricolage} title="Kaufnebenkosten gesamt inkl. Makler">{num(c.kaufNebenkosten)}</td>
+                    <td className={COL_NUMERIC} style={bricolage} title="Gesamtkapitalbedarf">{num(c.gesamtkosten)}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>
+                      {num(p.nettomieteMtl)}
+                      {p.nettomieteGeschaetzt && <div className="text-[10px] text-[#D97706]" style={{ fontFamily: "Inter" }}>geschätzt</div>}
+                    </td>
+                    <td className={`${COL_NUMERIC}`} style={bricolage} title="Mindestmiete für positiven Cashflow">
+                      <span className={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-[#2D6A4F]" : "text-[#D97706]"}>
+                        {num(c.requiredBreakEvenRent)}
+                      </span>
+                      <div className="text-[10px] text-[#A8A29E]" style={{ fontFamily: "Inter" }}>{c.requiredBreakEvenRentPerM2 ? `${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²` : "—"}</div>
+                    </td>
+                    <td className={COL_NUMERIC} style={bricolage}>{c.bruttorendite ? fmtPct(c.bruttorendite) : <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className={`${COL_NUMERIC}`} style={bricolage}>
+                      <span className={c.cashflowMtl < 0 ? "text-[#DC2626]" : c.cashflowMtl > 0 ? "text-[#16A34A]" : "text-[#A8A29E]"}>
+                        {c.cashflowMtl === 0 ? "—" : fmtEUR(c.cashflowMtl)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 align-middle text-[12px]" title="Mietrechtliches Risiko aus Baujahr/Beschreibung">
+                      {(() => { const m = inferMietrecht(p); return <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>{m.risiko}</AmpelBadge>; })()}
+                    </td>
+                    <td className="py-3 px-4 align-middle"><AmpelBadge ampel={dq.ampel}>{dq.score}%</AmpelBadge></td>
+                    <td className="py-3 px-4 align-middle text-[12px] text-[#1C1917]">
+                      {p.nextAction ? (
+                        <>
+                          <div className="truncate max-w-[140px]">{p.nextAction}</div>
+                          {p.nextActionDate && <div className="text-[10px] text-[#A8A29E]">{p.nextActionDate}</div>}
+                        </>
+                      ) : <span className="text-[#A8A29E]">—</span>}
+                    </td>
+                    <td className="py-3 px-4 align-middle text-[12px] text-[#1C1917]">
+                      <div className="truncate max-w-[140px]">{p.sellerName || p.sellerCompany || <span className="text-[#A8A29E]">—</span>}</div>
+                      {p.sellerType && p.sellerType !== "unklar" && <div className="text-[10px] text-[#A8A29E]">{p.sellerType}</div>}
+                    </td>
+                    <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
+                        {isValidUrl(p.link) ? (
+                          <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-[#2D6A4F] hover:text-[#235740]">
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        ) : <span className="text-[12px] text-[#A8A29E]">—</span>}
+                        {maps && (
+                          <a href={maps} target="_blank" rel="noopener noreferrer" title="Google Maps" className="text-[#2D6A4F] hover:text-[#235740]">
+                            <MapPin className="size-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => { if (confirm("Wirklich löschen?")) { deleteProperty(p.id); toast.success("Gelöscht."); } }}
+                        className="text-[#A8A29E] hover:text-[#DC2626]"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={22} className="py-10 text-center text-muted-foreground">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
+                <tr><td colSpan={21} className="py-12 text-center text-[13px] text-[#78716C]">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
               )}
             </tbody>
           </table>
