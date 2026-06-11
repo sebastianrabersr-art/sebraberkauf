@@ -1,4 +1,9 @@
 import type { Assumptions, FinanceScenario, Mietrecht, Property } from "./types";
+import {
+  computePurchaseCostBreakdown,
+  resolvePurchaseCostRules,
+  type PurchaseCostBreakdown,
+} from "./purchaseCostRules";
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
   eigenkapital: 100000,
@@ -80,11 +85,30 @@ export interface Calc {
 function calcPurchaseCosts(p: Property, a: Assumptions) {
   const kaufpreis = p.kaufpreis ?? 0;
 
-  // Pauschalsatz für Nebenkosten, abhängig davon ob Makler beteiligt ist.
-  const nebenkostenPct =
+  // Pauschalsatz für Nebenkosten (Legacy-Anzeige). Bleibt erhalten, wird
+  // unten aus den itemisierten Posten neu abgeleitet, damit der Wert mit
+  // der detaillierten Aufstellung übereinstimmt.
+  const nebenkostenPctLegacy =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
 
+  // ────────── Regelbasierte Defaults aus Land/Bundesland ──────────
+  // Bestandsdaten ohne `land` werden in resolvePurchaseCostRules
+  // automatisch als Österreich behandelt.
+  const rules = resolvePurchaseCostRules(p);
+
+  // Grobe Kreditbetrag-Schätzung für die Pfandrechts-Eintragung:
+  // Falls ein FinanceScenario explizit einen Kreditbetrag definiert,
+  // nehmen wir den – sonst „so viel wie das EK NICHT deckt".
+  const activeFin = getActiveFinance(p);
+  const baseInvest = kaufpreis + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
+  const ekForFin = activeFin?.eigenkapital ?? a.eigenkapital;
+  const kreditBetragSchätzung = activeFin?.kreditBetrag != null
+    ? Math.max(0, activeFin.kreditBetrag)
+    : Math.max(0, baseInvest - (ekForFin ?? 0));
+
   // Maklerkosten – bidirektional, "provisionLastEdit" = source of truth.
+  // Die Default-Provision (provisionPct) kommt jetzt aus den zentralen
+  // Regeln statt einem hartcodierten 3 %.
   const sellerIsPrivat = p.sellerType === "Privat";
   const maklerKostenZahlbar =
     p.maklerkostenZahlbar != null
@@ -94,7 +118,7 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
         : p.makler === "Nein"
           ? false
           : p.makler === "Ja" || !!p.provisionPct || !!p.provisionEUR || !!p.provisionBruttoEUR || p.sellerType === "Makler";
-  const maklerProvisionUstPct = p.maklerprovisionUstPct ?? 0.20;
+  const maklerProvisionUstPct = p.maklerprovisionUstPct ?? rules.brokerVatRate;
   const provBasis = (p.provisionBasis ?? "brutto") === "netto" ? (p.kaufpreisNetto ?? kaufpreis) : (p.kaufpreisBrutto ?? kaufpreis);
   const last = p.provisionLastEdit ?? (p.provisionBruttoEUR != null ? "brutto" : p.provisionEUR != null ? "netto" : "pct");
   let maklerProvisionPct = 0, maklerProvisionNetto = 0, maklerProvisionBrutto = 0;
@@ -108,19 +132,33 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
       maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
       maklerProvisionPct = provBasis > 0 ? maklerProvisionNetto / provBasis : 0;
     } else {
-      maklerProvisionPct = p.provisionPct ?? 0.03;
+      maklerProvisionPct = p.provisionPct ?? rules.brokerCommissionRate;
       maklerProvisionNetto = provBasis * maklerProvisionPct;
       maklerProvisionBrutto = maklerProvisionNetto * (1 + maklerProvisionUstPct);
     }
   }
   const maklerProvisionUst = maklerProvisionBrutto - maklerProvisionNetto;
 
-  // Explizit eingegebene Nebenkosten – wenn vorhanden, schlagen sie die Pauschale.
-  const otherNK =
-    (p.grunderwerbsteuer ?? 0) + (p.grundbuchkosten ?? 0) + (p.vertragskosten ?? 0) +
-    (p.finanzierungskosten ?? 0) + (p.sonstigeNK ?? 0);
-  const explicitNK = otherNK + maklerProvisionBrutto;
-  const kaufNebenkosten = explicitNK > 0 ? explicitNK : kaufpreis * nebenkostenPct;
+  // ────────── Itemisierte Posten via Rules-System ──────────
+  // User-Eingaben am Property gewinnen IMMER gegen die Regel-Defaults
+  // (siehe `overrides` weiter unten).
+  const breakdown: PurchaseCostBreakdown = computePurchaseCostBreakdown({
+    kaufpreis,
+    kreditBetragSchätzung,
+    rules,
+    overrides: {
+      grunderwerbsteuer: p.grunderwerbsteuer,
+      grundbuchkosten: p.grundbuchkosten,
+      vertragskosten: p.vertragskosten,
+      finanzierungskosten: p.finanzierungskosten,
+      sonstigeNK: p.sonstigeNK,
+    },
+  });
+
+  const kaufNebenkosten = breakdown.subtotalOhneMakler + maklerProvisionBrutto;
+  // nebenkostenPct = abgeleiteter effektiver Prozentsatz (für Anzeige).
+  // Fällt auf den alten Pauschalsatz zurück, wenn kein Kaufpreis vorliegt.
+  const nebenkostenPct = kaufpreis > 0 ? kaufNebenkosten / kaufpreis : nebenkostenPctLegacy;
 
   // Gesamtinvestition inkl. Sanierung, Einrichtung und Reserve.
   const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
