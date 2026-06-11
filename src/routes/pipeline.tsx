@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
-import { ALL_PROZESS_STATUSES, migrateLegacyStatus, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
+import { migrateLegacyStatus, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
 import { MoreHorizontal, Phone, Mail, Calendar, GripVertical } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline")({
