@@ -267,12 +267,20 @@ function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
 
   // 5) Monatsrate.
   //    - endfaellig: nur Zinsen monatlich.
-  //    - Zins == 0: lineare Tilgung (pmt() handhabt das).
-  //    - sonst: Annuität.
+  //    - manuell:    Durchschnitt aus manualSchedule (falls vorhanden), sonst Annuität.
+  //    - Zins == 0:  lineare Tilgung (pmt() handhabt das).
+  //    - sonst:      Annuität.
+  const tilgungsart = activeScn?.tilgungsart;
   let monthlyLoanPayment = 0;
   if (loanAmount > 0) {
-    if (activeScn?.tilgungsart === "endfaellig") {
+    if (tilgungsart === "endfaellig") {
       monthlyLoanPayment = loanAmount * monthlyRate; // 0 bei Zins 0
+    } else if (tilgungsart === "manuell") {
+      const sched = activeScn?.manualSchedule ?? [];
+      const sumYear = sched.reduce((s, x) => s + safeNonNeg(x.payment, 0), 0);
+      monthlyLoanPayment = sched.length > 0
+        ? sumYear / sched.length / 12
+        : pmt(monthlyRate, totalMonths, loanAmount);
     } else {
       monthlyLoanPayment = pmt(monthlyRate, totalMonths, loanAmount);
     }
@@ -283,16 +291,16 @@ function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
 
   const yearlyLoanPayment = monthlyLoanPayment * 12;
 
-  // 6) Gezahlte Zinsen gesamt über die Laufzeit.
-  //    - endfaellig: Zinsen × Laufzeit (Tilgung erst am Ende).
-  //    - Annuität:   (Rate × n) − Kreditbetrag.
-  //    - Zins 0:     0.
-  let totalInterestPaid = 0;
-  if (loanAmount > 0 && monthlyRate > 0) {
-    totalInterestPaid = activeScn?.tilgungsart === "endfaellig"
-      ? monthlyLoanPayment * totalMonths
-      : Math.max(0, monthlyLoanPayment * totalMonths - loanAmount);
-  }
+  // 6) Gezahlte Zinsen gesamt über die Laufzeit (zentrale Formel).
+  const totalInterestPaid = calcTotalInterestPaid({
+    loanAmount,
+    annualRate,
+    termYears: laufzeitJahre,
+    monthlyPayment: monthlyLoanPayment,
+    tilgungsart: tilgungsart === "endfaellig" || tilgungsart === "manuell"
+      ? tilgungsart
+      : "annuitaet",
+  });
 
   // 7) LTV – nur sinnvoll, wenn Bedarf > 0.
   const ltvFinance = totalCapitalNeed > 0 ? loanAmount / totalCapitalNeed : 0;
