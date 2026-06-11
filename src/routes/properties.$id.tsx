@@ -10,6 +10,7 @@ import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
+import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
 import { ScoreBreakdownCard } from "@/components/ScoreBreakdownCard";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
@@ -490,6 +491,10 @@ function Detail() {
 
           <Section title="Aktivitäten / Verlauf">
             <ActivitiesPanel propertyId={p.id} />
+          </Section>
+
+          <Section title="Investor-Charts (Darlehen, Asset, Cash, Szenarien, AfA)">
+            <InvestorChartsPanel p={p} />
           </Section>
 
           <Section title="Advanced: AfA, Projektion & Anschlussfinanzierung">
