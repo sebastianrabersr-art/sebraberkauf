@@ -261,7 +261,17 @@ Schema-Felder:
 - image_urls (Array mit bis zu 6 absoluten Bild-URLs aus dem Inserat falls im Text/JSON-LD erkennbar)
 - estimated_rent_monthly (realistisch geschätzte Netto-Kaltmiete je Lage/Größe/Zustand), rent_is_estimate (true wenn geschätzt)
 - mietrecht_hint nur für AT: ("Neubau / freie Miete" | "Teilanwendung MRG" | "Altbau / Richtwert möglich" | "unklar – rechtlich prüfen" | "nicht geeignet"). Für DE: ""
-- missing_data (string[] aller nicht gefundenen relevanten Felder).`;
+- missing_data (string[] aller nicht gefundenen relevanten Felder).
+
+Zusätzliche Hinweise für schwierige Fälle:
+- Bei willhaben: Kaufpreis steht oft als 'Kaufpreis: X €' oder im JSON-LD als 'price'. Bezirk = PLZ (4-stellig bei AT).
+- Bei ImmoScout24: Preis steht als 'Kaufpreis' oder 'Gesamtpreis' im Expose. Zimmer als 'Zi.' abgekürzt.
+- Bei immowelt: 'Kaufpreis' oder 'Gesamtpreis inkl. NK'. Provision oft als '3,57 % inkl. MwSt'.
+- Bei kleinanzeigen.de: Preis direkt im Titel oder als 'VB' (Verhandlungsbasis). Land = Deutschland.
+- Bei Bauträger-/Maklerseiten: Preis oft als 'ab X €' — nimm den niedrigsten genannten Preis.
+- Wenn commission_pct nicht explizit genannt aber 'provisionsfrei' oder 'ohne Makler' steht: commission_pct = 0.
+- Wenn 'Makler' oder 'Provision' erwähnt wird ohne Prozentsatz: AT-Standard = 3.0, DE-Standard = 3.57.
+- estimated_rent_monthly: Berechne als (Kaufpreis / 200) als grobe Schätzung wenn keine Mietangaben vorhanden, aber markiere rent_is_estimate = true.`;
 
     const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\nLand (URL-Heuristik): ${country || "unbekannt"}\n\nInseratstext:\n${text}`;
 
