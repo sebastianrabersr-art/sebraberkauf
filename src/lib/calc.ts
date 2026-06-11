@@ -1184,3 +1184,398 @@ export function summarizePayments(list: Payment[]): PaymentSummary {
     reparaturGezahlt: sumBy(paid, (p) => p.category === "Reparatur / Instandhaltung"),
   };
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  INVESTOR-MODELL (Langzeit-Projektion)
+ *
+ *  Diese Modul-Erweiterung bildet die Excel-Logik nach:
+ *    - Asset-Entwicklung      (Wert, Restschuld, EK im Objekt, Verkaufserlös)
+ *    - Cash-Entwicklung       (Jahres-CF, kumuliert, liquide Mittel)
+ *    - Kredit-Entwicklung     (Restschuld, Zins, Tilgung pro Jahr)
+ *    - Zins/Annuität          (nominal, monatlich/jährlich, Zins/Tilgungs-Anteil)
+ *    - Chart-Daten            (saubere Arrays mit deutschen Labels)
+ *    - Szenarien              (base / conservative / optimistic)
+ *
+ *  Alle Felder sind defensiv: keine NaN, keine Infinity, keine negativen
+ *  Restschulden, keine kaputten Achsen.
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+export interface AssetYear {
+  jahr: number;
+  estimatedPropertyValue: number;
+  remainingDebt: number;
+  equityInProperty: number;
+  cumulativePrincipalPaid: number;
+  hypotheticalSaleProceeds: number;
+  wealthChange: number;
+}
+
+export interface CashYear {
+  jahr: number;
+  annualCashflow: number;
+  cumulativeCashflow: number;
+  liquidFundsDevelopment: number;
+  cashflowAfterTax: number | null;
+}
+
+export interface LoanYear {
+  jahr: number;
+  remainingDebt: number;
+  interestPaid: number;
+  principalPaid: number;
+  annuityPayment: number;
+  cumulativeInterest: number;
+  cumulativePrincipal: number;
+}
+
+export interface InterestAnnuity {
+  nominalInterestRate: number;
+  monthlyAnnuity: number;
+  yearlyAnnuity: number;
+  /** Zinsanteil im 1. Jahr (Summe Monatszinsen Jahr 1). */
+  interestPart: number;
+  /** Tilgungsanteil im 1. Jahr. */
+  principalPart: number;
+}
+
+export interface LoanNeed {
+  totalCapitalNeed: number;
+  availableEquity: number;
+  requiredLoan: number;
+  /** > 0 = EK fehlt, < 0 = EK-Überschuss. */
+  equityGap: number;
+  equitySurplus: number;
+  ltv: number;
+}
+
+export interface ChartPoint {
+  jahr: number;
+  label: string;
+  value: number;
+}
+
+export interface ChartsData {
+  loanDevelopmentData: ChartPoint[];
+  assetDevelopmentData: ChartPoint[];
+  cashDevelopmentData: ChartPoint[];
+  depreciationData: ChartPoint[];
+  scenarioComparisonData: { label: string; cashflow: number; remainingDebt: number; propertyValue: number; equityInProperty: number; cumulativeCashflow: number; dealScore: number }[];
+}
+
+export interface ScenarioResult {
+  key: "base" | "conservative" | "optimistic";
+  label: string;
+  cashflow: number;
+  remainingDebt: number;
+  propertyValue: number;
+  equityInProperty: number;
+  cumulativeCashflow: number;
+  dealScore: number;
+}
+
+export interface InvestorModel {
+  horizonJahre: number;
+  loanNeed: LoanNeed;
+  interestAnnuity: InterestAnnuity;
+  assetDevelopment: AssetYear[];
+  cashDevelopment: CashYear[];
+  loanDevelopment: LoanYear[];
+  scenarios: ScenarioResult[];
+  charts: ChartsData;
+}
+
+/** Erzeugt einen Tilgungsplan pro Jahr (Annuität / endfällig / Zins 0). */
+function buildLoanSchedule(
+  loanAmount: number,
+  annualRate: number,
+  laufzeitJahre: number,
+  horizon: number,
+  tilgungsart: "annuitaet" | "endfaellig" = "annuitaet",
+): LoanYear[] {
+  const out: LoanYear[] = [];
+  const principal = safeNonNeg(loanAmount, 0);
+  const rate = safeNonNeg(annualRate, 0);
+  const n = Math.max(1, Math.round(safeNum(laufzeitJahre, 30)));
+  const H = Math.max(1, Math.round(safeNum(horizon, 10)));
+  const mRate = rate / 12;
+  const monthlyPay = tilgungsart === "endfaellig"
+    ? principal * mRate
+    : pmt(mRate, n * 12, principal);
+
+  let bal = principal;
+  let cumInt = 0;
+  let cumPrin = 0;
+  for (let j = 1; j <= H; j++) {
+    let interestY = 0;
+    let principalY = 0;
+    if (bal > 0) {
+      if (tilgungsart === "endfaellig") {
+        interestY = bal * rate;
+        principalY = j === n ? bal : 0; // Tilgung am Ende
+      } else if (mRate === 0) {
+        // Zins 0: lineare Tilgung
+        principalY = Math.min(bal, monthlyPay * 12);
+      } else {
+        // 12 Monate iterieren für genaue Zins/Tilgung-Aufteilung
+        for (let m = 0; m < 12 && bal > 0; m++) {
+          const i = bal * mRate;
+          const t = Math.min(monthlyPay - i, bal);
+          interestY += i;
+          principalY += t;
+          bal -= t;
+        }
+      }
+      if (tilgungsart !== "annuitaet" || mRate === 0) {
+        bal = Math.max(0, bal - principalY);
+      }
+    }
+    cumInt += interestY;
+    cumPrin += principalY;
+    out.push({
+      jahr: j,
+      remainingDebt: Math.max(0, bal),
+      interestPaid: Math.max(0, interestY),
+      principalPaid: Math.max(0, principalY),
+      annuityPayment: Math.max(0, interestY + principalY),
+      cumulativeInterest: Math.max(0, cumInt),
+      cumulativePrincipal: Math.max(0, cumPrin),
+    });
+  }
+  return out;
+}
+
+/** Asset-Entwicklung: Wert, Restschuld, EK im Objekt, Verkaufserlös. */
+export function calcAssetDevelopment(args: {
+  startWert: number;
+  valueGrowthPct: number;
+  loan: LoanYear[];
+  initialEquity: number;
+  sellingCostPct: number;
+}): AssetYear[] {
+  const v0 = safeNonNeg(args.startWert, 0);
+  const g = safeNum(args.valueGrowthPct, 0);
+  const sellCost = Math.max(0, safeNum(args.sellingCostPct, 0));
+  const eq0 = safeNonNeg(args.initialEquity, 0);
+  return args.loan.map((l) => {
+    const value = v0 * Math.pow(1 + g, l.jahr);
+    const equityInProperty = value - l.remainingDebt;
+    const proceeds = value * (1 - sellCost) - l.remainingDebt;
+    return {
+      jahr: l.jahr,
+      estimatedPropertyValue: Math.max(0, value),
+      remainingDebt: l.remainingDebt,
+      equityInProperty,
+      cumulativePrincipalPaid: l.cumulativePrincipal,
+      hypotheticalSaleProceeds: proceeds,
+      wealthChange: proceeds - eq0,
+    };
+  });
+}
+
+/** Cash-Entwicklung: jährlicher und kumulierter Cashflow, liquide Mittel. */
+export function calcCashDevelopment(args: {
+  baseAnnualCashflow: number;
+  rentGrowthPct: number;
+  costGrowthPct: number;
+  horizon: number;
+  startLiquidity: number;
+  taxRate: number | null;
+}): CashYear[] {
+  const cf0 = safeNum(args.baseAnnualCashflow, 0);
+  const rg = safeNum(args.rentGrowthPct, 0);
+  const cg = safeNum(args.costGrowthPct, 0);
+  const H = Math.max(1, Math.round(safeNum(args.horizon, 10)));
+  const start = safeNum(args.startLiquidity, 0);
+  const tax = args.taxRate;
+  const out: CashYear[] = [];
+  let cumCF = 0;
+  let liquid = start;
+  // Vereinfachte Steigerung: Mittelwert aus Miet- und Kostenwachstum auf CF.
+  const cfGrowth = (rg + cg) / 2;
+  for (let j = 1; j <= H; j++) {
+    const cf = cf0 * Math.pow(1 + cfGrowth, j - 1);
+    cumCF += cf;
+    liquid += cf;
+    const afterTax = tax != null && tax > 0
+      ? cf * (1 - Math.min(1, Math.max(0, tax)))
+      : null;
+    out.push({
+      jahr: j,
+      annualCashflow: safeNum(cf, 0),
+      cumulativeCashflow: safeNum(cumCF, 0),
+      liquidFundsDevelopment: safeNum(liquid, 0),
+      cashflowAfterTax: afterTax != null ? safeNum(afterTax, 0) : null,
+    });
+  }
+  return out;
+}
+
+/** Zins-/Annuitäten-Übersicht für UI-Anzeige (Jahr 1). */
+function calcInterestAnnuity(loan: LoanYear[], annualRate: number, monthlyPay: number): InterestAnnuity {
+  const y1 = loan[0];
+  return {
+    nominalInterestRate: safeNonNeg(annualRate, 0),
+    monthlyAnnuity: safeNonNeg(monthlyPay, 0),
+    yearlyAnnuity: safeNonNeg(monthlyPay, 0) * 12,
+    interestPart: y1?.interestPaid ?? 0,
+    principalPart: y1?.principalPaid ?? 0,
+  };
+}
+
+/** Bedarfs-Analyse: EK-Lücke oder -Überschuss. */
+function calcLoanNeed(totalCapitalNeed: number, equity: number, loan: number): LoanNeed {
+  const need = Math.max(0, safeNum(totalCapitalNeed, 0));
+  const eq = Math.max(0, safeNum(equity, 0));
+  const req = Math.max(0, need - eq);
+  const gap = Math.max(0, req - safeNum(loan, 0));
+  const surplus = Math.max(0, eq - need);
+  return {
+    totalCapitalNeed: need,
+    availableEquity: eq,
+    requiredLoan: req,
+    equityGap: gap,
+    equitySurplus: surplus,
+    ltv: need > 0 ? Math.max(0, safeNum(loan, 0)) / need : 0,
+  };
+}
+
+/** Szenarien base / conservative / optimistic. */
+function calcScenarios(args: {
+  baseAnnualCashflow: number;
+  startWert: number;
+  loan: LoanYear[];
+  initialEquity: number;
+  sellingCostPct: number;
+  rentGrowthPct: number;
+  valueGrowthPct: number;
+  horizon: number;
+  baseDealScore: number;
+}): ScenarioResult[] {
+  const variants: { key: ScenarioResult["key"]; label: string; cfMult: number; valMult: number; scoreDelta: number }[] = [
+    { key: "conservative", label: "Konservativ", cfMult: 0.85, valMult: 0.5, scoreDelta: -10 },
+    { key: "base",         label: "Basis",       cfMult: 1.00, valMult: 1.0, scoreDelta: 0 },
+    { key: "optimistic",   label: "Optimistisch",cfMult: 1.15, valMult: 1.3, scoreDelta: +8 },
+  ];
+  const H = Math.max(1, Math.round(safeNum(args.horizon, 10)));
+  return variants.map((v) => {
+    const annualCF = safeNum(args.baseAnnualCashflow, 0) * v.cfMult;
+    const cum = annualCF * H;
+    const valGrowth = safeNum(args.valueGrowthPct, 0) * v.valMult;
+    const value = Math.max(0, safeNonNeg(args.startWert, 0) * Math.pow(1 + valGrowth, H));
+    const remDebt = args.loan[H - 1]?.remainingDebt ?? args.loan[args.loan.length - 1]?.remainingDebt ?? 0;
+    const equityInProperty = value - remDebt;
+    const score = Math.max(0, Math.min(100, Math.round(args.baseDealScore + v.scoreDelta)));
+    return {
+      key: v.key, label: v.label,
+      cashflow: safeNum(annualCF, 0),
+      remainingDebt: Math.max(0, remDebt),
+      propertyValue: value,
+      equityInProperty,
+      cumulativeCashflow: safeNum(cum, 0),
+      dealScore: score,
+    };
+  });
+}
+
+/** Hauptaggregat: baut das komplette Investor-Modell aus den Basis-KPIs. */
+export function calcInvestorModel(
+  p: Property,
+  a: Assumptions,
+  base: {
+    kaufpreis: number;
+    gesamtkosten: number;
+    eigenkapitalEinsatz: number;
+    kreditBetrag: number;
+    kreditRateMtl: number;
+    cashflowJahr: number;
+    dealScore: number;
+  },
+): InvestorModel {
+  const proj = p.projections ?? {};
+  // Sichere Defaults für die Wachstumsannahmen.
+  const horizon = Math.max(1, Math.round(safeNum(proj.horizonJahre, 10)));
+  const valueGrowth = safeNum(proj.wertsteigerungPct, 0.02);   // 2 % p.a.
+  const rentGrowth = safeNum(proj.mietsteigerungPct, 0.02);
+  const costGrowth = safeNum(proj.kostensteigerungPct, 0.02);
+  const sellingCostPct = 0.035;                                 // konservativer Default
+
+  const activeFin = getActiveFinance(p);
+  const annualRate = safeNonNeg(activeFin?.zinssatz, safeNonNeg(a.zinssatz, 0));
+  const laufzeit = (() => {
+    const v = safeNum(activeFin?.laufzeitJahre, safeNum(a.laufzeit, 30));
+    return v > 0 ? v : 30;
+  })();
+  const tilgungsart: "annuitaet" | "endfaellig" =
+    activeFin?.tilgungsart === "endfaellig" ? "endfaellig" : "annuitaet";
+
+  const loanSchedule = buildLoanSchedule(
+    base.kreditBetrag, annualRate, laufzeit, horizon, tilgungsart,
+  );
+  const interestAnnuity = calcInterestAnnuity(loanSchedule, annualRate, base.kreditRateMtl);
+  const loanNeed = calcLoanNeed(base.gesamtkosten, base.eigenkapitalEinsatz, base.kreditBetrag);
+  const assetDev = calcAssetDevelopment({
+    startWert: base.kaufpreis,
+    valueGrowthPct: valueGrowth,
+    loan: loanSchedule,
+    initialEquity: base.eigenkapitalEinsatz,
+    sellingCostPct,
+  });
+  const cashDev = calcCashDevelopment({
+    baseAnnualCashflow: base.cashflowJahr,
+    rentGrowthPct: rentGrowth,
+    costGrowthPct: -costGrowth, // Kosten erhöhen → CF mindern
+    horizon,
+    startLiquidity: 0,
+    taxRate: null, // keine Steuerfelder vorhanden → pre-tax
+  });
+  const scenarios = calcScenarios({
+    baseAnnualCashflow: base.cashflowJahr,
+    startWert: base.kaufpreis,
+    loan: loanSchedule,
+    initialEquity: base.eigenkapitalEinsatz,
+    sellingCostPct,
+    rentGrowthPct: rentGrowth,
+    valueGrowthPct: valueGrowth,
+    horizon,
+    baseDealScore: base.dealScore,
+  });
+
+  // AfA / Abschreibung pro Jahr (vereinfacht: konstanter Jahresbetrag).
+  const afaJahr = safeNonNeg(p.afa?.jahresBetrag, 0);
+  const depreciationData: ChartPoint[] = loanSchedule.map((l) => ({
+    jahr: l.jahr, label: `Jahr ${l.jahr}`, value: afaJahr,
+  }));
+
+  const charts: ChartsData = {
+    loanDevelopmentData: loanSchedule.map((l) => ({
+      jahr: l.jahr, label: `Jahr ${l.jahr}`, value: l.remainingDebt,
+    })),
+    assetDevelopmentData: assetDev.map((x) => ({
+      jahr: x.jahr, label: `Jahr ${x.jahr}`, value: x.estimatedPropertyValue,
+    })),
+    cashDevelopmentData: cashDev.map((x) => ({
+      jahr: x.jahr, label: `Jahr ${x.jahr}`, value: x.cumulativeCashflow,
+    })),
+    depreciationData,
+    scenarioComparisonData: scenarios.map((s) => ({
+      label: s.label,
+      cashflow: s.cashflow,
+      remainingDebt: s.remainingDebt,
+      propertyValue: s.propertyValue,
+      equityInProperty: s.equityInProperty,
+      cumulativeCashflow: s.cumulativeCashflow,
+      dealScore: s.dealScore,
+    })),
+  };
+
+  return {
+    horizonJahre: horizon,
+    loanNeed,
+    interestAnnuity,
+    assetDevelopment: assetDev,
+    cashDevelopment: cashDev,
+    loanDevelopment: loanSchedule,
+    scenarios,
+    charts,
+  };
+}
