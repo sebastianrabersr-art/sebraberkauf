@@ -117,14 +117,14 @@ export function planLabel(p?: Plan | null) {
 export interface PlanCapabilities {
   properties: number | null; // null = unlimited
   projects: number | null;
-  compare: boolean;
+  compareLimit: number; // 0 = no access, 4 = plus, 10 = premium
   portfolio: boolean;
 }
 
 export function planLimits(plan: Plan | undefined | null): PlanCapabilities {
-  if (plan === "plus") return { properties: 5, projects: 1, compare: true, portfolio: false };
-  if (plan === "premium") return { properties: null, projects: null, compare: true, portfolio: true };
-  return { properties: 1, projects: 1, compare: false, portfolio: false };
+  if (plan === "plus")    return { properties: 5,    projects: 1,    compareLimit: 4,  portfolio: false };
+  if (plan === "premium") return { properties: null, projects: null, compareLimit: 10, portfolio: true  };
+  return                         { properties: 1,    projects: 1,    compareLimit: 0,  portfolio: false };
 }
 
 export const PLAN_PRICING = {

@@ -103,7 +103,7 @@ function SettingsPage() {
               <ul className="text-xs text-muted-foreground mt-2 space-y-0.5">
                 <li>Immobilien: {planLimits(currentPlan).properties ?? "unbegrenzt"}</li>
                 <li>Projekte: {planLimits(currentPlan).projects ?? "unbegrenzt"}</li>
-                <li>Vergleich: {planLimits(currentPlan).compare ? "enthalten" : "nicht enthalten"}</li>
+                <li>Vergleich: {planLimits(currentPlan).compareLimit > 0 ? "enthalten" : "nicht enthalten"}</li>
                 <li>Portfolio: {planLimits(currentPlan).portfolio ? "enthalten" : "nicht enthalten"}</li>
               </ul>
             </div>

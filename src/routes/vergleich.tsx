@@ -6,7 +6,7 @@ import {
   calcDataQuality, calcProperty, calcScore, fmtEUR, fmtNum, fmtPct, getActiveFinance,
 } from "@/lib/calc";
 import { ALL_STATUSES, type Property } from "@/lib/types";
-import { Plus } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 
@@ -28,29 +28,32 @@ interface Row {
 
 function ComparePage() {
   const { subscription } = useAuth();
-  if (!planLimits(subscription?.plan).compare) {
+  const compareLimit = planLimits(subscription?.plan).compareLimit;
+  if (compareLimit === 0) {
     return (
       <AppShell>
-        <PageHead />
+        <PageHead compareLimit={compareLimit} />
         <FeatureLocked
           title="Vergleich ist in Plus & Premium enthalten"
-          description="Mit Plus kannst du mehrere Immobilien direkt nebeneinander vergleichen und die beste Wahl treffen."
+          description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
       </AppShell>
     );
   }
-  return <ComparePageInner />;
+  return <ComparePageInner compareLimit={compareLimit} />;
 }
 
-function PageHead() {
+function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>
         Vergleich
       </h1>
       <p className="mt-1 text-[13px] text-[#78716C]">
-        2–4 Immobilien auswählen und nebeneinander vergleichen
+        {compareLimit > 0
+          ? `Bis zu ${compareLimit} Immobilien auswählen und nebeneinander vergleichen`
+          : "2–4 Immobilien auswählen und nebeneinander vergleichen"}
       </p>
     </div>
   );
@@ -59,7 +62,7 @@ function PageHead() {
 const selectCls =
   "h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30";
 
-function ComparePageInner() {
+function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const { projects, properties } = useStore();
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -101,7 +104,7 @@ function ComparePageInner() {
   const toggle = (id: string) => {
     setSelected((cur) => {
       if (cur.includes(id)) return cur.filter((x) => x !== id);
-      if (cur.length >= 4) return cur;
+      if (cur.length >= compareLimit) return cur;
       return [...cur, id];
     });
   };
@@ -114,7 +117,7 @@ function ComparePageInner() {
 
   return (
     <AppShell>
-      <PageHead />
+      <PageHead compareLimit={compareLimit} />
 
       {/* Filter bar */}
       <div className="bg-[#FAFAF8] border-y border-[#EAE6DF] -mx-6 px-6 py-3 mb-5">
@@ -149,7 +152,7 @@ function ComparePageInner() {
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
           <div className="text-[12px] text-[#78716C]">
-            Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / 4</span>
+            Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / {compareLimit}</span>
             {selected.length > 0 && selected.length < 2 && <span className="ml-2">— mind. 2 wählen</span>}
           </div>
           <div className="flex gap-2">
@@ -181,7 +184,7 @@ function ComparePageInner() {
               const c = calcProperty(p, ass);
               const s = calcScore(p, ass, c);
               const on = selected.includes(p.id);
-              const disabled = !on && selected.length >= 4;
+              const disabled = !on && selected.length >= compareLimit;
               return (
                 <button
                   key={p.id}
@@ -199,6 +202,15 @@ function ComparePageInner() {
                       <div className="text-[12px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
                       <div className="text-[11px] text-[#A8A29E] truncate mt-0.5">
                         {[p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
+                      </div>
+                      <div className="text-[11px] text-[#A8A29E] truncate mt-1 tabular-nums">
+                        {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
+                      </div>
+                      <div
+                        className="text-[10px] tabular-nums mt-0.5"
+                        style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#DC2626" }}
+                      >
+                        {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
                       </div>
                     </div>
                     <span className="font-display text-[16px] font-extrabold text-[#1C1917] tabular-nums leading-none">
@@ -287,22 +299,127 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
 
   const cols = computed.length;
 
+  // Entscheidungshilfe winners
+  const bestScore = computed.reduce((a, b) => (a.s.total >= b.s.total ? a : b));
+  const bestRendite = computed.reduce((a, b) =>
+    (a.c.bruttorendite ?? -Infinity) >= (b.c.bruttorendite ?? -Infinity) ? a : b,
+  );
+  const bestCashflow = computed.reduce((a, b) =>
+    (a.c.cashflowMtl ?? -Infinity) >= (b.c.cashflowMtl ?? -Infinity) ? a : b,
+  );
+  const bestPreis = computed.reduce((a, b) =>
+    (a.p.kaufpreis ?? Infinity) <= (b.p.kaufpreis ?? Infinity) ? a : b,
+  );
+  const riskRankFn = (r?: string) => (r === "niedrig" ? 1 : r === "mittel" ? 2 : r === "hoch" ? 3 : 4);
+  const bestMietrecht = computed.reduce((a, b) =>
+    riskRankFn(a.p.mietrechtRisiko) <= riskRankFn(b.p.mietrechtRisiko) ? a : b,
+  );
+  const overallWinner = bestScore;
+
+  const allEqual = (vals: (number | null | undefined)[]) => {
+    const v = vals.filter((x) => x != null && isFinite(x as number));
+    if (v.length < 2) return false;
+    return v.every((x) => x === v[0]);
+  };
+
+  type Chip = { label: string; name: string; value: string; tie: boolean };
+  const chips: Chip[] = [];
+  chips.push({
+    label: "SCORE",
+    name: bestScore.p.title || "—",
+    value: String(bestScore.s.total),
+    tie: allEqual(computed.map((x) => x.s.total)),
+  });
+  if (bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)) {
+    chips.push({
+      label: "BRUTTORENDITE",
+      name: bestRendite.p.title || "—",
+      value: fmtPct(bestRendite.c.bruttorendite, 2),
+      tie: allEqual(computed.map((x) => x.c.bruttorendite)),
+    });
+  }
+  if (bestCashflow.c.cashflowMtl != null && isFinite(bestCashflow.c.cashflowMtl)) {
+    chips.push({
+      label: "CASHFLOW",
+      name: bestCashflow.p.title || "—",
+      value: `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo`,
+      tie: allEqual(computed.map((x) => x.c.cashflowMtl)),
+    });
+  }
+  if (bestPreis.p.kaufpreis != null) {
+    chips.push({
+      label: "GÜNSTIGSTER PREIS",
+      name: bestPreis.p.title || "—",
+      value: fmtEUR(bestPreis.p.kaufpreis),
+      tie: allEqual(computed.map((x) => x.p.kaufpreis)),
+    });
+  }
+  if (bestMietrecht.p.mietrechtRisiko) {
+    chips.push({
+      label: "MIETRECHT",
+      name: bestMietrecht.p.title || "—",
+      value: bestMietrecht.p.mietrechtRisiko || "—",
+      tie: computed.every((x) => x.p.mietrechtRisiko === computed[0].p.mietrechtRisiko),
+    });
+  }
+
   return (
-    <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
-              <th className="text-left font-normal text-[10px] uppercase tracking-wide text-[#A8A29E] px-[14px] py-3 min-w-[160px]">
-                Kennzahl
-              </th>
-              {computed.map((x) => (
-                <th key={x.p.id} className="text-right font-display font-bold text-[13px] text-[#1C1917] px-[14px] py-3 min-w-[140px]">
-                  {x.p.title || "—"}
+    <>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px] mb-4" style={{ padding: "16px 20px" }}>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Entscheidungshilfe</div>
+        <div
+          className="rounded-[10px] mb-3 flex items-start gap-3"
+          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "12px 16px" }}
+        >
+          <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <div className="font-display font-bold text-[15px] text-[#2D6A4F] truncate">
+              Gesamtsieger: {overallWinner.p.title || "—"}
+            </div>
+            <div className="text-[12px] text-[#78716C] mt-0.5">
+              Score {overallWinner.s.total}/100 · {overallWinner.s.entscheidung}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {chips.map((ch) => (
+            <div
+              key={ch.label}
+              className="rounded-lg bg-white border border-[#EAE6DF] flex items-center gap-2"
+              style={{ padding: "8px 12px" }}
+            >
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{ch.label}</div>
+              {ch.tie ? (
+                <div className="text-[12px] text-[#78716C]">Unentschieden</div>
+              ) : (
+                <>
+                  <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{ch.name}</div>
+                  <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{ch.value}</div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
+                <th className="text-left font-normal text-[10px] uppercase tracking-wide text-[#A8A29E] px-[14px] py-3 min-w-[160px]">
+                  Kennzahl
                 </th>
-              ))}
-            </tr>
-          </thead>
+                {computed.map((x) => (
+                  <th key={x.p.id} className="text-right px-[14px] py-3 min-w-[140px] align-top">
+                    <div className="font-display font-bold text-[13px] text-[#1C1917]">{x.p.title || "—"}</div>
+                    <div className="font-normal text-[11px] text-[#A8A29E] tabular-nums mt-0.5">
+                      {x.p.kaufpreis != null ? fmtEUR(x.p.kaufpreis) : "—"}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
           <tbody>
             {sections.map((sec) => (
               <React.Fragment key={sec.title}>
@@ -340,9 +457,10 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
               </React.Fragment>
             ))}
           </tbody>
-        </table>
-      </div>
-    </div>
+          </table>
+          </div>
+        </div>
+      </>
   );
 }
 
