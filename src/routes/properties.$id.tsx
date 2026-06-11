@@ -178,11 +178,19 @@ function Detail() {
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
             <>
-              <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("kalkulation")} />
+              <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
               <SetupWalkthrough propertyId={p.id} navTo={navTo} />
             </>
           )}
-          {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} u={u} />}
+          {tab === "uebersicht" && (
+            <OverviewTab
+              p={p} c={c} dq={dq} mietrecht={mietrecht}
+              u={u} projects={projects} regions={regions}
+              applyRegionDefaults={applyRegionDefaults} linkValid={linkValid}
+              onGoMietrecht={() => navTo("mietrecht")}
+              onGoCrm={() => navTo("crm")}
+            />
+          )}
           {tab === "finanzierung" && (
             <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
               <FinancePanel p={p} />
@@ -191,7 +199,7 @@ function Detail() {
           {tab === "mietrecht" && (
             <>
               <MietrechtRiskCard p={p} />
-              <Section title="Mietrechtliche Einschätzung" defaultOpen>
+              <Section title="Eigene Einschätzung & fehlende Daten" defaultOpen>
                 <div className="grid md:grid-cols-2 gap-3">
                   <F label="Mietrechtliche Einschätzung">
                     <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className={selectCls}>
@@ -202,38 +210,18 @@ function Detail() {
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
                 </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs uppercase tracking-wide text-[#A8A29E]">Kategorie</span>
-                    <AmpelBadge ampel={mietrecht.risiko === "niedrig" ? "green" : mietrecht.risiko === "mittel" ? "yellow" : "red"}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
-                  </div>
-                  <p className="text-sm text-[#78716C]">{mietrecht.erklaerung}</p>
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-[#A8A29E] mb-1">Vor Kauf prüfen</div>
-                    <ul className="list-disc list-inside text-sm text-[#1C1917]">
-                      {mietrecht.pruefen.map((x) => <li key={x}>{x}</li>)}
-                    </ul>
-                  </div>
-                  <p className="text-[11px] text-[#A8A29E] border-t border-[#EAE6DF] pt-2">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
-                </div>
+                <p className="text-[11px] text-[#A8A29E] border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
               </Section>
             </>
           )}
-          {tab === "kalkulation" && (
-            <KalkulationTab p={p} c={c} u={u} projects={projects} regions={regions} applyRegionDefaults={applyRegionDefaults} linkValid={linkValid} />
+          {tab === "analysen" && (
+            <AnalysenTab p={p} c={c} />
           )}
-          {tab === "charts" && (
-            <>
-              <Section title="Investor-Charts (Darlehen, Asset, Cash, Szenarien, AfA)" defaultOpen>
-                <InvestorChartsPanel p={p} />
-              </Section>
-              <Section title="Advanced: AfA, Projektion & Anschlussfinanzierung">
-                <AdvancedInvestmentPanel p={p} />
-              </Section>
-            </>
+          {tab === "besichtigung" && (
+            <BesichtigungTab p={p} viewings={viewings} setViewing={setViewing} />
           )}
           {tab === "crm" && (
-            <CrmTab p={p} u={u} viewings={viewings} setViewing={setViewing} />
+            <CrmTab p={p} u={u} />
           )}
         </div>
 
