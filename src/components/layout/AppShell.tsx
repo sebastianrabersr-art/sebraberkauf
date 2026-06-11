@@ -28,11 +28,11 @@ function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
   const { projects, activeProjectId, setActiveProject } = useStore();
   return (
     <div className={cn("flex items-center gap-2", compact ? "" : "w-full")}>
-      {!compact && <span className="text-[10px] uppercase tracking-wider font-medium text-sidebar-foreground/55">Aktives Projekt</span>}
+      {!compact && <span className="text-[10px] uppercase tracking-wider font-semibold text-[#A8A29E]">Aktives Projekt</span>}
       <select
         value={activeProjectId}
         onChange={(e) => setActiveProject(e.target.value)}
-        className="w-full rounded-lg bg-card text-foreground border border-sidebar-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring/40"
+        className="w-full rounded-lg bg-white text-[#1C1917] border border-[#EAE6DF] px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/40"
       >
         {projects.map((p) => (
           <option key={p.id} value={p.id}>
@@ -47,18 +47,18 @@ function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
 function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pathname: string; label?: string }) {
   return (
     <div className="space-y-0.5">
-      {label && <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-medium text-sidebar-foreground/45">{label}</div>}
+      {label && <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-[#A8A29E]">{label}</div>}
       {items.map((n) => {
         const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
         return (
           <Link key={n.to} to={n.to}
             className={cn(
-              "relative flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors",
+              "relative flex items-center gap-3 px-3 py-2 text-[13px] transition-colors",
               active
-                ? "text-white font-medium before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-primary before:rounded-full"
-                : "text-sidebar-foreground hover:text-white",
+                ? "text-[#2D6A4F] font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-[#2D6A4F] before:rounded-full"
+                : "text-[#78716C] hover:bg-[#EAE6DF] rounded-lg",
             )}>
-            <n.icon className={cn("size-4 shrink-0", active ? "text-primary" : "")} />
+            <n.icon className={cn("size-4 shrink-0", active ? "text-[#2D6A4F]" : "text-[#78716C]")} />
             <span className="truncate">{n.label}</span>
           </Link>
         );
@@ -70,15 +70,15 @@ function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pat
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <div className="min-h-screen flex bg-[#F5F3EE]">
+      <aside className="hidden md:flex w-64 flex-col bg-[#F5F3EE] text-[#78716C] border-r border-[#EAE6DF]">
         <div className="px-5 py-5 flex items-center gap-2">
-          <span className="font-display text-2xl font-bold tracking-tight text-white leading-none">kaufma</span>
-          <span className="inline-block size-[7px] rounded-full bg-primary" />
+          <span className="font-display text-2xl font-bold tracking-tight text-[#1C1917] leading-none">kaufma</span>
+          <span className="inline-block size-[7px] rounded-full bg-[#2D6A4F]" />
         </div>
         <div className="px-3 pb-3 space-y-1.5">
           <ProjectSwitcher />
-          <Link to="/projects" className="block text-[11px] text-sidebar-foreground/55 hover:text-sidebar-foreground px-1">
+          <Link to="/projects" className="block text-[11px] text-[#A8A29E] hover:text-[#78716C] px-1">
             Projekte verwalten →
           </Link>
         </div>
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <AccountBox />
       </aside>
       <main className="flex-1 min-w-0">
-        <div className="md:hidden sticky top-0 z-10 bg-sidebar/95 backdrop-blur text-sidebar-foreground border-b border-sidebar-border px-3 py-2 space-y-2">
+        <div className="md:hidden sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur text-[#78716C] border-b border-[#EAE6DF] px-3 py-2 space-y-2">
           <ProjectSwitcher compact />
           <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
             {ALL_NAV.map((n) => {
@@ -99,8 +99,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className={cn(
                     "text-xs whitespace-nowrap px-3 py-1.5 rounded-full border",
                     active
-                      ? "bg-primary text-primary-foreground border-transparent"
-                      : "bg-card border-sidebar-border text-sidebar-foreground/80",
+                      ? "bg-[#2D6A4F] text-white border-transparent"
+                      : "bg-white border-[#EAE6DF] text-[#78716C]",
                   )}>
                   {n.label}
                 </Link>
@@ -130,19 +130,19 @@ export function PageHeader({ title, description, actions }: { title: string; des
 function AccountBox() {
   const { profile, subscription, signOut } = useAuth();
   return (
-    <div className="p-3 border-t border-sidebar-border space-y-1">
-      <Link to="/settings" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent text-sm">
-        <div className="size-8 rounded-full bg-accent text-accent-foreground grid place-items-center">
+    <div className="p-3 border-t border-[#EAE6DF] space-y-1">
+      <Link to="/settings" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
+        <div className="size-8 rounded-full bg-[#E8F5EE] text-[#2D6A4F] grid place-items-center">
           <UserCircle className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-medium text-sm">{profile?.name || profile?.email || "Account"}</div>
-          <div className="text-[10px] text-sidebar-foreground/55 flex items-center gap-1">
+          <div className="truncate font-medium text-sm text-[#1C1917]">{profile?.name || profile?.email || "Account"}</div>
+          <div className="text-[10px] text-[#A8A29E] flex items-center gap-1">
             <Sparkles className="size-3" /> {planLabel(subscription?.plan)}
           </div>
         </div>
       </Link>
-      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-sidebar-accent text-xs text-sidebar-foreground/70">
+      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#EAE6DF] text-xs text-[#78716C]">
         <LogOut className="size-3.5" /> Abmelden
       </button>
     </div>
