@@ -112,6 +112,16 @@ export function detectPlatform(url: string): string {
   if (u.includes("ehl.at")) return "EHL";
   if (u.includes("otto-immobilien")) return "Otto Immobilien";
   if (u.includes("jp-immobilien")) return "JP Immobilien";
+  if (u.includes("immo.at")) return "immo.at";
+  if (u.includes("remax.at")) return "RE/MAX AT";
+  if (u.includes("bazar.at")) return "bazar.at";
+  if (u.includes("wohnnet.at")) return "wohnnet";
+  if (u.includes("immounited")) return "ImmoUnited";
+  if (u.includes("s-real.at")) return "s Real";
+  if (u.includes("raiffeisen-immobilien")) return "Raiffeisen Immobilien";
+  if (u.includes("century21")) return "Century 21";
+  if (u.includes("buwog")) return "BUWOG";
+  if (u.includes("arealis")) return "Arealis";
   // Deutschland
   if (u.includes("immobilienscout24.de") || u.includes("immoscout24.de")) return "ImmoScout24 DE";
   if (u.includes("immowelt.de")) return "immowelt DE";
@@ -138,30 +148,82 @@ export function detectCountry(url: string): "Österreich" | "Deutschland" | "" {
   return "";
 }
 
-async function fetchPage(url: string): Promise<string> {
-  const headers = {
+function normalizeUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    const trackingParams = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "tracking"];
+    trackingParams.forEach((p) => u.searchParams.delete(p));
+    const host = u.hostname.toLowerCase();
+    if (host.includes("immobilienscout24") || host.includes("immoscout24")) {
+      // strip all query params for ImmoScout
+      u.search = "";
+    } else if (host.includes("immowelt") || host.includes("kleinanzeigen") || host.includes("ebay-kleinanzeigen")) {
+      u.search = "";
+    }
+    return u.toString();
+  } catch { return raw; }
+}
+
+function extractFromHtml(html: string): string {
+  const ldMatches = Array.from(html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
+    .map((m) => m[1]).join("\n").slice(0, 10000);
+  const metaTags = Array.from(html.matchAll(/<meta[^>]+(property|name)=["'](og:[^"']+|description|keywords)["'][^>]*content=["']([^"']*)["'][^>]*>/gi))
+    .map((m) => `${m[2]}: ${m[3]}`).join("\n").slice(0, 3000);
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 30000);
+  return `JSON-LD:\n${ldMatches}\n\nMeta:\n${metaTags}\n\nText:\n${text}`;
+}
+
+async function fetchHtml(url: string, headers: Record<string, string>): Promise<string> {
+  try {
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000), redirect: "follow" });
+    if (!res.ok) return "";
+    return await res.text();
+  } catch { return ""; }
+}
+
+async function fetchPage(rawUrl: string): Promise<string> {
+  const url = normalizeUrl(rawUrl);
+  const baseHeaders: Record<string, string> = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
     Accept: "text/html,application/xhtml+xml",
     "Accept-Language": "de-AT,de;q=0.9,en;q=0.8",
   };
-  try {
-    const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000), redirect: "follow" });
-    if (!res.ok) return "";
-    const html = await res.text();
-    // Try to capture JSON-LD blocks first for better structured data
-    const ldMatches = Array.from(html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
-      .map((m) => m[1]).join("\n").slice(0, 6000);
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 22000);
-    return ldMatches ? `JSON-LD:\n${ldMatches}\n\nText:\n${text}` : text;
-  } catch { return ""; }
+
+  // Strategy 1: direct fetch
+  let html = await fetchHtml(url, baseHeaders);
+  let result = html ? extractFromHtml(html) : "";
+  if (result.length >= 500) return result;
+
+  // Strategy 2: stealthier headers
+  const stealthHeaders: Record<string, string> = {
+    ...baseHeaders,
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Referer": "https://www.google.com/",
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "cross-site",
+  };
+  html = await fetchHtml(url, stealthHeaders);
+  const r2 = html ? extractFromHtml(html) : "";
+  if (r2.length >= 500) return r2;
+  if (r2.length > result.length) result = r2;
+
+  // Strategy 3: Google cache fallback
+  const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
+  html = await fetchHtml(cacheUrl, baseHeaders);
+  const r3 = html ? extractFromHtml(html) : "";
+  if (r3.length > result.length) result = r3;
+
+  return result;
 }
 
 export const extractProperty = createServerFn({ method: "POST" })
@@ -199,7 +261,17 @@ Schema-Felder:
 - image_urls (Array mit bis zu 6 absoluten Bild-URLs aus dem Inserat falls im Text/JSON-LD erkennbar)
 - estimated_rent_monthly (realistisch geschätzte Netto-Kaltmiete je Lage/Größe/Zustand), rent_is_estimate (true wenn geschätzt)
 - mietrecht_hint nur für AT: ("Neubau / freie Miete" | "Teilanwendung MRG" | "Altbau / Richtwert möglich" | "unklar – rechtlich prüfen" | "nicht geeignet"). Für DE: ""
-- missing_data (string[] aller nicht gefundenen relevanten Felder).`;
+- missing_data (string[] aller nicht gefundenen relevanten Felder).
+
+Zusätzliche Hinweise für schwierige Fälle:
+- Bei willhaben: Kaufpreis steht oft als 'Kaufpreis: X €' oder im JSON-LD als 'price'. Bezirk = PLZ (4-stellig bei AT).
+- Bei ImmoScout24: Preis steht als 'Kaufpreis' oder 'Gesamtpreis' im Expose. Zimmer als 'Zi.' abgekürzt.
+- Bei immowelt: 'Kaufpreis' oder 'Gesamtpreis inkl. NK'. Provision oft als '3,57 % inkl. MwSt'.
+- Bei kleinanzeigen.de: Preis direkt im Titel oder als 'VB' (Verhandlungsbasis). Land = Deutschland.
+- Bei Bauträger-/Maklerseiten: Preis oft als 'ab X €' — nimm den niedrigsten genannten Preis.
+- Wenn commission_pct nicht explizit genannt aber 'provisionsfrei' oder 'ohne Makler' steht: commission_pct = 0.
+- Wenn 'Makler' oder 'Provision' erwähnt wird ohne Prozentsatz: AT-Standard = 3.0, DE-Standard = 3.57.
+- estimated_rent_monthly: Berechne als (Kaufpreis / 200) als grobe Schätzung wenn keine Mietangaben vorhanden, aber markiere rent_is_estimate = true.`;
 
     const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\nLand (URL-Heuristik): ${country || "unbekannt"}\n\nInseratstext:\n${text}`;
 
