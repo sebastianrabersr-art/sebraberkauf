@@ -117,7 +117,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
 
   return (
     <AppShell>
-      <PageHead />
+      <PageHead compareLimit={compareLimit} />
 
       {/* Filter bar */}
       <div className="bg-[#FAFAF8] border-y border-[#EAE6DF] -mx-6 px-6 py-3 mb-5">
