@@ -23,11 +23,36 @@ export const DEFAULT_ASSUMPTIONS: Assumptions = {
   reparaturStress: 5000,
 };
 
-export function pmt(rateMonthly: number, n: number, pv: number): number {
-  if (pv <= 0) return 0;
-  if (rateMonthly === 0) return pv / n;
-  return (pv * rateMonthly) / (1 - Math.pow(1 + rateMonthly, -n));
+/** Coerce to a finite number; non-finite/NaN/negative values fall back to `fallback`. */
+function safeNum(v: unknown, fallback = 0): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return n;
 }
+function safeNonNeg(v: unknown, fallback = 0): number {
+  const n = safeNum(v, fallback);
+  return n < 0 ? 0 : n;
+}
+
+/**
+ * Monthly annuity payment.
+ *
+ * - Annuitätenformel als Default.
+ * - Zinssatz 0  → einfache lineare Tilgung pv / n.
+ * - Negative/0 pv oder n  → 0 (kein NaN/Infinity).
+ */
+export function pmt(rateMonthly: number, n: number, pv: number): number {
+  const r = safeNum(rateMonthly, 0);
+  const periods = safeNum(n, 0);
+  const principal = safeNum(pv, 0);
+  if (principal <= 0 || periods <= 0) return 0;
+  if (r === 0) return principal / periods;
+  const denom = 1 - Math.pow(1 + r, -periods);
+  if (!Number.isFinite(denom) || denom === 0) return 0;
+  const result = (principal * r) / denom;
+  return Number.isFinite(result) && result > 0 ? result : 0;
+}
+
 
 export interface Calc {
   nebenkostenPct: number;
