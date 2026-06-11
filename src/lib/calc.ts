@@ -86,6 +86,17 @@ export interface Calc {
   maklerProvisionBrutto: number;
   maklerProvisionUstPct: number;
   maklerKostenZahlbar: boolean;
+  // ── Neue, additive Felder (UI-Code, der sie nicht kennt, ignoriert sie) ──
+  /** Kombinierter Stresstest: Zins +1 %, Miete −10 %, Leerstand +5 %-Pkt. */
+  stressedCashflowMtl: number;
+  /** DSCR im kombinierten Stress-Szenario. */
+  stressedDscr: number;
+  /** 0–100 Deal Score. */
+  dealScore: number;
+  /** Qualitatives Rating zum dealScore. */
+  dealRating: "excellent" | "good" | "ok" | "risky" | "bad";
+  /** Kurze deutsche Zusammenfassung des Deals. */
+  dealSummaryShort: string;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -359,9 +370,21 @@ function calcInvestmentKpis(
     leerstandPct: number;
   },
 ) {
-  const { kaufpreis, m2, miete, gesamtkosten, eigenkapitalEinsatz, kreditBetrag,
-    kreditRateMtl, nichtUmlMtl, ruecklageMtl, leerstandMtl, leerstandPct } = inputs;
+  // Alle Eingaben defensiv normalisieren – nichts darf NaN/Infinity werden.
+  const kaufpreis = safeNonNeg(inputs.kaufpreis, 0);
+  const m2 = safeNonNeg(inputs.m2, 0);
+  const miete = safeNonNeg(inputs.miete, 0);
+  const gesamtkosten = safeNonNeg(inputs.gesamtkosten, 0);
+  const eigenkapitalEinsatz = safeNonNeg(inputs.eigenkapitalEinsatz, 0);
+  const kreditBetrag = safeNonNeg(inputs.kreditBetrag, 0);
+  const kreditRateMtl = safeNonNeg(inputs.kreditRateMtl, 0);
+  const nichtUmlMtl = safeNonNeg(inputs.nichtUmlMtl, 0);
+  const ruecklageMtl = safeNonNeg(inputs.ruecklageMtl, 0);
+  const leerstandMtl = safeNonNeg(inputs.leerstandMtl, 0);
+  const leerstandPct = Math.min(1, Math.max(0, safeNum(inputs.leerstandPct, 0)));
 
+  // Investor-Cashflow: umlagefähige Betriebskosten zahlt der Mieter und
+  // bleiben daher hier außen vor.
   const cashflowMtl = miete - kreditRateMtl - nichtUmlMtl - ruecklageMtl - leerstandMtl;
   const cashflowJahr = cashflowMtl * 12;
 
@@ -373,14 +396,31 @@ function calcInvestmentKpis(
   const ltv = gesamtkosten > 0 ? kreditBetrag / gesamtkosten : 0;
   const dscr = kreditRateMtl > 0 ? miete / kreditRateMtl : 0;
 
-  // Stresstests – jeweils nur eine Variable verändert.
-  const rateStress = pmt((a.zinssatz + a.zinsStress) / 12, a.laufzeit * 12, kreditBetrag);
-  const cashflowStressZins = miete - rateStress - nichtUmlMtl - ruecklageMtl - leerstandMtl;
-  const cashflowStressLeerstand = cashflowMtl - (miete * a.leerstandStressMonate) / 12;
-  const cashflowStressReparatur = cashflowMtl - a.reparaturStress / 12;
+  // Einzelne Stresstests – jeweils nur eine Variable verändert.
+  const laufzeit = safeNum(a.laufzeit, 30) > 0 ? safeNum(a.laufzeit, 30) : 30;
+  const rateStressZins = pmt(
+    (safeNonNeg(a.zinssatz, 0) + safeNonNeg(a.zinsStress, 0)) / 12,
+    laufzeit * 12,
+    kreditBetrag,
+  );
+  const cashflowStressZins = miete - rateStressZins - nichtUmlMtl - ruecklageMtl - leerstandMtl;
+  const cashflowStressLeerstand = cashflowMtl - (miete * safeNonNeg(a.leerstandStressMonate, 0)) / 12;
+  const cashflowStressReparatur = cashflowMtl - safeNonNeg(a.reparaturStress, 0) / 12;
+
+  // Kombiniertes Stress-Szenario: Zins +1 %, Miete −10 %, Leerstand +5 %-Pkt.
+  const stressMiete = miete * 0.9;
+  const stressRate = pmt(
+    (safeNonNeg(a.zinssatz, 0) + 0.01) / 12,
+    laufzeit * 12,
+    kreditBetrag,
+  );
+  const stressLeerstandPct = Math.min(1, leerstandPct + 0.05);
+  const stressLeerstandMtl = stressMiete * stressLeerstandPct;
+  const stressedCashflowMtl = stressMiete - stressRate - nichtUmlMtl - ruecklageMtl - stressLeerstandMtl;
+  const stressedDscr = stressRate > 0 ? stressMiete / stressRate : 0;
 
   const breakEvenMiete = kreditRateMtl + nichtUmlMtl + ruecklageMtl;
-  const maxKaufpreisZielRendite = a.zielBrutto > 0 ? (miete * 12) / a.zielBrutto : 0;
+  const maxKaufpreisZielRendite = safeNonNeg(a.zielBrutto, 0) > 0 ? (miete * 12) / a.zielBrutto : 0;
 
   // Mit Leerstandspuffer hochskaliert: tatsächlich nötige Sollmiete.
   const denom = Math.max(0.0001, 1 - leerstandPct);
@@ -391,9 +431,75 @@ function calcInvestmentKpis(
     cashflowMtl, cashflowJahr,
     bruttorendite, nettorendite, eigenkapitalrendite, preisProM2, ltv, dscr,
     cashflowStressZins, cashflowStressLeerstand, cashflowStressReparatur,
+    stressedCashflowMtl, stressedDscr,
     breakEvenMiete, maxKaufpreisZielRendite,
     requiredBreakEvenRent, requiredBreakEvenRentPerM2,
   };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Deal Score (0–100)
+ *
+ * Gewichtete Punkte aus:
+ *  - Cashflow ........... 25
+ *  - Bruttorendite ...... 15
+ *  - Nettorendite ....... 15
+ *  - Eigenkapitalrendite  15
+ *  - LTV (niedriger=besser) 10
+ *  - DSCR ............... 10
+ *  - Stress-Cashflow .... 5
+ *  - Datenvollständigkeit 5
+ * ──────────────────────────────────────────────────────────────────────────── */
+function clamp01(n: number) { return Math.max(0, Math.min(1, safeNum(n, 0))); }
+
+function calcDealScore(
+  p: Property,
+  a: Assumptions,
+  k: {
+    cashflowMtl: number; bruttorendite: number; nettorendite: number;
+    eigenkapitalrendite: number; ltv: number; dscr: number;
+    stressedCashflowMtl: number;
+  },
+): { dealScore: number; dealRating: Calc["dealRating"]; dealSummaryShort: string } {
+  // 1) Cashflow: 0€ = 0 Pkt, +500€ = volle Punkte (skaliert linear).
+  const pCashflow = clamp01(k.cashflowMtl / 500) * 25;
+  // 2) Brutto-/Nettorendite: am Ziel = volle Punkte.
+  const pBrutto = clamp01(k.bruttorendite / Math.max(0.0001, a.zielBrutto)) * 15;
+  const pNetto = clamp01(k.nettorendite / Math.max(0.0001, a.zielNetto)) * 15;
+  // 3) EK-Rendite: 8 % = volle Punkte.
+  const pEk = clamp01(k.eigenkapitalrendite / 0.08) * 15;
+  // 4) LTV: 60 % = volle Punkte, 100 % = 0 Punkte.
+  const pLtv = clamp01(1 - Math.max(0, k.ltv - 0.6) / 0.4) * 10;
+  // 5) DSCR: 1.25 = volle Punkte.
+  const pDscr = clamp01(k.dscr / 1.25) * 10;
+  // 6) Stress: positiver Cashflow im Worst-Case = volle Punkte.
+  const pStress = clamp01((k.stressedCashflowMtl + 200) / 400) * 5;
+  // 7) Datenqualität.
+  const dq = calcDataQuality(p).score / 100;
+  const pDq = clamp01(dq) * 5;
+
+  const raw = pCashflow + pBrutto + pNetto + pEk + pLtv + pDscr + pStress + pDq;
+  const dealScore = Math.round(Math.max(0, Math.min(100, raw)));
+
+  let dealRating: Calc["dealRating"] = "bad";
+  if (dealScore >= 85) dealRating = "excellent";
+  else if (dealScore >= 70) dealRating = "good";
+  else if (dealScore >= 55) dealRating = "ok";
+  else if (dealScore >= 40) dealRating = "risky";
+
+  const summaryParts: string[] = [];
+  if (k.cashflowMtl >= 0) summaryParts.push(`Cashflow ${fmtEUR(k.cashflowMtl)}/Mt`);
+  else summaryParts.push(`negativer Cashflow ${fmtEUR(k.cashflowMtl)}/Mt`);
+  summaryParts.push(`Brutto ${(k.bruttorendite * 100).toFixed(1)}%`);
+  if (k.dscr > 0) summaryParts.push(`DSCR ${k.dscr.toFixed(2)}`);
+  if (k.stressedCashflowMtl < 0) summaryParts.push("Stress negativ");
+  const ratingLabel: Record<Calc["dealRating"], string> = {
+    excellent: "Top-Deal", good: "solider Deal", ok: "okayer Deal",
+    risky: "riskanter Deal", bad: "schwacher Deal",
+  };
+  const dealSummaryShort = `${ratingLabel[dealRating]} – ${summaryParts.join(", ")}.`;
+
+  return { dealScore, dealRating, dealSummaryShort };
 }
 
 /**
@@ -455,7 +561,16 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     leerstandPct: rental.leerstandPct,
   });
 
-
+  // Deal-Score aus den KPIs ableiten.
+  const deal = calcDealScore(pn, a, {
+    cashflowMtl: kpis.cashflowMtl,
+    bruttorendite: kpis.bruttorendite,
+    nettorendite: kpis.nettorendite,
+    eigenkapitalrendite: kpis.eigenkapitalrendite,
+    ltv: kpis.ltv,
+    dscr: kpis.dscr,
+    stressedCashflowMtl: kpis.stressedCashflowMtl,
+  });
 
   return {
     nebenkostenPct: purchase.nebenkostenPct,
@@ -489,6 +604,11 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     maklerProvisionBrutto: purchase.maklerProvisionBrutto,
     maklerProvisionUstPct: purchase.maklerProvisionUstPct,
     maklerKostenZahlbar: purchase.maklerKostenZahlbar,
+    stressedCashflowMtl: kpis.stressedCashflowMtl,
+    stressedDscr: kpis.stressedDscr,
+    dealScore: deal.dealScore,
+    dealRating: deal.dealRating,
+    dealSummaryShort: deal.dealSummaryShort,
   };
 }
 
