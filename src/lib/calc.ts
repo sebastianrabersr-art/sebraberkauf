@@ -58,15 +58,33 @@ export interface Calc {
   maklerKostenZahlbar: boolean;
 }
 
-export function calcProperty(p: Property, a: Assumptions): Calc {
-  const kaufpreis = p.kaufpreis ?? 0;
-  const m2 = p.wohnflaecheM2 ?? 0;
-  const miete = p.nettomieteMtl ?? 0;
+/* ────────────────────────────────────────────────────────────────────────────
+ * Internal pure sub-calculations used by calcProperty.
+ * They are intentionally not exported – calcProperty stays the single
+ * source of truth for the Calc shape consumed by the UI.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Maklerkosten + sonstige Kaufnebenkosten + Gesamtinvestitionssumme.
+ *
+ * Maklerprovision wird bidirektional gerechnet: der Wert, den der User
+ * zuletzt bearbeitet hat (`provisionLastEdit`: pct | netto | brutto) ist
+ * die Quelle der Wahrheit; die anderen Felder werden daraus abgeleitet.
+ *
+ * `kaufNebenkosten` = explizit eingegebene Posten (falls vorhanden),
+ * sonst Pauschale = Kaufpreis × nebenkostenPct.
+ *
+ * `gesamtkosten` = Kaufpreis + Nebenkosten + Sanierung + Einrichtung + Reserve
+ * (die Investitionssumme, auf der LTV und Nettorendite basieren).
+ */
+function calcPurchaseCosts(p: Property, a: Assumptions) {
+  const kaufpreis = p.kaufpreis ?? 0;
+
+  // Pauschalsatz für Nebenkosten, abhängig davon ob Makler beteiligt ist.
   const nebenkostenPct =
     p.makler === "Ja" ? a.nkMitMakler : p.makler === "Nein" ? a.nkOhneMakler : a.nkKonservativ;
 
-  // Maklerkosten – bidirektional, "provisionLastEdit" = source of truth
+  // Maklerkosten – bidirektional, "provisionLastEdit" = source of truth.
   const sellerIsPrivat = p.sellerType === "Privat";
   const maklerKostenZahlbar =
     p.maklerkostenZahlbar != null
@@ -97,18 +115,45 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
   }
   const maklerProvisionUst = maklerProvisionBrutto - maklerProvisionNetto;
 
+  // Explizit eingegebene Nebenkosten – wenn vorhanden, schlagen sie die Pauschale.
   const otherNK =
     (p.grunderwerbsteuer ?? 0) + (p.grundbuchkosten ?? 0) + (p.vertragskosten ?? 0) +
     (p.finanzierungskosten ?? 0) + (p.sonstigeNK ?? 0);
   const explicitNK = otherNK + maklerProvisionBrutto;
   const kaufNebenkosten = explicitNK > 0 ? explicitNK : kaufpreis * nebenkostenPct;
+
+  // Gesamtinvestition inkl. Sanierung, Einrichtung und Reserve.
   const gesamtkosten = kaufpreis + kaufNebenkosten + (p.sanierung || 0) + (p.einrichtung || 0) + (p.reserve || 0);
 
-  // Finance scenario override
+  return {
+    nebenkostenPct,
+    kaufNebenkosten,
+    gesamtkosten,
+    maklerKostenZahlbar,
+    maklerProvisionPct,
+    maklerProvisionNetto,
+    maklerProvisionBrutto,
+    maklerProvisionUst,
+    maklerProvisionUstPct,
+  };
+}
+
+/**
+ * Finanzierung: Eigenkapitaleinsatz, Kreditbetrag und monatliche Rate.
+ *
+ * Ein aktives Finanzierungsszenario (FinanceScenario) überschreibt die
+ * Default-Werte aus den Assumptions. Bei `tilgungsart === "endfaellig"`
+ * fließen nur Zinsen monatlich, keine Tilgung.
+ */
+function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
   const activeScn = getActiveFinance(p);
   const ekDefault = Math.min(a.eigenkapital, gesamtkosten);
-  const ekEinsatz = activeScn?.eigenkapital != null ? Math.min(activeScn.eigenkapital, gesamtkosten) : ekDefault;
-  const kreditBetrag = activeScn?.kreditBetrag != null ? activeScn.kreditBetrag : Math.max(0, gesamtkosten - ekEinsatz);
+  const eigenkapitalEinsatz = activeScn?.eigenkapital != null
+    ? Math.min(activeScn.eigenkapital, gesamtkosten)
+    : ekDefault;
+  const kreditBetrag = activeScn?.kreditBetrag != null
+    ? activeScn.kreditBetrag
+    : Math.max(0, gesamtkosten - eigenkapitalEinsatz);
   const scnZins = activeScn?.zinssatz ?? a.zinssatz;
   const scnLaufzeit = activeScn?.laufzeitJahre ?? a.laufzeit;
   const kreditRateMtl = activeScn && activeScn.tilgungsart === "endfaellig"
@@ -116,43 +161,160 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     : pmt(scnZins / 12, scnLaufzeit * 12, kreditBetrag);
   const annuitaet = kreditRateMtl * 12;
 
+  return { eigenkapitalEinsatz, kreditBetrag, kreditRateMtl, annuitaet };
+}
 
+/**
+ * Laufende, vermietungsbezogene Kosten pro Monat.
+ *
+ * Drei Positionen, die den Cashflow drücken aber oft verwechselt werden:
+ *
+ * 1. nichtUmlMtl  – Betriebskostenanteile, die der Vermieter selbst trägt
+ *                   (z. B. Verwaltung, nicht umlagefähige Reparaturen).
+ *                   User-Wert (`bkNichtUmlagefaehig`) oder Pauschale m² × `nichtUmlPerM2`.
+ *
+ * 2. ruecklageMtl – Instandhaltungsrücklage für künftige Sanierungen
+ *                   (Dach, Fassade, Heizung). User-Wert oder m² × `ruecklagePerM2`.
+ *
+ * 3. leerstandMtl – kalkulatorischer Mietausfall (Leerstandspuffer).
+ *                   Prozentsatz der Sollmiete (`leerstandPufferPct` oder
+ *                   `leerstandPuffer` aus Assumptions).
+ *
+ * Die reine Betriebskosten-Position (umlagefähig) ist nicht Teil dieser
+ * Rechnung – sie wird vom Mieter getragen.
+ */
+function calcRentalCosts(p: Property, a: Assumptions, miete: number, m2: number) {
   const nichtUmlMtl = p.bkNichtUmlagefaehig != null ? p.bkNichtUmlagefaehig : m2 * a.nichtUmlPerM2;
   const ruecklageMtl = p.ruecklageMtl != null ? p.ruecklageMtl : m2 * a.ruecklagePerM2;
   const leerstandPct = p.leerstandPufferPct != null ? p.leerstandPufferPct : a.leerstandPuffer;
   const leerstandMtl = miete * leerstandPct;
+
+  return { nichtUmlMtl, ruecklageMtl, leerstandMtl, leerstandPct };
+}
+
+/**
+ * Renditen, Cashflow, Stresstests und Break-Even-Kennzahlen.
+ *
+ * - bruttorendite   = Jahresmiete / Kaufpreis  (Schnellcheck)
+ * - nettorendite    = (Jahresmiete − laufende Kosten) / Gesamtinvestition
+ * - eigenkapitalrendite = Jahres-Cashflow / eingesetztes Eigenkapital
+ * - dscr            = Miete / Kreditrate       (Bank-Sicht)
+ * - ltv             = Kredit / Gesamtkosten
+ * - breakEvenMiete  = Kreditrate + nicht-umlegbare BK + Rücklage
+ *                     (Mindestmiete ohne Berücksichtigung des Leerstands)
+ * - requiredBreakEvenRent = Break-Even unter Berücksichtigung des
+ *                     Leerstandspuffers → "echte" Solbsoll-Miete.
+ */
+function calcInvestmentKpis(
+  p: Property,
+  a: Assumptions,
+  inputs: {
+    kaufpreis: number;
+    m2: number;
+    miete: number;
+    gesamtkosten: number;
+    eigenkapitalEinsatz: number;
+    kreditBetrag: number;
+    kreditRateMtl: number;
+    nichtUmlMtl: number;
+    ruecklageMtl: number;
+    leerstandMtl: number;
+    leerstandPct: number;
+  },
+) {
+  const { kaufpreis, m2, miete, gesamtkosten, eigenkapitalEinsatz, kreditBetrag,
+    kreditRateMtl, nichtUmlMtl, ruecklageMtl, leerstandMtl, leerstandPct } = inputs;
+
   const cashflowMtl = miete - kreditRateMtl - nichtUmlMtl - ruecklageMtl - leerstandMtl;
   const cashflowJahr = cashflowMtl * 12;
 
   const bruttorendite = kaufpreis > 0 ? (miete * 12) / kaufpreis : 0;
   const nettoJahr = miete * 12 - (nichtUmlMtl + ruecklageMtl + leerstandMtl) * 12;
   const nettorendite = gesamtkosten > 0 ? nettoJahr / gesamtkosten : 0;
-  const eigenkapitalrendite = ekEinsatz > 0 ? cashflowJahr / ekEinsatz : 0;
+  const eigenkapitalrendite = eigenkapitalEinsatz > 0 ? cashflowJahr / eigenkapitalEinsatz : 0;
   const preisProM2 = m2 > 0 ? kaufpreis / m2 : 0;
   const ltv = gesamtkosten > 0 ? kreditBetrag / gesamtkosten : 0;
   const dscr = kreditRateMtl > 0 ? miete / kreditRateMtl : 0;
 
+  // Stresstests – jeweils nur eine Variable verändert.
   const rateStress = pmt((a.zinssatz + a.zinsStress) / 12, a.laufzeit * 12, kreditBetrag);
   const cashflowStressZins = miete - rateStress - nichtUmlMtl - ruecklageMtl - leerstandMtl;
   const cashflowStressLeerstand = cashflowMtl - (miete * a.leerstandStressMonate) / 12;
   const cashflowStressReparatur = cashflowMtl - a.reparaturStress / 12;
+
   const breakEvenMiete = kreditRateMtl + nichtUmlMtl + ruecklageMtl;
   const maxKaufpreisZielRendite = a.zielBrutto > 0 ? (miete * 12) / a.zielBrutto : 0;
 
+  // Mit Leerstandspuffer hochskaliert: tatsächlich nötige Sollmiete.
   const denom = Math.max(0.0001, 1 - leerstandPct);
   const requiredBreakEvenRent = (kreditRateMtl + nichtUmlMtl + ruecklageMtl) / denom;
   const requiredBreakEvenRentPerM2 = m2 > 0 ? requiredBreakEvenRent / m2 : 0;
 
   return {
-    nebenkostenPct, kaufNebenkosten, gesamtkosten,
-    eigenkapitalEinsatz: ekEinsatz, kreditBetrag, kreditRateMtl, annuitaet,
-    nichtUmlMtl, ruecklageMtl, leerstandMtl, cashflowMtl, cashflowJahr,
+    cashflowMtl, cashflowJahr,
     bruttorendite, nettorendite, eigenkapitalrendite, preisProM2, ltv, dscr,
     cashflowStressZins, cashflowStressLeerstand, cashflowStressReparatur,
     breakEvenMiete, maxKaufpreisZielRendite,
     requiredBreakEvenRent, requiredBreakEvenRentPerM2,
-    maklerProvisionPct, maklerProvisionNetto, maklerProvisionUst, maklerProvisionBrutto,
-    maklerProvisionUstPct, maklerKostenZahlbar,
+  };
+}
+
+/**
+ * Hauptfunktion – komponiert die obigen Bausteine zum Calc-Objekt.
+ * Die Felder bleiben 1:1 wie bisher, damit kein UI-Code bricht.
+ */
+export function calcProperty(p: Property, a: Assumptions): Calc {
+  const kaufpreis = p.kaufpreis ?? 0;
+  const m2 = p.wohnflaecheM2 ?? 0;
+  const miete = p.nettomieteMtl ?? 0;
+
+  const purchase = calcPurchaseCosts(p, a);
+  const financing = calcFinancing(p, a, purchase.gesamtkosten);
+  const rental = calcRentalCosts(p, a, miete, m2);
+  const kpis = calcInvestmentKpis(p, a, {
+    kaufpreis, m2, miete,
+    gesamtkosten: purchase.gesamtkosten,
+    eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
+    kreditBetrag: financing.kreditBetrag,
+    kreditRateMtl: financing.kreditRateMtl,
+    nichtUmlMtl: rental.nichtUmlMtl,
+    ruecklageMtl: rental.ruecklageMtl,
+    leerstandMtl: rental.leerstandMtl,
+    leerstandPct: rental.leerstandPct,
+  });
+
+  return {
+    nebenkostenPct: purchase.nebenkostenPct,
+    kaufNebenkosten: purchase.kaufNebenkosten,
+    gesamtkosten: purchase.gesamtkosten,
+    eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
+    kreditBetrag: financing.kreditBetrag,
+    kreditRateMtl: financing.kreditRateMtl,
+    annuitaet: financing.annuitaet,
+    nichtUmlMtl: rental.nichtUmlMtl,
+    ruecklageMtl: rental.ruecklageMtl,
+    leerstandMtl: rental.leerstandMtl,
+    cashflowMtl: kpis.cashflowMtl,
+    cashflowJahr: kpis.cashflowJahr,
+    bruttorendite: kpis.bruttorendite,
+    nettorendite: kpis.nettorendite,
+    eigenkapitalrendite: kpis.eigenkapitalrendite,
+    preisProM2: kpis.preisProM2,
+    ltv: kpis.ltv,
+    dscr: kpis.dscr,
+    cashflowStressZins: kpis.cashflowStressZins,
+    cashflowStressLeerstand: kpis.cashflowStressLeerstand,
+    cashflowStressReparatur: kpis.cashflowStressReparatur,
+    breakEvenMiete: kpis.breakEvenMiete,
+    maxKaufpreisZielRendite: kpis.maxKaufpreisZielRendite,
+    requiredBreakEvenRent: kpis.requiredBreakEvenRent,
+    requiredBreakEvenRentPerM2: kpis.requiredBreakEvenRentPerM2,
+    maklerProvisionPct: purchase.maklerProvisionPct,
+    maklerProvisionNetto: purchase.maklerProvisionNetto,
+    maklerProvisionUst: purchase.maklerProvisionUst,
+    maklerProvisionBrutto: purchase.maklerProvisionBrutto,
+    maklerProvisionUstPct: purchase.maklerProvisionUstPct,
+    maklerKostenZahlbar: purchase.maklerKostenZahlbar,
   };
 }
 
