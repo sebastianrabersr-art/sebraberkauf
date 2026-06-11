@@ -178,6 +178,7 @@ export interface Property {
   link: string;
   platform: string;
   extractionStatus?: "ok" | "partial" | "failed" | "manuell";
+  dataVerified?: boolean; // true = User hat alle Daten geprüft und bestätigt
   title: string;
   bezirk: string;
   adresse: string;
