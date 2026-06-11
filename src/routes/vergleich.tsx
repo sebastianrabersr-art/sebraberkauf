@@ -256,7 +256,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         )}
       </div>
 
-      {started && items.length >= 2 && <Comparison items={items} a={a} projects={projects} />}
+      {started && items.length >= 2 && <Comparison items={items} a={a} projects={projects} goal={goal} />}
     </AppShell>
   );
 }
