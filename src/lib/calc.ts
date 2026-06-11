@@ -1638,5 +1638,6 @@ export function calcInvestorModel(
     loanDevelopment: loanSchedule,
     scenarios,
     charts,
+    totalInterestPaid,
   };
 }
