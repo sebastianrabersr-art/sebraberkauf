@@ -360,7 +360,7 @@ function OverviewTab({ p, c, dq, mietrecht, project, linkValid, mapsUrl }: {
 // ============ KALKULATION TAB ============
 function KalkulationTab({ p, c, u, projects, regions, applyRegionDefaults, linkValid }: {
   p: Property; c: ReturnType<typeof calcProperty>; u: (patch: Partial<Property>) => void;
-  projects: ReturnType<typeof useStore>["projects"]; regions: ReturnType<typeof regionsOf>; applyRegionDefaults: () => void; linkValid: boolean;
+  projects: { id: string; name: string }[]; regions: ReturnType<typeof regionsOf>; applyRegionDefaults: () => void; linkValid: boolean;
 }) {
   return (
     <>
