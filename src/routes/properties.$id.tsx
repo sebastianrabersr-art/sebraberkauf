@@ -672,9 +672,9 @@ function ReadField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Section({ title, children, actions, defaultOpen = false }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean }) {
+function Section({ title, children, actions, defaultOpen = false, id }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-2 min-w-0">
           <ChevronRight className="size-4 text-[#A8A29E] shrink-0 transition-transform group-open:rotate-90" />
