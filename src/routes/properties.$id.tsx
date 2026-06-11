@@ -160,7 +160,7 @@ function Detail() {
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && <OverviewTab p={p} c={c} dq={dq} mietrecht={mietrecht} project={project?.name} linkValid={linkValid} mapsUrl={mapsUrl} />}
           {tab === "finanzierung" && (
-            <Section title="Finanzierung & Bank" defaultOpen>
+            <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
               <FinancePanel p={p} />
             </Section>
           )}
