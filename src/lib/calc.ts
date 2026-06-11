@@ -202,30 +202,104 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
 }
 
 /**
- * Finanzierung: Eigenkapitaleinsatz, Kreditbetrag und monatliche Rate.
+ * Finanzierung: Eigenkapitaleinsatz, Kreditbetrag, Rate und abgeleitete KPIs.
  *
- * Ein aktives Finanzierungsszenario (FinanceScenario) überschreibt die
- * Default-Werte aus den Assumptions. Bei `tilgungsart === "endfaellig"`
- * fließen nur Zinsen monatlich, keine Tilgung.
+ * Berechnet:
+ *  - totalCapitalNeed     = Gesamtinvestition (Kaufpreis + NK + Sanierung + …)
+ *  - equityInput          = tatsächlich eingesetztes Eigenkapital (≤ Bedarf)
+ *  - loanAmount           = benötigter Kreditbetrag (≥ 0)
+ *  - ltv                  = loanAmount / totalCapitalNeed (0..1)
+ *  - monthlyLoanPayment   = Annuität pro Monat (bei Zins 0 lineare Tilgung;
+ *                            bei `endfaellig` nur Zinsen, keine Tilgung)
+ *  - yearlyLoanPayment    = monthlyLoanPayment × 12
+ *  - totalInterestPaid    = Summe aller gezahlten Zinsen über die Laufzeit
+ *
+ * Robustheit:
+ *  - Fehlende Werte → sichere Defaults aus Assumptions.
+ *  - Alle Outputs sind finite Zahlen ≥ 0 (kein NaN, kein Infinity,
+ *    kein negativer Kreditbetrag).
+ *  - Eigenkapital wird auf den tatsächlichen Bedarf gedeckelt.
+ *
+ * Die Rückgabe enthält weiterhin die bisherigen Felder
+ * (eigenkapitalEinsatz, kreditBetrag, kreditRateMtl, annuitaet),
+ * damit `calcProperty` und alle UI-Konsumenten unverändert funktionieren.
  */
 function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
   const activeScn = getActiveFinance(p);
-  const ekDefault = Math.min(a.eigenkapital, gesamtkosten);
-  const eigenkapitalEinsatz = activeScn?.eigenkapital != null
-    ? Math.min(activeScn.eigenkapital, gesamtkosten)
-    : ekDefault;
-  const kreditBetrag = activeScn?.kreditBetrag != null
-    ? activeScn.kreditBetrag
-    : Math.max(0, gesamtkosten - eigenkapitalEinsatz);
-  const scnZins = activeScn?.zinssatz ?? a.zinssatz;
-  const scnLaufzeit = activeScn?.laufzeitJahre ?? a.laufzeit;
-  const kreditRateMtl = activeScn && activeScn.tilgungsart === "endfaellig"
-    ? (kreditBetrag * scnZins) / 12
-    : pmt(scnZins / 12, scnLaufzeit * 12, kreditBetrag);
-  const annuitaet = kreditRateMtl * 12;
 
-  return { eigenkapitalEinsatz, kreditBetrag, kreditRateMtl, annuitaet };
+  // 1) Gesamter Kapitalbedarf (immer ≥ 0).
+  const totalCapitalNeed = Math.max(0, safeNum(gesamtkosten, 0));
+
+  // 2) Eigenkapitaleinsatz – nie negativ, nie größer als der Bedarf.
+  const ekRaw = activeScn?.eigenkapital != null
+    ? safeNum(activeScn.eigenkapital, 0)
+    : safeNum(a.eigenkapital, 0);
+  const equityInput = Math.min(Math.max(0, ekRaw), totalCapitalNeed);
+
+  // 3) Kreditbetrag – explizit aus Szenario oder Differenz; nie negativ.
+  const loanRaw = activeScn?.kreditBetrag != null
+    ? safeNum(activeScn.kreditBetrag, 0)
+    : totalCapitalNeed - equityInput;
+  const loanAmount = Math.max(0, loanRaw);
+
+  // 4) Konditionen – sichere Defaults aus Assumptions.
+  const annualRate = safeNonNeg(activeScn?.zinssatz, safeNonNeg(a.zinssatz, 0));
+  const laufzeitJahre = (() => {
+    const v = safeNum(activeScn?.laufzeitJahre, safeNum(a.laufzeit, 0));
+    return v > 0 ? v : 30; // sicherer Default, verhindert n=0
+  })();
+  const monthlyRate = annualRate / 12;
+  const totalMonths = laufzeitJahre * 12;
+
+  // 5) Monatsrate.
+  //    - endfaellig: nur Zinsen monatlich.
+  //    - Zins == 0: lineare Tilgung (pmt() handhabt das).
+  //    - sonst: Annuität.
+  let monthlyLoanPayment = 0;
+  if (loanAmount > 0) {
+    if (activeScn?.tilgungsart === "endfaellig") {
+      monthlyLoanPayment = loanAmount * monthlyRate; // 0 bei Zins 0
+    } else {
+      monthlyLoanPayment = pmt(monthlyRate, totalMonths, loanAmount);
+    }
+  }
+  monthlyLoanPayment = Number.isFinite(monthlyLoanPayment) && monthlyLoanPayment > 0
+    ? monthlyLoanPayment
+    : 0;
+
+  const yearlyLoanPayment = monthlyLoanPayment * 12;
+
+  // 6) Gezahlte Zinsen gesamt über die Laufzeit.
+  //    - endfaellig: Zinsen × Laufzeit (Tilgung erst am Ende).
+  //    - Annuität:   (Rate × n) − Kreditbetrag.
+  //    - Zins 0:     0.
+  let totalInterestPaid = 0;
+  if (loanAmount > 0 && monthlyRate > 0) {
+    totalInterestPaid = activeScn?.tilgungsart === "endfaellig"
+      ? monthlyLoanPayment * totalMonths
+      : Math.max(0, monthlyLoanPayment * totalMonths - loanAmount);
+  }
+
+  // 7) LTV – nur sinnvoll, wenn Bedarf > 0.
+  const ltvFinance = totalCapitalNeed > 0 ? loanAmount / totalCapitalNeed : 0;
+
+  return {
+    // bestehende Felder – Reihenfolge & Namen unverändert
+    eigenkapitalEinsatz: equityInput,
+    kreditBetrag: loanAmount,
+    kreditRateMtl: monthlyLoanPayment,
+    annuitaet: yearlyLoanPayment,
+    // zusätzliche, intern nutzbare Kennzahlen
+    totalCapitalNeed,
+    equityInput,
+    loanAmount,
+    ltv: ltvFinance,
+    monthlyLoanPayment,
+    yearlyLoanPayment,
+    totalInterestPaid,
+  };
 }
+
 
 /**
  * Laufende, vermietungsbezogene Kosten pro Monat.
