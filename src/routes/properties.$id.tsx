@@ -594,7 +594,7 @@ function CrmTab({ p, u, viewings, setViewing }: {
           </F>
           <F label="Nächste Aktion"><T value={p.nextAction ?? ""} edit on={(v) => u({ nextAction: v })} /></F>
           <F label="Fällig am">
-            <input type="date" value={p.nextActionDate ?? ""} onChange={(e) => u({ nextActionDate: e.target.value || null })} className={selectCls} />
+            <input type="date" value={p.nextActionDate ?? ""} onChange={(e) => u({ nextActionDate: e.target.value || undefined })} className={selectCls} />
           </F>
         </div>
       </Section>
