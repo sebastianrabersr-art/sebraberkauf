@@ -101,12 +101,48 @@ function NewPropertyPage() {
           <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
           {link && !isValidUrl(link) && <p className="text-xs text-destructive mt-1">Ungültige URL.</p>}
         </Row>
+        <Row label="Objektart">
+          <select
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value as PropertyType)}
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </Row>
         <div className="grid grid-cols-2 gap-3">
           <Row label="Bezirk"><input value={bezirk} onChange={(e) => setBezirk(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
-          <Row label="Kaufpreis €"><N value={kaufpreis} on={setKaufpreis} /></Row>
-          <Row label="Wohnfläche m²"><N value={m2} on={setM2} /></Row>
-          <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
-          <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
+          {isHouseSeparate ? (
+            <>
+              <Row label="Kaufpreis Haus €"><N value={housePurchasePrice} on={setHousePurchasePrice} /></Row>
+              <Row label="Kaufpreis Grundstück €"><N value={landPurchasePrice} on={setLandPurchasePrice} /></Row>
+              <Row label="Gesamtkaufpreis €">
+                <input
+                  type="number"
+                  value={computedTotal ?? ""}
+                  readOnly
+                  className="w-full rounded-md border bg-muted px-3 py-2 text-sm"
+                />
+              </Row>
+            </>
+          ) : (
+            <Row label={isLand ? "Kaufpreis Grundstück €" : "Kaufpreis €"}>
+              <N value={kaufpreis} on={setKaufpreis} />
+            </Row>
+          )}
+          {(isHouse || isLand) && (
+            <Row label="Grundstücksfläche m²"><N value={landAreaSqm} on={setLandAreaSqm} /></Row>
+          )}
+          {!isLand && (
+            <>
+              <Row label={isHouse ? "Wohnfläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
+              <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
+              <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
+            </>
+          )}
+          {isLand && (
+            <Row label="Erwartete Miete €/Mt (optional)"><N value={miete} on={setMiete} /></Row>
+          )}
         </div>
         <div className="flex gap-2 pt-2">
           <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>
