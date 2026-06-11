@@ -149,6 +149,34 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         </div>
       </div>
 
+      {/* Goal selector */}
+      <div className="mb-4">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-[#A8A29E] mb-2">
+          Was ist dein Ziel?
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { key: "score",    label: "Ausgewogen",          emoji: "⚖️" },
+            { key: "rendite",  label: "Höchste Rendite",     emoji: "📈" },
+            { key: "cashflow", label: "Positiver Cashflow",  emoji: "💶" },
+            { key: "preis",    label: "Günstigster Einstieg", emoji: "🏷️" },
+            { key: "rate",     label: "Geringe Belastung",   emoji: "📉" },
+          ] as const).map((g) => (
+            <button
+              key={g.key}
+              onClick={() => setGoal(g.key)}
+              className={`px-4 py-2 rounded-[20px] text-[13px] font-medium border-[1.5px] transition-all ${
+                goal === g.key
+                  ? "bg-[#1C1917] text-white border-[#1C1917]"
+                  : "bg-[#F5F3EE] text-[#78716C] border-[#EAE6DF] hover:border-[#1C1917] hover:text-[#1C1917]"
+              }`}
+            >
+              {g.emoji} {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Property selection — horizontal scroll */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
