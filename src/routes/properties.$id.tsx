@@ -11,6 +11,7 @@ import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
+import { ProjectionTable } from "@/components/ProjectionTable";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
