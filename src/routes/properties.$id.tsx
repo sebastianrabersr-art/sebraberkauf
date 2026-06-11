@@ -14,6 +14,7 @@ import { ScoreBreakdownCard } from "@/components/ScoreBreakdownCard";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
+import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_MIETRECHTE, ALL_STATUSES, PROPERTY_TYPES, type Mietrecht, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Copy, ExternalLink, Mail, MapPin, Phone, Trash2, Wand2 } from "lucide-react";
@@ -373,7 +374,9 @@ function Detail() {
             </div>
           </Section>
 
-          <Section title="Detaillierte Kaufnebenkosten & Maklerkosten" actions={
+          <PurchaseCostsDetails p={p} c={c} u={u} />
+
+          <Section title="Maklerprovision – Details" actions={
             <button onClick={applyRegionDefaults} type="button"
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2.5 py-1 hover:bg-accent">
               <Wand2 className="size-3.5" /> Standardwerte für Region übernehmen
@@ -410,17 +413,12 @@ function Detail() {
                   <option value="nein">Nein</option>
                 </select>
               </F>
-              <F label="Grunderwerbsteuer €"><N value={p.grunderwerbsteuer ?? null} edit={true} on={(v) => u({ grunderwerbsteuer: v })} /></F>
-              <F label="Grundbucheintragung €"><N value={p.grundbuchkosten ?? null} edit={true} on={(v) => u({ grundbuchkosten: v })} /></F>
-              <F label="Vertragskosten €"><N value={p.vertragskosten ?? null} edit={true} on={(v) => u({ vertragskosten: v })} /></F>
-              <F label="Finanzierungskosten €"><N value={p.finanzierungskosten ?? null} edit={true} on={(v) => u({ finanzierungskosten: v })} /></F>
-              <F label="Sonstige NK €"><N value={p.sonstigeNK ?? null} edit={true} on={(v) => u({ sonstigeNK: v })} /></F>
-              <F label="Kaufnebenkosten gesamt €"><Ro>{fmtEUR(c.kaufNebenkosten)}</Ro></F>
             </div>
             <p className="text-[11px] text-muted-foreground mt-3">
               Bidirektional: ändere %, netto oder brutto – die anderen Werte werden automatisch berechnet. Das zuletzt bearbeitete Feld ({p.provisionLastEdit ?? "pct"}) ist die Quelle der Wahrheit.
             </p>
           </Section>
+
 
           <Section title="Finanzierung & Bank" defaultOpen>
             <FinancePanel p={p} />
