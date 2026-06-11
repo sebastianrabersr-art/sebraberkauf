@@ -305,8 +305,8 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
           </thead>
           <tbody>
             {sections.map((sec) => (
-              <>
-                <tr key={`s-${sec.title}`} className="bg-[#FAFAF8]">
+              <React.Fragment key={sec.title}>
+                <tr className="bg-[#FAFAF8]">
                   <td colSpan={cols + 1} className="px-[14px] py-2 text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">
                     {sec.title}
                   </td>
@@ -337,7 +337,7 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
                     </tr>
                   );
                 })}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
