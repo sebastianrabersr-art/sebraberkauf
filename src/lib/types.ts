@@ -313,6 +313,8 @@ export interface Property {
   createdAt: string;
   updatedAt?: string;
   isDemo?: boolean;
+  bewertung?: Bewertung;
+  prozessStatus?: ProzessStatus;
 }
 
 export interface PurchaseInfo {
