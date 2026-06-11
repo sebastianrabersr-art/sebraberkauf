@@ -11,7 +11,7 @@ import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/vergleich")({
-  head: () => ({ meta: [{ title: "Vergleich – Immobilien gegenüberstellen" }] }),
+  head: () => ({ meta: [{ title: "Analyse – Immobilien vergleichen" }] }),
   component: ComparePage,
 });
 
@@ -34,7 +34,7 @@ function ComparePage() {
       <AppShell>
         <PageHead compareLimit={compareLimit} />
         <FeatureLocked
-          title="Vergleich ist in Plus & Premium enthalten"
+          title="Analyse ist in Plus & Premium enthalten"
           description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
@@ -48,12 +48,12 @@ function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>
-        Vergleich
+        Analyse
       </h1>
       <p className="mt-1 text-[13px] text-[#78716C]">
         {compareLimit > 0
-          ? `Bis zu ${compareLimit} Immobilien auswählen und nebeneinander vergleichen`
-          : "2–4 Immobilien auswählen und nebeneinander vergleichen"}
+          ? `Bis zu ${compareLimit} Immobilien analysieren und die beste Wahl treffen`
+          : "2–4 Immobilien analysieren und die beste Wahl treffen"}
       </p>
     </div>
   );
@@ -71,6 +71,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const [minScore, setMinScore] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
+  const [goal, setGoal] = useState<"score" | "rendite" | "cashflow" | "preis" | "rate">("score");
 
   const project = projects.find((x) => x.id === projectFilter);
   const a = (project?.assumptions) ?? projects[0]?.assumptions;
@@ -148,6 +149,34 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         </div>
       </div>
 
+      {/* Goal selector */}
+      <div className="mb-4">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-[#A8A29E] mb-2">
+          Was ist dein Ziel?
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { key: "score",    label: "Ausgewogen",          emoji: "⚖️" },
+            { key: "rendite",  label: "Höchste Rendite",     emoji: "📈" },
+            { key: "cashflow", label: "Positiver Cashflow",  emoji: "💶" },
+            { key: "preis",    label: "Günstigster Einstieg", emoji: "🏷️" },
+            { key: "rate",     label: "Geringe Belastung",   emoji: "📉" },
+          ] as const).map((g) => (
+            <button
+              key={g.key}
+              onClick={() => setGoal(g.key)}
+              className={`px-4 py-2 rounded-[20px] text-[13px] font-medium border-[1.5px] transition-all ${
+                goal === g.key
+                  ? "bg-[#1C1917] text-white border-[#1C1917]"
+                  : "bg-[#F5F3EE] text-[#78716C] border-[#EAE6DF] hover:border-[#1C1917] hover:text-[#1C1917]"
+              }`}
+            >
+              {g.emoji} {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Property selection — horizontal scroll */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
@@ -167,7 +196,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               disabled={selected.length < 2}
               className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Vergleich starten
+              Analyse starten
             </button>
           </div>
         </div>
@@ -227,12 +256,12 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         )}
       </div>
 
-      {started && items.length >= 2 && <Comparison items={items} a={a} projects={projects} />}
+      {started && items.length >= 2 && <Comparison items={items} a={a} projects={projects} goal={goal} />}
     </AppShell>
   );
 }
 
-function Comparison({ items, a, projects }: { items: Property[]; a: any; projects: any[] }) {
+function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; projects: any[]; goal: "score"|"rendite"|"cashflow"|"preis"|"rate" }) {
   const computed = items.map((p) => {
     const proj = projects.find((x) => x.id === p.projectId);
     const ass = proj?.assumptions ?? a;
@@ -314,93 +343,82 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
   const bestMietrecht = computed.reduce((a, b) =>
     riskRankFn(a.p.mietrechtRisiko) <= riskRankFn(b.p.mietrechtRisiko) ? a : b,
   );
-  const overallWinner = bestScore;
+  const bestRate = computed.reduce((a, b) =>
+    (a.c.kreditRateMtl ?? Infinity) <= (b.c.kreditRateMtl ?? Infinity) ? a : b,
+  );
 
-  const allEqual = (vals: (number | null | undefined)[]) => {
-    const v = vals.filter((x) => x != null && isFinite(x as number));
-    if (v.length < 2) return false;
-    return v.every((x) => x === v[0]);
-  };
+  const winner = (() => {
+    switch (goal) {
+      case "rendite":
+        return bestRendite;
+      case "cashflow":
+        return bestCashflow;
+      case "preis":
+        return bestPreis;
+      case "rate":
+        return bestRate;
+      case "score":
+      default:
+        return bestScore;
+    }
+  })();
 
-  type Chip = { label: string; name: string; value: string; tie: boolean };
-  const chips: Chip[] = [];
-  chips.push({
-    label: "SCORE",
-    name: bestScore.p.title || "—",
-    value: String(bestScore.s.total),
-    tie: allEqual(computed.map((x) => x.s.total)),
-  });
-  if (bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)) {
-    chips.push({
-      label: "BRUTTORENDITE",
-      name: bestRendite.p.title || "—",
-      value: fmtPct(bestRendite.c.bruttorendite, 2),
-      tie: allEqual(computed.map((x) => x.c.bruttorendite)),
-    });
-  }
-  if (bestCashflow.c.cashflowMtl != null && isFinite(bestCashflow.c.cashflowMtl)) {
-    chips.push({
-      label: "CASHFLOW",
-      name: bestCashflow.p.title || "—",
-      value: `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo`,
-      tie: allEqual(computed.map((x) => x.c.cashflowMtl)),
-    });
-  }
-  if (bestPreis.p.kaufpreis != null) {
-    chips.push({
-      label: "GÜNSTIGSTER PREIS",
-      name: bestPreis.p.title || "—",
-      value: fmtEUR(bestPreis.p.kaufpreis),
-      tie: allEqual(computed.map((x) => x.p.kaufpreis)),
-    });
-  }
-  if (bestMietrecht.p.mietrechtRisiko) {
-    chips.push({
-      label: "MIETRECHT",
-      name: bestMietrecht.p.title || "—",
-      value: bestMietrecht.p.mietrechtRisiko || "—",
-      tie: computed.every((x) => x.p.mietrechtRisiko === computed[0].p.mietrechtRisiko),
-    });
-  }
+  const goalConfig = {
+    score:    { eyebrow: "Bester Gesamtscore",          value: `${winner.s.total}/100`, sub: `${winner.s.entscheidung}` },
+    rendite:  { eyebrow: "Höchste Bruttorendite",       value: fmtPct(winner.c.bruttorendite, 2), sub: `Nettorendite ${fmtPct(winner.c.nettorendite, 2)}` },
+    cashflow: { eyebrow: "Bester monatlicher Cashflow", value: `${fmtEUR(winner.c.cashflowMtl)}/Mo`, sub: (winner.c.cashflowMtl ?? 0) >= 0 ? "Positiver Cashflow ✓" : "Bester verfügbarer Cashflow" },
+    preis:    { eyebrow: "Günstigster Einstiegspreis",  value: fmtEUR(winner.p.kaufpreis), sub: `${fmtEUR(winner.c.preisProM2)}/m²` },
+    rate:     { eyebrow: "Geringste monatliche Rate",   value: `${fmtEUR(winner.c.kreditRateMtl)}/Mo`, sub: `DSCR ${fmtNum(winner.c.dscr, 2)}` },
+  } as const;
+  const cfg = goalConfig[goal];
+
+  void bestMietrecht;
+
+
 
   return (
     <>
-      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px] mb-4" style={{ padding: "16px 20px" }}>
-        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Entscheidungshilfe</div>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white mb-4" style={{ padding: "16px 20px" }}>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Analyse</div>
         <div
-          className="rounded-[10px] mb-3 flex items-start gap-3"
-          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "12px 16px" }}
+          className="rounded-[10px] mb-3 flex items-start justify-between gap-4"
+          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "14px 18px" }}
         >
-          <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
-          <div className="min-w-0">
-            <div className="font-display font-bold text-[15px] text-[#2D6A4F] truncate">
-              Gesamtsieger: {overallWinner.p.title || "—"}
+          <div className="flex items-start gap-3 min-w-0">
+            <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#2D6A4F]">{cfg.eyebrow}</div>
+              <div className="font-display font-bold text-[16px] text-[#1C1917] truncate mt-0.5">
+                {winner.p.title || "—"}
+              </div>
+              <div className="text-[12px] text-[#78716C] mt-0.5">{cfg.sub}</div>
             </div>
-            <div className="text-[12px] text-[#78716C] mt-0.5">
-              Score {overallWinner.s.total}/100 · {overallWinner.s.entscheidung}
-            </div>
+          </div>
+          <div className="font-display font-extrabold text-[22px] text-[#2D6A4F] tabular-nums shrink-0">
+            {cfg.value}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {chips.map((ch) => (
+          {([
+            { key: "score",    label: "Score",    val: `${bestScore.s.total}`,                                                        name: bestScore.p.title    || "—" },
+            { key: "rendite",  label: "Rendite",  val: bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)   ? fmtPct(bestRendite.c.bruttorendite, 2) : "—", name: bestRendite.p.title  || "—" },
+            { key: "cashflow", label: "Cashflow", val: bestCashflow.c.cashflowMtl  != null && isFinite(bestCashflow.c.cashflowMtl)    ? `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo` : "—", name: bestCashflow.p.title || "—" },
+            { key: "preis",    label: "Preis",    val: bestPreis.p.kaufpreis != null ? fmtEUR(bestPreis.p.kaufpreis) : "—",            name: bestPreis.p.title    || "—" },
+            { key: "rate",     label: "Rate",     val: bestRate.c.kreditRateMtl != null && isFinite(bestRate.c.kreditRateMtl) ? `${fmtEUR(bestRate.c.kreditRateMtl)}/Mo` : "—", name: bestRate.p.title || "—" },
+          ] as const).filter((c) => c.key !== goal && c.val !== "—").map((c) => (
             <div
-              key={ch.label}
+              key={c.key}
               className="rounded-lg bg-white border border-[#EAE6DF] flex items-center gap-2"
               style={{ padding: "8px 12px" }}
             >
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{ch.label}</div>
-              {ch.tie ? (
-                <div className="text-[12px] text-[#78716C]">Unentschieden</div>
-              ) : (
-                <>
-                  <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{ch.name}</div>
-                  <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{ch.value}</div>
-                </>
-              )}
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{c.label}</div>
+              <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{c.name}</div>
+              <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{c.val}</div>
             </div>
           ))}
         </div>
       </div>
+
 
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">

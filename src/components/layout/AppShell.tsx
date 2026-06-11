@@ -9,7 +9,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 const NAV_PRIMARY: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/properties", label: "Kaufkandidaten", icon: Database },
-  { to: "/vergleich", label: "Vergleich", icon: GitCompareArrows },
+  { to: "/vergleich", label: "Analyse", icon: GitCompareArrows },
   { to: "/rechner", label: "Rechner", icon: Calculator },
 ];
 
