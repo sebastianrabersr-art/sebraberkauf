@@ -46,106 +46,123 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, sans-serif;
 }
 
 :root {
-  --radius: 0.875rem;
-  --background: oklch(0.99 0.003 240);
-  --foreground: oklch(0.20 0.02 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.02 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.02 250);
-  --primary: oklch(0.48 0.14 250);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.965 0.005 240);
-  --secondary-foreground: oklch(0.25 0.03 250);
-  --muted: oklch(0.97 0.004 240);
-  --muted-foreground: oklch(0.52 0.015 250);
-  --accent: oklch(0.95 0.015 240);
-  --accent-foreground: oklch(0.25 0.03 250);
-  --destructive: oklch(0.58 0.20 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.62 0.13 155);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.78 0.14 75);
-  --warning-foreground: oklch(0.22 0.04 60);
-  --info: oklch(0.6 0.13 230);
-  --info-foreground: oklch(0.99 0 0);
-  --border: oklch(0.93 0.005 240);
-  --input: oklch(0.93 0.005 240);
-  --ring: oklch(0.48 0.14 250);
-  --chart-1: oklch(0.55 0.18 250);
-  --chart-2: oklch(0.62 0.13 155);
-  --chart-3: oklch(0.7 0.15 80);
-  --chart-4: oklch(0.55 0.18 320);
-  --chart-5: oklch(0.6 0.18 20);
-  --sidebar: oklch(0.985 0.004 240);
-  --sidebar-foreground: oklch(0.28 0.02 250);
-  --sidebar-primary: oklch(0.48 0.14 250);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.95 0.01 240);
-  --sidebar-accent-foreground: oklch(0.22 0.03 250);
-  --sidebar-border: oklch(0.93 0.005 240);
+  --radius: 0.75rem; /* 12px cards */
+  /* Warm editorial palette */
+  --background: #F5F3EE;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+  --primary: #2D6A4F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FAFAF8;
+  --secondary-foreground: #1C1917;
+  --muted: #FAFAF8;
+  --muted-foreground: #78716C;
+  --accent: #E8F5EE;
+  --accent-foreground: #2D6A4F;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --success: #16A34A;
+  --success-foreground: #FFFFFF;
+  --warning: #D97706;
+  --warning-foreground: #FFFFFF;
+  --info: #2D6A4F;
+  --info-foreground: #FFFFFF;
+  --border: #EAE6DF;
+  --input: #EAE6DF;
+  --ring: #2D6A4F;
+  --chart-1: #2D6A4F;
+  --chart-2: #16A34A;
+  --chart-3: #D97706;
+  --chart-4: #78716C;
+  --chart-5: #DC2626;
+  --sidebar: #1C1917;
+  --sidebar-foreground: #A8A29E;
+  --sidebar-primary: #2D6A4F;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2A2724;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A2724;
 }
 
 .dark {
-  --background: oklch(0.15 0.02 250);
-  --foreground: oklch(0.97 0.005 240);
-  --card: oklch(0.2 0.02 250);
-  --card-foreground: oklch(0.97 0.005 240);
-  --popover: oklch(0.2 0.02 250);
-  --popover-foreground: oklch(0.97 0.005 240);
-  --primary: oklch(0.7 0.16 250);
-  --primary-foreground: oklch(0.15 0.02 250);
-  --secondary: oklch(0.25 0.02 250);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.25 0.02 250);
-  --muted-foreground: oklch(0.7 0.02 240);
-  --accent: oklch(0.28 0.03 250);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.6 0.13 250);
-  --sidebar: oklch(0.18 0.02 250);
-  --sidebar-foreground: oklch(0.92 0.005 240);
-  --sidebar-accent: oklch(0.25 0.03 250);
-  --sidebar-accent-foreground: oklch(0.97 0.005 240);
-  --sidebar-border: oklch(1 0 0 / 8%);
+  --background: #1C1917;
+  --foreground: #F5F3EE;
+  --card: #232020;
+  --card-foreground: #F5F3EE;
+  --popover: #232020;
+  --popover-foreground: #F5F3EE;
+  --primary: #2D6A4F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2A2724;
+  --secondary-foreground: #F5F3EE;
+  --muted: #2A2724;
+  --muted-foreground: #A8A29E;
+  --accent: #1F3A2C;
+  --accent-foreground: #E8F5EE;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #2A2724;
+  --input: #2A2724;
+  --ring: #2D6A4F;
+  --sidebar: #131110;
+  --sidebar-foreground: #A8A29E;
+  --sidebar-accent: #2A2724;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A2724;
 }
 
 @layer base {
   * { border-color: var(--color-border); }
+  html, body {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  h1, h2, h3, h4 { letter-spacing: -0.015em; }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  h1 { font-size: 32px; font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  h3 { font-size: 16px; font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; }
+
+  /* Cards: no shadows, soft border */
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: none !important;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); letter-spacing: -0.03em; }
+  .text-positive { color: #16A34A; }
+  .text-negative { color: #DC2626; }
+  .text-warning { color: #D97706; }
+  .surface-secondary { background-color: #FAFAF8; }
+  .badge-interesting { background:#E8F5EE; color:#2D6A4F; border-radius:20px; }
+  .badge-negotiate { background:#FEF3C7; color:#92400E; border-radius:20px; }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
 }
-
 @keyframes float-delayed {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
 }
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-  animation: float-delayed 5s ease-in-out infinite 1s;
-}
-
-.perspective-1000 {
-  perspective: 1000px;
-}
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 5s ease-in-out infinite 1s; }
+.perspective-1000 { perspective: 1000px; }
