@@ -343,7 +343,34 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
   const bestMietrecht = computed.reduce((a, b) =>
     riskRankFn(a.p.mietrechtRisiko) <= riskRankFn(b.p.mietrechtRisiko) ? a : b,
   );
-  const overallWinner = bestScore;
+  const bestRate = computed.reduce((a, b) =>
+    (a.c.kreditRateMtl ?? Infinity) <= (b.c.kreditRateMtl ?? Infinity) ? a : b,
+  );
+
+  const winner = (() => {
+    switch (goal) {
+      case "rendite":
+        return bestRendite;
+      case "cashflow":
+        return bestCashflow;
+      case "preis":
+        return bestPreis;
+      case "rate":
+        return bestRate;
+      case "score":
+      default:
+        return bestScore;
+    }
+  })();
+
+  const goalConfig = {
+    score:    { eyebrow: "Bester Gesamtscore",          value: `${winner.s.total}/100`, sub: `${winner.s.entscheidung}` },
+    rendite:  { eyebrow: "Höchste Bruttorendite",       value: fmtPct(winner.c.bruttorendite, 2), sub: `Nettorendite ${fmtPct(winner.c.nettorendite, 2)}` },
+    cashflow: { eyebrow: "Bester monatlicher Cashflow", value: `${fmtEUR(winner.c.cashflowMtl)}/Mo`, sub: (winner.c.cashflowMtl ?? 0) >= 0 ? "Positiver Cashflow ✓" : "Bester verfügbarer Cashflow" },
+    preis:    { eyebrow: "Günstigster Einstiegspreis",  value: fmtEUR(winner.p.kaufpreis), sub: `${fmtEUR(winner.c.preisProM2)}/m²` },
+    rate:     { eyebrow: "Geringste monatliche Rate",   value: `${fmtEUR(winner.c.kreditRateMtl)}/Mo`, sub: `DSCR ${fmtNum(winner.c.dscr, 2)}` },
+  } as const;
+  const cfg = goalConfig[goal];
 
   const allEqual = (vals: (number | null | undefined)[]) => {
     const v = vals.filter((x) => x != null && isFinite(x as number));
