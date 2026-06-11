@@ -104,7 +104,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const toggle = (id: string) => {
     setSelected((cur) => {
       if (cur.includes(id)) return cur.filter((x) => x !== id);
-      if (cur.length >= 4) return cur;
+      if (cur.length >= compareLimit) return cur;
       return [...cur, id];
     });
   };
