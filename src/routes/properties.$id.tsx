@@ -424,7 +424,7 @@ function KalkulationTab({ p, c, u, projects, regions, applyRegionDefaults, linkV
         </div>
       </Section>
 
-      <Section title="Kauf & Nebenkosten" defaultOpen>
+      <Section id="sec-kauf-nebenkosten" title="Kauf & Nebenkosten" defaultOpen>
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Objektart">
             <select value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })} className={selectCls}>
