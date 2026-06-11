@@ -1315,7 +1315,14 @@ export interface ScenarioResult {
   equityInProperty: number;
   cumulativeCashflow: number;
   dealScore: number;
+  charts: ChartsData;
+  totalInterestPaid: number;
 }
+
+// (dup interface end marker)
+type _hack = never;
+declare const __removeNext: _hack;
+
 
 export interface InvestorModel {
   horizonJahre: number;
