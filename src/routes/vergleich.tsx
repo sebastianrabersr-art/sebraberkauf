@@ -28,29 +28,32 @@ interface Row {
 
 function ComparePage() {
   const { subscription } = useAuth();
-  if (!planLimits(subscription?.plan).compare) {
+  const compareLimit = planLimits(subscription?.plan).compareLimit;
+  if (compareLimit === 0) {
     return (
       <AppShell>
-        <PageHead />
+        <PageHead compareLimit={compareLimit} />
         <FeatureLocked
           title="Vergleich ist in Plus & Premium enthalten"
-          description="Mit Plus kannst du mehrere Immobilien direkt nebeneinander vergleichen und die beste Wahl treffen."
+          description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
       </AppShell>
     );
   }
-  return <ComparePageInner />;
+  return <ComparePageInner compareLimit={compareLimit} />;
 }
 
-function PageHead() {
+function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>
         Vergleich
       </h1>
       <p className="mt-1 text-[13px] text-[#78716C]">
-        2–4 Immobilien auswählen und nebeneinander vergleichen
+        {compareLimit > 0
+          ? `Bis zu ${compareLimit} Immobilien auswählen und nebeneinander vergleichen`
+          : "2–4 Immobilien auswählen und nebeneinander vergleichen"}
       </p>
     </div>
   );
