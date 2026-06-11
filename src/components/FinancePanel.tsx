@@ -330,14 +330,19 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
     hints.push({ id: bestCashflow.scn.id, icon: "cf", msg: `„${bestCashflow.scn.name}" liefert den besten Cashflow (${fmtEUR(bestCashflow.sum.cashflowMtl)}/Mt).` });
   if (shortTermVsLong) hints.push({ id: shortTermVsLong.id, icon: "warn", msg: shortTermVsLong.msg });
 
-  // chart data
-  const chartData = rows.map((r) => ({
-    name: r.scn.name,
-    rate: Math.round(r.sum.ratePerMonth),
-    interest: Math.round(r.sum.totalInterest),
-    cashflow: Math.round(r.sum.cashflowMtl),
-    fill: r.scn.id === bestOverall?.scn.id ? "hsl(var(--success))" : r.scn.status === "Abgelehnt" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
-  }));
+  // Szenario-Chart-Daten: feste Felder, NaN-sicher.
+  // totalInterestCost fällt auf Finanzierungs-Summe zurück, damit der Balken nie leer ist.
+  const chartData = rows.map((r) => {
+    const safe = (n: number | null | undefined) => (Number.isFinite(n as number) ? Number(n) : 0);
+    const rate = Math.round(safe(r.sum.ratePerMonth));
+    const cashflow = Math.round(safe(r.sum.cashflowMtl));
+    // Fallback: wenn totalInterest fehlt, aus Rate × Laufzeit − Kreditbetrag rekonstruieren.
+    const laufzeitM = Math.max(1, Math.round((r.scn.laufzeitJahre ?? 30) * 12));
+    const kredit = safe(r.scn.kreditBetrag);
+    const interestFallback = Math.max(0, rate * laufzeitM - kredit);
+    const interest = Math.round(safe(r.sum.totalInterest)) || interestFallback;
+    return { name: r.scn.name, rate, interest, cashflow };
+  });
 
   // line chart: Restschuld über Zeit
   const balanceData = useMemo(() => {
