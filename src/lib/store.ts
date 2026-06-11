@@ -196,12 +196,22 @@ export const useStore = create<State>()(
     }),
     {
       name: "immo-invest-store-v2",
-      version: 4,
+      version: 5,
       migrate: (persisted: any, _version: number) => {
         if (persisted && typeof persisted === "object") {
           persisted.documents = persisted.documents ?? [];
           persisted.activities = persisted.activities ?? [];
           persisted.payments = persisted.payments ?? [];
+          if (Array.isArray(persisted.properties)) {
+            const { migrateLegacyStatus } = require("./types");
+            persisted.properties = persisted.properties.map((p: any) => {
+              if (p && (p.bewertung == null || p.prozessStatus == null)) {
+                const mig = migrateLegacyStatus(p.status);
+                return { ...p, bewertung: p.bewertung ?? mig.bewertung, prozessStatus: p.prozessStatus ?? mig.prozessStatus };
+              }
+              return p;
+            });
+          }
         }
         return persisted;
       },
