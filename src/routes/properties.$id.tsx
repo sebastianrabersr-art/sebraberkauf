@@ -81,8 +81,10 @@ function Detail() {
     toast.success(`Standardwerte für ${d.region.name} übernommen`);
   };
 
+  const suppressLeaveWarnRef = useRef(false);
   const onDelete = () => {
     if (confirm("Diese Immobilie wirklich löschen?")) {
+      suppressLeaveWarnRef.current = true;
       deleteProperty(p.id);
       toast.success("Gelöscht.");
       navigate({ to: "/properties" });
@@ -92,6 +94,30 @@ function Detail() {
     const newId = duplicateProperty(p.id);
     if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
   };
+
+  // Leave-warning: fire toast on unmount if required fields are missing
+  const dqRef = useRef(dq);
+  useEffect(() => { dqRef.current = dq; }, [dq]);
+  useEffect(() => {
+    const pid = p.id;
+    return () => {
+      if (suppressLeaveWarnRef.current) return;
+      const d = dqRef.current;
+      if (d.score < 70 && d.missing.length > 0) {
+        const more = d.missing.length > 3 ? ` und ${d.missing.length - 3} weitere` : "";
+        toast.warning("Einige Pflichtfelder fehlen noch", {
+          description: `Fehlend: ${d.missing.slice(0, 3).join(", ")}${more}`,
+          duration: 5000,
+          action: {
+            label: "Zurück",
+            onClick: () => navigate({ to: "/properties/$id", params: { id: pid } }),
+          },
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Navigate to a tab and optionally scroll to a section id
   const navTo = (target: TabKey, sectionId?: string) => {
@@ -202,11 +228,15 @@ function Detail() {
               <MietrechtRiskCard p={p} />
               <Section title="Eigene Einschätzung & fehlende Daten" defaultOpen>
                 <div className="grid md:grid-cols-2 gap-3">
-                  <F label="Mietrechtliche Einschätzung">
+                  <F
+                    label="Mietrechtliche Einschätzung"
+                    hint={p.mietrecht === "unklar – rechtlich prüfen" ? <RequiredHint text="Mietrechtskategorie prüfen – beeinflusst Score und Risikoeinschätzung" /> : undefined}
+                  >
                     <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className={selectCls}>
                       {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </F>
+
                   <F label="Fehlende Daten (komma-getrennt)">
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
@@ -299,10 +329,21 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
 
+  const scrollToFirstMissing = () => {
+    const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
+    if (el) {
+      if (el.tagName === "DETAILS") el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <>
+      <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} />
+
       {/* === SECTION A: Kennzahlen === */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
         <OverviewStat
           label="Kaufpreis"
           value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)}
@@ -349,13 +390,14 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
               </select>
             </F>
-            <F label="Kaufpreis €"><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
-            <F label="Zimmer"><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
-            <F label="Baujahr"><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
-            <F label="Zustand"><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
+            <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
+            <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
+            <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
+            <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
+            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
             <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
-            <F label="Energieklasse"><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+
             <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
             <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit on={(v) => u({ verfuegbarkeit: v })} /></F>
             <F label="Land">
@@ -376,7 +418,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               )}
             </F>
             <F label="Stadt"><T value={p.city ?? ""} edit on={(v) => u({ city: v })} /></F>
-            <F label="Bezirk / Landkreis"><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
+            <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
               <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className={selectCls}>
@@ -422,10 +464,11 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Sanierung €"><N value={p.sanierung} edit on={(v) => u({ sanierung: v ?? 0 })} /></F>
           <F label="Einrichtung €"><N value={p.einrichtung} edit on={(v) => u({ einrichtung: v ?? 0 })} /></F>
           <F label="Reserve €"><N value={p.reserve} edit on={(v) => u({ reserve: v ?? 0 })} /></F>
-          <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+          <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
           <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
-          <F label="Nettomiete mtl. €"><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          <F label="Nettomiete mtl. €" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+
         </div>
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] grid md:grid-cols-2 gap-3">
           <div className="rounded-lg bg-[#FAFAF8] px-3 py-2.5">
@@ -483,14 +526,15 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       {/* === SECTION E: Miete & Betriebskosten === */}
       <Section title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
-          <F label="Erwartete Miete €/Mt"><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          <F label="Erwartete Miete €/Mt" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
               <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />
               Schätzwert
             </label>
           </F>
-          <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+          <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+
           <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
         </div>
@@ -925,9 +969,56 @@ function Section({ title, children, actions, defaultOpen = false, id }: { title:
   );
 }
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}</label>;
+function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
+  return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
 }
+function DataQualityBanner({ dq, onScroll }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void }) {
+  if (dq.score === 100) return null;
+  if (dq.score >= 70) {
+    return (
+      <div
+        className="inline-flex items-center gap-1.5 rounded-full"
+        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "4px 12px" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <span className="text-[12px]" style={{ color: "#2D6A4F" }}>{dq.score}% Datenqualität · {dq.level}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[10px] flex items-start gap-2.5" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
+      <AlertTriangle className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} />
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium" style={{ color: "#92400E" }}>
+          {dq.filled} von {dq.total} Pflichtfeldern ausgefüllt · {dq.score}% Datenqualität
+        </div>
+        {dq.missing.length > 0 && (
+          <div className="text-[11px] mt-0.5" style={{ color: "#92400E" }}>
+            Fehlend: {dq.missing.join(", ")}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onScroll}
+        className="text-[12px] font-medium shrink-0 hover:underline"
+        style={{ color: "#92400E" }}
+      >
+        Felder ausfüllen ↓
+      </button>
+    </div>
+  );
+}
+
+function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
+  return (
+    <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
+      <AlertTriangle style={{ width: 12, height: 12 }} />
+      <span>{text}</span>
+    </div>
+  );
+}
+
 function Ro({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-[9px] rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] text-[13px] text-[#1C1917] min-h-[36px]">{children}</div>;
 }
