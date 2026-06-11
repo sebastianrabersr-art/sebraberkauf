@@ -9,10 +9,10 @@ import {
   buildFaqJsonLd,
   type CalcFaqItem,
 } from "@/components/marketing/PublicCalcLayout";
-import { fmtEUR, fmtPct } from "@/lib/calc";
+import { fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
-type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow";
+type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit";
 
 type CalcMeta = {
   title: string;
@@ -60,9 +60,45 @@ const META: Record<CalcSlug, CalcMeta> = {
       { q: "Was ist die Break-even-Miete?", a: "Die Miete, ab der dein Cashflow null ist – darüber bleibt monatlich Geld übrig, darunter musst du zuzahlen." },
     ],
   },
+  finanzierung: {
+    title: "Finanzierungsrechner für Immobilien | kauf ma",
+    description: "Berechne monatliche Kreditrate, Restschuld und Gesamtzinskosten für deine Immobilienfinanzierung. Kostenlos online.",
+    category: "Finanzierung",
+    h1: "Finanzierungsrechner für Immobilien",
+    intro: "Monatliche Rate, Restschuld nach 10 Jahren und Gesamtzinskosten auf einen Blick – mit realistischen Annahmen.",
+    faq: [
+      { q: "Wie hoch sollte die monatliche Rate sein?", a: "Eine Faustregel: max. 30–35 % deines Nettoeinkommens. So bleibt Puffer für Rücklagen und unerwartete Kosten." },
+      { q: "Was ist die Restschuld nach 10 Jahren?", a: "Der noch offene Kreditbetrag nach 10 Jahren Annuitätentilgung. Wichtig für Anschlussfinanzierung." },
+      { q: "Werden die Kaufnebenkosten mitfinanziert?", a: "Viele Banken verlangen, dass Nebenkosten aus Eigenkapital gezahlt werden. Erkundige dich bei deiner Bank." },
+    ],
+  },
+  breakeven: {
+    title: "Break-even-Miete-Rechner | kauf ma",
+    description: "Berechne die Mindestmiete, ab der deine Immobilie monatlich nicht negativ läuft. Kostenlos online.",
+    category: "Break-even-Miete",
+    h1: "Break-even-Miete-Rechner",
+    intro: "Welche Miete brauchst du mindestens, damit Kreditrate, Betriebskosten und Rücklage gedeckt sind?",
+    faq: [
+      { q: "Was bedeutet Break-even-Miete?", a: "Die Miete, ab der Einnahmen und Ausgaben ausgeglichen sind – darüber verdienst du, darunter zahlst du zu." },
+      { q: "Wie realistisch ist eine Break-even-Miete über 30 €/m²?", a: "In den meisten Lagen unrealistisch. Überlege Kaufpreisreduktion, mehr Eigenkapital oder eine andere Immobilie." },
+      { q: "Ist Tilgung im Break-even enthalten?", a: "Ja – die monatliche Kreditrate beinhaltet Zins und Tilgung. Beides fließt monatlich ab." },
+    ],
+  },
+  leistbarkeit: {
+    title: "Leistbarkeitsrechner für Immobilien | kauf ma",
+    description: "Berechne den maximalen Kaufpreis, den du dir bei deiner Wunsch-Monatsrate leisten kannst. Kostenlos online.",
+    category: "Leistbarkeit",
+    h1: "Leistbarkeitsrechner für Immobilien",
+    intro: "Welchen Kaufpreis kannst du dir bei deinem Eigenkapital und deiner Wunsch-Monatsrate über die Laufzeit leisten?",
+    faq: [
+      { q: "Wie funktioniert der Leistbarkeitsrechner?", a: "Er berechnet aus Monatsrate, Zinssatz und Laufzeit den maximalen Kreditbetrag und addiert dein Eigenkapital." },
+      { q: "Sind Kaufnebenkosten enthalten?", a: "Ja – du kannst einen Prozentsatz für Nebenkosten angeben, der vom Gesamtbudget abgezogen wird." },
+      { q: "Was passiert bei steigenden Zinsen?", a: "Bei gleicher Rate sinkt der Kaufpreis. Teste verschiedene Szenarien, um das Risiko einzuschätzen." },
+    ],
+  },
 };
 
-const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow"];
+const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow", "finanzierung", "breakeven", "leistbarkeit"];
 
 function isCalcSlug(v: string): v is CalcSlug {
   return (VALID as string[]).includes(v);
@@ -110,7 +146,10 @@ function CalcPage() {
   const { slug } = Route.useLoaderData();
   if (slug === "kaufnebenkosten") return <KaufNebenCalculator />;
   if (slug === "rendite") return <RenditeCalculator />;
-  return <CashflowCalculator />;
+  if (slug === "cashflow") return <CashflowCalculator />;
+  if (slug === "finanzierung") return <FinanceCalculator />;
+  if (slug === "breakeven") return <BreakEvenCalculator />;
+  return <LeistbarkeitCalculator />;
 }
 
 /* ───────── Kaufnebenkosten ───────── */

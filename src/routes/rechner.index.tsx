@@ -80,7 +80,7 @@ function PublicRechnerHub() {
           Die wichtigsten Rechner für deinen Immobilienkauf – kostenlos, ohne Anmeldung. Schnelle Antworten auf konkrete Fragen.
         </p>
 
-        <div className="mt-8 grid sm:grid-cols-2 gap-4">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARDS.map((c) => (
             <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-[#2D6A4F]">
               <c.icon className="size-9 text-[#2D6A4F]" strokeWidth={1.5} />
