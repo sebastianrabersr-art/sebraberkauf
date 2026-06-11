@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { HelpCircle } from "lucide-react";
 import type { AfaLand, AfaMethode, ObjektartDetail, Property } from "@/lib/types";
 import { calcAfa, calcFollowUpFinance, calcLongTermProjection, calcProperty, fmtEUR, fmtPct, getActiveFinance } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
