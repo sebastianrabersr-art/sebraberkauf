@@ -16,7 +16,7 @@ import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
-import { ALL_MIETRECHTE, ALL_STATUSES, PROPERTY_TYPES, type Mietrecht, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
+import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, ChevronRight, Copy, ExternalLink, MapPin, Pencil, Trash2, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -738,8 +738,44 @@ function BesichtigungTab({ p, viewings, setViewing }: {
 
 // ============ CRM TAB ============
 function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+  const mig = migrateLegacyStatus(p.status);
+  const bewertung: Bewertung = p.bewertung ?? mig.bewertung;
+  const prozess: ProzessStatus = (p.prozessStatus ?? mig.prozessStatus) as ProzessStatus;
+
+  const chip = (active: boolean) => ({
+    background: active ? "#2D6A4F" : "#F5F3EE",
+    color: active ? "#FFFFFF" : "#78716C",
+    border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
+    borderRadius: 20,
+    padding: "5px 12px",
+    fontSize: 12,
+    fontWeight: active ? 600 : 500,
+  });
+
   return (
     <>
+      <Section title="Status" defaultOpen>
+        <div className="space-y-3">
+          <div>
+            <div className="text-[11px] text-[#A8A29E] mb-1.5">Prozess-Status:</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => u({ prozessStatus: "" })} style={chip(!prozess)}>—</button>
+              {ALL_PROZESS_STATUSES.map((s) => (
+                <button key={s} onClick={() => u({ prozessStatus: s })} style={chip(prozess === s)}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-[#A8A29E] mb-1.5">Bewertung:</div>
+            <div className="flex flex-wrap gap-1.5">
+              {ALL_BEWERTUNGEN.map((b) => (
+                <button key={b} onClick={() => u({ bewertung: b })} style={chip(bewertung === b)}>{b}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
       <Section title="Follow-ups & Nächste Aktion" defaultOpen>
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Priorität">

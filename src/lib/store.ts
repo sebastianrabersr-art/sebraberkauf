@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_ASSUMPTIONS } from "./calc";
 import type { Activity, ActivityType, Assumptions, Payment, Project, Property, PropertyDocument, ViewingNote } from "./types";
+import { migrateLegacyStatus } from "./types";
 
 export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] = [
   { key: "fenster", label: "Zustand Fenster", group: "Wohnung" },
@@ -196,12 +197,22 @@ export const useStore = create<State>()(
     }),
     {
       name: "immo-invest-store-v2",
-      version: 4,
+      version: 5,
       migrate: (persisted: any, _version: number) => {
         if (persisted && typeof persisted === "object") {
           persisted.documents = persisted.documents ?? [];
           persisted.activities = persisted.activities ?? [];
           persisted.payments = persisted.payments ?? [];
+          if (Array.isArray(persisted.properties)) {
+            const _mig = migrateLegacyStatus;
+            persisted.properties = persisted.properties.map((p: any) => {
+              if (p && (p.bewertung == null || p.prozessStatus == null)) {
+                const mig = _mig(p.status);
+                return { ...p, bewertung: p.bewertung ?? mig.bewertung, prozessStatus: p.prozessStatus ?? mig.prozessStatus };
+              }
+              return p;
+            });
+          }
         }
         return persisted;
       },
@@ -232,6 +243,7 @@ export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
     missingData: [], scoreLage: 15, scoreVermietbarkeit: 12, scoreZustand: 10,
     scoreRecht: 6, scoreWiederverkauf: 3, notizen: "",
     priority: "Mittel", sellerType: "unklar",
+    bewertung: "Neu", prozessStatus: "",
     createdAt: now(), ...partial,
   };
 }
