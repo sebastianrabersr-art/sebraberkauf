@@ -299,22 +299,127 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
 
   const cols = computed.length;
 
+  // Entscheidungshilfe winners
+  const bestScore = computed.reduce((a, b) => (a.s.total >= b.s.total ? a : b));
+  const bestRendite = computed.reduce((a, b) =>
+    (a.c.bruttorendite ?? -Infinity) >= (b.c.bruttorendite ?? -Infinity) ? a : b,
+  );
+  const bestCashflow = computed.reduce((a, b) =>
+    (a.c.cashflowMtl ?? -Infinity) >= (b.c.cashflowMtl ?? -Infinity) ? a : b,
+  );
+  const bestPreis = computed.reduce((a, b) =>
+    (a.p.kaufpreis ?? Infinity) <= (b.p.kaufpreis ?? Infinity) ? a : b,
+  );
+  const riskRankFn = (r?: string) => (r === "niedrig" ? 1 : r === "mittel" ? 2 : r === "hoch" ? 3 : 4);
+  const bestMietrecht = computed.reduce((a, b) =>
+    riskRankFn(a.p.mietrechtRisiko) <= riskRankFn(b.p.mietrechtRisiko) ? a : b,
+  );
+  const overallWinner = bestScore;
+
+  const allEqual = (vals: (number | null | undefined)[]) => {
+    const v = vals.filter((x) => x != null && isFinite(x as number));
+    if (v.length < 2) return false;
+    return v.every((x) => x === v[0]);
+  };
+
+  type Chip = { label: string; name: string; value: string; tie: boolean };
+  const chips: Chip[] = [];
+  chips.push({
+    label: "SCORE",
+    name: bestScore.p.title || "—",
+    value: String(bestScore.s.total),
+    tie: allEqual(computed.map((x) => x.s.total)),
+  });
+  if (bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)) {
+    chips.push({
+      label: "BRUTTORENDITE",
+      name: bestRendite.p.title || "—",
+      value: fmtPct(bestRendite.c.bruttorendite, 2),
+      tie: allEqual(computed.map((x) => x.c.bruttorendite)),
+    });
+  }
+  if (bestCashflow.c.cashflowMtl != null && isFinite(bestCashflow.c.cashflowMtl)) {
+    chips.push({
+      label: "CASHFLOW",
+      name: bestCashflow.p.title || "—",
+      value: `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo`,
+      tie: allEqual(computed.map((x) => x.c.cashflowMtl)),
+    });
+  }
+  if (bestPreis.p.kaufpreis != null) {
+    chips.push({
+      label: "GÜNSTIGSTER PREIS",
+      name: bestPreis.p.title || "—",
+      value: fmtEUR(bestPreis.p.kaufpreis),
+      tie: allEqual(computed.map((x) => x.p.kaufpreis)),
+    });
+  }
+  if (bestMietrecht.p.mietrechtRisiko) {
+    chips.push({
+      label: "MIETRECHT",
+      name: bestMietrecht.p.title || "—",
+      value: bestMietrecht.p.mietrechtRisiko || "—",
+      tie: computed.every((x) => x.p.mietrechtRisiko === computed[0].p.mietrechtRisiko),
+    });
+  }
+
   return (
-    <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
-              <th className="text-left font-normal text-[10px] uppercase tracking-wide text-[#A8A29E] px-[14px] py-3 min-w-[160px]">
-                Kennzahl
-              </th>
-              {computed.map((x) => (
-                <th key={x.p.id} className="text-right font-display font-bold text-[13px] text-[#1C1917] px-[14px] py-3 min-w-[140px]">
-                  {x.p.title || "—"}
+    <>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px] mb-4" style={{ padding: "16px 20px" }}>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Entscheidungshilfe</div>
+        <div
+          className="rounded-[10px] mb-3 flex items-start gap-3"
+          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "12px 16px" }}
+        >
+          <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <div className="font-display font-bold text-[15px] text-[#2D6A4F] truncate">
+              Gesamtsieger: {overallWinner.p.title || "—"}
+            </div>
+            <div className="text-[12px] text-[#78716C] mt-0.5">
+              Score {overallWinner.s.total}/100 · {overallWinner.s.entscheidung}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {chips.map((ch) => (
+            <div
+              key={ch.label}
+              className="rounded-lg bg-white border border-[#EAE6DF] flex items-center gap-2"
+              style={{ padding: "8px 12px" }}
+            >
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{ch.label}</div>
+              {ch.tie ? (
+                <div className="text-[12px] text-[#78716C]">Unentschieden</div>
+              ) : (
+                <>
+                  <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{ch.name}</div>
+                  <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{ch.value}</div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
+                <th className="text-left font-normal text-[10px] uppercase tracking-wide text-[#A8A29E] px-[14px] py-3 min-w-[160px]">
+                  Kennzahl
                 </th>
-              ))}
-            </tr>
-          </thead>
+                {computed.map((x) => (
+                  <th key={x.p.id} className="text-right px-[14px] py-3 min-w-[140px] align-top">
+                    <div className="font-display font-bold text-[13px] text-[#1C1917]">{x.p.title || "—"}</div>
+                    <div className="font-normal text-[11px] text-[#A8A29E] tabular-nums mt-0.5">
+                      {x.p.kaufpreis != null ? fmtEUR(x.p.kaufpreis) : "—"}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
           <tbody>
             {sections.map((sec) => (
               <React.Fragment key={sec.title}>
