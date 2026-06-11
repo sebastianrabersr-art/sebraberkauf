@@ -8,6 +8,7 @@ import { isValidUrl } from "@/lib/calc";
 import { planLimits, useAuth } from "@/lib/auth";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { track } from "@/lib/analytics";
+import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
 
 export const Route = createFileRoute("/properties/new")({
   head: () => ({ meta: [{ title: "Neue Immobilie – Immo Invest" }] }),
