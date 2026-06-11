@@ -720,6 +720,7 @@ const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boo
   { key: "zustand", label: "Zustand", check: (p) => !!p.zustand?.trim() },
   { key: "nettomieteMtl", label: "Geschätzte Miete", check: (p) => !!p.nettomieteMtl },
   { key: "mietrecht", label: "Mietrecht", check: (p) => p.mietrecht !== "unklar – rechtlich prüfen" },
+  { key: "energyClass", label: "Energieklasse", check: (p) => !!p.energyClass?.trim() },
   { key: "beschreibung", label: "Beschreibung", check: (p) => !!p.beschreibung?.trim() },
   { key: "link", label: "Original-Link", check: (p) => !!p.link?.trim() && /^https?:\/\//.test(p.link) },
 ];
