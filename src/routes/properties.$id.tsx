@@ -81,8 +81,10 @@ function Detail() {
     toast.success(`Standardwerte für ${d.region.name} übernommen`);
   };
 
+  const suppressLeaveWarnRef = useRef(false);
   const onDelete = () => {
     if (confirm("Diese Immobilie wirklich löschen?")) {
+      suppressLeaveWarnRef.current = true;
       deleteProperty(p.id);
       toast.success("Gelöscht.");
       navigate({ to: "/properties" });
@@ -92,6 +94,30 @@ function Detail() {
     const newId = duplicateProperty(p.id);
     if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
   };
+
+  // Leave-warning: fire toast on unmount if required fields are missing
+  const dqRef = useRef(dq);
+  useEffect(() => { dqRef.current = dq; }, [dq]);
+  useEffect(() => {
+    const pid = p.id;
+    return () => {
+      if (suppressLeaveWarnRef.current) return;
+      const d = dqRef.current;
+      if (d.score < 70 && d.missing.length > 0) {
+        const more = d.missing.length > 3 ? ` und ${d.missing.length - 3} weitere` : "";
+        toast.warning("Einige Pflichtfelder fehlen noch", {
+          description: `Fehlend: ${d.missing.slice(0, 3).join(", ")}${more}`,
+          duration: 5000,
+          action: {
+            label: "Zurück",
+            onClick: () => navigate({ to: "/properties/$id", params: { id: pid } }),
+          },
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Navigate to a tab and optionally scroll to a section id
   const navTo = (target: TabKey, sectionId?: string) => {
