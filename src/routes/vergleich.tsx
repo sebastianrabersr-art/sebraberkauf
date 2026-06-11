@@ -152,7 +152,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
           <div className="text-[12px] text-[#78716C]">
-            Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / 4</span>
+            Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / {compareLimit}</span>
             {selected.length > 0 && selected.length < 2 && <span className="ml-2">— mind. 2 wählen</span>}
           </div>
           <div className="flex gap-2">
