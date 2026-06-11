@@ -11,6 +11,7 @@ import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
+import { ProjectionTable } from "@/components/ProjectionTable";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
@@ -624,7 +625,10 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
       </AccordionCard>
 
       <AccordionCard title="Asset-Entwicklung & Projektion">
-        <InvestorChartsPanel p={p} />
+        <div className="space-y-5">
+          <InvestorChartsPanel p={p} />
+          <ProjectionTable p={p} />
+        </div>
       </AccordionCard>
 
       <AccordionCard title="Finanzierungsszenarien-Vergleich">

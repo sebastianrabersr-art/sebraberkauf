@@ -27,24 +27,38 @@ import { useActiveAssumptions } from "@/lib/store";
  *  - Amber  = Warnungen / AfA
  */
 const COLORS = {
-  debt: "oklch(0.62 0.16 250)", // blau
-  value: "oklch(0.58 0.18 300)", // lila
-  equity: "oklch(0.62 0.14 155)", // grün
-  cashPos: "oklch(0.62 0.14 155)", // grün
-  cashNeg: "oklch(0.58 0.20 25)", // rot
-  cashCum: "oklch(0.52 0.13 165)", // dunkelgrün
-  liquid: "oklch(0.55 0.10 200)", // teal
-  amber: "oklch(0.74 0.14 75)", // amber
-  base: "oklch(0.55 0.18 250)", // blau (Basis)
-  conservative: "oklch(0.66 0.16 50)", // amber/orange (konservativ)
-  optimistic: "oklch(0.60 0.15 155)", // grün (optimistisch)
+  debt: "#DC2626", // rot — Schulden
+  value: "#2D6A4F", // grün — Wert
+  equity: "#2D6A4F",
+  cashPos: "#2D6A4F",
+  cashNeg: "#DC2626",
+  cashCum: "#1C1917",
+  liquid: "#78716C",
+  amber: "#D97706",
+  base: "#1C1917",
+  conservative: "#D97706",
+  optimistic: "#2D6A4F",
+  grid: "#EAE6DF",
 } as const;
 
-const compact = new Intl.NumberFormat("de-DE", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-const fmtCompactEUR = (n: number) => `${compact.format(n)} €`;
+const eurLocale = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 });
+const niceStep = (max: number) => {
+  if (max <= 0) return 50000;
+  const rough = max / 5;
+  const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+  const m = rough / pow;
+  const step = m >= 5 ? 5 : m >= 2 ? 2 : 1;
+  return step * pow;
+};
+const buildTicks = (min: number, max: number) => {
+  const step = niceStep(Math.max(Math.abs(min), Math.abs(max)));
+  const start = Math.floor(min / step) * step;
+  const end = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+  for (let v = start; v <= end + 0.5; v += step) ticks.push(v);
+  return { ticks, domain: [start, end] as [number, number] };
+};
+const fmtCompactEUR = (n: number) => `€ ${eurLocale.format(n)}`;
 
 const tooltipStyle: React.CSSProperties = {
   background: "var(--card)",
@@ -116,18 +130,27 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
     dealScore: Math.round(s.dealScore),
   }));
 
+  // Y-Axis scales
+  const loanMax = Math.max(...loan.map((l) => l.restschuld), 0);
+  const loanScale = buildTicks(0, loanMax * 1.1);
+  const assetMax = Math.max(...asset.map((x) => Math.max(x.immoWert, x.restschuld, x.eigenkapital)), 0);
+  const assetScale = buildTicks(0, assetMax * 1.3);
+  const cashMin = Math.min(...cash.map((x) => Math.min(x.cashflow, x.cumCashflow, x.liquide)), 0);
+  const cashMax = Math.max(...cash.map((x) => Math.max(x.cashflow, x.cumCashflow, x.liquide)), 0);
+  const cashScale = buildTicks(cashMin < 0 ? cashMin * 1.2 : 0, Math.max(0, cashMax * 1.1));
+
   return (
     <div className="grid gap-4">
       {/* 1. Darlehen */}
       <ChartCard
         title="Darlehenshöhe im Zeitverlauf"
-        caption="Verlauf der Restschuld über die geplante Halteperiode. Blau = Restschuld in €."
+        caption="Verlauf der Restschuld über die geplante Halteperiode."
       >
         <ResponsiveContainer>
           <LineChart data={loan}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={loanScale.domain} ticks={loanScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line
@@ -145,18 +168,18 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 2. Asset */}
       <ChartCard
         title="Asset-Entwicklung"
-        caption="Immobilienwert (lila) vs. Restschuld (blau) ergibt das Eigenkapital im Objekt (grün)."
+        caption="Immobilienwert vs. Restschuld ergibt das Eigenkapital im Objekt."
       >
         <ResponsiveContainer>
           <LineChart data={asset}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={assetScale.domain} ticks={assetScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="immoWert" name="Immobilienwert" stroke={COLORS.value} strokeWidth={2.5} dot={false} />
             <Line type="monotone" dataKey="restschuld" name="Restschuld" stroke={COLORS.debt} strokeWidth={2.5} dot={false} />
-            <Line type="monotone" dataKey="eigenkapital" name="Eigenkapital im Objekt" stroke={COLORS.equity} strokeWidth={2.5} dot={false} />
+            <Line type="monotone" dataKey="eigenkapital" name="Eigenkapital im Objekt" stroke={COLORS.equity} strokeWidth={2.5} strokeDasharray="5 3" dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -164,13 +187,13 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 3. Cash */}
       <ChartCard
         title="Cash-Entwicklung"
-        caption="Jährlicher Cashflow (grün/rot je nach Vorzeichen), kumulierter Cashflow und Entwicklung der liquiden Mittel."
+        caption="Jährlicher Cashflow (grün/rot), kumulierter Cashflow und liquide Mittel."
       >
         <ResponsiveContainer>
           <ComposedChart data={cash}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={cashScale.domain} ticks={cashScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="cashflow" name="Cashflow p.a.">
@@ -183,6 +206,8 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
           </ComposedChart>
         </ResponsiveContainer>
       </ChartCard>
+
+
 
       {/* 4. Szenarien */}
       <ChartCard
