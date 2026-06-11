@@ -1315,14 +1315,8 @@ export interface ScenarioResult {
   equityInProperty: number;
   cumulativeCashflow: number;
   dealScore: number;
-  charts: ChartsData;
-  totalInterestPaid: number;
+  totalInterestCost: number;
 }
-
-// (dup interface end marker)
-type _hack = never;
-declare const __removeNext: _hack;
-
 
 export interface InvestorModel {
   horizonJahre: number;
@@ -1333,6 +1327,7 @@ export interface InvestorModel {
   loanDevelopment: LoanYear[];
   scenarios: ScenarioResult[];
   charts: ChartsData;
+  totalInterestPaid: number;
 }
 
 /** Erzeugt einen Tilgungsplan pro Jahr (Annuität / endfällig / Zins 0). */
