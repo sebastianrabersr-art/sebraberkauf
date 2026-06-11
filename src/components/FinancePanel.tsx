@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineCh
 import { Plus, Trash2, Check, Star, Copy, Lightbulb, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
-import { calcAmortizationSchedule, calcBalanceSeries, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
