@@ -472,26 +472,70 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
   );
 }
 
-function MiniBarChart({ title, data, dataKey, higherBetter }: { title: string; data: any[]; dataKey: string; higherBetter?: boolean }) {
-  const vals = data.map((d) => d[dataKey]);
-  const best = higherBetter ? Math.max(...vals) : Math.min(...vals);
-  const worst = higherBetter ? Math.min(...vals) : Math.max(...vals);
+function MiniBarChart({
+  title,
+  data,
+  dataKey,
+  kind = "rate",
+  yLabel,
+}: {
+  title: string;
+  data: any[];
+  dataKey: string;
+  kind?: "rate" | "interest" | "cashflow";
+  yLabel?: string;
+  higherBetter?: boolean;
+}) {
+  // Zentrales Farbschema (oklch direkt → in light + dark sichtbar):
+  //   rate     = blau (Finanzierung)
+  //   interest = amber (Warnung/Kosten)
+  //   cashflow = grün/rot je nach Vorzeichen
+  const COLOR_RATE = "oklch(0.62 0.16 250)";
+  const COLOR_INTEREST = "oklch(0.74 0.14 75)";
+  const COLOR_POS = "oklch(0.62 0.14 155)";
+  const COLOR_NEG = "oklch(0.58 0.20 25)";
+  const colorFor = (v: number) =>
+    kind === "rate"
+      ? COLOR_RATE
+      : kind === "interest"
+      ? COLOR_INTEREST
+      : v >= 0
+      ? COLOR_POS
+      : COLOR_NEG;
+  const legendName =
+    kind === "rate" ? "Monatsrate" : kind === "interest" ? "Zinskosten gesamt" : "Cashflow mtl.";
+  const compact = new Intl.NumberFormat("de-DE", { notation: "compact", maximumFractionDigits: 1 });
   return (
     <div className="rounded-lg border bg-card p-3">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
-      <div className="h-40 w-full">
+      <div className="h-48 w-full">
         <ResponsiveContainer>
-          <BarChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 0 }}>
+          <BarChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={40} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-            <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
-            <Bar dataKey={dataKey} radius={[6, 6, 0, 0]}>
-              {data.map((d, i) => {
-                const v = d[dataKey];
-                const color = v === best ? "hsl(var(--success))" : v === worst ? "hsl(var(--destructive))" : "hsl(var(--warning))";
-                return <Cell key={i} fill={color} />;
-              })}
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={44} />
+            <YAxis
+              tick={{ fontSize: 10 }}
+              tickFormatter={(v) => `${compact.format(Number(v))} €`}
+              label={yLabel ? { value: yLabel, angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 10, fill: "var(--muted-foreground)" } } : undefined}
+            />
+            <Tooltip
+              formatter={(v: any) => [
+                new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(v)),
+                legendName,
+              ]}
+              contentStyle={{
+                background: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                fontSize: 11,
+                color: "var(--card-foreground)",
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 10 }} formatter={() => legendName} />
+            <Bar dataKey={dataKey} radius={[6, 6, 0, 0]} name={legendName}>
+              {data.map((d, i) => (
+                <Cell key={i} fill={colorFor(Number(d[dataKey]) || 0)} />
+              ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
