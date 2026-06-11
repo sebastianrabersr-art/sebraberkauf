@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, scoreBreakdown } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, scoreBreakdown } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
