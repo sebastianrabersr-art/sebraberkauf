@@ -710,20 +710,40 @@ export interface DataQuality {
   total: number;
 }
 
-const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boolean }[] = [
-  { key: "kaufpreis", label: "Kaufpreis", check: (p) => !!p.kaufpreis },
-  { key: "wohnflaecheM2", label: "Wohnfläche", check: (p) => !!p.wohnflaecheM2 },
-  { key: "zimmer", label: "Zimmer", check: (p) => !!p.zimmer },
-  { key: "bezirk", label: "Bezirk", check: (p) => !!p.bezirk?.trim() },
-  { key: "betriebskostenMtl", label: "Betriebskosten", check: (p) => p.betriebskostenMtl != null },
-  { key: "baujahr", label: "Baujahr", check: (p) => !!p.baujahr },
-  { key: "zustand", label: "Zustand", check: (p) => !!p.zustand?.trim() },
-  { key: "nettomieteMtl", label: "Geschätzte Miete", check: (p) => !!p.nettomieteMtl },
-  { key: "mietrecht", label: "Mietrecht", check: (p) => p.mietrecht !== "unklar – rechtlich prüfen" },
-  { key: "energyClass", label: "Energieklasse", check: (p) => !!p.energyClass?.trim() },
-  { key: "beschreibung", label: "Beschreibung", check: (p) => !!p.beschreibung?.trim() },
-  { key: "link", label: "Original-Link", check: (p) => !!p.link?.trim() && /^https?:\/\//.test(p.link) },
+const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boolean; group: "basis" | "kosten" | "finanzierung" | "bewertung" }[] = [
+  // BASIS
+  { key: "kaufpreis",       label: "Kaufpreis",          group: "basis",        check: (p) => !!p.kaufpreis && p.kaufpreis > 0 },
+  { key: "wohnflaecheM2",   label: "Wohnfläche m²",      group: "basis",        check: (p) => !!p.wohnflaecheM2 && p.wohnflaecheM2 > 0 },
+  { key: "nettomieteMtl",   label: "Erwartete Miete",    group: "basis",        check: (p) => !!p.nettomieteMtl && p.nettomieteMtl > 0 },
+  { key: "zimmer",          label: "Zimmer",             group: "basis",        check: (p) => !!p.zimmer && p.zimmer > 0 },
+  { key: "bezirk",          label: "Bezirk / PLZ",       group: "basis",        check: (p) => !!p.bezirk?.trim() || !!p.land?.trim() },
+  // KOSTEN
+  { key: "makler",            label: "Makler Ja/Nein",      group: "kosten",     check: (p) => p.makler === "Ja" || p.makler === "Nein" },
+  { key: "betriebskostenMtl", label: "Betriebskosten",      group: "kosten",     check: (p) => p.betriebskostenMtl != null && p.betriebskostenMtl >= 0 },
+  { key: "grunderwerbsteuer", label: "Grunderwerbsteuer",   group: "kosten",     check: (p) => p.grunderwerbsteuer != null },
+  { key: "grundbuchkosten",   label: "Grundbucheintragung", group: "kosten",     check: (p) => p.grundbuchkosten != null },
+  { key: "vertragskosten",    label: "Notar / Vertrag",     group: "kosten",     check: (p) => p.vertragskosten != null },
+  // FINANZIERUNG
+  { key: "eigenkapital", label: "Eigenkapital", group: "finanzierung", check: (p) => {
+    const fin = getActiveFinance(p);
+    return fin != null ? (fin.eigenkapital ?? 0) > 0 : false;
+  } },
+  { key: "zinssatz", label: "Zinssatz", group: "finanzierung", check: (p) => {
+    const fin = getActiveFinance(p);
+    return fin != null ? (fin.zinssatz ?? 0) > 0 : false;
+  } },
+  // BEWERTUNG
+  { key: "baujahr",     label: "Baujahr",      group: "bewertung", check: (p) => !!p.baujahr && p.baujahr > 1800 },
+  { key: "zustand",     label: "Zustand",      group: "bewertung", check: (p) => !!p.zustand?.trim() },
+  { key: "mietrecht",   label: "Mietrecht",    group: "bewertung", check: (p) => !!p.energyClass?.trim() },
 ];
+
+export function getRequiredFieldGroups() {
+  return ["basis", "kosten", "finanzierung", "bewertung"] as const;
+}
+export function getFieldsByGroup(group: string) {
+  return REQUIRED_FIELDS.filter((f) => f.group === group);
+}
 
 export function calcDataQuality(p: Property): DataQuality {
   const missing = REQUIRED_FIELDS.filter((f) => !f.check(p)).map((f) => f.label);

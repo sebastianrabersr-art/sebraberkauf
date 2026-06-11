@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AppShell } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import {
@@ -63,6 +64,7 @@ const selectCls =
   "h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30";
 
 function ComparePageInner({ compareLimit }: { compareLimit: number }) {
+  const navigate = useNavigate();
   const { projects, properties } = useStore();
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -72,6 +74,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
   const [goal, setGoal] = useState<"score" | "rendite" | "cashflow" | "preis" | "rate">("score");
+  const [showUnverifiedDialog, setShowUnverifiedDialog] = useState(false);
 
   const project = projects.find((x) => x.id === projectFilter);
   const a = (project?.assumptions) ?? projects[0]?.assumptions;
@@ -182,6 +185,9 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         <div className="flex items-center justify-between mb-2">
           <div className="text-[12px] text-[#78716C]">
             Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / {compareLimit}</span>
+            {selected.length > 0 && (
+              <span className="ml-2">· <span className="text-[#1C1917] font-medium">{items.filter((p) => p.dataVerified === true).length}</span> geprüft</span>
+            )}
             {selected.length > 0 && selected.length < 2 && <span className="ml-2">— mind. 2 wählen</span>}
           </div>
           <div className="flex gap-2">
@@ -192,7 +198,11 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               Auswahl zurücksetzen
             </button>
             <button
-              onClick={() => setStarted(true)}
+              onClick={() => {
+                const hasUnverified = items.some((p) => p.dataVerified !== true);
+                if (hasUnverified) setShowUnverifiedDialog(true);
+                else setStarted(true);
+              }}
               disabled={selected.length < 2}
               className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41] disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -214,6 +224,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               const s = calcScore(p, ass, c);
               const on = selected.includes(p.id);
               const disabled = !on && selected.length >= compareLimit;
+              const verified = p.dataVerified === true;
               return (
                 <button
                   key={p.id}
@@ -241,6 +252,14 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                       >
                         {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
                       </div>
+                      {!verified && (
+                        <div
+                          className="inline-block mt-1.5 text-[10px]"
+                          style={{ color: "#92400E", background: "#FEF3C7", padding: "2px 8px", borderRadius: "20px" }}
+                        >
+                          Daten nicht geprüft
+                        </div>
+                      )}
                     </div>
                     <span className="font-display text-[16px] font-extrabold text-[#1C1917] tabular-nums leading-none">
                       {s.total}
@@ -257,9 +276,50 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
       </div>
 
       {started && items.length >= 2 && <Comparison items={items} a={a} projects={projects} goal={goal} />}
+
+      <Dialog open={showUnverifiedDialog} onOpenChange={setShowUnverifiedDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unvollständige Daten</DialogTitle>
+            <DialogDescription>
+              Folgende Immobilien wurden noch nicht geprüft:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="text-[13px] text-[#1C1917] list-disc pl-5 space-y-1">
+            {items.filter((p) => p.dataVerified !== true).map((p) => (
+              <li key={p.id}>{p.title || "—"}</li>
+            ))}
+          </ul>
+          <p className="text-[12px] text-[#78716C]">
+            Ungenaue Daten können zu falschen Ergebnissen führen.
+          </p>
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => {
+                setShowUnverifiedDialog(false);
+                setStarted(true);
+              }}
+              className="h-9 rounded-lg border border-[#EAE6DF] bg-white px-4 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
+            >
+              Trotzdem vergleichen
+            </button>
+            <button
+              onClick={() => {
+                const first = items.find((p) => p.dataVerified !== true);
+                setShowUnverifiedDialog(false);
+                if (first) navigate({ to: "/properties/$id", params: { id: first.id } });
+              }}
+              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41]"
+            >
+              Daten prüfen
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+
 
 function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; projects: any[]; goal: "score"|"rendite"|"cashflow"|"preis"|"rate" }) {
   const computed = items.map((p) => {

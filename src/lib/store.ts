@@ -233,7 +233,7 @@ export function useActiveAssumptions(): Assumptions {
 export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
   return {
     id: crypto.randomUUID(), projectId: "", status: "Neu", inseratsdatum: now(),
-    link: "", platform: "", extractionStatus: "manuell", title: "",
+    link: "", platform: "", extractionStatus: "manuell", dataVerified: false, title: "",
     bezirk: "", adresse: "", city: "", land: "Österreich",
     objekttyp: "Wohnung", baujahr: null, mietrecht: "unklar – rechtlich prüfen",
     propertyType: "apartment",

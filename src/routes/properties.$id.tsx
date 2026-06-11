@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, scoreBreakdown } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, scoreBreakdown } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { CrmPanel } from "@/components/CrmPanel";
@@ -371,6 +371,10 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           ))}
         </div>
       )}
+
+      <VerificationChecklist p={p} dq={dq} u={u} />
+
+
 
       {/* === SECTION B: Objektdaten (editable, open) === */}
       <div>
@@ -968,6 +972,122 @@ function Section({ title, children, actions, defaultOpen = false, id }: { title:
     </details>
   );
 }
+
+function VerificationChecklist({ p, dq, u }: {
+  p: Property;
+  dq: ReturnType<typeof calcDataQuality>;
+  u: (patch: Partial<Property>) => void;
+}) {
+  if (p.dataVerified) {
+    return (
+      <div
+        className="inline-flex items-center gap-2 rounded-[10px]"
+        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "8px 14px" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <span className="text-[12px] font-medium" style={{ color: "#2D6A4F" }}>Daten geprüft &amp; bestätigt</span>
+        <button
+          type="button"
+          onClick={() => u({ dataVerified: false })}
+          className="text-[11px] text-[#78716C] hover:text-[#1C1917] ml-1 underline"
+        >
+          zurücksetzen
+        </button>
+      </div>
+    );
+  }
+
+  const groups = [
+    { key: "basis", label: "Basisdaten" },
+    { key: "kosten", label: "Kaufnebenkosten" },
+    { key: "finanzierung", label: "Finanzierung" },
+    { key: "bewertung", label: "Bewertung & Score" },
+  ] as const;
+
+  const basisOk = getFieldsByGroup("basis").every((f) => f.check(p));
+  const kostenOk = getFieldsByGroup("kosten").every((f) => f.check(p));
+  const canVerify = basisOk && kostenOk;
+
+  return (
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white" style={{ padding: "16px 20px" }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
+        <div className="text-[11px] text-[#78716C]">{dq.filled}/{dq.total} ausgefüllt</div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-3 mb-4">
+        {groups.map((group) => {
+          const fields = getFieldsByGroup(group.key);
+          const allOk = fields.every((f) => f.check(p));
+          return (
+            <div
+              key={group.key}
+              className="rounded-[10px] border"
+              style={{
+                borderColor: allOk ? "#2D6A4F" : "#EAE6DF",
+                background: allOk ? "#F0FAF4" : "#FAFAF8",
+                padding: "10px 12px",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span
+                  className="grid place-items-center rounded-full text-[10px] font-bold size-4"
+                  style={{
+                    background: allOk ? "#2D6A4F" : "#FCD34D",
+                    color: allOk ? "#FFFFFF" : "#92400E",
+                  }}
+                >
+                  {allOk ? "✓" : "!"}
+                </span>
+                <div className="text-[12px] font-semibold text-[#1C1917]">{group.label}</div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {fields.map((f) => {
+                  const ok = f.check(p);
+                  return (
+                    <span
+                      key={f.key}
+                      className="inline-flex items-center gap-1 rounded-full text-[10px]"
+                      style={{
+                        background: ok ? "#E8F5EE" : "#FEF3C7",
+                        color: ok ? "#2D6A4F" : "#92400E",
+                        padding: "2px 8px",
+                      }}
+                    >
+                      {ok ? "✓" : "!"} {f.label}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <label
+        className={`flex items-start gap-2 rounded-[10px] ${canVerify ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+        style={{ background: "#FAFAF8", border: "1px solid #EAE6DF", padding: "10px 12px" }}
+      >
+        <input
+          type="checkbox"
+          disabled={!canVerify}
+          checked={!!p.dataVerified}
+          onChange={(e) => u({ dataVerified: e.target.checked })}
+          className="mt-0.5 accent-[#2D6A4F] size-4"
+        />
+        <span className="text-[12px] text-[#1C1917]">
+          Ich habe alle Daten geprüft und bestätigt – die Kalkulation kann beginnen.
+          {!canVerify && (
+            <span className="block text-[11px] text-[#92400E] mt-0.5">
+              Bitte zuerst Basisdaten und Kaufnebenkosten vollständig ausfüllen.
+            </span>
+          )}
+        </span>
+      </label>
+    </div>
+  );
+}
+
 
 function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
   return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
