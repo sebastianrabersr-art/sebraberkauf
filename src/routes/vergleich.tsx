@@ -372,52 +372,9 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
   } as const;
   const cfg = goalConfig[goal];
 
-  const allEqual = (vals: (number | null | undefined)[]) => {
-    const v = vals.filter((x) => x != null && isFinite(x as number));
-    if (v.length < 2) return false;
-    return v.every((x) => x === v[0]);
-  };
+  void bestMietrecht;
 
-  type Chip = { label: string; name: string; value: string; tie: boolean };
-  const chips: Chip[] = [];
-  chips.push({
-    label: "SCORE",
-    name: bestScore.p.title || "—",
-    value: String(bestScore.s.total),
-    tie: allEqual(computed.map((x) => x.s.total)),
-  });
-  if (bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)) {
-    chips.push({
-      label: "BRUTTORENDITE",
-      name: bestRendite.p.title || "—",
-      value: fmtPct(bestRendite.c.bruttorendite, 2),
-      tie: allEqual(computed.map((x) => x.c.bruttorendite)),
-    });
-  }
-  if (bestCashflow.c.cashflowMtl != null && isFinite(bestCashflow.c.cashflowMtl)) {
-    chips.push({
-      label: "CASHFLOW",
-      name: bestCashflow.p.title || "—",
-      value: `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo`,
-      tie: allEqual(computed.map((x) => x.c.cashflowMtl)),
-    });
-  }
-  if (bestPreis.p.kaufpreis != null) {
-    chips.push({
-      label: "GÜNSTIGSTER PREIS",
-      name: bestPreis.p.title || "—",
-      value: fmtEUR(bestPreis.p.kaufpreis),
-      tie: allEqual(computed.map((x) => x.p.kaufpreis)),
-    });
-  }
-  if (bestMietrecht.p.mietrechtRisiko) {
-    chips.push({
-      label: "MIETRECHT",
-      name: bestMietrecht.p.title || "—",
-      value: bestMietrecht.p.mietrechtRisiko || "—",
-      tie: computed.every((x) => x.p.mietrechtRisiko === computed[0].p.mietrechtRisiko),
-    });
-  }
+
 
   return (
     <>
