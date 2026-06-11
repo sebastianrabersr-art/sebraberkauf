@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Bell, Briefcase, Building2, Calculator, ClipboardCheck, Database, FolderKanban, GitCompareArrows, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, Briefcase, Calculator, ClipboardCheck, Database, FolderKanban, GitCompareArrows, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
@@ -53,10 +53,10 @@ function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pat
         return (
           <Link key={n.to} to={n.to}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              "relative flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors",
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                ? "text-white font-medium before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-primary before:rounded-full"
+                : "text-sidebar-foreground hover:text-white",
             )}>
             <n.icon className={cn("size-4 shrink-0", active ? "text-primary" : "")} />
             <span className="truncate">{n.label}</span>
@@ -72,14 +72,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="px-5 py-5 flex items-center gap-3">
-          <div className="size-9 rounded-xl bg-primary text-primary-foreground grid place-items-center shadow-sm">
-            <Building2 className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="font-semibold tracking-tight truncate">Immo Invest</div>
-            <div className="text-xs text-sidebar-foreground/55 truncate">Bewertung & Portfolio</div>
-          </div>
+        <div className="px-5 py-5 flex items-center gap-2">
+          <span className="font-display text-2xl font-bold tracking-tight text-white leading-none">kaufma</span>
+          <span className="inline-block size-[7px] rounded-full bg-primary" />
         </div>
         <div className="px-3 pb-3 space-y-1.5">
           <ProjectSwitcher />
