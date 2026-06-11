@@ -49,38 +49,8 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
       </Block>
 
       {/* AfA */}
-      <Block title="Abschreibung / AfA">
-        <div className="grid md:grid-cols-3 gap-3">
-          <Fld label="Land">
-            <select value={p.afa?.land ?? "AT"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), land: e.target.value as AfaLand } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-              <option value="AT">Österreich</option>
-              <option value="DE">Deutschland</option>
-            </select>
-          </Fld>
-          <Fld label="AfA-Methode">
-            <select value={p.afa?.methode ?? "linear"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), methode: e.target.value as AfaMethode } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-              <option value="linear">linear</option>
-              <option value="manuell">manuell</option>
-            </select>
-          </Fld>
-          <Fld label="Abschreibungsbasis €">
-            <NumInp v={p.afa?.basis ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), basis: v } })} placeholder={`Standard: Kaufpreis ${fmtEUR(p.kaufpreis)}`} />
-          </Fld>
-          <Fld label="Grundstücksanteil %"><NumInp v={p.afa?.grundAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), grundAnteilPct: v, gebaeudeAnteilPct: v == null ? (p.afa?.gebaeudeAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.grundAnteilPct)} /></Fld>
-          <Fld label="Gebäudeanteil %"><NumInp v={p.afa?.gebaeudeAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), gebaeudeAnteilPct: v, grundAnteilPct: v == null ? (p.afa?.grundAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.gebaeudeAnteilPct)} /></Fld>
-          <Fld label="AfA-Satz %"><NumInp v={p.afa?.satzPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), satzPct: v } })} step={0.1} placeholder={String(afa.satzPct)} /></Fld>
-          {p.afa?.methode === "manuell" && (
-            <Fld label="AfA pro Jahr € (manuell)"><NumInp v={p.afa?.jahresBetrag ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), jahresBetrag: v } })} /></Fld>
-          )}
-        </div>
-        <div className="grid md:grid-cols-3 gap-3 mt-3">
-          <Kpi label="Gebäudewert" value={fmtEUR(afa.gebaeudewert)} />
-          <Kpi label="AfA-Satz" value={`${afa.satzPct.toFixed(2)} %`} />
-          <Kpi label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} tone="good" />
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">{afa.hinweis}</p>
-        <p className="text-[11px] text-warning-foreground font-medium mt-1">⚠ Keine Steuerberatung. Nur vereinfachte Modellrechnung.</p>
-      </Block>
+      <AfaSection p={p} u={u} afa={afa} />
+
 
       {/* Projections */}
       <Block title="Langfristige Projektion (Mietsteigerung, Wertsteigerung, Leerstand)">
