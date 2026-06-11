@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { HelpCircle } from "lucide-react";
 import type { AfaLand, AfaMethode, ObjektartDetail, Property } from "@/lib/types";
 import { calcAfa, calcFollowUpFinance, calcLongTermProjection, calcProperty, fmtEUR, fmtPct, getActiveFinance } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
@@ -48,38 +49,8 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
       </Block>
 
       {/* AfA */}
-      <Block title="Abschreibung / AfA">
-        <div className="grid md:grid-cols-3 gap-3">
-          <Fld label="Land">
-            <select value={p.afa?.land ?? "AT"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), land: e.target.value as AfaLand } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-              <option value="AT">Österreich</option>
-              <option value="DE">Deutschland</option>
-            </select>
-          </Fld>
-          <Fld label="AfA-Methode">
-            <select value={p.afa?.methode ?? "linear"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), methode: e.target.value as AfaMethode } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-              <option value="linear">linear</option>
-              <option value="manuell">manuell</option>
-            </select>
-          </Fld>
-          <Fld label="Abschreibungsbasis €">
-            <NumInp v={p.afa?.basis ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), basis: v } })} placeholder={`Standard: Kaufpreis ${fmtEUR(p.kaufpreis)}`} />
-          </Fld>
-          <Fld label="Grundstücksanteil %"><NumInp v={p.afa?.grundAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), grundAnteilPct: v, gebaeudeAnteilPct: v == null ? (p.afa?.gebaeudeAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.grundAnteilPct)} /></Fld>
-          <Fld label="Gebäudeanteil %"><NumInp v={p.afa?.gebaeudeAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), gebaeudeAnteilPct: v, grundAnteilPct: v == null ? (p.afa?.grundAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.gebaeudeAnteilPct)} /></Fld>
-          <Fld label="AfA-Satz %"><NumInp v={p.afa?.satzPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), satzPct: v } })} step={0.1} placeholder={String(afa.satzPct)} /></Fld>
-          {p.afa?.methode === "manuell" && (
-            <Fld label="AfA pro Jahr € (manuell)"><NumInp v={p.afa?.jahresBetrag ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), jahresBetrag: v } })} /></Fld>
-          )}
-        </div>
-        <div className="grid md:grid-cols-3 gap-3 mt-3">
-          <Kpi label="Gebäudewert" value={fmtEUR(afa.gebaeudewert)} />
-          <Kpi label="AfA-Satz" value={`${afa.satzPct.toFixed(2)} %`} />
-          <Kpi label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} tone="good" />
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">{afa.hinweis}</p>
-        <p className="text-[11px] text-warning-foreground font-medium mt-1">⚠ Keine Steuerberatung. Nur vereinfachte Modellrechnung.</p>
-      </Block>
+      <AfaSection p={p} u={u} afa={afa} />
+
 
       {/* Projections */}
       <Block title="Langfristige Projektion (Mietsteigerung, Wertsteigerung, Leerstand)">
@@ -232,7 +203,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
     </div>
   );
 }
-function Fld({ label, children }: { label: string; children: React.ReactNode }) {
+function Fld({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return <label className="block"><div className="text-xs text-muted-foreground mb-1">{label}</div>{children}</label>;
 }
 function NumInp({ v, onChange, step, placeholder }: { v: number | null | undefined; onChange: (v: number | null) => void; step?: number; placeholder?: string }) {
@@ -243,6 +214,102 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone?: "goo
     <div className="rounded-lg border bg-card p-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`text-base font-semibold mt-0.5 ${tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+const bricolage = { fontFamily: '"Bricolage Grotesque", system-ui, sans-serif', letterSpacing: "-0.02em" } as const;
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="relative inline-flex group align-middle ml-1">
+      <HelpCircle className="size-[14px] text-[#A8A29E] cursor-help" />
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-10 hidden group-hover:block w-56 rounded-md border border-[#EAE6DF] bg-white px-2.5 py-1.5 text-[12px] leading-snug text-[#1C1917] shadow-sm" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function ResultCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="rounded-[8px] border border-[#EAE6DF] bg-[#FAFAF8] px-[14px] py-[12px]">
+      <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="mt-1 text-[18px] tabular-nums" style={{ ...bricolage, fontWeight: 700, color: accent ? "#2D6A4F" : "#1C1917" }}>{value}</div>
+    </div>
+  );
+}
+
+function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) => void; afa: ReturnType<typeof calcAfa> }) {
+  const [expert, setExpert] = useState(false);
+  const kaufpreis = p.afa?.basis ?? p.kaufpreis ?? 0;
+
+  return (
+    <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+      <h4 className="font-semibold text-[13px] text-[#1C1917] mb-3">Abschreibung / AfA</h4>
+
+      {!expert ? (
+        <>
+          <Fld label="Kaufpreis €">
+            <NumInp v={kaufpreis || null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), basis: v } })} placeholder={String(p.kaufpreis ?? "")} />
+          </Fld>
+          <div className="grid md:grid-cols-3 gap-3 mt-3">
+            <ResultCard label="Gebäudewert" value={fmtEUR(afa.gebaeudewert)} />
+            <ResultCard label="AfA-Satz" value={`${afa.satzPct.toFixed(1).replace(".", ",")} % p.a.`} />
+            <ResultCard label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} accent />
+          </div>
+          <p className="text-[12px] text-[#78716C] mt-3 leading-relaxed">
+            Die Abschreibung (AfA) senkt dein zu versteuerndes Einkommen. Bei vermieteten Wohnungen in Österreich beträgt der Satz 1,5% des Gebäudewerts pro Jahr. Der Gebäudewert wird mit 80% des Kaufpreises angesetzt (Standard AT).
+          </p>
+          <button onClick={() => setExpert(true)} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+            Experteneinstellungen anzeigen ›
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="grid md:grid-cols-3 gap-3">
+            <Fld label={<>Land<InfoTip text="Land bestimmt die gesetzlichen Standardwerte für AfA-Satz und Aufteilung." /></>}>
+              <select value={p.afa?.land ?? "AT"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), land: e.target.value as AfaLand } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <option value="AT">Österreich</option>
+                <option value="DE">Deutschland</option>
+              </select>
+            </Fld>
+            <Fld label={<>AfA-Methode<InfoTip text="Linear bedeutet: jedes Jahr gleich viel abschreiben." /></>}>
+              <select value={p.afa?.methode ?? "linear"} onChange={(e) => u({ afa: { ...(p.afa ?? {}), methode: e.target.value as AfaMethode } })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                <option value="linear">linear</option>
+                <option value="manuell">manuell</option>
+              </select>
+            </Fld>
+            <Fld label="Abschreibungsbasis €">
+              <NumInp v={p.afa?.basis ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), basis: v } })} placeholder={`Standard: Kaufpreis ${fmtEUR(p.kaufpreis)}`} />
+            </Fld>
+            <Fld label={<>Grundstücksanteil %<InfoTip text="Der Anteil des Kaufpreises der auf das Grundstück entfällt. Grundstücke werden nicht abgeschrieben." /></>}>
+              <NumInp v={p.afa?.grundAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), grundAnteilPct: v, gebaeudeAnteilPct: v == null ? (p.afa?.gebaeudeAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.grundAnteilPct)} />
+            </Fld>
+            <Fld label={<>Gebäudeanteil %<InfoTip text="Der Anteil der abgeschrieben werden kann. Standard bei Wohnungen: 80%." /></>}>
+              <NumInp v={p.afa?.gebaeudeAnteilPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), gebaeudeAnteilPct: v, grundAnteilPct: v == null ? (p.afa?.grundAnteilPct ?? null) : Math.max(0, 100 - v) } })} placeholder={String(afa.gebaeudeAnteilPct)} />
+            </Fld>
+            <Fld label={<>AfA-Satz %<InfoTip text="Gesetzlicher Satz für vermietete Wohngebäude in Österreich: 1,5% p.a." /></>}>
+              <NumInp v={p.afa?.satzPct ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), satzPct: v } })} step={0.1} placeholder={String(afa.satzPct)} />
+            </Fld>
+            {p.afa?.methode === "manuell" && (
+              <Fld label="AfA pro Jahr € (manuell)">
+                <NumInp v={p.afa?.jahresBetrag ?? null} onChange={(v) => u({ afa: { ...(p.afa ?? {}), jahresBetrag: v } })} />
+              </Fld>
+            )}
+          </div>
+          <div className="grid md:grid-cols-3 gap-3 mt-3">
+            <ResultCard label="Gebäudewert" value={fmtEUR(afa.gebaeudewert)} />
+            <ResultCard label="AfA-Satz" value={`${afa.satzPct.toFixed(2).replace(".", ",")} %`} />
+            <ResultCard label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} accent />
+          </div>
+          <p className="text-[11px] text-[#78716C] mt-2">{afa.hinweis}</p>
+          <p className="text-[11px] text-[#D97706] font-medium mt-1">⚠ Keine Steuerberatung. Nur vereinfachte Modellrechnung.</p>
+          <button onClick={() => setExpert(false)} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+            ‹ Einfache Ansicht
+          </button>
+        </>
+      )}
     </div>
   );
 }
