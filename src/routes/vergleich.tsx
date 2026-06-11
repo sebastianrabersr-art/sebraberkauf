@@ -71,6 +71,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const [minScore, setMinScore] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
+  const [goal, setGoal] = useState<"score" | "rendite" | "cashflow" | "preis" | "rate">("score");
 
   const project = projects.find((x) => x.id === projectFilter);
   const a = (project?.assumptions) ?? projects[0]?.assumptions;
