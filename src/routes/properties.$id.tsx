@@ -370,7 +370,7 @@ function KalkulationTab({ p, c, u, projects, regions, applyRegionDefaults, linkV
           <Section title="Zahlungen & Cashflow" defaultOpen><PaymentsPanel p={p} /></Section>
         </>
       )}
-      <Section title="Objektdaten" defaultOpen>
+      <Section id="sec-objektdaten" title="Objektdaten" defaultOpen>
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Titel"><T value={p.title} edit on={(v) => u({ title: v })} /></F>
           <F label="Original-Link">
