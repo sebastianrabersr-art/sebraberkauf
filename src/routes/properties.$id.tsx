@@ -403,7 +403,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               )}
             </F>
             <F label="Stadt"><T value={p.city ?? ""} edit on={(v) => u({ city: v })} /></F>
-            <F label="Bezirk / Landkreis"><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
+            <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
               <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className={selectCls}>
