@@ -228,11 +228,15 @@ function Detail() {
               <MietrechtRiskCard p={p} />
               <Section title="Eigene Einschätzung & fehlende Daten" defaultOpen>
                 <div className="grid md:grid-cols-2 gap-3">
-                  <F label="Mietrechtliche Einschätzung">
+                  <F
+                    label="Mietrechtliche Einschätzung"
+                    hint={p.mietrecht === "unklar – rechtlich prüfen" ? <RequiredHint text="Mietrechtskategorie prüfen – beeinflusst Score und Risikoeinschätzung" /> : undefined}
+                  >
                     <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className={selectCls}>
                       {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </F>
+
                   <F label="Fehlende Daten (komma-getrennt)">
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
