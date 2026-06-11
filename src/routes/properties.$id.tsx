@@ -972,6 +972,44 @@ function Section({ title, children, actions, defaultOpen = false, id }: { title:
 function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
   return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
 }
+function DataQualityBanner({ dq, onScroll }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void }) {
+  if (dq.score === 100) return null;
+  if (dq.score >= 70) {
+    return (
+      <div
+        className="inline-flex items-center gap-1.5 rounded-full"
+        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "4px 12px" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <span className="text-[12px]" style={{ color: "#2D6A4F" }}>{dq.score}% Datenqualität · {dq.level}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[10px] flex items-start gap-2.5" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
+      <AlertTriangle className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} />
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium" style={{ color: "#92400E" }}>
+          {dq.filled} von {dq.total} Pflichtfeldern ausgefüllt · {dq.score}% Datenqualität
+        </div>
+        {dq.missing.length > 0 && (
+          <div className="text-[11px] mt-0.5" style={{ color: "#92400E" }}>
+            Fehlend: {dq.missing.join(", ")}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onScroll}
+        className="text-[12px] font-medium shrink-0 hover:underline"
+        style={{ color: "#92400E" }}
+      >
+        Felder ausfüllen ↓
+      </button>
+    </div>
+  );
+}
+
 function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
   return (
     <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
