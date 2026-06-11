@@ -386,9 +386,9 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
 
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-4">
-        <MiniBarChart title="Monatliche Rate" data={chartData} dataKey="rate" />
-        <MiniBarChart title="Gesamtzinskosten" data={chartData} dataKey="interest" />
-        <MiniBarChart title="Cashflow mtl." data={chartData} dataKey="cashflow" higherBetter />
+        <MiniBarChart title="Monatliche Rate" data={chartData} dataKey="rate" kind="rate" yLabel="€ / Monat" />
+        <MiniBarChart title="Gesamtzinskosten" data={chartData} dataKey="interest" kind="interest" yLabel="€ über Laufzeit" />
+        <MiniBarChart title="Cashflow mtl." data={chartData} dataKey="cashflow" kind="cashflow" yLabel="€ / Monat" higherBetter />
         <div className="rounded-lg border bg-card p-3">
           <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Restschuld über Zeit</div>
           <div className="h-48 w-full">
