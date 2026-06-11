@@ -725,11 +725,11 @@ const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boo
   { key: "vertragskosten",    label: "Notar / Vertrag",     group: "kosten",     check: (p) => p.vertragskosten != null },
   // FINANZIERUNG
   { key: "eigenkapital", label: "Eigenkapital", group: "finanzierung", check: (p) => {
-    const fin = p.financeScenarios?.find((s) => s.isActive);
+    const fin = getActiveFinance(p);
     return fin != null ? (fin.eigenkapital ?? 0) > 0 : false;
   } },
   { key: "zinssatz", label: "Zinssatz", group: "finanzierung", check: (p) => {
-    const fin = p.financeScenarios?.find((s) => s.isActive);
+    const fin = getActiveFinance(p);
     return fin != null ? (fin.zinssatz ?? 0) > 0 : false;
   } },
   // BEWERTUNG
