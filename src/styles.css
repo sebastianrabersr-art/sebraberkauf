@@ -166,3 +166,8 @@
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-float-delayed { animation: float-delayed 5s ease-in-out infinite 1s; }
 .perspective-1000 { perspective: 1000px; }
+
+/* Remove spinner arrows from number inputs globally */
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
