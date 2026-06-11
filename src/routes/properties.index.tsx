@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { useMemo, useState } from "react";
@@ -230,7 +230,9 @@ function PropertiesList() {
             </thead>
             <tbody>
               {rows.map(({ p, c, s, dq, projectName }) => {
-                const maps = googleMapsUrl(p);
+                const maps = (p.lat && p.lng)
+                  ? mapsUrlFromCoords(p.lat, p.lng)
+                  : googleMapsUrl(p);
                 const score = s.total as number;
                 const scoreColor = score >= 65 ? "#2D6A4F" : score >= 50 ? "#D97706" : "#A8A29E";
                 return (
@@ -304,7 +306,7 @@ function PropertiesList() {
                           </a>
                         ) : <span className="text-[12px] text-[#A8A29E]">—</span>}
                         {maps && (
-                          <a href={maps} target="_blank" rel="noopener noreferrer" title="Google Maps" className="text-[#2D6A4F] hover:text-[#235740]">
+                          <a href={maps} target="_blank" rel="noopener noreferrer" title="Karte öffnen" className="text-[#2D6A4F] hover:text-[#235740]">
                             <MapPin className="size-3.5" />
                           </a>
                         )}

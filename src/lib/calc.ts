@@ -773,7 +773,7 @@ export function isValidUrl(s: string | null | undefined): boolean {
   catch { return false; }
 }
 
-export function googleMapsUrl(p: Pick<Property, "adresse" | "bezirk" | "city" | "bundesland" | "land" | "googleMapsUrlOverride">): string | null {
+export function mapsUrl(p: Pick<Property, "adresse" | "bezirk" | "city" | "bundesland" | "land" | "googleMapsUrlOverride">): string | null {
   const override = (p.googleMapsUrlOverride || "").trim();
   if (override) {
     if (/^https?:\/\//i.test(override)) return override;
@@ -787,8 +787,14 @@ export function googleMapsUrl(p: Pick<Property, "adresse" | "bezirk" | "city" | 
   if (cleaned.length === 0) return null;
   // encodeURIComponent handles Umlaute, spaces, special chars correctly
   const q = encodeURIComponent(cleaned.join(", "));
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  return `https://www.openstreetmap.org/search?query=${q}`;
 }
+
+export function mapsUrlFromCoords(lat: number, lng: number): string {
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=16`;
+}
+
+export { mapsUrl as googleMapsUrl };
 
 export interface ScoreCategory {
   key: "lage" | "zahlen" | "vermietbarkeit" | "zustand" | "recht" | "wiederverkauf";

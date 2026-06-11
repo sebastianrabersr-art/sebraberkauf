@@ -57,7 +57,9 @@ function Detail() {
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
   const linkValid = isValidUrl(p.link);
-  const mapsUrl = googleMapsUrl(p);
+  const mapsUrl = (p.lat && p.lng)
+    ? mapsUrlFromCoords(p.lat, p.lng)
+    : googleMapsUrl(p);
   const mietrecht = inferMietrecht(p);
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
@@ -171,7 +173,7 @@ function Detail() {
           )}
           {mapsUrl && (
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
-              <MapPin className="size-3.5" /> Maps
+              <MapPin className="size-3.5" /> In Karte öffnen
             </a>
           )}
           <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
