@@ -72,14 +72,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="px-5 py-5 flex items-center gap-3">
-          <div className="size-9 rounded-xl bg-primary text-primary-foreground grid place-items-center shadow-sm">
-            <Building2 className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="font-semibold tracking-tight truncate">Immo Invest</div>
-            <div className="text-xs text-sidebar-foreground/55 truncate">Bewertung & Portfolio</div>
-          </div>
+        <div className="px-5 py-5 flex items-center gap-2">
+          <span className="font-display text-2xl font-bold tracking-tight text-white leading-none">kaufma</span>
+          <span className="inline-block size-[7px] rounded-full bg-primary" />
         </div>
         <div className="px-3 pb-3 space-y-1.5">
           <ProjectSwitcher />
