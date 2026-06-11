@@ -1,4 +1,9 @@
 import type { Assumptions, FinanceScenario, Mietrecht, Property } from "./types";
+import {
+  computePurchaseCostBreakdown,
+  resolvePurchaseCostRules,
+  type PurchaseCostBreakdown,
+} from "./purchaseCostRules";
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
   eigenkapital: 100000,
