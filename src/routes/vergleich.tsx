@@ -11,7 +11,7 @@ import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 
 export const Route = createFileRoute("/vergleich")({
-  head: () => ({ meta: [{ title: "Vergleich – Immobilien gegenüberstellen" }] }),
+  head: () => ({ meta: [{ title: "Analyse – Immobilien vergleichen" }] }),
   component: ComparePage,
 });
 
