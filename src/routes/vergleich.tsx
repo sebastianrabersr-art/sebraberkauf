@@ -457,9 +457,10 @@ function Comparison({ items, a, projects }: { items: Property[]; a: any; project
               </React.Fragment>
             ))}
           </tbody>
-        </table>
-      </div>
-    </div>
+          </table>
+          </div>
+        </div>
+      </>
   );
 }
 
