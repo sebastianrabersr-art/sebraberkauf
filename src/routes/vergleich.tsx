@@ -34,7 +34,7 @@ function ComparePage() {
       <AppShell>
         <PageHead compareLimit={compareLimit} />
         <FeatureLocked
-          title="Vergleich ist in Plus & Premium enthalten"
+          title="Analyse ist in Plus & Premium enthalten"
           description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
