@@ -204,10 +204,10 @@ export const useStore = create<State>()(
           persisted.activities = persisted.activities ?? [];
           persisted.payments = persisted.payments ?? [];
           if (Array.isArray(persisted.properties)) {
-            const { migrateLegacyStatus } = require("./types");
+            const _mig = migrateLegacyStatus;
             persisted.properties = persisted.properties.map((p: any) => {
               if (p && (p.bewertung == null || p.prozessStatus == null)) {
-                const mig = migrateLegacyStatus(p.status);
+                const mig = _mig(p.status);
                 return { ...p, bewertung: p.bewertung ?? mig.bewertung, prozessStatus: p.prozessStatus ?? mig.prozessStatus };
               }
               return p;
