@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineCh
 import { Plus, Trash2, Check, Star, Copy, Lightbulb, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
-import { calcAmortizationSchedule, calcBalanceSeries, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
@@ -336,10 +336,16 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
     const safe = (n: number | null | undefined) => (Number.isFinite(n as number) ? Number(n) : 0);
     const rate = Math.round(safe(r.sum.ratePerMonth));
     const cashflow = Math.round(safe(r.sum.cashflowMtl));
-    // Fallback: wenn totalInterest fehlt, aus Rate × Laufzeit − Kreditbetrag rekonstruieren.
-    const laufzeitM = Math.max(1, Math.round((r.scn.laufzeitJahre ?? 30) * 12));
-    const kredit = safe(r.scn.kreditBetrag);
-    const interestFallback = Math.max(0, rate * laufzeitM - kredit);
+    // Zentrale Formel: Annuität = Rate × n − Kreditbetrag, endfällig = Kredit × Zins × Jahre, 0 % = 0.
+    const interestFallback = Math.round(calcTotalInterestPaid({
+      loanAmount: safe(r.scn.kreditBetrag),
+      annualRate: safe(r.scn.zinssatz),
+      termYears: safe(r.scn.laufzeitJahre),
+      monthlyPayment: rate,
+      tilgungsart: r.scn.tilgungsart === "endfaellig" || r.scn.tilgungsart === "manuell"
+        ? r.scn.tilgungsart
+        : "annuitaet",
+    }));
     const interest = Math.round(safe(r.sum.totalInterest)) || interestFallback;
     return { name: r.scn.name, rate, interest, cashflow };
   });

@@ -238,6 +238,42 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
  * (eigenkapitalEinsatz, kreditBetrag, kreditRateMtl, annuitaet),
  * damit `calcProperty` und alle UI-Konsumenten unverändert funktionieren.
  */
+
+/**
+ * Zentrale Berechnung der Gesamtzinskosten über die gesamte Laufzeit.
+ *
+ *  - Annuität:          totalInterest = monthlyPayment × n − loanAmount
+ *  - Zins 0 %:          totalInterest = 0
+ *  - Endfällig:         totalInterest = loanAmount × annualRate × termYears
+ *  - Manuelle Rate:     totalInterest = max(manualMonthlyPayment × n − loanAmount, 0)
+ *
+ * Schützt gegen NaN, Infinity und negative Werte und wird überall verwendet
+ * (Finanzierungs-Summary, InvestorModel, Szenarienvergleich, Gesamtzins-Chart).
+ */
+export function calcTotalInterestPaid(args: {
+  loanAmount: number;
+  annualRate: number;
+  termYears: number;
+  monthlyPayment: number;
+  tilgungsart?: "annuitaet" | "endfaellig" | "manuell";
+}): number {
+  const loan = safeNonNeg(args.loanAmount, 0);
+  const rate = safeNonNeg(args.annualRate, 0);
+  const years = Math.max(0, safeNum(args.termYears, 0));
+  const pay = safeNonNeg(args.monthlyPayment, 0);
+  const art = args.tilgungsart ?? "annuitaet";
+  if (loan <= 0 || years <= 0) return 0;
+  if (rate === 0 && art !== "manuell") return 0; // 0 % → keine Zinsen
+  const months = years * 12;
+  if (art === "endfaellig") {
+    const v = loan * rate * years;
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  }
+  // Annuität & manuell: Summe der Zahlungen minus Tilgung = Zinsen.
+  const v = pay * months - loan;
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
 function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
   const activeScn = getActiveFinance(p);
 
@@ -267,12 +303,20 @@ function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
 
   // 5) Monatsrate.
   //    - endfaellig: nur Zinsen monatlich.
-  //    - Zins == 0: lineare Tilgung (pmt() handhabt das).
-  //    - sonst: Annuität.
+  //    - manuell:    Durchschnitt aus manualSchedule (falls vorhanden), sonst Annuität.
+  //    - Zins == 0:  lineare Tilgung (pmt() handhabt das).
+  //    - sonst:      Annuität.
+  const tilgungsart = activeScn?.tilgungsart;
   let monthlyLoanPayment = 0;
   if (loanAmount > 0) {
-    if (activeScn?.tilgungsart === "endfaellig") {
+    if (tilgungsart === "endfaellig") {
       monthlyLoanPayment = loanAmount * monthlyRate; // 0 bei Zins 0
+    } else if (tilgungsart === "manuell") {
+      const sched = activeScn?.manualSchedule ?? [];
+      const sumYear = sched.reduce((s, x) => s + safeNonNeg(x.payment, 0), 0);
+      monthlyLoanPayment = sched.length > 0
+        ? sumYear / sched.length / 12
+        : pmt(monthlyRate, totalMonths, loanAmount);
     } else {
       monthlyLoanPayment = pmt(monthlyRate, totalMonths, loanAmount);
     }
@@ -283,16 +327,16 @@ function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
 
   const yearlyLoanPayment = monthlyLoanPayment * 12;
 
-  // 6) Gezahlte Zinsen gesamt über die Laufzeit.
-  //    - endfaellig: Zinsen × Laufzeit (Tilgung erst am Ende).
-  //    - Annuität:   (Rate × n) − Kreditbetrag.
-  //    - Zins 0:     0.
-  let totalInterestPaid = 0;
-  if (loanAmount > 0 && monthlyRate > 0) {
-    totalInterestPaid = activeScn?.tilgungsart === "endfaellig"
-      ? monthlyLoanPayment * totalMonths
-      : Math.max(0, monthlyLoanPayment * totalMonths - loanAmount);
-  }
+  // 6) Gezahlte Zinsen gesamt über die Laufzeit (zentrale Formel).
+  const totalInterestPaid = calcTotalInterestPaid({
+    loanAmount,
+    annualRate,
+    termYears: laufzeitJahre,
+    monthlyPayment: monthlyLoanPayment,
+    tilgungsart: tilgungsart === "endfaellig" || tilgungsart === "manuell"
+      ? tilgungsart
+      : "annuitaet",
+  });
 
   // 7) LTV – nur sinnvoll, wenn Bedarf > 0.
   const ltvFinance = totalCapitalNeed > 0 ? loanAmount / totalCapitalNeed : 0;
@@ -1259,7 +1303,7 @@ export interface ChartsData {
   assetDevelopmentData: ChartPoint[];
   cashDevelopmentData: ChartPoint[];
   depreciationData: ChartPoint[];
-  scenarioComparisonData: { label: string; cashflow: number; remainingDebt: number; propertyValue: number; equityInProperty: number; cumulativeCashflow: number; dealScore: number }[];
+  scenarioComparisonData: { label: string; cashflow: number; remainingDebt: number; propertyValue: number; equityInProperty: number; cumulativeCashflow: number; dealScore: number; totalInterestCost: number }[];
 }
 
 export interface ScenarioResult {
@@ -1271,6 +1315,7 @@ export interface ScenarioResult {
   equityInProperty: number;
   cumulativeCashflow: number;
   dealScore: number;
+  totalInterestCost: number;
 }
 
 export interface InvestorModel {
@@ -1282,6 +1327,7 @@ export interface InvestorModel {
   loanDevelopment: LoanYear[];
   scenarios: ScenarioResult[];
   charts: ChartsData;
+  totalInterestPaid: number;
 }
 
 /** Erzeugt einen Tilgungsplan pro Jahr (Annuität / endfällig / Zins 0). */
@@ -1450,6 +1496,7 @@ function calcScenarios(args: {
   valueGrowthPct: number;
   horizon: number;
   baseDealScore: number;
+  totalInterestCost: number;
 }): ScenarioResult[] {
   const variants: { key: ScenarioResult["key"]; label: string; cfMult: number; valMult: number; scoreDelta: number }[] = [
     { key: "conservative", label: "Konservativ", cfMult: 0.85, valMult: 0.5, scoreDelta: -10 },
@@ -1457,6 +1504,7 @@ function calcScenarios(args: {
     { key: "optimistic",   label: "Optimistisch",cfMult: 1.15, valMult: 1.3, scoreDelta: +8 },
   ];
   const H = Math.max(1, Math.round(safeNum(args.horizon, 10)));
+  const tic = safeNonNeg(args.totalInterestCost, 0);
   return variants.map((v) => {
     const annualCF = safeNum(args.baseAnnualCashflow, 0) * v.cfMult;
     const cum = annualCF * H;
@@ -1473,6 +1521,7 @@ function calcScenarios(args: {
       equityInProperty,
       cumulativeCashflow: safeNum(cum, 0),
       dealScore: score,
+      totalInterestCost: tic, // Gesamtzins gilt für die Finanzierung gleich, scenarien-unabhängig
     };
   });
 }
@@ -1528,6 +1577,16 @@ export function calcInvestorModel(
     startLiquidity: 0,
     taxRate: null, // keine Steuerfelder vorhanden → pre-tax
   });
+  // Zentrale Gesamtzinskosten – einmal berechnet, überall verwendet.
+  // Annuität: monthlyPay × n − loanAmount  |  0 %: 0  |  Endfällig: loan × rate × years
+  const totalInterestPaid = calcTotalInterestPaid({
+    loanAmount: base.kreditBetrag,
+    annualRate,
+    termYears: laufzeit,
+    monthlyPayment: base.kreditRateMtl,
+    tilgungsart,
+  });
+
   const scenarios = calcScenarios({
     baseAnnualCashflow: base.cashflowJahr,
     startWert: base.kaufpreis,
@@ -1538,6 +1597,7 @@ export function calcInvestorModel(
     valueGrowthPct: valueGrowth,
     horizon,
     baseDealScore: base.dealScore,
+    totalInterestCost: totalInterestPaid,
   });
 
   // AfA / Abschreibung pro Jahr (vereinfacht: konstanter Jahresbetrag).
@@ -1565,6 +1625,7 @@ export function calcInvestorModel(
       equityInProperty: s.equityInProperty,
       cumulativeCashflow: s.cumulativeCashflow,
       dealScore: s.dealScore,
+      totalInterestCost: s.totalInterestCost,
     })),
   };
 
@@ -1577,5 +1638,6 @@ export function calcInvestorModel(
     loanDevelopment: loanSchedule,
     scenarios,
     charts,
+    totalInterestPaid,
   };
 }
