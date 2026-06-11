@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
@@ -11,7 +11,9 @@ import { track } from "@/lib/analytics";
 import {
   ArrowRight,
   Calculator,
+  Coins,
   FileText,
+  Home,
   Link2,
   Loader2,
   Sparkles,
@@ -377,6 +379,59 @@ function Landing() {
           <Feature icon={ShieldCheck} title="Mietrecht-Risiko">MRG-Vollanwendung erkennen, Richtwertzonen, Befristungsabschlag – als Ampel.</Feature>
           <Feature icon={Calculator} title="Bank-Szenarien">Mehrere Finanzierungen vergleichen, Zahlungsplan als Grafik, Sondertilgungen.</Feature>
           <Feature icon={FileText} title="CRM & Follow-ups">Pipeline, Besichtigungen, Aufgaben, Notizen – pro Immobilie und Projekt.</Feature>
+        </div>
+      </section>
+
+      {/* ===== RECHNER SECTION ===== */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <h2 className="font-display text-[28px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>Kostenlose Rechner</h2>
+        <p className="text-[13px] text-[#78716C] mt-1.5">Schnelle Antworten ohne Anmeldung.</p>
+
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link
+            to="/rechner/$slug"
+            params={{ slug: "kaufnebenkosten" }}
+            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
+          >
+            <Coins className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold text-[#1C1917]">Kaufnebenkosten-Rechner</div>
+              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Steuern, Notar, Makler, Grundbuch</div>
+            </div>
+            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
+          </Link>
+
+          <Link
+            to="/rechner/$slug"
+            params={{ slug: "cashflow" }}
+            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
+          >
+            <Home className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold text-[#1C1917]">Cashflow-Rechner</div>
+              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Was bleibt monatlich übrig</div>
+            </div>
+            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
+          </Link>
+
+          <Link
+            to="/rechner/$slug"
+            params={{ slug: "rendite" }}
+            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
+          >
+            <TrendingUp className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold text-[#1C1917]">Rendite-Rechner</div>
+              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Brutto, Netto, Eigenkapital</div>
+            </div>
+            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
+          </Link>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/rechner" className="text-[13px] text-[#2D6A4F] font-medium hover:underline">
+            Alle 6 Rechner ansehen →
+          </Link>
         </div>
       </section>
 

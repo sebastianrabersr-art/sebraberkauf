@@ -9,10 +9,10 @@ import {
   buildFaqJsonLd,
   type CalcFaqItem,
 } from "@/components/marketing/PublicCalcLayout";
-import { fmtEUR, fmtPct } from "@/lib/calc";
+import { fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
-type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow";
+type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit";
 
 type CalcMeta = {
   title: string;
@@ -60,9 +60,45 @@ const META: Record<CalcSlug, CalcMeta> = {
       { q: "Was ist die Break-even-Miete?", a: "Die Miete, ab der dein Cashflow null ist – darüber bleibt monatlich Geld übrig, darunter musst du zuzahlen." },
     ],
   },
+  finanzierung: {
+    title: "Finanzierungsrechner für Immobilien | kauf ma",
+    description: "Berechne monatliche Kreditrate, Restschuld und Gesamtzinskosten für deine Immobilienfinanzierung. Kostenlos online.",
+    category: "Finanzierung",
+    h1: "Finanzierungsrechner für Immobilien",
+    intro: "Monatliche Rate, Restschuld nach 10 Jahren und Gesamtzinskosten auf einen Blick – mit realistischen Annahmen.",
+    faq: [
+      { q: "Wie hoch sollte die monatliche Rate sein?", a: "Eine Faustregel: max. 30–35 % deines Nettoeinkommens. So bleibt Puffer für Rücklagen und unerwartete Kosten." },
+      { q: "Was ist die Restschuld nach 10 Jahren?", a: "Der noch offene Kreditbetrag nach 10 Jahren Annuitätentilgung. Wichtig für Anschlussfinanzierung." },
+      { q: "Werden die Kaufnebenkosten mitfinanziert?", a: "Viele Banken verlangen, dass Nebenkosten aus Eigenkapital gezahlt werden. Erkundige dich bei deiner Bank." },
+    ],
+  },
+  breakeven: {
+    title: "Break-even-Miete-Rechner | kauf ma",
+    description: "Berechne die Mindestmiete, ab der deine Immobilie monatlich nicht negativ läuft. Kostenlos online.",
+    category: "Break-even-Miete",
+    h1: "Break-even-Miete-Rechner",
+    intro: "Welche Miete brauchst du mindestens, damit Kreditrate, Betriebskosten und Rücklage gedeckt sind?",
+    faq: [
+      { q: "Was bedeutet Break-even-Miete?", a: "Die Miete, ab der Einnahmen und Ausgaben ausgeglichen sind – darüber verdienst du, darunter zahlst du zu." },
+      { q: "Wie realistisch ist eine Break-even-Miete über 30 €/m²?", a: "In den meisten Lagen unrealistisch. Überlege Kaufpreisreduktion, mehr Eigenkapital oder eine andere Immobilie." },
+      { q: "Ist Tilgung im Break-even enthalten?", a: "Ja – die monatliche Kreditrate beinhaltet Zins und Tilgung. Beides fließt monatlich ab." },
+    ],
+  },
+  leistbarkeit: {
+    title: "Leistbarkeitsrechner für Immobilien | kauf ma",
+    description: "Berechne den maximalen Kaufpreis, den du dir bei deiner Wunsch-Monatsrate leisten kannst. Kostenlos online.",
+    category: "Leistbarkeit",
+    h1: "Leistbarkeitsrechner für Immobilien",
+    intro: "Welchen Kaufpreis kannst du dir bei deinem Eigenkapital und deiner Wunsch-Monatsrate über die Laufzeit leisten?",
+    faq: [
+      { q: "Wie funktioniert der Leistbarkeitsrechner?", a: "Er berechnet aus Monatsrate, Zinssatz und Laufzeit den maximalen Kreditbetrag und addiert dein Eigenkapital." },
+      { q: "Sind Kaufnebenkosten enthalten?", a: "Ja – du kannst einen Prozentsatz für Nebenkosten angeben, der vom Gesamtbudget abgezogen wird." },
+      { q: "Was passiert bei steigenden Zinsen?", a: "Bei gleicher Rate sinkt der Kaufpreis. Teste verschiedene Szenarien, um das Risiko einzuschätzen." },
+    ],
+  },
 };
 
-const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow"];
+const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow", "finanzierung", "breakeven", "leistbarkeit"];
 
 function isCalcSlug(v: string): v is CalcSlug {
   return (VALID as string[]).includes(v);
@@ -110,7 +146,10 @@ function CalcPage() {
   const { slug } = Route.useLoaderData();
   if (slug === "kaufnebenkosten") return <KaufNebenCalculator />;
   if (slug === "rendite") return <RenditeCalculator />;
-  return <CashflowCalculator />;
+  if (slug === "cashflow") return <CashflowCalculator />;
+  if (slug === "finanzierung") return <FinanceCalculator />;
+  if (slug === "breakeven") return <BreakEvenCalculator />;
+  return <LeistbarkeitCalculator />;
 }
 
 /* ───────── Kaufnebenkosten ───────── */
@@ -330,6 +369,199 @@ function CashflowCalculator() {
       explanation={
         <p>
           Cashflow = Mieteinnahmen − alle laufenden Ausgaben. Tilgung ist Vermögensaufbau, fließt aber monatlich ab und gehört deshalb in die Rechnung. Plane immer einen realistischen Leerstandspuffer (3–5 %).
+        </p>
+      }
+    />
+  );
+}
+
+/* ───────── Finanzierung ───────── */
+
+function FinanceCalculator() {
+  const meta = META.finanzierung;
+  const [kp, setKp] = useState(300000);
+  const [ek, setEk] = useState(80000);
+  const [zins, setZins] = useState(3.5);
+  const [laufzeit, setLaufzeit] = useState(25);
+
+  const kredit = Math.max(0, kp - ek);
+  const rate = pmt(zins / 100 / 12, laufzeit * 12, kredit);
+  const gesamtZahlung = rate * laufzeit * 12;
+  const zinsenTotal = gesamtZahlung - kredit;
+
+  const restschuld10 = (() => {
+    let bal = kredit;
+    const r = zins / 100 / 12;
+    for (let i = 0; i < Math.min(10 * 12, laufzeit * 12); i++) {
+      const zinsAnteil = bal * r;
+      const tilg = rate - zinsAnteil;
+      bal = Math.max(0, bal - tilg);
+    }
+    return bal;
+  })();
+
+  return (
+    <PublicCalcLayout
+      category={meta.category}
+      h1={meta.h1}
+      intro={meta.intro}
+      breadcrumbSlug="finanzierung"
+      faq={meta.faq}
+      snapshot={{
+        type: "finanzierung",
+        createdAt: new Date().toISOString(),
+        inputs: { kp, ek, zins, laufzeit },
+        result: { rate, kredit, zinsenTotal, restschuld10 },
+      }}
+      inputs={
+        <>
+          <NumInput label="Kaufpreis + Nebenkosten" value={kp} onChange={setKp} suffix="€" />
+          <NumInput label="Eigenkapital" value={ek} onChange={setEk} suffix="€" />
+          <NumInput label="Zinssatz p.a." value={zins} onChange={setZins} suffix="%" step={0.1} />
+          <NumInput label="Laufzeit" value={laufzeit} onChange={setLaufzeit} suffix="Jahre" />
+        </>
+      }
+      result={
+        <div className="space-y-5">
+          <BigResult label="Monatliche Rate" value={fmtEUR(rate)} />
+          <div className="border-t pt-3">
+            <ResultRow label="Kreditbetrag" value={fmtEUR(kredit)} />
+            <ResultRow label="Zinssatz" value={`${zins.toFixed(2)} %`} />
+            <ResultRow label="Laufzeit" value={`${laufzeit} Jahre`} />
+            <ResultRow label="Zinskosten gesamt" value={fmtEUR(zinsenTotal)} />
+            <ResultRow label="Restschuld nach 10 Jahren" value={fmtEUR(restschuld10)} />
+          </div>
+        </div>
+      }
+      explanation={
+        <p>
+          Die monatliche Rate wird als Annuität berechnet (gleichbleibende Rate aus Zins und Tilgung). Die Restschuld nach 10 Jahren hilft dir, die Anschlussfinanzierung zu planen.
+        </p>
+      }
+    />
+  );
+}
+
+/* ───────── Break-even-Miete ───────── */
+
+function BreakEvenCalculator() {
+  const meta = META.breakeven;
+  const [rate, setRate] = useState(700);
+  const [bk, setBk] = useState(50);
+  const [ruecklage, setRuecklage] = useState(60);
+  const [leerstand, setLeerstand] = useState(4);
+  const [wfl, setWfl] = useState(50);
+  const [aktMiete, setAktMiete] = useState(0);
+
+  const lPct = leerstand / 100;
+  const fix = rate + bk + ruecklage;
+  const required = fix / Math.max(0.0001, 1 - lPct);
+  const perM2 = wfl > 0 ? required / wfl : 0;
+  const diff = required - aktMiete;
+
+  return (
+    <PublicCalcLayout
+      category={meta.category}
+      h1={meta.h1}
+      intro={meta.intro}
+      breadcrumbSlug="breakeven"
+      faq={meta.faq}
+      snapshot={{
+        type: "breakeven",
+        createdAt: new Date().toISOString(),
+        inputs: { rate, bk, ruecklage, leerstand, wfl, aktMiete },
+        result: { required, perM2, diff },
+      }}
+      inputs={
+        <>
+          <NumInput label="Kreditrate" value={rate} onChange={setRate} suffix="€/M" />
+          <NumInput label="Betriebskosten" value={bk} onChange={setBk} suffix="€/M" />
+          <NumInput label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+          <NumInput label="Leerstandspuffer" value={leerstand} onChange={setLeerstand} suffix="%" step={0.5} />
+          <NumInput label="Wohnfläche" value={wfl} onChange={setWfl} suffix="m²" />
+          <NumInput label="Aktuelle Miete" value={aktMiete} onChange={setAktMiete} suffix="€/M" />
+        </>
+      }
+      result={
+        <div className="space-y-5">
+          <BigResult label="Benötigte Miete" value={fmtEUR(required)} />
+          <div className="text-xs text-muted-foreground">≈ {perM2.toFixed(2)} €/m²</div>
+          <div className="border-t pt-3">
+            <ResultRow label="Aktuelle Miete" value={fmtEUR(aktMiete)} />
+            <ResultRow label="Differenz" value={fmtEUR(diff)} tone={diff > 0 ? "bad" : "good"} />
+          </div>
+          {perM2 > 30 && (
+            <div className="rounded-md bg-destructive/10 text-destructive p-3 text-xs">
+              Über 30 €/m² ist in den meisten Lagen unrealistisch. Überlege Kaufpreisreduktion oder mehr Eigenkapital.
+            </div>
+          )}
+        </div>
+      }
+      explanation={
+        <p>
+          Die Break-even-Miete deckt Kreditrate, Betriebskosten und Rücklage ab – inklusive eines Leerstandspuffers. Alles darüber ist positiver Cashflow.
+        </p>
+      }
+    />
+  );
+}
+
+/* ───────── Leistbarkeit ───────── */
+
+function LeistbarkeitCalculator() {
+  const meta = META.leistbarkeit;
+  const [ek, setEk] = useState(80000);
+  const [zins, setZins] = useState(3.5);
+  const [laufzeit, setLaufzeit] = useState(25);
+  const [rate, setRate] = useState(900);
+  const [nkPct, setNkPct] = useState(10);
+
+  const r = zins / 100 / 12;
+  const n = laufzeit * 12;
+  const kredit = r === 0 ? rate * n : (rate * (1 - Math.pow(1 + r, -n))) / r;
+  const gesamt = ek + kredit;
+  const maxKp = gesamt / (1 + nkPct / 100);
+  const nk = gesamt - maxKp;
+
+  return (
+    <PublicCalcLayout
+      category={meta.category}
+      h1={meta.h1}
+      intro={meta.intro}
+      breadcrumbSlug="leistbarkeit"
+      faq={meta.faq}
+      snapshot={{
+        type: "leistbarkeit",
+        createdAt: new Date().toISOString(),
+        inputs: { ek, zins, laufzeit, rate, nkPct },
+        result: { maxKp, kredit, nk, gesamt },
+      }}
+      inputs={
+        <>
+          <NumInput label="Eigenkapital" value={ek} onChange={setEk} suffix="€" />
+          <NumInput label="Wunsch-Monatsrate" value={rate} onChange={setRate} suffix="€/M" />
+          <NumInput label="Zinssatz p.a." value={zins} onChange={setZins} suffix="%" step={0.1} />
+          <NumInput label="Laufzeit" value={laufzeit} onChange={setLaufzeit} suffix="Jahre" />
+          <NumInput label="Nebenkosten" value={nkPct} onChange={setNkPct} suffix="%" step={0.5} />
+        </>
+      }
+      result={
+        <div className="space-y-5">
+          <BigResult label="Maximaler Kaufpreis" value={fmtEUR(maxKp)} />
+          <div className="border-t pt-3">
+            <ResultRow label="Eigenkapital" value={fmtEUR(ek)} />
+            <ResultRow label="Kreditbetrag" value={fmtEUR(kredit)} />
+            <ResultRow label="Kaufnebenkosten" value={fmtEUR(nk)} />
+            <ResultRow label="Gesamtkosten" value={fmtEUR(gesamt)} />
+          </div>
+          <p className="text-xs text-muted-foreground border-t pt-3">
+            Annahme: Du bringst dein Eigenkapital ein und finanzierst den Rest mit der gewählten Monatsrate über die Laufzeit.
+          </p>
+        </div>
+      }
+      explanation={
+        <p>
+          Der Rechner berechnet aus Monatsrate, Zinssatz und Laufzeit den maximalen Kreditbetrag und addiert dein Eigenkapital. Kaufnebenkosten werden als Prozentsatz abgezogen.
         </p>
       }
     />

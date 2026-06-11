@@ -36,20 +36,38 @@ const CARDS = [
   {
     slug: "kaufnebenkosten",
     title: "Kaufnebenkosten-Rechner",
-    benefit: "Grunderwerbsteuer, Notar, Makler, Grundbuch: So viel kommt zum Kaufpreis dazu.",
+    benefit: "Grunderwerbsteuer, Notar, Makler und Grundbuch – so viel kommt zum Kaufpreis dazu.",
     icon: Coins,
-  },
-  {
-    slug: "rendite",
-    title: "Rendite-Rechner",
-    benefit: "Brutto, Netto und Eigenkapitalrendite – ehrlich auf einen Blick.",
-    icon: TrendingUp,
   },
   {
     slug: "cashflow",
     title: "Cashflow-Rechner",
-    benefit: "Was bleibt monatlich übrig – nach Kreditrate, Rücklage und Leerstand.",
+    benefit: "Was bleibt monatlich übrig – nach Kreditrate, Betriebskosten, Rücklage und Leerstand.",
     icon: Home,
+  },
+  {
+    slug: "rendite",
+    title: "Rendite-Rechner",
+    benefit: "Brutto-, Netto- und Eigenkapitalrendite – ehrlich auf einen Blick.",
+    icon: TrendingUp,
+  },
+  {
+    slug: "finanzierung",
+    title: "Finanzierungsrechner",
+    benefit: "Monatliche Rate, Restschuld und Gesamtzinskosten für deinen Kredit.",
+    icon: Wallet,
+  },
+  {
+    slug: "breakeven",
+    title: "Break-even-Miete",
+    benefit: "Welche Miete brauchst du, damit die Immobilie monatlich nicht negativ läuft?",
+    icon: Calculator,
+  },
+  {
+    slug: "leistbarkeit",
+    title: "Leistbarkeitsrechner",
+    benefit: "Welchen Kaufpreis kannst du dir bei deiner Wunsch-Monatsrate leisten?",
+    icon: PiggyBank,
   },
 ] as const;
 
@@ -62,7 +80,7 @@ function PublicRechnerHub() {
           Die wichtigsten Rechner für deinen Immobilienkauf – kostenlos, ohne Anmeldung. Schnelle Antworten auf konkrete Fragen.
         </p>
 
-        <div className="mt-8 grid sm:grid-cols-2 gap-4">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARDS.map((c) => (
             <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-[#2D6A4F]">
               <c.icon className="size-9 text-[#2D6A4F]" strokeWidth={1.5} />
