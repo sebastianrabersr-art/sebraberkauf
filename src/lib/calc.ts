@@ -1496,6 +1496,7 @@ function calcScenarios(args: {
   valueGrowthPct: number;
   horizon: number;
   baseDealScore: number;
+  totalInterestCost: number;
 }): ScenarioResult[] {
   const variants: { key: ScenarioResult["key"]; label: string; cfMult: number; valMult: number; scoreDelta: number }[] = [
     { key: "conservative", label: "Konservativ", cfMult: 0.85, valMult: 0.5, scoreDelta: -10 },
@@ -1503,6 +1504,7 @@ function calcScenarios(args: {
     { key: "optimistic",   label: "Optimistisch",cfMult: 1.15, valMult: 1.3, scoreDelta: +8 },
   ];
   const H = Math.max(1, Math.round(safeNum(args.horizon, 10)));
+  const tic = safeNonNeg(args.totalInterestCost, 0);
   return variants.map((v) => {
     const annualCF = safeNum(args.baseAnnualCashflow, 0) * v.cfMult;
     const cum = annualCF * H;
@@ -1519,6 +1521,7 @@ function calcScenarios(args: {
       equityInProperty,
       cumulativeCashflow: safeNum(cum, 0),
       dealScore: score,
+      totalInterestCost: tic, // Gesamtzins gilt für die Finanzierung gleich, scenarien-unabhängig
     };
   });
 }
