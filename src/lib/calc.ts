@@ -612,8 +612,18 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     dealScore: deal.dealScore,
     dealRating: deal.dealRating,
     dealSummaryShort: deal.dealSummaryShort,
+    investorModel: calcInvestorModel(pn, a, {
+      kaufpreis: effectiveKaufpreis,
+      gesamtkosten: purchase.gesamtkosten,
+      eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
+      kreditBetrag: financing.kreditBetrag,
+      kreditRateMtl: financing.kreditRateMtl,
+      cashflowJahr: kpis.cashflowJahr,
+      dealScore: deal.dealScore,
+    }),
   };
 }
+
 
 export interface Score {
   lage: number;
