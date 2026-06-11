@@ -17,6 +17,24 @@ export type PendingCalc =
       createdAt: string;
       inputs: { miete: number; rate: number; bk: number; ruecklage: number; leerstand: number; sonst: number };
       result: { cfMonth: number; cfYear: number; breakEven: number };
+    }
+  | {
+      type: "finanzierung";
+      createdAt: string;
+      inputs: { kp: number; ek: number; zins: number; laufzeit: number };
+      result: { rate: number; kredit: number; zinsenTotal: number; restschuld10: number };
+    }
+  | {
+      type: "breakeven";
+      createdAt: string;
+      inputs: { rate: number; bk: number; ruecklage: number; leerstand: number; wfl: number; aktMiete: number };
+      result: { required: number; perM2: number; diff: number };
+    }
+  | {
+      type: "leistbarkeit";
+      createdAt: string;
+      inputs: { ek: number; zins: number; laufzeit: number; rate: number; nkPct: number };
+      result: { maxKp: number; kredit: number; nk: number; gesamt: number };
     };
 
 const KEY = "pending_calc_v1";
@@ -63,10 +81,34 @@ export function calcToPropertyDraft(calc: PendingCalc): {
       notizen: `Aus Renditerechner übernommen.\nKaufpreis: ${calc.inputs.kp} €\nNebenkosten: ${calc.inputs.nk} €\nJahresmiete: ${calc.inputs.jahresmiete} €\nBruttorendite: ${(calc.result.brutto * 100).toFixed(2)}%\nNettorendite: ${(calc.result.netto * 100).toFixed(2)}%`,
     };
   }
+  if (calc.type === "cashflow") {
+    return {
+      title: "Kalkulation Cashflow",
+      kaufpreis: null,
+      nettomieteMtl: calc.inputs.miete || null,
+      notizen: `Aus Cashflow-Rechner übernommen.\nMiete: ${calc.inputs.miete} €/M\nKreditrate: ${calc.inputs.rate} €/M\nCashflow: ${Math.round(calc.result.cfMonth)} €/M`,
+    };
+  }
+  if (calc.type === "finanzierung") {
+    return {
+      title: "Kalkulation Finanzierung",
+      kaufpreis: calc.inputs.kp || null,
+      nettomieteMtl: null,
+      notizen: `Aus Finanzierungsrechner übernommen.\nKaufpreis: ${calc.inputs.kp} €\nEigenkapital: ${calc.inputs.ek} €\nZinssatz: ${calc.inputs.zins}%\nRate: ${Math.round(calc.result.rate)} €/M\nRestschuld 10J: ${Math.round(calc.result.restschuld10)} €`,
+    };
+  }
+  if (calc.type === "breakeven") {
+    return {
+      title: "Kalkulation Break-even-Miete",
+      kaufpreis: null,
+      nettomieteMtl: calc.inputs.aktMiete || null,
+      notizen: `Aus Break-even-Rechner übernommen.\nBenötigte Miete: ${Math.round(calc.result.required)} €/M\nAktuelle Miete: ${calc.inputs.aktMiete} €/M\nWohnfläche: ${calc.inputs.wfl} m²`,
+    };
+  }
   return {
-    title: "Kalkulation Cashflow",
-    kaufpreis: null,
-    nettomieteMtl: calc.inputs.miete || null,
-    notizen: `Aus Cashflow-Rechner übernommen.\nMiete: ${calc.inputs.miete} €/M\nKreditrate: ${calc.inputs.rate} €/M\nCashflow: ${Math.round(calc.result.cfMonth)} €/M`,
+    title: "Kalkulation Leistbarkeit",
+    kaufpreis: calc.result.maxKp || null,
+    nettomieteMtl: null,
+    notizen: `Aus Leistbarkeitsrechner übernommen.\nMax. Kaufpreis: ${Math.round(calc.result.maxKp)} €\nEigenkapital: ${calc.inputs.ek} €\nRate: ${calc.inputs.rate} €/M\nLaufzeit: ${calc.inputs.laufzeit} J`,
   };
 }
