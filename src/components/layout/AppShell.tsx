@@ -53,10 +53,10 @@ function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pat
         return (
           <Link key={n.to} to={n.to}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              "relative flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors",
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                ? "text-white font-medium before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-primary before:rounded-full"
+                : "text-sidebar-foreground hover:text-white",
             )}>
             <n.icon className={cn("size-4 shrink-0", active ? "text-primary" : "")} />
             <span className="truncate">{n.label}</span>
