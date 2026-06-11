@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import {
