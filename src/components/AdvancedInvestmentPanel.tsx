@@ -203,7 +203,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
     </div>
   );
 }
-function Fld({ label, children }: { label: string; children: React.ReactNode }) {
+function Fld({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return <label className="block"><div className="text-xs text-muted-foreground mb-1">{label}</div>{children}</label>;
 }
 function NumInp({ v, onChange, step, placeholder }: { v: number | null | undefined; onChange: (v: number | null) => void; step?: number; placeholder?: string }) {
