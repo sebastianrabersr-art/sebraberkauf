@@ -225,6 +225,7 @@ export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
     link: "", platform: "", extractionStatus: "manuell", title: "",
     bezirk: "", adresse: "", city: "", land: "Österreich",
     objekttyp: "Wohnung", baujahr: null, mietrecht: "unklar – rechtlich prüfen",
+    propertyType: "apartment",
     zustand: "", wohnflaecheM2: null, zimmer: null, kaufpreis: null,
     makler: "unklar", sanierung: 0, einrichtung: 0, reserve: 0,
     nettomieteMtl: null, nettomieteGeschaetzt: false,
