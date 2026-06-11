@@ -1303,7 +1303,7 @@ export interface ChartsData {
   assetDevelopmentData: ChartPoint[];
   cashDevelopmentData: ChartPoint[];
   depreciationData: ChartPoint[];
-  scenarioComparisonData: { label: string; cashflow: number; remainingDebt: number; propertyValue: number; equityInProperty: number; cumulativeCashflow: number; dealScore: number }[];
+  scenarioComparisonData: { label: string; cashflow: number; remainingDebt: number; propertyValue: number; equityInProperty: number; cumulativeCashflow: number; dealScore: number; totalInterestCost: number }[];
 }
 
 export interface ScenarioResult {
