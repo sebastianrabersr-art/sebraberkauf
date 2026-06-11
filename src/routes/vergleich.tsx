@@ -184,7 +184,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               const c = calcProperty(p, ass);
               const s = calcScore(p, ass, c);
               const on = selected.includes(p.id);
-              const disabled = !on && selected.length >= 4;
+              const disabled = !on && selected.length >= compareLimit;
               return (
                 <button
                   key={p.id}
