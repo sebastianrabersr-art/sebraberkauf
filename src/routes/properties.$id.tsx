@@ -10,6 +10,7 @@ import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel, getImportantOpenQuestions } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
+import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
 import { ScoreBreakdownCard } from "@/components/ScoreBreakdownCard";
 import { ScoreInfo } from "@/components/ScoreInfo";
 import { PaymentsPanel } from "@/components/PaymentsPanel";
