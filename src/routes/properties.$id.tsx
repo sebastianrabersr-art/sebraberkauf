@@ -375,13 +375,14 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
               </select>
             </F>
-            <F label="Kaufpreis €"><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²"><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
-            <F label="Zimmer"><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
-            <F label="Baujahr"><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
-            <F label="Zustand"><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
+            <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
+            <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
+            <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
+            <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
+            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
             <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
-            <F label="Energieklasse"><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+
             <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
             <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit on={(v) => u({ verfuegbarkeit: v })} /></F>
             <F label="Land">
