@@ -130,18 +130,27 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
     dealScore: Math.round(s.dealScore),
   }));
 
+  // Y-Axis scales
+  const loanMax = Math.max(...loan.map((l) => l.restschuld), 0);
+  const loanScale = buildTicks(0, loanMax * 1.1);
+  const assetMax = Math.max(...asset.map((x) => Math.max(x.immoWert, x.restschuld, x.eigenkapital)), 0);
+  const assetScale = buildTicks(0, assetMax * 1.3);
+  const cashMin = Math.min(...cash.map((x) => Math.min(x.cashflow, x.cumCashflow, x.liquide)), 0);
+  const cashMax = Math.max(...cash.map((x) => Math.max(x.cashflow, x.cumCashflow, x.liquide)), 0);
+  const cashScale = buildTicks(cashMin < 0 ? cashMin * 1.2 : 0, Math.max(0, cashMax * 1.1));
+
   return (
     <div className="grid gap-4">
       {/* 1. Darlehen */}
       <ChartCard
         title="Darlehenshöhe im Zeitverlauf"
-        caption="Verlauf der Restschuld über die geplante Halteperiode. Blau = Restschuld in €."
+        caption="Verlauf der Restschuld über die geplante Halteperiode."
       >
         <ResponsiveContainer>
           <LineChart data={loan}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={loanScale.domain} ticks={loanScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line
@@ -159,18 +168,18 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 2. Asset */}
       <ChartCard
         title="Asset-Entwicklung"
-        caption="Immobilienwert (lila) vs. Restschuld (blau) ergibt das Eigenkapital im Objekt (grün)."
+        caption="Immobilienwert vs. Restschuld ergibt das Eigenkapital im Objekt."
       >
         <ResponsiveContainer>
           <LineChart data={asset}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={assetScale.domain} ticks={assetScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="immoWert" name="Immobilienwert" stroke={COLORS.value} strokeWidth={2.5} dot={false} />
             <Line type="monotone" dataKey="restschuld" name="Restschuld" stroke={COLORS.debt} strokeWidth={2.5} dot={false} />
-            <Line type="monotone" dataKey="eigenkapital" name="Eigenkapital im Objekt" stroke={COLORS.equity} strokeWidth={2.5} dot={false} />
+            <Line type="monotone" dataKey="eigenkapital" name="Eigenkapital im Objekt" stroke={COLORS.equity} strokeWidth={2.5} strokeDasharray="5 3" dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -178,13 +187,13 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 3. Cash */}
       <ChartCard
         title="Cash-Entwicklung"
-        caption="Jährlicher Cashflow (grün/rot je nach Vorzeichen), kumulierter Cashflow und Entwicklung der liquiden Mittel."
+        caption="Jährlicher Cashflow (grün/rot), kumulierter Cashflow und liquide Mittel."
       >
         <ResponsiveContainer>
           <ComposedChart data={cash}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
             <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={cashScale.domain} ticks={cashScale.ticks} />
             <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="cashflow" name="Cashflow p.a.">
@@ -197,6 +206,8 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
           </ComposedChart>
         </ResponsiveContainer>
       </ChartCard>
+
+
 
       {/* 4. Szenarien */}
       <ChartCard
