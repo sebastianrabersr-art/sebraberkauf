@@ -92,8 +92,26 @@ function Detail() {
     if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
   };
 
+  // Navigate to a tab and optionally scroll to a section id
+  const navTo = (target: TabKey, sectionId?: string) => {
+    setTab(target);
+    if (sectionId) {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId) as HTMLDetailsElement | null;
+        if (el) {
+          if (el.tagName === "DETAILS") el.open = true;
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 60);
+    } else {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 30);
+    }
+  };
+
   // Negative margins to break out of AppShell padding (p-6 md:p-10)
   const breakout = "-mx-6 md:-mx-10";
+
+
 
   return (
     <AppShell>
