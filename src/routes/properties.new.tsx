@@ -25,10 +25,19 @@ function NewPropertyPage() {
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [bezirk, setBezirk] = useState("");
+  const [propertyType, setPropertyType] = useState<PropertyType>("apartment");
   const [kaufpreis, setKaufpreis] = useState<number | null>(null);
+  const [housePurchasePrice, setHousePurchasePrice] = useState<number | null>(null);
+  const [landPurchasePrice, setLandPurchasePrice] = useState<number | null>(null);
+  const [landAreaSqm, setLandAreaSqm] = useState<number | null>(null);
   const [m2, setM2] = useState<number | null>(null);
   const [zimmer, setZimmer] = useState<number | null>(null);
   const [miete, setMiete] = useState<number | null>(null);
+
+  const isHouseSeparate = propertyType === "house_with_separate_land";
+  const isHouse = propertyType === "house_with_land" || propertyType === "house_with_separate_land";
+  const isLand = propertyType === "land_only";
+  const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
   const checkLimit = () => {
     if (limits.properties != null && properties.length >= limits.properties) {
