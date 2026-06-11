@@ -951,9 +951,18 @@ function Section({ title, children, actions, defaultOpen = false, id }: { title:
   );
 }
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}</label>;
+function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
+  return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
 }
+function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
+  return (
+    <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
+      <AlertTriangle style={{ width: 12, height: 12 }} />
+      <span>{text}</span>
+    </div>
+  );
+}
+
 function Ro({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-[9px] rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] text-[13px] text-[#1C1917] min-h-[36px]">{children}</div>;
 }
