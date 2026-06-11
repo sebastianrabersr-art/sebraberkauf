@@ -261,7 +261,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   );
 }
 
-function Comparison({ items, a, projects }: { items: Property[]; a: any; projects: any[] }) {
+function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; projects: any[]; goal: "score"|"rendite"|"cashflow"|"preis"|"rate" }) {
   const computed = items.map((p) => {
     const proj = projects.find((x) => x.id === p.projectId);
     const ass = proj?.assumptions ?? a;
