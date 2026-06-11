@@ -267,6 +267,24 @@ function AnalyzePage() {
           Akzeptiert AT & DE: willhaben, ImmoScout24 AT/DE, derStandard, immowelt, immobazar, immonet, kleinanzeigen, Makler-, Bauträger- und Bank-/Verwertungsseiten – sowie unbekannte Immobilienseiten. Der Original-Link wird in jedem Fall gespeichert.
         </p>
 
+        <div className="mt-2 flex flex-wrap gap-1">
+          {["willhaben", "ImmoScout24", "immowelt", "immo.at", "kleinanzeigen", "RE/MAX", "Bauträger", "und mehr"].map((p) => (
+            <span
+              key={p}
+              className="text-[11px] text-[#A8A29E] bg-[#F5F3EE] border border-[#EAE6DF] rounded-[20px] px-2 py-0.5"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+
+        {loading && (
+          <div className="mt-3 text-center text-[12px] text-[#A8A29E]" style={{ fontFamily: "Inter, sans-serif" }}>
+            {loadingTexts[loadingPhase]}
+          </div>
+        )}
+
         {result && (
           <div className={`mt-5 rounded-md border p-4 text-sm ${result.partial ? "border-warning/50 bg-warning/10" : "border-success/50 bg-success/10"}`}>
             <div className="flex items-start gap-2">
@@ -311,23 +329,26 @@ function AnalyzePage() {
         )}
 
         {needsText && !result && (
-          <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm flex items-start gap-2">
-            <AlertTriangle className="size-4 mt-0.5" />
-            <div>
-              Die Seite lässt sich nicht direkt auslesen (häufig bei willhaben/ImmoScout). Füge den Inseratstext unten ein – die KI extrahiert daraus.
-            </div>
+          <div className="mt-4 rounded-[10px] border border-[#EAE6DF] bg-[#FAFAF8] p-[14px_16px]" style={{ fontFamily: "Inter, sans-serif" }}>
+            <div className="text-[13px] font-semibold text-[#1C1917]">Link konnte nicht automatisch ausgelesen werden</div>
+            <div className="text-[13px] text-[#78716C] mt-1">Das passiert manchmal bei willhaben und ImmoScout. So gehst du vor:</div>
+            <ol className="mt-2 space-y-1 text-[13px] text-[#78716C] list-decimal pl-5">
+              <li>Öffne das Inserat im Browser</li>
+              <li>Markiere alles (Strg+A / Cmd+A) und kopiere (Strg+C / Cmd+C)</li>
+              <li>Füge den kopierten Text unten ein — die KI ignoriert Werbung automatisch</li>
+            </ol>
           </div>
         )}
 
         <details id="fallback-text" open={needsText} className="mt-4">
           <summary className="cursor-pointer text-sm font-medium select-none">
-            Inseratstext manuell einfügen (Fallback)
+            Inseratstext einfügen (wenn Link nicht funktioniert)
           </summary>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={10}
-            placeholder="Hier den Exposé-/Inseratstext einfügen…"
+            placeholder={"Gesamten Seiteninhalt hier einfügen — inklusive Werbung und Navigation.\nDie KI erkennt automatisch alle relevanten Immobiliendaten."}
             className="mt-3 w-full rounded-md border bg-background p-3 text-sm font-mono"
           />
           <div className="flex gap-2 mt-2">
@@ -341,6 +362,7 @@ function AnalyzePage() {
           </div>
         </details>
       </div>
+
 
       <div className="mt-6 grid md:grid-cols-3 gap-4">
         {[
