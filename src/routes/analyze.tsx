@@ -28,8 +28,16 @@ function AnalyzePage() {
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState(0);
   const [needsText, setNeedsText] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+
+  useEffect(() => {
+    if (!loading) { setLoadingPhase(0); return; }
+    const id = setInterval(() => setLoadingPhase((p) => (p + 1) % 3), 2500);
+    return () => clearInterval(id);
+  }, [loading]);
+  const loadingTexts = ["Link wird geladen…", "Daten werden extrahiert…", "KI analysiert…"];
 
   // Pick up a link the visitor pasted on the landing page before signup
   useEffect(() => {
