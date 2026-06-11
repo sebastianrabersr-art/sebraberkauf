@@ -185,6 +185,8 @@ export interface Property {
   city?: string;
   bundesland?: string;
   land?: string;
+  lat?: number | null;
+  lng?: number | null;
   objekttyp: string;
   baujahr: number | null;
   neubauAltbau?: "Neubau" | "Altbau" | "saniert" | "";

@@ -234,7 +234,7 @@ export function makeEmptyProperty(partial: Partial<Property> = {}): Property {
   return {
     id: crypto.randomUUID(), projectId: "", status: "Neu", inseratsdatum: now(),
     link: "", platform: "", extractionStatus: "manuell", dataVerified: false, title: "",
-    bezirk: "", adresse: "", city: "", land: "Österreich",
+    bezirk: "", adresse: "", city: "", land: "Österreich", lat: null, lng: null,
     objekttyp: "Wohnung", baujahr: null, mietrecht: "unklar – rechtlich prüfen",
     propertyType: "apartment",
     zustand: "", wohnflaecheM2: null, zimmer: null, kaufpreis: null,
