@@ -372,6 +372,10 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         </div>
       )}
 
+      <VerificationChecklist p={p} dq={dq} u={u} />
+
+
+
       {/* === SECTION B: Objektdaten (editable, open) === */}
       <div>
         <div className="flex items-center gap-1.5 mb-1.5 text-[11px]" style={{ color: "#D97706" }}>
