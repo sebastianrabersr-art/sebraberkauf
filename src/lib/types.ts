@@ -58,6 +58,26 @@ export const ALL_MIETRECHTE: Mietrecht[] = [
 export type SellerType = "Privat" | "Makler" | "Bauträger" | "Bank" | "Sonstige" | "unklar";
 export type ContactChannel = "Telefon" | "E-Mail" | "WhatsApp" | "Plattform" | "Maklerportal" | "Persönlich" | "";
 
+/**
+ * Übergeordnete Objekt-Kategorie. Steuert sowohl das Eingabeformular
+ * (welche Felder sichtbar sind) als auch die Berechnung (welcher
+ * Gesamtkaufpreis verwendet wird).
+ */
+export type PropertyType =
+  | "apartment"                  // Wohnung
+  | "house_with_land"            // Haus inkl. Grundstück (ein Kaufpreis)
+  | "house_with_separate_land"   // Haus + Grundstück getrennt gekauft
+  | "land_only"                  // reines Grundstück
+  | "commercial";                // Gewerbeimmobilie
+
+export const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
+  { value: "apartment", label: "Wohnung" },
+  { value: "house_with_land", label: "Haus inkl. Grundstück" },
+  { value: "house_with_separate_land", label: "Haus + Grundstück (separat)" },
+  { value: "land_only", label: "Grundstück" },
+  { value: "commercial", label: "Gewerbeimmobilie" },
+];
+
 export interface Assumptions {
   eigenkapital: number;
   zinssatz: number;
