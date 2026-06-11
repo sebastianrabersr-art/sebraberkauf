@@ -624,7 +624,10 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
       </AccordionCard>
 
       <AccordionCard title="Asset-Entwicklung & Projektion">
-        <InvestorChartsPanel p={p} />
+        <div className="space-y-5">
+          <InvestorChartsPanel p={p} />
+          <ProjectionTable p={p} />
+        </div>
       </AccordionCard>
 
       <AccordionCard title="Finanzierungsszenarien-Vergleich">
