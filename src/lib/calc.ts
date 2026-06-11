@@ -86,6 +86,17 @@ export interface Calc {
   maklerProvisionBrutto: number;
   maklerProvisionUstPct: number;
   maklerKostenZahlbar: boolean;
+  // ── Neue, additive Felder (UI-Code, der sie nicht kennt, ignoriert sie) ──
+  /** Kombinierter Stresstest: Zins +1 %, Miete −10 %, Leerstand +5 %-Pkt. */
+  stressedCashflowMtl: number;
+  /** DSCR im kombinierten Stress-Szenario. */
+  stressedDscr: number;
+  /** 0–100 Deal Score. */
+  dealScore: number;
+  /** Qualitatives Rating zum dealScore. */
+  dealRating: "excellent" | "good" | "ok" | "risky" | "bad";
+  /** Kurze deutsche Zusammenfassung des Deals. */
+  dealSummaryShort: string;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
