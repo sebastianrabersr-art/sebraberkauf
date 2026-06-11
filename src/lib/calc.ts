@@ -97,7 +97,10 @@ export interface Calc {
   dealRating: "excellent" | "good" | "ok" | "risky" | "bad";
   /** Kurze deutsche Zusammenfassung des Deals. */
   dealSummaryShort: string;
+  /** Investor-Langzeitmodell (Asset/Cash/Loan-Entwicklung, Charts, Szenarien). */
+  investorModel?: InvestorModel;
 }
+
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Internal pure sub-calculations used by calcProperty.
