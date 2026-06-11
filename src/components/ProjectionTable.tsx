@@ -88,7 +88,7 @@ export function ProjectionTable({ p }: { p: Property }) {
             {view === "year"
               ? rows.map((r, i) => {
                   const verm = r.immoWert - r.restschuld;
-                  const ek = c.eigenkapitalGesamt || 1;
+                  const ek = c.eigenkapitalEinsatz || 1;
                   const rendite = (r.cashflow / ek) * 100;
                   const isOpen = openYear === r.year;
                   const months = isOpen ? monthsFor(i) : [];
