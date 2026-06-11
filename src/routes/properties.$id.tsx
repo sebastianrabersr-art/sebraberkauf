@@ -329,10 +329,21 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
 
+  const scrollToFirstMissing = () => {
+    const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
+    if (el) {
+      if (el.tagName === "DETAILS") el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <>
+      <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} />
+
       {/* === SECTION A: Kennzahlen === */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
         <OverviewStat
           label="Kaufpreis"
           value={fmtEUR(p.kaufpreisBrutto ?? p.kaufpreis)}
