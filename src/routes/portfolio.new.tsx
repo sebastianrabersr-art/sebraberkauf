@@ -187,7 +187,7 @@ function NewPortfolioProperty() {
             <F label="Land">
               <Sel value={f.land} on={(v) => u({ land: v })} opts={["Österreich","Deutschland"]} />
             </F>
-            <F label="Google-Maps-Link (optional)" wide><I value={f.googleMapsUrlOverride} on={(v) => u({ googleMapsUrlOverride: v })} placeholder="https://maps.google.com/…" /></F>
+            <F label="Karten-Link (optional, z.B. OpenStreetMap oder Google Maps)" wide><I value={f.googleMapsUrlOverride} on={(v) => u({ googleMapsUrlOverride: v })} placeholder="https://www.openstreetmap.org/... oder https://maps.google.com/..." /></F>
             <F label="Kaufdatum"><I type="date" value={f.kaufdatum} on={(v) => u({ kaufdatum: v })} /></F>
             <F label="Tatsächlicher Kaufpreis €"><I type="number" value={f.tatsKaufpreis} on={(v) => u({ tatsKaufpreis: v })} /></F>
             <F label="Aktueller Objektwert €"><I type="number" value={f.aktuellerObjektwert} on={(v) => u({ aktuellerObjektwert: v })} /></F>
