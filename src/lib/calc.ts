@@ -238,6 +238,42 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
  * (eigenkapitalEinsatz, kreditBetrag, kreditRateMtl, annuitaet),
  * damit `calcProperty` und alle UI-Konsumenten unverändert funktionieren.
  */
+
+/**
+ * Zentrale Berechnung der Gesamtzinskosten über die gesamte Laufzeit.
+ *
+ *  - Annuität:          totalInterest = monthlyPayment × n − loanAmount
+ *  - Zins 0 %:          totalInterest = 0
+ *  - Endfällig:         totalInterest = loanAmount × annualRate × termYears
+ *  - Manuelle Rate:     totalInterest = max(manualMonthlyPayment × n − loanAmount, 0)
+ *
+ * Schützt gegen NaN, Infinity und negative Werte und wird überall verwendet
+ * (Finanzierungs-Summary, InvestorModel, Szenarienvergleich, Gesamtzins-Chart).
+ */
+export function calcTotalInterestPaid(args: {
+  loanAmount: number;
+  annualRate: number;
+  termYears: number;
+  monthlyPayment: number;
+  tilgungsart?: "annuitaet" | "endfaellig" | "manuell";
+}): number {
+  const loan = safeNonNeg(args.loanAmount, 0);
+  const rate = safeNonNeg(args.annualRate, 0);
+  const years = Math.max(0, safeNum(args.termYears, 0));
+  const pay = safeNonNeg(args.monthlyPayment, 0);
+  const art = args.tilgungsart ?? "annuitaet";
+  if (loan <= 0 || years <= 0) return 0;
+  if (rate === 0 && art !== "manuell") return 0; // 0 % → keine Zinsen
+  const months = years * 12;
+  if (art === "endfaellig") {
+    const v = loan * rate * years;
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  }
+  // Annuität & manuell: Summe der Zahlungen minus Tilgung = Zinsen.
+  const v = pay * months - loan;
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
 function calcFinancing(p: Property, a: Assumptions, gesamtkosten: number) {
   const activeScn = getActiveFinance(p);
 
