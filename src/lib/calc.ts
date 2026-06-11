@@ -561,7 +561,16 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     leerstandPct: rental.leerstandPct,
   });
 
-
+  // Deal-Score aus den KPIs ableiten.
+  const deal = calcDealScore(pn, a, {
+    cashflowMtl: kpis.cashflowMtl,
+    bruttorendite: kpis.bruttorendite,
+    nettorendite: kpis.nettorendite,
+    eigenkapitalrendite: kpis.eigenkapitalrendite,
+    ltv: kpis.ltv,
+    dscr: kpis.dscr,
+    stressedCashflowMtl: kpis.stressedCashflowMtl,
+  });
 
   return {
     nebenkostenPct: purchase.nebenkostenPct,
