@@ -604,6 +604,11 @@ export function calcProperty(p: Property, a: Assumptions): Calc {
     maklerProvisionBrutto: purchase.maklerProvisionBrutto,
     maklerProvisionUstPct: purchase.maklerProvisionUstPct,
     maklerKostenZahlbar: purchase.maklerKostenZahlbar,
+    stressedCashflowMtl: kpis.stressedCashflowMtl,
+    stressedDscr: kpis.stressedDscr,
+    dealScore: deal.dealScore,
+    dealRating: deal.dealRating,
+    dealSummaryShort: deal.dealSummaryShort,
   };
 }
 
