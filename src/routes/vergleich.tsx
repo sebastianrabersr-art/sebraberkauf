@@ -421,42 +421,47 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
 
   return (
     <>
-      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px] mb-4" style={{ padding: "16px 20px" }}>
-        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Entscheidungshilfe</div>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white mb-4" style={{ padding: "16px 20px" }}>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Analyse</div>
         <div
-          className="rounded-[10px] mb-3 flex items-start gap-3"
-          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "12px 16px" }}
+          className="rounded-[10px] mb-3 flex items-start justify-between gap-4"
+          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "14px 18px" }}
         >
-          <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
-          <div className="min-w-0">
-            <div className="font-display font-bold text-[15px] text-[#2D6A4F] truncate">
-              Gesamtsieger: {overallWinner.p.title || "—"}
+          <div className="flex items-start gap-3 min-w-0">
+            <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#2D6A4F]">{cfg.eyebrow}</div>
+              <div className="font-display font-bold text-[16px] text-[#1C1917] truncate mt-0.5">
+                {winner.p.title || "—"}
+              </div>
+              <div className="text-[12px] text-[#78716C] mt-0.5">{cfg.sub}</div>
             </div>
-            <div className="text-[12px] text-[#78716C] mt-0.5">
-              Score {overallWinner.s.total}/100 · {overallWinner.s.entscheidung}
-            </div>
+          </div>
+          <div className="font-display font-extrabold text-[22px] text-[#2D6A4F] tabular-nums shrink-0">
+            {cfg.value}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {chips.map((ch) => (
+          {([
+            { key: "score",    label: "Score",    val: `${bestScore.s.total}`,                                                        name: bestScore.p.title    || "—" },
+            { key: "rendite",  label: "Rendite",  val: bestRendite.c.bruttorendite != null && isFinite(bestRendite.c.bruttorendite)   ? fmtPct(bestRendite.c.bruttorendite, 2) : "—", name: bestRendite.p.title  || "—" },
+            { key: "cashflow", label: "Cashflow", val: bestCashflow.c.cashflowMtl  != null && isFinite(bestCashflow.c.cashflowMtl)    ? `${fmtEUR(bestCashflow.c.cashflowMtl)}/Mo` : "—", name: bestCashflow.p.title || "—" },
+            { key: "preis",    label: "Preis",    val: bestPreis.p.kaufpreis != null ? fmtEUR(bestPreis.p.kaufpreis) : "—",            name: bestPreis.p.title    || "—" },
+            { key: "rate",     label: "Rate",     val: bestRate.c.kreditRateMtl != null && isFinite(bestRate.c.kreditRateMtl) ? `${fmtEUR(bestRate.c.kreditRateMtl)}/Mo` : "—", name: bestRate.p.title || "—" },
+          ] as const).filter((c) => c.key !== goal && c.val !== "—").map((c) => (
             <div
-              key={ch.label}
+              key={c.key}
               className="rounded-lg bg-white border border-[#EAE6DF] flex items-center gap-2"
               style={{ padding: "8px 12px" }}
             >
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{ch.label}</div>
-              {ch.tie ? (
-                <div className="text-[12px] text-[#78716C]">Unentschieden</div>
-              ) : (
-                <>
-                  <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{ch.name}</div>
-                  <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{ch.value}</div>
-                </>
-              )}
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{c.label}</div>
+              <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{c.name}</div>
+              <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{c.val}</div>
             </div>
           ))}
         </div>
       </div>
+
 
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
