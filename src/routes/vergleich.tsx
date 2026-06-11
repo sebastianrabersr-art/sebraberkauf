@@ -168,7 +168,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               disabled={selected.length < 2}
               className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Vergleich starten
+              Analyse starten
             </button>
           </div>
         </div>
