@@ -1577,6 +1577,16 @@ export function calcInvestorModel(
     startLiquidity: 0,
     taxRate: null, // keine Steuerfelder vorhanden → pre-tax
   });
+  // Zentrale Gesamtzinskosten – einmal berechnet, überall verwendet.
+  // Annuität: monthlyPay × n − loanAmount  |  0 %: 0  |  Endfällig: loan × rate × years
+  const totalInterestPaid = calcTotalInterestPaid({
+    loanAmount: base.kreditBetrag,
+    annualRate,
+    termYears: laufzeit,
+    monthlyPayment: base.kreditRateMtl,
+    tilgungsart,
+  });
+
   const scenarios = calcScenarios({
     baseAnnualCashflow: base.cashflowJahr,
     startWert: base.kaufpreis,
@@ -1587,6 +1597,7 @@ export function calcInvestorModel(
     valueGrowthPct: valueGrowth,
     horizon,
     baseDealScore: base.dealScore,
+    totalInterestCost: totalInterestPaid,
   });
 
   // AfA / Abschreibung pro Jahr (vereinfacht: konstanter Jahresbetrag).
@@ -1614,6 +1625,7 @@ export function calcInvestorModel(
       equityInProperty: s.equityInProperty,
       cumulativeCashflow: s.cumulativeCashflow,
       dealScore: s.dealScore,
+      totalInterestCost: s.totalInterestCost,
     })),
   };
 
