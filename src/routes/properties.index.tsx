@@ -5,7 +5,7 @@ import { calcDataQuality, calcProperty, fmtEUR, fmtPct, googleMapsUrl, inferMiet
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
