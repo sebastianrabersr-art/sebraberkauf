@@ -16,9 +16,12 @@ import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
-import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
+import { usePlan } from "@/lib/auth";
+import { ExportPdfDialog } from "@/components/ExportPdfDialog";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/properties/$id")({
   head: () => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
@@ -65,6 +68,10 @@ function Detail() {
 
   const [tab, setTab] = useState<TabKey>("uebersicht");
   const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportUpgradeOpen, setExportUpgradeOpen] = useState(false);
+  const plan = usePlan();
+  const canExport = plan === "plus" || plan === "premium";
 
   const applyRegionDefaults = () => {
     const d = regionDefaultsForProperty(p);
@@ -173,6 +180,12 @@ function Detail() {
           )}
           <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
             <Copy className="size-3.5" /> Duplizieren
+          </button>
+          <button
+            onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
+            className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1"
+          >
+            {canExport ? <Download className="size-3.5" /> : <Lock className="size-3.5" />} Exportieren
           </button>
           <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#DC2626] px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
