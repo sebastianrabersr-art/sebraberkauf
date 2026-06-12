@@ -60,13 +60,13 @@ function exportCSV(rows: any[]) {
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
 const selectClass =
-  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] appearance-none cursor-pointer";
 const inputClass =
-  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
-const SelectWrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative">
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none";
+const SelectWrap = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`relative ${className}`}>
     {children}
-    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-[#A8A29E] pointer-events-none" />
   </div>
 );
 
