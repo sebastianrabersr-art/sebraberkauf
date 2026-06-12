@@ -1280,7 +1280,16 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
 
 
 // ============ HELPER COMPONENTS ============
-const selectCls = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";
+const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+function Sel({ children, className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select {...props} className={selectCls + (className ? " " + className : "")}>{children}</select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+    </div>
+  );
+}
 
 function OverviewStat({ label, value, sub, tone, editable }: {
   label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral";
