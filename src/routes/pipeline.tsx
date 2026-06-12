@@ -43,7 +43,7 @@ function Pipeline() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState("");
 
-  const inProj = useMemo(() => properties.filter((p) => p.projectId === project.id), [properties, project.id]);
+  const inProj = useMemo(() => project ? properties.filter((p) => p.projectId === project.id) : [], [properties, project?.id]);
   const filtered = useMemo(
     () => (filter === "Alle" ? inProj : inProj.filter((p) => getBewertung(p) === filter)),
     [inProj, filter]
