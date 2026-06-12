@@ -36,6 +36,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AssumptionsRouteImport } from './routes/assumptions'
 import { Route as AnalyzeRouteImport } from './routes/analyze'
+import { Route as AktivitaetenRouteImport } from './routes/aktivitaeten'
 import { Route as AgbRouteImport } from './routes/agb'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RechnerIndexRouteImport } from './routes/rechner.index'
@@ -186,6 +187,11 @@ const AnalyzeRoute = AnalyzeRouteImport.update({
   path: '/analyze',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AktivitaetenRoute = AktivitaetenRouteImport.update({
+  id: '/aktivitaeten',
+  path: '/aktivitaeten',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgbRoute = AgbRouteImport.update({
   id: '/agb',
   path: '/agb',
@@ -262,6 +268,7 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agb': typeof AgbRoute
+  '/aktivitaeten': typeof AktivitaetenRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agb': typeof AgbRoute
+  '/aktivitaeten': typeof AktivitaetenRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agb': typeof AgbRoute
+  '/aktivitaeten': typeof AktivitaetenRoute
   '/analyze': typeof AnalyzeRoute
   '/assumptions': typeof AssumptionsRoute
   '/auth-callback': typeof AuthCallbackRoute
@@ -391,6 +400,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agb'
+    | '/aktivitaeten'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agb'
+    | '/aktivitaeten'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agb'
+    | '/aktivitaeten'
     | '/analyze'
     | '/assumptions'
     | '/auth-callback'
@@ -518,6 +530,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgbRoute: typeof AgbRoute
+  AktivitaetenRoute: typeof AktivitaetenRoute
   AnalyzeRoute: typeof AnalyzeRoute
   AssumptionsRoute: typeof AssumptionsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -744,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyzeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aktivitaeten': {
+      id: '/aktivitaeten'
+      path: '/aktivitaeten'
+      fullPath: '/aktivitaeten'
+      preLoaderRoute: typeof AktivitaetenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agb': {
       id: '/agb'
       path: '/agb'
@@ -889,6 +909,7 @@ const RechnerRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgbRoute: AgbRoute,
+  AktivitaetenRoute: AktivitaetenRoute,
   AnalyzeRoute: AnalyzeRoute,
   AssumptionsRoute: AssumptionsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
