@@ -576,6 +576,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <Section title="Zahlungen & Cashflow"><PaymentsPanel p={p} /></Section>
         </>
       )}
+
+      <MeineBewertung p={p} u={u} />
     </>
   );
 }
