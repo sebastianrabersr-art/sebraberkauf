@@ -193,7 +193,7 @@ function PropertiesList() {
             <thead>
               <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
                 {([
-                  ["Score","__score__","left"],
+                  ["Bewertung","Persönliche Bewertung (Ø 1–10)","left"],
                   ["Status","Aktueller CRM-Status","left"],
                   ["Prio","Priorität für deine Pipeline","left"],
                   ["Titel","Inserats-Titel","left"],
@@ -217,12 +217,12 @@ function PropertiesList() {
                 ] as const).map(([h,tip,align]) => (
                   <th
                     key={h}
-                    title={tip === "__score__" ? undefined : tip}
+                    title={tip || undefined}
                     className={`px-4 font-semibold text-[11px] uppercase text-[#A8A29E] whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}
                     style={{ letterSpacing: "0.07em", height: 44 }}
                   >
                     <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end w-full" : ""}`}>
-                      {h}{tip === "__score__" && <ScoreInfo />}
+                      {h}
                     </span>
                   </th>
                 ))}
