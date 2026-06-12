@@ -138,7 +138,22 @@ export const PLAN_PRICING = {
   premium: { monthly: 19.99, yearly: 199.99 },
 } as const;
 
+/**
+ * Resolves the effective plan for a subscription row.
+ * Promo plan wins while promo_expires_at is in the future; otherwise the
+ * Stripe-managed `plan` column is used.
+ */
+export function getPlan(sub: Subscription | null | undefined): Plan {
+  if (sub?.promo_plan && sub.promo_expires_at) {
+    const exp = new Date(sub.promo_expires_at).getTime();
+    if (Number.isFinite(exp) && exp > Date.now()) {
+      return sub.promo_plan;
+    }
+  }
+  return (sub?.plan as Plan) ?? "free";
+}
+
 export function usePlan(): Plan {
   const { subscription } = useAuth();
-  return (subscription?.plan as Plan) ?? "free";
+  return getPlan(subscription);
 }
