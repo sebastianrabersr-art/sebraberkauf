@@ -290,6 +290,14 @@ function Detail() {
           )}
         </aside>
       </div>
+      <ExportPdfDialog open={exportOpen} onClose={() => setExportOpen(false)} property={p} assumptions={assumptions} />
+      <UpgradeDialog
+        open={exportUpgradeOpen}
+        onOpenChange={setExportUpgradeOpen}
+        title="PDF-Export ist in Plus & Premium enthalten"
+        description="Exportiere Eckdaten, Rendite, Finanzierung und mehr als PDF."
+        recommendPlan="plus"
+      />
     </AppShell>
   );
 }
