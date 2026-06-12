@@ -222,6 +222,21 @@ function PropertiesList() {
         </label>
       </div>
 
+      {sort !== DEFAULT_SORT && (
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F5EE] px-2.5 py-1 text-[12px] text-[#2D6A4F]">
+            Sortiert nach: {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+            <button
+              onClick={() => setSort(DEFAULT_SORT)}
+              className="hover:text-[#1C1917]"
+              title="Sortierung zurücksetzen"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* Tabelle */}
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
