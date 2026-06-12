@@ -229,9 +229,9 @@ function Detail() {
                     label="Mietrechtliche Einschätzung"
                     hint={p.mietrecht === "unklar – rechtlich prüfen" ? <RequiredHint text="Mietrechtskategorie prüfen – beeinflusst Score und Risikoeinschätzung" /> : undefined}
                   >
-                    <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className={selectCls}>
+                    <Sel value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })}>
                       {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </select>
+                    </Sel>
                   </F>
 
                   <F label="Fehlende Daten (komma-getrennt)">
