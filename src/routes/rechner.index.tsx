@@ -6,7 +6,7 @@ import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, Coins, Home, PiggyBank, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import { Calculator, ChevronDown, Coins, Home, PiggyBank, TrendingUp, Wallet, ArrowRight } from "lucide-react";
 import type { Property } from "@/lib/types";
 
 export const Route = createFileRoute("/rechner/")({
@@ -136,20 +136,23 @@ function AppRechnerHub() {
         </p>
       </div>
 
-      <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-2">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Mit Immobilie verknüpfen</label>
-        <select
-          value={selId}
-          onChange={(e) => setSelId(e.target.value)}
-          className="h-9 rounded-[8px] border border-[#EAE6DF] bg-white px-3 text-[13px] text-[#1C1917] flex-1 max-w-sm focus:outline-none focus:border-[#2D6A4F]"
-        >
-          <option value="">— manuell eingeben —</option>
-          {list.map((p) => (
-            <option key={p.id} value={p.id}>{p.title || "Ohne Titel"}</option>
-          ))}
-        </select>
+      <div className="mb-5 flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm w-full sm:w-72">
+          <select
+            value={selId}
+            onChange={(e) => setSelId(e.target.value)}
+            className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]"
+          >
+            <option value="">Immobilie verknüpfen (optional)</option>
+            {list.map((p) => (
+              <option key={p.id} value={p.id}>{p.title || "Ohne Titel"}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-[#A8A29E] pointer-events-none" />
+        </div>
         {sel && <div className="text-[12px] text-[#78716C]">Werte aus „{sel.title}" übernommen.</div>}
       </div>
+
 
       <Tabs defaultValue="nebenkosten" className="w-full">
         <TabsList className="h-auto p-1 bg-[#FAFAF8] border border-[#EAE6DF] flex-wrap">

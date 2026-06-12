@@ -16,7 +16,7 @@ import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
-import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Mail, MapPin, MoreHorizontal, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
@@ -173,14 +173,6 @@ function Detail() {
               <ExternalLink className="size-3.5" /> Inserat öffnen
             </a>
           )}
-          {mapsUrl && (
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
-              <MapPin className="size-3.5" /> In Karte öffnen
-            </a>
-          )}
-          <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
-            <Copy className="size-3.5" /> Duplizieren
-          </button>
           <button
             onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
             className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1"
@@ -190,7 +182,9 @@ function Detail() {
           <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#DC2626] px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
           </button>
+          <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
         </div>
+
 
         {/* ============ TAB NAV ============ */}
         <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto">
@@ -214,10 +208,7 @@ function Detail() {
       <div className={`${breakout} flex items-start`}>
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
-            <>
-              <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
-              <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
-            </>
+            <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
           )}
           {tab === "uebersicht" && (
             <OverviewTab
@@ -228,6 +219,7 @@ function Detail() {
               onGoCrm={() => navTo("crm")}
               dqBannerDismissed={dqBannerDismissed}
               setDqBannerDismissed={setDqBannerDismissed}
+              navTo={navTo}
             />
           )}
           {tab === "finanzierung" && (
@@ -303,7 +295,7 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed }: {
+function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed, navTo }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>;
   u: (patch: Partial<Property>) => void;
@@ -312,6 +304,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   onGoMietrecht: () => void; onGoCrm: () => void;
   dqBannerDismissed: boolean;
   setDqBannerDismissed: (v: boolean) => void;
+  navTo: (target: TabKey, sectionId?: string) => void;
 }) {
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
@@ -322,6 +315,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   if (dq.score < 70) alerts.push({ text: `Daten unvollständig (${dq.missing.slice(0, 2).join(", ")}${dq.missing.length > 2 ? "…" : ""})`, tone: "amber" });
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
+  const [alertsExpanded, setAlertsExpanded] = useState(false);
+  const visibleAlerts = alertsExpanded ? alerts : alerts.slice(0, 2);
+  const hiddenAlertsCount = alerts.length - visibleAlerts.length;
 
   const scrollToFirstMissing = () => {
     const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
@@ -354,8 +350,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       </div>
 
       {alerts.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {alerts.map((a, i) => (
+        <div className="flex flex-wrap gap-2 items-center">
+          {visibleAlerts.map((a, i) => (
             <span key={i} className="inline-flex items-center gap-1.5 text-[12px] rounded-full px-3 py-1" style={{
               background: a.tone === "red" ? "#FEE2E2" : "#FEF3C7",
               color: a.tone === "red" ? "#991B1B" : "#92400E",
@@ -363,10 +359,33 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               <AlertTriangle className="size-3" /> {a.text}
             </span>
           ))}
+          {hiddenAlertsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setAlertsExpanded(true)}
+              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+            >
+              + {hiddenAlertsCount} weitere
+            </button>
+          )}
+          {alertsExpanded && alerts.length > 2 && (
+            <button
+              type="button"
+              onClick={() => setAlertsExpanded(false)}
+              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+            >
+              weniger
+            </button>
+          )}
         </div>
       )}
 
+      {!p.dataVerified && (
+        <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
+      )}
+
       <VerificationChecklist p={p} dq={dq} u={u} />
+
 
 
 
@@ -1430,24 +1449,8 @@ function VerificationChecklist({ p, dq, u }: {
   dq: ReturnType<typeof calcDataQuality>;
   u: (patch: Partial<Property>) => void;
 }) {
-  if (p.dataVerified) {
-    return (
-      <div
-        className="inline-flex items-center gap-2 rounded-[10px]"
-        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "8px 14px" }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-        <span className="text-[12px] font-medium" style={{ color: "#2D6A4F" }}>Daten geprüft &amp; bestätigt</span>
-        <button
-          type="button"
-          onClick={() => u({ dataVerified: false })}
-          className="text-[11px] text-[#78716C] hover:text-[#1C1917] ml-1 underline"
-        >
-          zurücksetzen
-        </button>
-      </div>
-    );
-  }
+  const [expanded, setExpanded] = useState(false);
+  if (p.dataVerified) return null;
 
   const groups = [
     { key: "basis", label: "Basisdaten" },
@@ -1460,10 +1463,23 @@ function VerificationChecklist({ p, dq, u }: {
   const kostenOk = getFieldsByGroup("kosten").every((f) => f.check(p));
   const canVerify = basisOk && kostenOk;
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+      >
+        Daten prüfen <ChevronDown className="size-3.5" /> ({dq.filled}/{dq.total})
+      </button>
+    );
+  }
+
   return (
     <div className="rounded-[12px] border border-[#EAE6DF] bg-white" style={{ padding: "16px 20px" }}>
       <div className="flex items-center justify-between mb-3">
         <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
+
         <div className="text-[11px] text-[#78716C]">{dq.filled}/{dq.total} ausgefüllt</div>
       </div>
 
@@ -1804,6 +1820,53 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
               {avg != null ? avg.toFixed(1) : "—"} / 10
             </span>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDuplicate: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2 py-1"
+        aria-label="Weitere Aktionen"
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[10px] border border-[#EAE6DF] bg-white shadow-md py-1">
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
+            >
+              <MapPin className="size-3.5 text-[#78716C]" /> In Karte öffnen
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onDuplicate(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8] text-left"
+          >
+            <Copy className="size-3.5 text-[#78716C]" /> Duplizieren
+          </button>
         </div>
       )}
     </div>
