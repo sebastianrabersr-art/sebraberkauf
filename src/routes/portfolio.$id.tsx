@@ -674,6 +674,83 @@ function DokumenteTab({
   );
 }
 
+/* ─────────── Verwaltung ─────────── */
+function VerwaltungTab({
+  pi,
+  patchPurchase,
+}: {
+  pi: NonNullable<Property["purchase"]>;
+  patchPurchase: (patch: Partial<NonNullable<Property["purchase"]>>) => void;
+}) {
+  const v: VerwaltungInfo = pi.verwaltung ?? {};
+  const patch = (vp: Partial<VerwaltungInfo>) =>
+    patchPurchase({ verwaltung: { ...v, ...vp } });
+
+  return (
+    <div className="space-y-4">
+      <Card title="Mieter">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Name">
+            <input type="text" defaultValue={v.mieterName ?? ""} onBlur={(e) => patch({ mieterName: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Kontakt">
+            <input type="text" defaultValue={v.mieterKontakt ?? ""} onBlur={(e) => patch({ mieterKontakt: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Indexierung">
+            <input type="text" defaultValue={v.indexierung ?? ""} onBlur={(e) => patch({ indexierung: e.target.value })} className={inputCls} placeholder="z.B. VPI 2020" />
+          </Field>
+          <Field label="Mietbeginn">
+            <input type="date" defaultValue={v.mietbeginn ?? ""} onBlur={(e) => patch({ mietbeginn: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Mietende">
+            <input type="date" defaultValue={v.mietende ?? ""} onBlur={(e) => patch({ mietende: e.target.value })} className={inputCls} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Hausverwaltung">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Firma">
+            <input type="text" defaultValue={v.hvFirma ?? ""} onBlur={(e) => patch({ hvFirma: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Kontakt">
+            <input type="text" defaultValue={v.hvKontakt ?? ""} onBlur={(e) => patch({ hvKontakt: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Gebühr (mtl. €)">
+            <NumInput value={v.hvGebuehr} onCommit={(val) => patch({ hvGebuehr: val })} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Versicherung">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Field label="Gesellschaft">
+            <input type="text" defaultValue={v.versGesellschaft ?? ""} onBlur={(e) => patch({ versGesellschaft: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Nummer">
+            <input type="text" defaultValue={v.versNummer ?? ""} onBlur={(e) => patch({ versNummer: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Jahresprämie €">
+            <NumInput value={v.versJahrespraemie} onCommit={(val) => patch({ versJahrespraemie: val })} />
+          </Field>
+          <Field label="Fälligkeit">
+            <input type="date" defaultValue={v.versFaelligkeit ?? ""} onBlur={(e) => patch({ versFaelligkeit: e.target.value })} className={inputCls} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Steuern">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Grundsteuer jährlich €">
+            <NumInput value={v.grundsteuerJahr} onCommit={(val) => patch({ grundsteuerJahr: val })} />
+          </Field>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
 /* ─────────── Helpers ─────────── */
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
