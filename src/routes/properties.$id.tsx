@@ -273,6 +273,7 @@ function Detail() {
               <div className="text-[11px] text-[#78716C] mt-0.5">Risiko: {mietrecht.risiko}</div>
             </div>
           )}
+        </aside>
       </div>
     </AppShell>
   );
