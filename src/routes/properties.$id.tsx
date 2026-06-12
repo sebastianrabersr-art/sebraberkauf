@@ -258,50 +258,21 @@ function Detail() {
           className="hidden lg:block bg-[#FAFAF8] border-l border-[#EAE6DF] px-4 py-5 overflow-y-auto"
           style={{ width: 240, flex: "0 0 240px", position: "sticky", top: 0, height: "100vh" }}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Score</div>
-          <div className="mt-1 text-[44px] leading-none text-[#1C1917]" style={{ ...bricolage, fontWeight: 800 }}>{s.total}</div>
-          <div className="text-[12px] text-[#78716C]">von 100 Punkten</div>
-
-          <div className="mt-5 space-y-2.5">
-            {cats.map((cat) => {
-              const pct = cat.max > 0 ? (cat.value / cat.max) * 100 : 0;
-              const color = pct >= 70 ? "#2D6A4F" : pct >= 40 ? "#D97706" : "#DC2626";
-              return (
-                <div key={cat.key}>
-                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                    <span className="text-[12px] font-medium text-[#1C1917] truncate">{cat.label}</span>
-                    <span className="text-[12px] text-[#78716C] tabular-nums shrink-0">{cat.value.toFixed(1)}/{cat.max}</span>
-                  </div>
-                  <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden">
-                    <div className="h-full rounded-[3px]" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: color }} />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-1.5">Datenqualität</div>
+          <div className="text-[44px] leading-none text-[#1C1917]" style={{ ...bricolage, fontWeight: 800 }}>{dq.score}%</div>
+          <div className="text-[12px] text-[#78716C]">{dq.level}</div>
+          <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden my-2">
+            <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
           </div>
-
-          <div className="mt-5 rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider font-semibold text-[#2D6A4F]">Einschätzung</div>
-            <div className="text-[14px] font-semibold text-[#1C1917] mt-0.5">{s.entscheidung}</div>
-            <div className="text-[11px] text-[#78716C] mt-0.5">Ampel {s.ampel}</div>
-          </div>
+          <div className="text-[12px] text-[#78716C]">{dq.filled} von {dq.total} Pflichtfeldern</div>
 
           {mietrecht.risiko !== "niedrig" && (
-            <div className="mt-3 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
+            <div className="mt-5 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
               <div className="text-[10px] uppercase tracking-wider font-semibold text-[#92400E]">Mietrecht-Risiko</div>
               <div className="text-[13px] font-semibold text-[#1C1917] mt-0.5">{mietrecht.kategorie}</div>
               <div className="text-[11px] text-[#78716C] mt-0.5">Risiko: {mietrecht.risiko}</div>
             </div>
           )}
-
-          <div className="mt-5">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-1.5">Datenqualität</div>
-            <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden mb-1.5">
-              <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
-            </div>
-            <div className="text-[12px] text-[#78716C]">{dq.filled} von {dq.total} Pflichtfeldern</div>
-          </div>
-        </aside>
       </div>
     </AppShell>
   );
