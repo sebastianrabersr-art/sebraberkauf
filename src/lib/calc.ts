@@ -1669,3 +1669,25 @@ export function calcInvestorModel(
     totalInterestPaid,
   };
 }
+
+/**
+ * Sum of monthly cashflow across all "Gekauft" properties in the portfolio.
+ * Used to factor existing portfolio impact into new-purchase Leistbarkeit.
+ */
+export function getPortfolioCashflowMtl(properties: Property[]): number {
+  return properties
+    .filter((p) => p.status === "Gekauft" || p.prozessStatus === "Gekauft")
+    .reduce((sum, p) => {
+      const pi = p.purchase ?? {};
+      const miete = pi.aktuelleMonatsmiete ?? p.nettomieteMtl ?? 0;
+      const rate = pi.aktuelleMonatsrate ?? 0;
+      const kosten =
+        (pi.betriebskostenMtl ?? 0) +
+        (pi.nichtUmlMtl ?? 0) +
+        (pi.ruecklageMtl ?? 0) +
+        (pi.versicherungMtl ?? 0) +
+        (pi.verwaltungMtl ?? 0) +
+        (pi.sonstigeMtlKosten ?? 0);
+      return sum + (miete - rate - kosten);
+    }, 0);
+}
