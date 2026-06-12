@@ -480,6 +480,60 @@ function DokumenteTab({
 
   return (
     <div className="space-y-4">
+      <Card title="Dokumente">
+        <div className="space-y-2">
+          {documents.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Dokumente erfasst.</div>}
+          {documents.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
+              <FileText className="w-4 h-4 text-[#A8A29E] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-[#1C1917] truncate">{d.name}</div>
+                <div className="text-[11px] text-[#A8A29E]">
+                  {d.typ}{d.datum ? ` · ${d.datum}` : ""}{d.notiz ? ` · ${d.notiz}` : ""}
+                </div>
+              </div>
+              <button onClick={() => removeDocument(d.id)} className="text-[#A8A29E] hover:text-[#DC2626]">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-12 gap-2 mt-3">
+          <input
+            placeholder="Name"
+            value={newDoc.name}
+            onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
+            className={inputCls + " col-span-4"}
+          />
+          <select
+            value={newDoc.typ}
+            onChange={(e) => setNewDoc({ ...newDoc, typ: e.target.value as PortfolioDocumentTyp })}
+            className={inputCls + " col-span-3"}
+          >
+            {PORTFOLIO_DOCUMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input
+            type="date"
+            value={newDoc.datum}
+            onChange={(e) => setNewDoc({ ...newDoc, datum: e.target.value })}
+            className={inputCls + " col-span-2"}
+          />
+          <input
+            placeholder="Notiz"
+            value={newDoc.notiz}
+            onChange={(e) => setNewDoc({ ...newDoc, notiz: e.target.value })}
+            className={inputCls + " col-span-2"}
+          />
+          <button
+            onClick={addDocument}
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235940]"
+            aria-label="Dokument hinzufügen"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </Card>
+
       <Card title="Offene Reparaturen">
         <div className="space-y-2">
           {repairs.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Reparaturen erfasst.</div>}
