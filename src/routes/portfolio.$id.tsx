@@ -400,7 +400,14 @@ function DokumenteTab({
   deletePayment: (id: string) => void;
 }) {
   const repairs = pi.repairs ?? [];
+  const documents = pi.documents ?? [];
   const [newRepair, setNewRepair] = useState({ title: "", kosten: "" });
+  const [newDoc, setNewDoc] = useState({
+    name: "",
+    typ: "Sonstiges" as PortfolioDocumentTyp,
+    datum: new Date().toISOString().slice(0, 10),
+    notiz: "",
+  });
   const [newPay, setNewPay] = useState({
     direction: "Ausgabe" as "Einnahme" | "Ausgabe",
     category: "Betriebskosten" as PaymentKategorie,
@@ -408,6 +415,26 @@ function DokumenteTab({
     description: "",
     date: new Date().toISOString().slice(0, 10),
   });
+
+  const addDocument = () => {
+    if (!newDoc.name.trim()) return;
+    patchPurchase({
+      documents: [
+        ...documents,
+        {
+          id: crypto.randomUUID(),
+          name: newDoc.name.trim(),
+          typ: newDoc.typ,
+          datum: newDoc.datum || undefined,
+          notiz: newDoc.notiz || undefined,
+        } satisfies PortfolioDocument,
+      ],
+    });
+    setNewDoc({ name: "", typ: "Sonstiges", datum: new Date().toISOString().slice(0, 10), notiz: "" });
+  };
+  const removeDocument = (id: string) => {
+    patchPurchase({ documents: documents.filter((d) => d.id !== id) });
+  };
 
   const addRepair = () => {
     if (!newRepair.title.trim()) return;
