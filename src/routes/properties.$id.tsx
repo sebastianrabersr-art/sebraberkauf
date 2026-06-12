@@ -208,10 +208,7 @@ function Detail() {
       <div className={`${breakout} flex items-start`}>
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
-            <>
-              <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
-              <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
-            </>
+            <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
           )}
           {tab === "uebersicht" && (
             <OverviewTab
