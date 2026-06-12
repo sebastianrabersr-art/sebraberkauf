@@ -336,6 +336,8 @@ export function userRatingAvg(r?: UserRating | null): number | null {
   if (vals.some((v) => v == null)) return null;
   const sum = vals.reduce((a, b) => (a as number) + (b as number), 0) as number;
   return sum / 5;
+}
+
 
 export interface PurchaseInfo {
   kaufdatum?: string;
