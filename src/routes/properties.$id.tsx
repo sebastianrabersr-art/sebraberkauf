@@ -17,7 +17,7 @@ import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/$id")({
