@@ -1825,3 +1825,50 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
     </div>
   );
 }
+
+function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDuplicate: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2 py-1"
+        aria-label="Weitere Aktionen"
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[10px] border border-[#EAE6DF] bg-white shadow-md py-1">
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
+            >
+              <MapPin className="size-3.5 text-[#78716C]" /> In Karte öffnen
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onDuplicate(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8] text-left"
+          >
+            <Copy className="size-3.5 text-[#78716C]" /> Duplizieren
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
