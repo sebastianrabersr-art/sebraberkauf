@@ -20,7 +20,7 @@ function Portfolio() {
   const { subscription } = useAuth();
   const rows = useMemo(() => {
     return properties
-      .filter((p) => p.status === "Gekauft")
+      .filter((p) => p.status === "Gekauft" || p.prozessStatus === "Gekauft")
       .map((p) => {
         const list = payments.filter((x) => x.propertyId === p.id);
         const sum = summarizePayments(list);
