@@ -361,33 +361,44 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               {!linkValid && p.link && <div className="text-[10px] text-[#DC2626] mt-1">Ungültige URL</div>}
             </F>
             <F label="Projekt">
-              <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className={selectCls}>
+              <Sel value={p.projectId} onChange={(e) => u({ projectId: e.target.value })}>
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
-              </select>
+              </Sel>
             </F>
             <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
             <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
-            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
+            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
+              <Sel value={p.zustand ?? ""} onChange={(e) => u({ zustand: e.target.value })}>
+                <option value="">—</option>
+                {["Erstbezug","Neuwertig","Sehr gut","Gut","Sanierungsbedürftig","Abrissreif"].map((o) => <option key={o} value={o}>{o}</option>)}
+              </Sel>
+            </F>
             <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
-            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}>
+              <Sel value={p.energyClass ?? ""} onChange={(e) => u({ energyClass: e.target.value })}>
+                <option value="">—</option>
+                {["A++","A+","A","B","C","D","E","F","G","Unbekannt"].map((o) => <option key={o} value={o}>{o}</option>)}
+              </Sel>
+            </F>
 
             <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
             <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit on={(v) => u({ verfuegbarkeit: v })} /></F>
             <F label="Land">
-              <select value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })} className={selectCls}>
+              <Sel value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })}>
                 <option value="">—</option>
                 <option value="Österreich">Österreich</option>
                 <option value="Deutschland">Deutschland</option>
-              </select>
+                <option value="Schweiz">Schweiz</option>
+              </Sel>
             </F>
             <F label="Bundesland / Region">
               {regions.length > 0 ? (
-                <select value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })} className={selectCls}>
+                <Sel value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })}>
                   <option value="">—</option>
                   {regions.map((r) => <option key={r.code} value={r.name}>{r.name}</option>)}
-                </select>
+                </Sel>
               ) : (
                 <T value={p.bundesland ?? ""} edit on={(v) => u({ bundesland: v })} />
               )}
@@ -396,14 +407,16 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
-              <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className={selectCls}>
+              <Sel value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })}>
                 {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              </Sel>
             </F>
             <F label="Makler?">
-              <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className={selectCls}>
-                {["Ja","Nein","unklar"].map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <Sel value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })}>
+                <option value="Ja">Ja</option>
+                <option value="Nein">Nein</option>
+                <option value="unklar">Unbekannt</option>
+              </Sel>
             </F>
           </div>
         </Section>
