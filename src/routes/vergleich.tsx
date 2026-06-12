@@ -7,7 +7,7 @@ import {
   calcDataQuality, calcProperty, calcScore, fmtEUR, fmtNum, fmtPct, getActiveFinance,
 } from "@/lib/calc";
 import { ALL_STATUSES, type Property } from "@/lib/types";
-import { Plus, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Plus, CheckCircle2 } from "lucide-react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 
