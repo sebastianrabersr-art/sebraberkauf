@@ -53,7 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = async (uid: string) => {
     const [{ data: p }, { data: s }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("subscriptions").select("plan, property_limit, project_limit, subscription_status").eq("user_id", uid).maybeSingle(),
+      (supabase.from("subscriptions") as any)
+        .select("plan, property_limit, project_limit, subscription_status, promo_plan, promo_expires_at")
+        .eq("user_id", uid)
+        .maybeSingle(),
     ]);
     setProfile(p as any);
     setSubscription(s as any);
