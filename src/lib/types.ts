@@ -363,6 +363,45 @@ export interface PurchaseInfo {
     datum?: string;
     notiz?: string;
   }[];
+  documents?: PortfolioDocument[];
+  verwaltung?: VerwaltungInfo;
+}
+
+export type PortfolioDocumentTyp =
+  | "Kaufvertrag"
+  | "Grundbuchauszug"
+  | "Mietvertrag"
+  | "Versicherung"
+  | "Kreditvertrag"
+  | "Rechnung"
+  | "Sonstiges";
+
+export const PORTFOLIO_DOCUMENT_TYPES: PortfolioDocumentTyp[] = [
+  "Kaufvertrag","Grundbuchauszug","Mietvertrag","Versicherung","Kreditvertrag","Rechnung","Sonstiges",
+];
+
+export interface PortfolioDocument {
+  id: string;
+  name: string;
+  typ: PortfolioDocumentTyp;
+  datum?: string;
+  notiz?: string;
+}
+
+export interface VerwaltungInfo {
+  mieterName?: string;
+  mieterKontakt?: string;
+  mietbeginn?: string;
+  mietende?: string;
+  indexierung?: string;
+  hvFirma?: string;
+  hvKontakt?: string;
+  hvGebuehr?: number | null;
+  versGesellschaft?: string;
+  versNummer?: string;
+  versJahrespraemie?: number | null;
+  versFaelligkeit?: string;
+  grundsteuerJahr?: number | null;
 }
 
 export type PaymentDirection = "Einnahme" | "Ausgabe";
