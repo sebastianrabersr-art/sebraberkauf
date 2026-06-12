@@ -282,6 +282,36 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          duration_months: number
+          expires_at: string | null
+          max_uses: number | null
+          plan: string
+          uses: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          duration_months: number
+          expires_at?: string | null
+          max_uses?: number | null
+          plan: string
+          uses?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          duration_months?: number
+          expires_at?: string | null
+          max_uses?: number | null
+          plan?: string
+          uses?: number | null
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           created_at: string
@@ -338,6 +368,9 @@ export type Database = {
           price_id: string | null
           product_id: string | null
           project_limit: number | null
+          promo_code: string | null
+          promo_expires_at: string | null
+          promo_plan: string | null
           property_limit: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -356,6 +389,9 @@ export type Database = {
           price_id?: string | null
           product_id?: string | null
           project_limit?: number | null
+          promo_code?: string | null
+          promo_expires_at?: string | null
+          promo_plan?: string | null
           property_limit?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -374,6 +410,9 @@ export type Database = {
           price_id?: string | null
           product_id?: string | null
           project_limit?: number | null
+          promo_code?: string | null
+          promo_expires_at?: string | null
+          promo_plan?: string | null
           property_limit?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
