@@ -122,14 +122,19 @@ function RootComponent() {
       const t = e.target as HTMLInputElement | null;
       if (!t || t.tagName !== "INPUT") return;
       if (t.type !== "number") return;
-      // Clear "0" prefix so users can type fresh
-      if (t.value === "0") {
-        t.value = "";
-        t.dispatchEvent(new Event("input", { bubbles: true }));
-      } else {
-        // Defer to after browser's default focus selection
-        setTimeout(() => { try { t.select(); } catch {} }, 0);
-      }
+      // Select all on focus; if user types, the existing value (incl. "0") is replaced.
+      setTimeout(() => {
+        try {
+          if (t.value === "0") {
+            // Clear "0" so it isn't kept as a prefix when user starts typing digits.
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+            setter?.call(t, "");
+            t.dispatchEvent(new Event("input", { bubbles: true }));
+          } else {
+            t.select();
+          }
+        } catch {}
+      }, 0);
     };
     document.addEventListener("focusin", onFocusIn);
     return () => document.removeEventListener("focusin", onFocusIn);
