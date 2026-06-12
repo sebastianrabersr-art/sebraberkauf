@@ -134,6 +134,7 @@ function PortfolioDetail() {
             deletePayment={deletePayment}
           />
         )}
+        {tab === "verwaltung" && <VerwaltungTab pi={pi} patchPurchase={patchPurchase} />}
       </div>
     </AppShell>
   );
