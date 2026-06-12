@@ -54,9 +54,11 @@ function Detail() {
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
   const linkValid = isValidUrl(p.link);
-  const mapsUrl = (p.lat && p.lng)
-    ? mapsUrlFromCoords(p.lat, p.lng)
-    : googleMapsUrl(p);
+  const mapsUrl = googleMapsUrl(p);
+  useEffect(() => {
+    updateProperty(p.id, { lastViewed: new Date().toISOString() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.id]);
   const mietrecht = inferMietrecht(p);
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
