@@ -72,8 +72,9 @@ function Pipeline() {
     }
   };
   const addToPipeline = (id: string) => {
-    updateProperty(id, { prozessStatus: "Kontaktiert" });
+    updateProperty(id, { prozessStatus: "Kontaktiert", bewertung: "Interessant" });
     setShowAddModal(false);
+    setFilter("Alle");
   };
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (

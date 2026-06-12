@@ -6,13 +6,18 @@ import { fmtEUR, summarizePayments } from "@/lib/calc";
 import {
   AUSGABE_KATEGORIEN,
   EINNAHME_KATEGORIEN,
+  PORTFOLIO_DOCUMENT_TYPES,
   type Payment,
   type PaymentKategorie,
+  type PortfolioDocument,
+  type PortfolioDocumentTyp,
   type Property,
+  type VerwaltungInfo,
 } from "@/lib/types";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
+import { ChartCard, CHART_STYLE, type ChartRange } from "@/components/ChartCard";
 import {
   LineChart,
   Line,
@@ -22,6 +27,7 @@ import {
   Legend,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 export const Route = createFileRoute("/portfolio/$id")({
@@ -34,7 +40,7 @@ const inputCls =
   "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 const labelCls = "text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium mb-1 block";
 
-type TabKey = "uebersicht" | "finanzen" | "dokumente";
+type TabKey = "uebersicht" | "finanzen" | "dokumente" | "verwaltung";
 
 function PortfolioDetail() {
   const { id } = Route.useParams();
@@ -97,6 +103,7 @@ function PortfolioDetail() {
             ["uebersicht", "Übersicht"],
             ["finanzen", "Finanzen"],
             ["dokumente", "Dokumente & Kosten"],
+            ["verwaltung", "Verwaltung"],
           ] as [TabKey, string][]).map(([k, label]) => {
             const active = tab === k;
             return (
@@ -127,6 +134,7 @@ function PortfolioDetail() {
             deletePayment={deletePayment}
           />
         )}
+        {tab === "verwaltung" && <VerwaltungTab pi={pi} patchPurchase={patchPurchase} />}
       </div>
     </AppShell>
   );
@@ -140,7 +148,6 @@ function UebersichtTab({ p }: { p: Property }) {
   const wertzuwachs = wert - kauf;
   const wertzuwachsPct = kauf > 0 ? wertzuwachs / kauf : 0;
   const restschuld = pi.aktuelleRestschuld ?? 0;
-  const ek = wert - restschuld;
 
   const mtlMiete = pi.aktuelleMonatsmiete ?? p.nettomieteMtl ?? 0;
   const mtlRate = pi.aktuelleMonatsrate ?? 0;
@@ -150,18 +157,63 @@ function UebersichtTab({ p }: { p: Property }) {
       (pi.versicherungMtl ?? 0) + (pi.verwaltungMtl ?? 0) + (pi.sonstigeMtlKosten ?? 0));
   const mtlCash = mtlMiete - mtlRate - mtlKosten;
 
-  // Chart projection 10 years
-  const chartData = useMemo(() => {
-    const wertSteig = 0.025;
-    const tilgungProJahr = mtlRate * 12 * 0.4; // approx 40% Tilgung
+  const [range, setRange] = useState<ChartRange>("10J");
+  const [wertSteigPct, setWertSteigPct] = useState<number>(2.5);
+  const [tilgungAnteilPct, setTilgungAnteilPct] = useState<number>(40);
+
+  const years = useMemo(() => ({ "5J": 5, "10J": 10, "20J": 20, "30J": 30 }[range]), [range]);
+
+  const { chartData, kreditAbbezahltJahr, breakEvenJahr, ekIn10J } = useMemo(() => {
+    const wertSteig = wertSteigPct / 100;
+    const tilgungProJahr = mtlRate * 12 * (tilgungAnteilPct / 100);
     const out: { jahr: number; Objektwert: number; Restschuld: number; Eigenkapital: number }[] = [];
-    for (let j = 0; j <= 10; j++) {
+    let abbezahlt: number | null = null;
+    let breakEven: number | null = null;
+    for (let j = 0; j <= years; j++) {
       const w = wert * Math.pow(1 + wertSteig, j);
       const r = Math.max(0, restschuld - tilgungProJahr * j);
-      out.push({ jahr: j, Objektwert: Math.round(w), Restschuld: Math.round(r), Eigenkapital: Math.round(w - r) });
+      const e = w - r;
+      if (abbezahlt === null && r <= 0 && restschuld > 0) abbezahlt = j;
+      if (breakEven === null && e >= kauf && kauf > 0) breakEven = j;
+      out.push({ jahr: j, Objektwert: Math.round(w), Restschuld: Math.round(r), Eigenkapital: Math.round(e) });
     }
-    return out;
-  }, [wert, restschuld, mtlRate]);
+    const ek10 = out[Math.min(10, out.length - 1)]?.Eigenkapital ?? 0;
+    return { chartData: out, kreditAbbezahltJahr: abbezahlt, breakEvenJahr: breakEven, ekIn10J: ek10 };
+  }, [wert, restschuld, mtlRate, wertSteigPct, tilgungAnteilPct, years, kauf]);
+
+  const assumptions = (
+    <div className="flex flex-wrap items-center gap-3">
+      <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+        Wertsteigerung % p.a.
+        <input
+          type="number"
+          step={0.1}
+          value={wertSteigPct}
+          onChange={(e) => setWertSteigPct(Number(e.target.value) || 0)}
+          className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+        Tilgungsanteil %
+        <input
+          type="number"
+          step={1}
+          value={tilgungAnteilPct}
+          onChange={(e) => setTilgungAnteilPct(Number(e.target.value) || 0)}
+          className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      </label>
+    </div>
+  );
+
+  const footer = (
+    <>
+      {kreditAbbezahltJahr !== null
+        ? `Kredit abbezahlt in ${kreditAbbezahltJahr} Jahren`
+        : "Kredit innerhalb des Horizonts nicht abbezahlt"}
+      {" · "}Eigenkapital in 10J: {fmtEUR(ekIn10J)}
+    </>
+  );
 
   return (
     <div className="space-y-4">
@@ -176,25 +228,44 @@ function UebersichtTab({ p }: { p: Property }) {
         <StatCard label="Restschuld" value={fmtEUR(restschuld)} />
       </div>
 
-      <Card title="Wertentwicklung (Prognose 10 Jahre)">
-        <div className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke="#EAE6DF" strokeDasharray="3 3" />
-              <XAxis dataKey="jahr" tick={{ fontSize: 11, fill: "#78716C" }} />
-              <YAxis tick={{ fontSize: 11, fill: "#78716C" }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-              <Tooltip formatter={(v: number) => fmtEUR(v)} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="Objektwert" stroke="#2D6A4F" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Restschuld" stroke="#DC2626" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Eigenkapital" stroke="#3B82F6" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="text-[11px] text-[#A8A29E] mt-2">
-          Annahmen: 2,5% Wertsteigerung p.a., 40% Tilgungsanteil der Rate.
-        </div>
-      </Card>
+      <ChartCard
+        title="Wertentwicklung (Prognose)"
+        ranges={["5J", "10J", "20J", "30J"]}
+        range={range}
+        onRangeChange={setRange}
+        assumptions={assumptions}
+        footer={footer}
+        height={280}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+            <CartesianGrid {...CHART_STYLE.grid} />
+            <XAxis dataKey="jahr" tick={CHART_STYLE.axisTick} axisLine={CHART_STYLE.axisLine} />
+            <YAxis tick={CHART_STYLE.axisTick} axisLine={CHART_STYLE.axisLine} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+            <Tooltip formatter={(v: number) => fmtEUR(v)} contentStyle={CHART_STYLE.tooltipContent} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Line type="monotone" dataKey="Objektwert" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="Restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="Eigenkapital" stroke={CHART_STYLE.colors.secondary} strokeWidth={2} dot={false} />
+            {kreditAbbezahltJahr !== null && (
+              <ReferenceLine
+                x={kreditAbbezahltJahr}
+                stroke={CHART_STYLE.colors.positive}
+                strokeDasharray="4 4"
+                label={{ value: `Kredit abbezahlt (J${kreditAbbezahltJahr})`, position: "top", fontSize: 11, fill: CHART_STYLE.colors.positive }}
+              />
+            )}
+            {breakEvenJahr !== null && (
+              <ReferenceLine
+                x={breakEvenJahr}
+                stroke="#D97706"
+                strokeDasharray="4 4"
+                label={{ value: `Break-even (J${breakEvenJahr})`, position: "insideTopRight", fontSize: 11, fill: "#D97706" }}
+              />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+      </ChartCard>
 
       <Card title="Cashflow-Übersicht">
         <div className="grid grid-cols-3 gap-3 mb-3">
@@ -329,7 +400,14 @@ function DokumenteTab({
   deletePayment: (id: string) => void;
 }) {
   const repairs = pi.repairs ?? [];
+  const documents = pi.documents ?? [];
   const [newRepair, setNewRepair] = useState({ title: "", kosten: "" });
+  const [newDoc, setNewDoc] = useState({
+    name: "",
+    typ: "Sonstiges" as PortfolioDocumentTyp,
+    datum: new Date().toISOString().slice(0, 10),
+    notiz: "",
+  });
   const [newPay, setNewPay] = useState({
     direction: "Ausgabe" as "Einnahme" | "Ausgabe",
     category: "Betriebskosten" as PaymentKategorie,
@@ -337,6 +415,26 @@ function DokumenteTab({
     description: "",
     date: new Date().toISOString().slice(0, 10),
   });
+
+  const addDocument = () => {
+    if (!newDoc.name.trim()) return;
+    patchPurchase({
+      documents: [
+        ...documents,
+        {
+          id: crypto.randomUUID(),
+          name: newDoc.name.trim(),
+          typ: newDoc.typ,
+          datum: newDoc.datum || undefined,
+          notiz: newDoc.notiz || undefined,
+        } satisfies PortfolioDocument,
+      ],
+    });
+    setNewDoc({ name: "", typ: "Sonstiges", datum: new Date().toISOString().slice(0, 10), notiz: "" });
+  };
+  const removeDocument = (id: string) => {
+    patchPurchase({ documents: documents.filter((d) => d.id !== id) });
+  };
 
   const addRepair = () => {
     if (!newRepair.title.trim()) return;
@@ -382,6 +480,60 @@ function DokumenteTab({
 
   return (
     <div className="space-y-4">
+      <Card title="Dokumente">
+        <div className="space-y-2">
+          {documents.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Dokumente erfasst.</div>}
+          {documents.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
+              <FileText className="w-4 h-4 text-[#A8A29E] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-[#1C1917] truncate">{d.name}</div>
+                <div className="text-[11px] text-[#A8A29E]">
+                  {d.typ}{d.datum ? ` · ${d.datum}` : ""}{d.notiz ? ` · ${d.notiz}` : ""}
+                </div>
+              </div>
+              <button onClick={() => removeDocument(d.id)} className="text-[#A8A29E] hover:text-[#DC2626]">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-12 gap-2 mt-3">
+          <input
+            placeholder="Name"
+            value={newDoc.name}
+            onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
+            className={inputCls + " col-span-4"}
+          />
+          <select
+            value={newDoc.typ}
+            onChange={(e) => setNewDoc({ ...newDoc, typ: e.target.value as PortfolioDocumentTyp })}
+            className={inputCls + " col-span-3"}
+          >
+            {PORTFOLIO_DOCUMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input
+            type="date"
+            value={newDoc.datum}
+            onChange={(e) => setNewDoc({ ...newDoc, datum: e.target.value })}
+            className={inputCls + " col-span-2"}
+          />
+          <input
+            placeholder="Notiz"
+            value={newDoc.notiz}
+            onChange={(e) => setNewDoc({ ...newDoc, notiz: e.target.value })}
+            className={inputCls + " col-span-2"}
+          />
+          <button
+            onClick={addDocument}
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235940]"
+            aria-label="Dokument hinzufügen"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </Card>
+
       <Card title="Offene Reparaturen">
         <div className="space-y-2">
           {repairs.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Reparaturen erfasst.</div>}
@@ -521,6 +673,83 @@ function DokumenteTab({
     </div>
   );
 }
+
+/* ─────────── Verwaltung ─────────── */
+function VerwaltungTab({
+  pi,
+  patchPurchase,
+}: {
+  pi: NonNullable<Property["purchase"]>;
+  patchPurchase: (patch: Partial<NonNullable<Property["purchase"]>>) => void;
+}) {
+  const v: VerwaltungInfo = pi.verwaltung ?? {};
+  const patch = (vp: Partial<VerwaltungInfo>) =>
+    patchPurchase({ verwaltung: { ...v, ...vp } });
+
+  return (
+    <div className="space-y-4">
+      <Card title="Mieter">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Name">
+            <input type="text" defaultValue={v.mieterName ?? ""} onBlur={(e) => patch({ mieterName: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Kontakt">
+            <input type="text" defaultValue={v.mieterKontakt ?? ""} onBlur={(e) => patch({ mieterKontakt: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Indexierung">
+            <input type="text" defaultValue={v.indexierung ?? ""} onBlur={(e) => patch({ indexierung: e.target.value })} className={inputCls} placeholder="z.B. VPI 2020" />
+          </Field>
+          <Field label="Mietbeginn">
+            <input type="date" defaultValue={v.mietbeginn ?? ""} onBlur={(e) => patch({ mietbeginn: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Mietende">
+            <input type="date" defaultValue={v.mietende ?? ""} onBlur={(e) => patch({ mietende: e.target.value })} className={inputCls} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Hausverwaltung">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Firma">
+            <input type="text" defaultValue={v.hvFirma ?? ""} onBlur={(e) => patch({ hvFirma: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Kontakt">
+            <input type="text" defaultValue={v.hvKontakt ?? ""} onBlur={(e) => patch({ hvKontakt: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Gebühr (mtl. €)">
+            <NumInput value={v.hvGebuehr} onCommit={(val) => patch({ hvGebuehr: val })} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Versicherung">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Field label="Gesellschaft">
+            <input type="text" defaultValue={v.versGesellschaft ?? ""} onBlur={(e) => patch({ versGesellschaft: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Nummer">
+            <input type="text" defaultValue={v.versNummer ?? ""} onBlur={(e) => patch({ versNummer: e.target.value })} className={inputCls} />
+          </Field>
+          <Field label="Jahresprämie €">
+            <NumInput value={v.versJahrespraemie} onCommit={(val) => patch({ versJahrespraemie: val })} />
+          </Field>
+          <Field label="Fälligkeit">
+            <input type="date" defaultValue={v.versFaelligkeit ?? ""} onBlur={(e) => patch({ versFaelligkeit: e.target.value })} className={inputCls} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Steuern">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Field label="Grundsteuer jährlich €">
+            <NumInput value={v.grundsteuerJahr} onCommit={(val) => patch({ grundsteuerJahr: val })} />
+          </Field>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 
 /* ─────────── Helpers ─────────── */
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
