@@ -3,8 +3,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords, scoreBreakdown } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import { ActivitiesPanel } from "@/components/ActivitiesPanel";
-import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
