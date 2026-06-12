@@ -581,7 +581,8 @@ export function resolveTotalPurchasePrice(p: Property): number {
  * Hauptfunktion – komponiert die obigen Bausteine zum Calc-Objekt.
  * Die Felder bleiben 1:1 wie bisher, damit kein UI-Code bricht.
  */
-export function calcProperty(p: Property, a: Assumptions): Calc {
+export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCashflowMtl?: number }): Calc {
+  void _opts;
   // Effektiver Kaufpreis nach propertyType-Logik. Wir reichen ein
   // "normalisiertes" Property an die internen Helfer weiter, damit
   // Pauschalsätze, LTV, Renditen etc. konsistent mit derselben Zahl rechnen.
@@ -1667,4 +1668,26 @@ export function calcInvestorModel(
     charts,
     totalInterestPaid,
   };
+}
+
+/**
+ * Sum of monthly cashflow across all "Gekauft" properties in the portfolio.
+ * Used to factor existing portfolio impact into new-purchase Leistbarkeit.
+ */
+export function getPortfolioCashflowMtl(properties: Property[]): number {
+  return properties
+    .filter((p) => p.status === "Gekauft" || p.prozessStatus === "Gekauft")
+    .reduce((sum, p) => {
+      const pi = p.purchase ?? {};
+      const miete = pi.aktuelleMonatsmiete ?? p.nettomieteMtl ?? 0;
+      const rate = pi.aktuelleMonatsrate ?? 0;
+      const kosten =
+        (pi.betriebskostenMtl ?? 0) +
+        (pi.nichtUmlMtl ?? 0) +
+        (pi.ruecklageMtl ?? 0) +
+        (pi.versicherungMtl ?? 0) +
+        (pi.verwaltungMtl ?? 0) +
+        (pi.sonstigeMtlKosten ?? 0);
+      return sum + (miete - rate - kosten);
+    }, 0);
 }

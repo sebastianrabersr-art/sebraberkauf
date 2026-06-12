@@ -355,6 +355,14 @@ export interface PurchaseInfo {
   aktuelleNutzung?: "vermietet" | "selbst genutzt" | "leer" | "teilweise vermietet" | "";
   aktuellerObjektwert?: number | null;
   notizenNachKauf?: string;
+  repairs?: {
+    id: string;
+    title: string;
+    kosten: number | null;
+    status: "Offen" | "In Arbeit" | "Erledigt";
+    datum?: string;
+    notiz?: string;
+  }[];
 }
 
 export type PaymentDirection = "Einnahme" | "Ausgabe";

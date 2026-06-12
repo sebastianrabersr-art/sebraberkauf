@@ -48,6 +48,7 @@ import { Route as RatgeberSlugRouteImport } from './routes/ratgeber.$slug'
 import { Route as PropertiesNewRouteImport } from './routes/properties.new'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
+import { Route as PortfolioIdRouteImport } from './routes/portfolio.$id'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -247,6 +248,11 @@ const PortfolioNewRoute = PortfolioNewRouteImport.update({
   path: '/new',
   getParentRoute: () => PortfolioRoute,
 } as any)
+const PortfolioIdRoute = PortfolioIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PortfolioRoute,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/viewing': typeof ViewingRoute
   '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/portfolio/$id': typeof PortfolioIdRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/viewing': typeof ViewingRoute
   '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/portfolio/$id': typeof PortfolioIdRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/viewing': typeof ViewingRoute
   '/widerruf': typeof WiderrufRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/portfolio/$id': typeof PortfolioIdRoute
   '/portfolio/new': typeof PortfolioNewRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/properties/new': typeof PropertiesNewRoute
@@ -429,6 +438,7 @@ export interface FileRouteTypes {
     | '/viewing'
     | '/widerruf'
     | '/checkout/return'
+    | '/portfolio/$id'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/viewing'
     | '/widerruf'
     | '/checkout/return'
+    | '/portfolio/$id'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
@@ -514,6 +525,7 @@ export interface FileRouteTypes {
     | '/viewing'
     | '/widerruf'
     | '/checkout/return'
+    | '/portfolio/$id'
     | '/portfolio/new'
     | '/properties/$id'
     | '/properties/new'
@@ -841,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortfolioNewRouteImport
       parentRoute: typeof PortfolioRoute
     }
+    '/portfolio/$id': {
+      id: '/portfolio/$id'
+      path: '/$id'
+      fullPath: '/portfolio/$id'
+      preLoaderRoute: typeof PortfolioIdRouteImport
+      parentRoute: typeof PortfolioRoute
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -866,11 +885,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface PortfolioRouteChildren {
+  PortfolioIdRoute: typeof PortfolioIdRoute
   PortfolioNewRoute: typeof PortfolioNewRoute
   PortfolioIndexRoute: typeof PortfolioIndexRoute
 }
 
 const PortfolioRouteChildren: PortfolioRouteChildren = {
+  PortfolioIdRoute: PortfolioIdRoute,
   PortfolioNewRoute: PortfolioNewRoute,
   PortfolioIndexRoute: PortfolioIndexRoute,
 }

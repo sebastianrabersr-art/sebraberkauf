@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
 import { migrateLegacyStatus, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
-import { MoreHorizontal, Phone, Mail, Calendar, GripVertical } from "lucide-react";
+import { MoreHorizontal, Phone, Mail, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline")({
   head: () => ({ meta: [{ title: "Pipeline – Immo Invest CRM" }] }),
@@ -13,7 +14,8 @@ export const Route = createFileRoute("/pipeline")({
 
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-const COLUMNS: ProzessStatus[] = ["Kontaktiert", "Besichtigung", "Finanzierung", "Angebot & Verhandlung", "Gekauft", "Abgelehnt"];
+// "Gekauft" / "Abgelehnt" are exit lanes, not kanban columns.
+const COLUMNS: ProzessStatus[] = ["Kontaktiert", "Besichtigung", "Finanzierung", "Angebot & Verhandlung"];
 const BEWERTUNG_FILTERS: ("Alle" | Bewertung)[] = ["Alle", "Interessant", "Prüfen", "Neu", "Nicht interessant"];
 
 function getBewertung(p: Property): Bewertung {
@@ -37,25 +39,100 @@ function Pipeline() {
   const a = useActiveAssumptions();
   const [filter, setFilter] = useState<"Alle" | Bewertung>("Interessant");
   const [dragOverCol, setDragOverCol] = useState<ProzessStatus | null>(null);
-  const [unassignedOpen, setUnassignedOpen] = useState(true);
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
 
   const inProj = useMemo(() => properties.filter((p) => p.projectId === project.id), [properties, project.id]);
   const filtered = useMemo(
     () => (filter === "Alle" ? inProj : inProj.filter((p) => getBewertung(p) === filter)),
     [inProj, filter]
   );
-  const unassigned = filtered.filter((p) => !getProzess(p));
+  const boughtCount = inProj.filter((p) => getProzess(p) === "Gekauft" || p.status === "Gekauft").length;
+  const rejectedCount = inProj.filter((p) => getProzess(p) === "Abgelehnt").length;
+
+  // Candidates: in project, not in pipeline yet
+  const candidates = useMemo(
+    () => inProj.filter((p) => !p.prozessStatus && p.status !== "Gekauft")
+      .filter((p) => {
+        const q = addSearch.trim().toLowerCase();
+        if (!q) return true;
+        return (p.title ?? "").toLowerCase().includes(q) || (p.bezirk ?? "").toLowerCase().includes(q);
+      }),
+    [inProj, addSearch]
+  );
 
   const setBewertung = (id: string, b: Bewertung) => updateProperty(id, { bewertung: b });
-  const setProzess = (id: string, ps: ProzessStatus) => updateProperty(id, { prozessStatus: ps });
+  const setProzess = (id: string, ps: ProzessStatus) => {
+    updateProperty(id, { prozessStatus: ps });
+    if (ps === "Gekauft") {
+      updateProperty(id, { prozessStatus: "Gekauft", status: "Gekauft" });
+      toast.success("Glückwunsch! Immobilie ins Portfolio verschoben.");
+      setTimeout(() => navigate({ to: "/portfolio" }), 400);
+    }
+  };
+  const addToPipeline = (id: string) => {
+    updateProperty(id, { prozessStatus: "Kontaktiert" });
+    setShowAddModal(false);
+  };
+
+  const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
+    <div
+      onDragOver={(e) => { e.preventDefault(); if (dragOverCol !== col) setDragOverCol(col); }}
+      onDragLeave={() => setDragOverCol((c) => (c === col ? null : c))}
+      onDrop={(e) => {
+        setDragOverCol(null);
+        const id = e.dataTransfer.getData("text/plain");
+        if (id) setProzess(id, col);
+      }}
+      className="flex-1 rounded-[10px] p-[14px_16px]"
+      style={{
+        background: isOver ? (col === "Gekauft" ? "#E8F5EE" : "#FEE2E2") : "#FFFFFF",
+        border: isOver
+          ? `2px dashed ${col === "Gekauft" ? "#2D6A4F" : "#DC2626"}`
+          : "1px dashed #D4CFC8",
+      }}
+    >
+      <div className="flex items-center gap-2">
+        {col === "Gekauft"
+          ? <CheckCircle2 className="w-4 h-4 text-[#2D6A4F]" />
+          : <XCircle className="w-4 h-4 text-[#DC2626]" />}
+        <div className="text-[13px] font-semibold text-[#1C1917]">{label}</div>
+      </div>
+      <div className="text-[11px] text-[#A8A29E] mt-1">
+        {col === "Gekauft" ? "Wandert ins Portfolio" : "Archiviert"}
+      </div>
+      <div className="flex items-center justify-between mt-2">
+        <span className="text-[11px] text-[#78716C]">
+          {(col === "Gekauft" ? boughtCount : rejectedCount)} Objekte
+        </span>
+        {col === "Gekauft" && (
+          <button
+            onClick={() => navigate({ to: "/portfolio" })}
+            className="text-[11px] text-[#2D6A4F] hover:underline"
+          >
+            Portfolio öffnen →
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <AppShell>
       <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
-        <div className="mb-5">
-          <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>Pipeline</h1>
-          <p className="text-[13px] text-[#78716C] mt-1">Verfolge deine Immobilien durch den Kaufprozess</p>
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>Pipeline</h1>
+            <p className="text-[13px] text-[#78716C] mt-1">Verfolge deine Immobilien durch den Kaufprozess</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 rounded-[8px] border border-[#EAE6DF] bg-white px-3 py-2 text-[13px] font-medium text-[#1C1917] hover:bg-[#FAFAF8]"
+          >
+            <Plus className="w-4 h-4" />
+            Aus Kaufkandidaten hinzufügen
+          </button>
         </div>
 
         {/* Bewertung filter */}
@@ -82,42 +159,8 @@ function Pipeline() {
           })}
         </div>
 
-        {/* Unassigned */}
-        <div className="mb-5">
-          <button
-            onClick={() => setUnassignedOpen((v) => !v)}
-            className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2 flex items-center gap-1"
-          >
-            Noch nicht im Prozess <span className="text-[#D4CFC8]">({unassigned.length})</span>
-            <span className="ml-1">{unassignedOpen ? "▾" : "▸"}</span>
-          </button>
-          {unassignedOpen && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {unassigned.length === 0 && (
-                <div className="text-[12px] text-[#A8A29E] py-3">Keine offenen Objekte für diese Bewertung.</div>
-              )}
-              {unassigned.map((p) => {
-                const bw = getBewertung(p);
-                const st = BEWERTUNG_STYLE[bw];
-                return (
-                  <div key={p.id} className="shrink-0 w-[180px] rounded-[8px] bg-white border border-[#EAE6DF] p-[10px_12px]">
-                    <div className="text-[12px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded" style={{ background: st.bg, color: st.fg }}>{bw}</span>
-                    <button
-                      onClick={() => setProzess(p.id, "Kontaktiert")}
-                      className="block mt-2 text-[11px] text-[#2D6A4F] hover:underline"
-                    >
-                      + In Prozess aufnehmen
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
         {/* Kanban */}
-        <div className="flex gap-3 overflow-x-auto pb-6">
+        <div className="flex gap-3 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
             const items = filtered.filter((p) => getProzess(p) === col);
             const isOver = dragOverCol === col;
@@ -133,7 +176,7 @@ function Pipeline() {
                 }}
                 className="shrink-0 rounded-[10px] p-[10px]"
                 style={{
-                  width: 220,
+                  width: 240,
                   background: isOver ? "#E8F5EE" : "#EAE6DF",
                   border: isOver ? "2px dashed #2D6A4F" : "2px solid transparent",
                   minHeight: 200,
@@ -147,7 +190,7 @@ function Pipeline() {
                   {items.length === 0 && (
                     <div className="rounded-[8px] border-[1.5px] border-dashed border-[#D4CFC8] bg-transparent p-4 text-center">
                       <div className="text-[12px] text-[#A8A29E]">Keine Objekte</div>
-                      <div className="text-[11px] text-[#A8A29E] mt-1">Ziehe Objekte hierher oder setze den Status im CRM-Tab</div>
+                      <div className="text-[11px] text-[#A8A29E] mt-1">Ziehe Objekte hierher</div>
                     </div>
                   )}
                   {items.map((p) => {
@@ -217,6 +260,59 @@ function Pipeline() {
             );
           })}
         </div>
+
+        {/* Exit lanes */}
+        <div className="flex gap-3 mt-2">
+          {exitLane("Gekauft", "Gekauft ✓", dragOverCol === "Gekauft")}
+          {exitLane("Abgelehnt", "Abgelehnt ✗", dragOverCol === "Abgelehnt")}
+        </div>
+
+        {/* Add modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[12px] border border-[#EAE6DF] w-full max-w-[520px] max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-[#EAE6DF]">
+                <div className="text-[15px] font-semibold text-[#1C1917]" style={bricolage}>Aus Kaufkandidaten hinzufügen</div>
+                <button onClick={() => setShowAddModal(false)} className="text-[#A8A29E] hover:text-[#1C1917]"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="p-4 border-b border-[#EAE6DF]">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-[#A8A29E] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    value={addSearch}
+                    onChange={(e) => setAddSearch(e.target.value)}
+                    placeholder="Nach Titel oder Bezirk suchen…"
+                    className="w-full pl-9 pr-3 py-[9px] text-[13px] border-[1.5px] border-[#EAE6DF] rounded-[8px] outline-none focus:border-[#2D6A4F]"
+                  />
+                </div>
+              </div>
+              <div className="overflow-y-auto p-2">
+                {candidates.length === 0 && (
+                  <div className="text-[12px] text-[#A8A29E] p-6 text-center">Keine Kandidaten gefunden.</div>
+                )}
+                {candidates.map((p) => {
+                  const score = (p.scoreLage ?? 0) + (p.scoreVermietbarkeit ?? 0) + (p.scoreZustand ?? 0) + (p.scoreRecht ?? 0) + (p.scoreWiederverkauf ?? 0);
+                  const scoreColor = score >= 70 ? "#2D6A4F" : score >= 40 ? "#D97706" : "#DC2626";
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-[#FAFAF8]">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
+                        <div className="text-[11px] text-[#A8A29E]">{p.bezirk || "—"}</div>
+                      </div>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{score}</span>
+                      <button
+                        onClick={() => addToPipeline(p.id)}
+                        className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235940]"
+                      >
+                        Hinzufügen
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppShell>
   );
