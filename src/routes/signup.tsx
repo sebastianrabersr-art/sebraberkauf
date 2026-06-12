@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/signup")({
@@ -61,9 +61,8 @@ function Signup() {
   return (
     <div className="min-h-screen grid place-items-center p-6 bg-muted/30">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-        <a href="/" className="flex items-center gap-2 font-semibold mb-6">
-          <div className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center"><Building2 className="size-4" /></div>
-          kauf ma
+        <a href="/" className="flex items-center mb-6">
+          <Logo size={32} textSize={16} />
         </a>
         <h1 className="text-2xl font-semibold">Kostenlos starten</h1>
         <p className="text-muted-foreground text-sm mt-1">1 Immobilie gratis. Keine Kreditkarte nötig.</p>
