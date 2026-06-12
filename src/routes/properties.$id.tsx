@@ -1600,7 +1600,7 @@ function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: 
         if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
-      className={selectCls}
+      className={inputCls}
     />
   );
 }
