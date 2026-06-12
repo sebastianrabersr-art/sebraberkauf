@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
