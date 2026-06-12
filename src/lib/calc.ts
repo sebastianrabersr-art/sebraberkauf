@@ -581,7 +581,8 @@ export function resolveTotalPurchasePrice(p: Property): number {
  * Hauptfunktion – komponiert die obigen Bausteine zum Calc-Objekt.
  * Die Felder bleiben 1:1 wie bisher, damit kein UI-Code bricht.
  */
-export function calcProperty(p: Property, a: Assumptions): Calc {
+export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCashflowMtl?: number }): Calc {
+  void _opts;
   // Effektiver Kaufpreis nach propertyType-Logik. Wir reichen ein
   // "normalisiertes" Property an die internen Helfer weiter, damit
   // Pauschalsätze, LTV, Renditen etc. konsistent mit derselben Zahl rechnen.
