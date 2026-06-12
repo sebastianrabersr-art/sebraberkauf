@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Briefcase, Calculator, Database, FolderKanban, GitCompareArrows, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
+import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
