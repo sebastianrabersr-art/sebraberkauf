@@ -105,14 +105,29 @@ function PropertiesList() {
       .filter((r) => (minScore > 0 ? (r.avg ?? 0) * 10 >= minScore : true) && r.dq.score >= minDQ)
       .sort((a, b) => {
         switch (sort) {
-          case "kaufpreis": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
-          case "preisM2": return b.c.preisProM2 - a.c.preisProM2;
+          case "kaufpreis_asc": return (a.p.kaufpreis ?? Infinity) - (b.p.kaufpreis ?? Infinity);
+          case "kaufpreis_desc": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
+          case "preisM2": return (a.c.preisProM2 || Infinity) - (b.c.preisProM2 || Infinity);
           case "brutto": return b.c.bruttorendite - a.c.bruttorendite;
-          case "netto": return b.c.nettorendite - a.c.nettorendite;
           case "cashflow": return b.c.cashflowMtl - a.c.cashflowMtl;
           case "dq": return b.dq.score - a.dq.score;
           case "createdAt": return b.p.createdAt.localeCompare(a.p.createdAt);
-          default: return (b.avg ?? -1) - (a.avg ?? -1);
+          case "lastViewed": return (b.p.lastViewed ?? "").localeCompare(a.p.lastViewed ?? "");
+          case "title": return (a.p.title ?? "").localeCompare(b.p.title ?? "", "de", { sensitivity: "base" });
+          case "userRating": {
+            const avg = (p: typeof a.p) => {
+              const r = p.userRating;
+              if (!r) return -1;
+              return ((r.lage ?? 0) + (r.preisLeistung ?? 0) + (r.zustand ?? 0) + (r.vermietbarkeit ?? 0) + (r.bauchgefuehl ?? 0)) / 5;
+            };
+            return avg(b.p) - avg(a.p);
+          }
+          case "score":
+          default: {
+            const sa = calcScore(a.p, assumptions, a.c).total;
+            const sb = calcScore(b.p, assumptions, b.c).total;
+            return sb - sa;
+          }
         }
       });
   }, [properties, assumptions, activeProject.id, scopeAll, statusFilter, mietrechtFilter, bezirkFilter, search, sort, minScore, minDQ, projects]);
