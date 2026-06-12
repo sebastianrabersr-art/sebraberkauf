@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { planLabel, planLimits, PLAN_PRICING, useAuth } from "@/lib/auth";
+import { redeemPromoCode } from "@/lib/api/redeem-promo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
