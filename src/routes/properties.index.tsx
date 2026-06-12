@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
@@ -13,7 +13,22 @@ export const Route = createFileRoute("/properties/")({
   component: PropertiesList,
 });
 
-type SortKey = "bewertung" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
+type SortKey = "score" | "userRating" | "kaufpreis_asc" | "kaufpreis_desc" | "preisM2" | "brutto" | "cashflow" | "dq" | "createdAt" | "lastViewed" | "title";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "score", label: "Bester Score" },
+  { value: "userRating", label: "Meine Bewertung" },
+  { value: "brutto", label: "Höchste Rendite" },
+  { value: "cashflow", label: "Bester Cashflow" },
+  { value: "kaufpreis_asc", label: "Günstigster Preis" },
+  { value: "kaufpreis_desc", label: "Teuerster Preis" },
+  { value: "preisM2", label: "Günstiger €/m²" },
+  { value: "lastViewed", label: "Zuletzt angesehen" },
+  { value: "createdAt", label: "Zuletzt hinzugefügt" },
+  { value: "title", label: "Name A–Z" },
+  { value: "dq", label: "Datenqualität" },
+];
+const DEFAULT_SORT: SortKey = "score";
 
 // Hilfsfunktion: leere/0-Werte als em-dash anzeigen
 function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
@@ -68,7 +83,7 @@ function PropertiesList() {
   const [minScore, setMinScore] = useState(0);
   const [minDQ, setMinDQ] = useState(0);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("bewertung");
+  const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [scopeAll, setScopeAll] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
@@ -90,14 +105,29 @@ function PropertiesList() {
       .filter((r) => (minScore > 0 ? (r.avg ?? 0) * 10 >= minScore : true) && r.dq.score >= minDQ)
       .sort((a, b) => {
         switch (sort) {
-          case "kaufpreis": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
-          case "preisM2": return b.c.preisProM2 - a.c.preisProM2;
+          case "kaufpreis_asc": return (a.p.kaufpreis ?? Infinity) - (b.p.kaufpreis ?? Infinity);
+          case "kaufpreis_desc": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
+          case "preisM2": return (a.c.preisProM2 || Infinity) - (b.c.preisProM2 || Infinity);
           case "brutto": return b.c.bruttorendite - a.c.bruttorendite;
-          case "netto": return b.c.nettorendite - a.c.nettorendite;
           case "cashflow": return b.c.cashflowMtl - a.c.cashflowMtl;
           case "dq": return b.dq.score - a.dq.score;
           case "createdAt": return b.p.createdAt.localeCompare(a.p.createdAt);
-          default: return (b.avg ?? -1) - (a.avg ?? -1);
+          case "lastViewed": return (b.p.lastViewed ?? "").localeCompare(a.p.lastViewed ?? "");
+          case "title": return (a.p.title ?? "").localeCompare(b.p.title ?? "", "de", { sensitivity: "base" });
+          case "userRating": {
+            const avg = (p: typeof a.p) => {
+              const r = p.userRating;
+              if (!r) return -1;
+              return ((r.lage ?? 0) + (r.preisLeistung ?? 0) + (r.zustand ?? 0) + (r.vermietbarkeit ?? 0) + (r.bauchgefuehl ?? 0)) / 5;
+            };
+            return avg(b.p) - avg(a.p);
+          }
+          case "score":
+          default: {
+            const sa = calcScore(a.p, assumptions, a.c).total;
+            const sb = calcScore(b.p, assumptions, b.c).total;
+            return sb - sa;
+          }
         }
       });
   }, [properties, assumptions, activeProject.id, scopeAll, statusFilter, mietrechtFilter, bezirkFilter, search, sort, minScore, minDQ, projects]);
@@ -169,14 +199,7 @@ function PropertiesList() {
           <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
           <SelectWrap>
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
-              <option value="bewertung">Sort: Bewertung</option>
-              <option value="kaufpreis">Kaufpreis</option>
-              <option value="preisM2">Preis/m²</option>
-              <option value="brutto">Bruttorendite</option>
-              <option value="netto">Nettorendite</option>
-              <option value="cashflow">Cashflow</option>
-              <option value="dq">Datenqualität</option>
-              <option value="createdAt">Datum</option>
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </SelectWrap>
           <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
@@ -198,6 +221,21 @@ function PropertiesList() {
           Alle Projekte anzeigen (sonst nur aktives Projekt)
         </label>
       </div>
+
+      {sort !== DEFAULT_SORT && (
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F5EE] px-2.5 py-1 text-[12px] text-[#2D6A4F]">
+            Sortiert nach: {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+            <button
+              onClick={() => setSort(DEFAULT_SORT)}
+              className="hover:text-[#1C1917]"
+              title="Sortierung zurücksetzen"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Tabelle */}
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
@@ -243,9 +281,7 @@ function PropertiesList() {
             </thead>
             <tbody>
               {rows.map(({ p, c, dq, projectName, avg }) => {
-                const maps = (p.lat && p.lng)
-                  ? mapsUrlFromCoords(p.lat, p.lng)
-                  : googleMapsUrl(p);
+                const maps = googleMapsUrl(p);
                 return (
                   <tr
                     key={p.id}

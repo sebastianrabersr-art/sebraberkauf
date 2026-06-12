@@ -187,6 +187,7 @@ export interface Property {
   land?: string;
   lat?: number | null;
   lng?: number | null;
+  lastViewed?: string;
   objekttyp: string;
   baujahr: number | null;
   neubauAltbau?: "Neubau" | "Altbau" | "saniert" | "";

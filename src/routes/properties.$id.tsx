@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
+import { calcDataQuality, calcProperty, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
@@ -54,9 +54,11 @@ function Detail() {
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
   const linkValid = isValidUrl(p.link);
-  const mapsUrl = (p.lat && p.lng)
-    ? mapsUrlFromCoords(p.lat, p.lng)
-    : googleMapsUrl(p);
+  const mapsUrl = googleMapsUrl(p);
+  useEffect(() => {
+    updateProperty(p.id, { lastViewed: new Date().toISOString() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.id]);
   const mietrecht = inferMietrecht(p);
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
