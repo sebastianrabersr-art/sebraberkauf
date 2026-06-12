@@ -24,11 +24,11 @@ function num(value: number | null | undefined, fmt: (n: number) => string = fmtE
 }
 
 function exportCSV(rows: any[]) {
-  const headers = ["ID","Projekt","Status","Score","Entscheidung","Link","Titel","Bezirk","Kaufpreis","Fläche","Preis/m²","Zimmer","Baujahr","Miete","Brutto","Netto","Cashflow","LTV","Datenqualität","Mietrecht","Zustand","Fehlend"];
+  const headers = ["ID","Projekt","Status","Bewertung","Link","Titel","Bezirk","Kaufpreis","Fläche","Preis/m²","Zimmer","Baujahr","Miete","Brutto","Netto","Cashflow","LTV","Datenqualität","Mietrecht","Zustand","Fehlend"];
   const csv = [
     headers.join(";"),
-    ...rows.map(({p,c,s,dq,projectName}) => [
-      p.id, projectName, p.status, s.total, s.entscheidung, p.link, p.title, p.bezirk,
+    ...rows.map(({p,c,dq,projectName,avg}) => [
+      p.id, projectName, p.status, avg != null ? avg.toFixed(1) : "", p.link, p.title, p.bezirk,
       p.kaufpreis ?? "", p.wohnflaecheM2 ?? "", Math.round(c.preisProM2), p.zimmer ?? "", p.baujahr ?? "",
       p.nettomieteMtl ?? "", (c.bruttorendite*100).toFixed(2), (c.nettorendite*100).toFixed(2),
       Math.round(c.cashflowMtl), (c.ltv*100).toFixed(1), dq.score, p.mietrecht, p.zustand,
