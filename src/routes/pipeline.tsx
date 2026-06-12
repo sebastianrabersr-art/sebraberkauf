@@ -76,6 +76,14 @@ function Pipeline() {
     setShowAddModal(false);
     setFilter("Alle");
   };
+  useEffect(() => {
+    if (!showAddModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowAddModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showAddModal]);
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
     <div
