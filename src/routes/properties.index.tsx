@@ -199,14 +199,7 @@ function PropertiesList() {
           <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
           <SelectWrap>
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
-              <option value="bewertung">Sort: Bewertung</option>
-              <option value="kaufpreis">Kaufpreis</option>
-              <option value="preisM2">Preis/m²</option>
-              <option value="brutto">Bruttorendite</option>
-              <option value="netto">Nettorendite</option>
-              <option value="cashflow">Cashflow</option>
-              <option value="dq">Datenqualität</option>
-              <option value="createdAt">Datum</option>
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </SelectWrap>
           <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
