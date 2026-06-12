@@ -496,6 +496,8 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
       </div>
 
 
+      <ComparisonExportBar items={items} sections={sections} />
+
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
