@@ -40,7 +40,7 @@ const inputCls =
   "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 const labelCls = "text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium mb-1 block";
 
-type TabKey = "uebersicht" | "finanzen" | "dokumente";
+type TabKey = "uebersicht" | "finanzen" | "dokumente" | "verwaltung";
 
 function PortfolioDetail() {
   const { id } = Route.useParams();
