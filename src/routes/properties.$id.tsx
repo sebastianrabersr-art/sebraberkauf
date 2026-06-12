@@ -1449,24 +1449,8 @@ function VerificationChecklist({ p, dq, u }: {
   dq: ReturnType<typeof calcDataQuality>;
   u: (patch: Partial<Property>) => void;
 }) {
-  if (p.dataVerified) {
-    return (
-      <div
-        className="inline-flex items-center gap-2 rounded-[10px]"
-        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "8px 14px" }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-        <span className="text-[12px] font-medium" style={{ color: "#2D6A4F" }}>Daten geprüft &amp; bestätigt</span>
-        <button
-          type="button"
-          onClick={() => u({ dataVerified: false })}
-          className="text-[11px] text-[#78716C] hover:text-[#1C1917] ml-1 underline"
-        >
-          zurücksetzen
-        </button>
-      </div>
-    );
-  }
+  const [expanded, setExpanded] = useState(false);
+  if (p.dataVerified) return null;
 
   const groups = [
     { key: "basis", label: "Basisdaten" },
@@ -1479,10 +1463,23 @@ function VerificationChecklist({ p, dq, u }: {
   const kostenOk = getFieldsByGroup("kosten").every((f) => f.check(p));
   const canVerify = basisOk && kostenOk;
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+      >
+        Daten prüfen <ChevronDown className="size-3.5" /> ({dq.filled}/{dq.total})
+      </button>
+    );
+  }
+
   return (
     <div className="rounded-[12px] border border-[#EAE6DF] bg-white" style={{ padding: "16px 20px" }}>
       <div className="flex items-center justify-between mb-3">
         <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
+
         <div className="text-[11px] text-[#78716C]">{dq.filled}/{dq.total} ausgefüllt</div>
       </div>
 
