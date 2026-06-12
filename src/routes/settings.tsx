@@ -149,6 +149,10 @@ function SettingsPage() {
           )}
         </section>
 
+        <PromoCodeCard />
+
+
+
         <section className="rounded-xl border bg-card p-6">
           <h2 className="font-semibold">Profil</h2>
           <div className="grid sm:grid-cols-2 gap-4 mt-4">
