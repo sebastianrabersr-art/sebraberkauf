@@ -1,23 +1,23 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix } from "@phosphor-icons/react";
+import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix, UserCircle, Sparkle, SignOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { planLabel, useAuth } from "@/lib/auth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
-const NAV_PRIMARY: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { to: "/properties", label: "Kaufkandidaten", icon: Database },
-  { to: "/vergleich", label: "Analyse", icon: GitCompareArrows },
+const NAV_PRIMARY: { to: string; label: string; icon: React.ComponentType<any> }[] = [
+  { to: "/dashboard", label: "Dashboard", icon: ChartPieSlice },
+  { to: "/properties", label: "Kaufkandidaten", icon: Buildings },
+  { to: "/vergleich", label: "Vergleichen", icon: GitDiff },
   { to: "/rechner", label: "Rechner", icon: Calculator },
 ];
 
-const NAV_SECONDARY: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
-  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
-  { to: "/projects", label: "Projekte", icon: FolderKanban },
-  { to: "/assumptions", label: "Einstellungen", icon: Settings },
+const NAV_SECONDARY: { to: string; label: string; icon: React.ComponentType<any> }[] = [
+  { to: "/pipeline", label: "Pipeline", icon: Kanban },
+  { to: "/portfolio", label: "Portfolio", icon: Vault },
+  { to: "/projects", label: "Projekte", icon: FolderSimple },
+  { to: "/assumptions", label: "Einstellungen", icon: GearSix },
 ];
 
 const ALL_NAV = [...NAV_PRIMARY, ...NAV_SECONDARY];
@@ -56,7 +56,7 @@ function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pat
                 ? "text-[#2D6A4F] font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-[#2D6A4F] before:rounded-full"
                 : "text-[#78716C] hover:bg-[#EAE6DF] rounded-lg",
             )}>
-            <n.icon className={cn("size-4 shrink-0", active ? "text-[#2D6A4F]" : "text-[#78716C]")} />
+            <n.icon weight="duotone" size={18} color={active ? "#2D6A4F" : "#A8A29E"} className="shrink-0" />
             <span className="truncate">{n.label}</span>
           </Link>
         );
@@ -131,17 +131,17 @@ function AccountBox() {
     <div className="p-3 border-t border-[#EAE6DF] space-y-1">
       <Link to="/settings" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
         <div className="size-8 rounded-full bg-[#E8F5EE] text-[#2D6A4F] grid place-items-center">
-          <UserCircle className="size-4" />
+          <UserCircle weight="duotone" size={18} color="#2D6A4F" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-sm text-[#1C1917]">{profile?.name || profile?.email || "Account"}</div>
           <div className="text-[10px] text-[#A8A29E] flex items-center gap-1">
-            <Sparkles className="size-3" /> {planLabel(subscription?.plan)}
+            <Sparkle weight="duotone" size={14} color="#A8A29E" /> {planLabel(subscription?.plan)}
           </div>
         </div>
       </Link>
       <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#EAE6DF] text-xs text-[#78716C]">
-        <LogOut className="size-3.5" /> Abmelden
+        <SignOut weight="duotone" size={16} color="#78716C" /> Abmelden
       </button>
     </div>
   );
