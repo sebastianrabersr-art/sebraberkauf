@@ -1627,7 +1627,7 @@ function N({ value, on, edit }: { value: number | null | undefined; on: (v: numb
         if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
-      className={selectCls}
+      className={inputCls}
     />
   );
 }
