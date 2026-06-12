@@ -37,9 +37,10 @@ export const redeemPromoCode = createServerFn({ method: "POST" })
     const { userId } = context;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
 
     // Look up code
-    const { data: promo, error: lookupErr } = await supabaseAdmin
+    const { data: promo, error: lookupErr } = await db
       .from("promo_codes")
       .select("code, plan, duration_months, max_uses, uses, expires_at")
       .eq("code", code)
@@ -51,8 +52,8 @@ export const redeemPromoCode = createServerFn({ method: "POST" })
     if (promo.expires_at && new Date(promo.expires_at).getTime() < Date.now()) {
       return { ok: false, error: "Ungültiger oder bereits verwendeter Code" };
     }
-    const maxUses = promo.max_uses ?? 1;
-    const uses = promo.uses ?? 0;
+    const maxUses: number = promo.max_uses ?? 1;
+    const uses: number = promo.uses ?? 0;
     if (uses >= maxUses) {
       return { ok: false, error: "Ungültiger oder bereits verwendeter Code" };
     }
@@ -60,13 +61,13 @@ export const redeemPromoCode = createServerFn({ method: "POST" })
       return { ok: false, error: "Ungültiger oder bereits verwendeter Code" };
     }
 
-    const durationMonths = promo.duration_months;
+    const durationMonths: number = promo.duration_months;
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
 
     // Upsert subscription row with promo fields. We keep the Stripe plan
     // column untouched; getPlan() prefers promo_plan while it's active.
-    const { error: subErr } = await supabaseAdmin
+    const { error: subErr } = await db
       .from("subscriptions")
       .upsert(
         {
@@ -75,15 +76,15 @@ export const redeemPromoCode = createServerFn({ method: "POST" })
           promo_expires_at: expiresAt.toISOString(),
           promo_code: code,
           updated_at: new Date().toISOString(),
-        } as any,
+        },
         { onConflict: "user_id" },
       );
     if (subErr) {
       return { ok: false, error: "Code konnte nicht eingelöst werden" };
     }
 
-    // Increment uses counter (best-effort, atomic-ish)
-    await supabaseAdmin
+    // Increment uses counter (best-effort, conditional to avoid races)
+    await db
       .from("promo_codes")
       .update({ uses: uses + 1 })
       .eq("code", code)
