@@ -74,7 +74,6 @@ function Pipeline() {
   const addToPipeline = (id: string) => {
     updateProperty(id, { prozessStatus: "Kontaktiert", bewertung: "Interessant" });
     setShowAddModal(false);
-    setFilter("Alle");
   };
   useEffect(() => {
     if (!showAddModal) return;
