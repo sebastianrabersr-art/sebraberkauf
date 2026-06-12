@@ -61,7 +61,7 @@ function PropertiesList() {
   const [minScore, setMinScore] = useState(0);
   const [minDQ, setMinDQ] = useState(0);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("score");
+  const [sort, setSort] = useState<SortKey>("bewertung");
   const [scopeAll, setScopeAll] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
@@ -76,11 +76,11 @@ function PropertiesList() {
       .filter((p) => (search ? (p.title + p.bezirk + p.adresse + p.platform).toLowerCase().includes(search.toLowerCase()) : true))
       .map((p) => {
         const c = calcProperty(p, assumptions);
-        const s = calcScore(p, assumptions, c);
         const dq = calcDataQuality(p);
-        return { p, c, s, dq, projectName: projectName(p.projectId) };
+        const avg = userRatingAvg(p.userRating);
+        return { p, c, dq, projectName: projectName(p.projectId), avg };
       })
-      .filter((r) => r.s.total >= minScore && r.dq.score >= minDQ)
+      .filter((r) => (minScore > 0 ? (r.avg ?? 0) * 10 >= minScore : true) && r.dq.score >= minDQ)
       .sort((a, b) => {
         switch (sort) {
           case "kaufpreis": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
@@ -90,7 +90,7 @@ function PropertiesList() {
           case "cashflow": return b.c.cashflowMtl - a.c.cashflowMtl;
           case "dq": return b.dq.score - a.dq.score;
           case "createdAt": return b.p.createdAt.localeCompare(a.p.createdAt);
-          default: return b.s.total - a.s.total;
+          default: return (b.avg ?? -1) - (a.avg ?? -1);
         }
       });
   }, [properties, assumptions, activeProject.id, scopeAll, statusFilter, mietrechtFilter, bezirkFilter, search, sort, minScore, minDQ, projects]);
