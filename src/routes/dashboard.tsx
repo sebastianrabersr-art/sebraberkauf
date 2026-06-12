@@ -283,38 +283,36 @@ function Dashboard() {
 
           <TabsContent value="markt" className="mt-6">
             <div className="grid lg:grid-cols-2 gap-4">
-              <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
-                <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Score-Verteilung</h3>
-                <ResponsiveContainer width="100%" height={240}>
+              <ChartCard title="Score-Verteilung">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={scoreBuckets} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EAE6DF" vertical={false} />
-                    <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
-                    <YAxis fontSize={11} allowDecimals={false} tickLine={false} axisLine={false} stroke="#A8A29E" />
-                    <Tooltip cursor={{ fill: "#FAFAF8" }} contentStyle={{ borderRadius: 10, border: "1px solid #EAE6DF", fontSize: 12 }} />
-                    <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                    <CartesianGrid {...CHART_STYLE.grid} vertical={false} />
+                    <XAxis dataKey="name" tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
+                    <YAxis tick={CHART_STYLE.axisTick} allowDecimals={false} tickLine={false} axisLine={CHART_STYLE.axisLine} />
+                    <Tooltip cursor={{ fill: "#FAFAF8" }} contentStyle={CHART_STYLE.tooltipContent} />
+                    <Bar dataKey="count" radius={CHART_STYLE.bar.radius}>
                       {scoreBuckets.map((_, i) => (
-                        <Cell key={i} fill={i === 0 ? "#DC2626" : i === 1 ? "#D97706" : "#2D6A4F"} />
+                        <Cell key={i} fill={i === 0 ? CHART_STYLE.colors.negative : i === 1 ? "#D97706" : CHART_STYLE.colors.positive} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
-                <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Kaufpreis vs. Bruttorendite</h3>
-                <ResponsiveContainer width="100%" height={240}>
+              </ChartCard>
+              <ChartCard title="Kaufpreis vs. Bruttorendite">
+                <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EAE6DF" />
-                    <XAxis dataKey="x" name="Kaufpreis" tickFormatter={(v) => `${Math.round(v / 1000)}k`} fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
-                    <YAxis dataKey="y" name="Bruttorendite %" fontSize={11} tickLine={false} axisLine={false} stroke="#A8A29E" />
-                    <Tooltip formatter={(v: any, n) => (n === "x" ? fmtEUR(v) : `${Number(v).toFixed(2)}%`)} labelFormatter={() => ""} contentStyle={{ borderRadius: 10, border: "1px solid #EAE6DF", fontSize: 12 }} />
+                    <CartesianGrid {...CHART_STYLE.grid} />
+                    <XAxis dataKey="x" name="Kaufpreis" tickFormatter={(v) => `${Math.round(v / 1000)}k`} tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
+                    <YAxis dataKey="y" name="Bruttorendite %" tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
+                    <Tooltip formatter={(v: any, n) => (n === "x" ? fmtEUR(v) : `${Number(v).toFixed(2)}%`)} labelFormatter={() => ""} contentStyle={CHART_STYLE.tooltipContent} />
                     <Scatter data={scatter}>
                       {scatter.map((d, i) => (
-                        <Cell key={i} fill={d.ampel === "green" ? "#2D6A4F" : d.ampel === "yellow" ? "#D97706" : "#DC2626"} />
+                        <Cell key={i} fill={d.ampel === "green" ? CHART_STYLE.colors.positive : d.ampel === "yellow" ? "#D97706" : CHART_STYLE.colors.negative} />
                       ))}
                     </Scatter>
                   </ScatterChart>
                 </ResponsiveContainer>
-              </div>
+              </ChartCard>
             </div>
           </TabsContent>
         </Tabs>
