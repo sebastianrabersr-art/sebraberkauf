@@ -103,6 +103,7 @@ function PortfolioDetail() {
             ["uebersicht", "Übersicht"],
             ["finanzen", "Finanzen"],
             ["dokumente", "Dokumente & Kosten"],
+            ["verwaltung", "Verwaltung"],
           ] as [TabKey, string][]).map(([k, label]) => {
             const active = tab === k;
             return (
