@@ -117,6 +117,23 @@ function matchesPath(pathname: string, prefix: string) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target as HTMLInputElement | null;
+      if (!t || t.tagName !== "INPUT") return;
+      if (t.type !== "number") return;
+      // Clear "0" prefix so users can type fresh
+      if (t.value === "0") {
+        t.value = "";
+        t.dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        // Defer to after browser's default focus selection
+        setTimeout(() => { try { t.select(); } catch {} }, 0);
+      }
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
