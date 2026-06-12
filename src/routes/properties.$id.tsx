@@ -295,7 +295,7 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed }: {
+function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed, navTo }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>;
   u: (patch: Partial<Property>) => void;
@@ -304,6 +304,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   onGoMietrecht: () => void; onGoCrm: () => void;
   dqBannerDismissed: boolean;
   setDqBannerDismissed: (v: boolean) => void;
+  navTo: (target: TabKey, sectionId?: string) => void;
 }) {
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
@@ -314,6 +315,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   if (dq.score < 70) alerts.push({ text: `Daten unvollständig (${dq.missing.slice(0, 2).join(", ")}${dq.missing.length > 2 ? "…" : ""})`, tone: "amber" });
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
+  const [alertsExpanded, setAlertsExpanded] = useState(false);
+  const visibleAlerts = alertsExpanded ? alerts : alerts.slice(0, 2);
+  const hiddenAlertsCount = alerts.length - visibleAlerts.length;
 
   const scrollToFirstMissing = () => {
     const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
@@ -346,8 +350,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       </div>
 
       {alerts.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {alerts.map((a, i) => (
+        <div className="flex flex-wrap gap-2 items-center">
+          {visibleAlerts.map((a, i) => (
             <span key={i} className="inline-flex items-center gap-1.5 text-[12px] rounded-full px-3 py-1" style={{
               background: a.tone === "red" ? "#FEE2E2" : "#FEF3C7",
               color: a.tone === "red" ? "#991B1B" : "#92400E",
@@ -355,10 +359,33 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               <AlertTriangle className="size-3" /> {a.text}
             </span>
           ))}
+          {hiddenAlertsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setAlertsExpanded(true)}
+              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+            >
+              + {hiddenAlertsCount} weitere
+            </button>
+          )}
+          {alertsExpanded && alerts.length > 2 && (
+            <button
+              type="button"
+              onClick={() => setAlertsExpanded(false)}
+              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+            >
+              weniger
+            </button>
+          )}
         </div>
       )}
 
+      {!p.dataVerified && (
+        <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
+      )}
+
       <VerificationChecklist p={p} dq={dq} u={u} />
+
 
 
 
