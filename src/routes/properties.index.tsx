@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
+import { calcDataQuality, calcProperty, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import { ScoreInfo } from "@/components/ScoreInfo";
+import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/properties/")({
   component: PropertiesList,
 });
 
-type SortKey = "score" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
+type SortKey = "bewertung" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
 
 // Hilfsfunktion: leere/0-Werte als em-dash anzeigen
 function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
@@ -24,11 +24,11 @@ function num(value: number | null | undefined, fmt: (n: number) => string = fmtE
 }
 
 function exportCSV(rows: any[]) {
-  const headers = ["ID","Projekt","Status","Score","Entscheidung","Link","Titel","Bezirk","Kaufpreis","Fläche","Preis/m²","Zimmer","Baujahr","Miete","Brutto","Netto","Cashflow","LTV","Datenqualität","Mietrecht","Zustand","Fehlend"];
+  const headers = ["ID","Projekt","Status","Bewertung","Link","Titel","Bezirk","Kaufpreis","Fläche","Preis/m²","Zimmer","Baujahr","Miete","Brutto","Netto","Cashflow","LTV","Datenqualität","Mietrecht","Zustand","Fehlend"];
   const csv = [
     headers.join(";"),
-    ...rows.map(({p,c,s,dq,projectName}) => [
-      p.id, projectName, p.status, s.total, s.entscheidung, p.link, p.title, p.bezirk,
+    ...rows.map(({p,c,dq,projectName,avg}) => [
+      p.id, projectName, p.status, avg != null ? avg.toFixed(1) : "", p.link, p.title, p.bezirk,
       p.kaufpreis ?? "", p.wohnflaecheM2 ?? "", Math.round(c.preisProM2), p.zimmer ?? "", p.baujahr ?? "",
       p.nettomieteMtl ?? "", (c.bruttorendite*100).toFixed(2), (c.nettorendite*100).toFixed(2),
       Math.round(c.cashflowMtl), (c.ltv*100).toFixed(1), dq.score, p.mietrecht, p.zustand,
@@ -61,7 +61,7 @@ function PropertiesList() {
   const [minScore, setMinScore] = useState(0);
   const [minDQ, setMinDQ] = useState(0);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("score");
+  const [sort, setSort] = useState<SortKey>("bewertung");
   const [scopeAll, setScopeAll] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
@@ -76,11 +76,11 @@ function PropertiesList() {
       .filter((p) => (search ? (p.title + p.bezirk + p.adresse + p.platform).toLowerCase().includes(search.toLowerCase()) : true))
       .map((p) => {
         const c = calcProperty(p, assumptions);
-        const s = calcScore(p, assumptions, c);
         const dq = calcDataQuality(p);
-        return { p, c, s, dq, projectName: projectName(p.projectId) };
+        const avg = userRatingAvg(p.userRating);
+        return { p, c, dq, projectName: projectName(p.projectId), avg };
       })
-      .filter((r) => r.s.total >= minScore && r.dq.score >= minDQ)
+      .filter((r) => (minScore > 0 ? (r.avg ?? 0) * 10 >= minScore : true) && r.dq.score >= minDQ)
       .sort((a, b) => {
         switch (sort) {
           case "kaufpreis": return (b.p.kaufpreis ?? 0) - (a.p.kaufpreis ?? 0);
@@ -90,7 +90,7 @@ function PropertiesList() {
           case "cashflow": return b.c.cashflowMtl - a.c.cashflowMtl;
           case "dq": return b.dq.score - a.dq.score;
           case "createdAt": return b.p.createdAt.localeCompare(a.p.createdAt);
-          default: return b.s.total - a.s.total;
+          default: return (b.avg ?? -1) - (a.avg ?? -1);
         }
       });
   }, [properties, assumptions, activeProject.id, scopeAll, statusFilter, mietrechtFilter, bezirkFilter, search, sort, minScore, minDQ, projects]);
@@ -157,7 +157,7 @@ function PropertiesList() {
           </select>
           <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
           <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
-            <option value="score">Sort: Score</option>
+            <option value="bewertung">Sort: Bewertung</option>
             <option value="kaufpreis">Kaufpreis</option>
             <option value="preisM2">Preis/m²</option>
             <option value="brutto">Bruttorendite</option>
@@ -167,7 +167,7 @@ function PropertiesList() {
             <option value="createdAt">Datum</option>
           </select>
           <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
-            Score≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+            Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
           </label>
           <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
             DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
@@ -193,7 +193,7 @@ function PropertiesList() {
             <thead>
               <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
                 {([
-                  ["Score","__score__","left"],
+                  ["Bewertung","Persönliche Bewertung (Ø 1–10)","left"],
                   ["Status","Aktueller CRM-Status","left"],
                   ["Prio","Priorität für deine Pipeline","left"],
                   ["Titel","Inserats-Titel","left"],
@@ -217,24 +217,22 @@ function PropertiesList() {
                 ] as const).map(([h,tip,align]) => (
                   <th
                     key={h}
-                    title={tip === "__score__" ? undefined : tip}
+                    title={tip || undefined}
                     className={`px-4 font-semibold text-[11px] uppercase text-[#A8A29E] whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}
                     style={{ letterSpacing: "0.07em", height: 44 }}
                   >
                     <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end w-full" : ""}`}>
-                      {h}{tip === "__score__" && <ScoreInfo />}
+                      {h}
                     </span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ p, c, s, dq, projectName }) => {
+              {rows.map(({ p, c, dq, projectName, avg }) => {
                 const maps = (p.lat && p.lng)
                   ? mapsUrlFromCoords(p.lat, p.lng)
                   : googleMapsUrl(p);
-                const score = s.total as number;
-                const scoreColor = score >= 65 ? "#2D6A4F" : score >= 50 ? "#D97706" : "#A8A29E";
                 return (
                   <tr
                     key={p.id}
@@ -243,8 +241,13 @@ function PropertiesList() {
                     style={{ minHeight: 64 }}
                   >
                     <td className="py-3 px-4 align-middle" style={{ minHeight: 64 }}>
-                      <div className="leading-none tabular-nums" style={{ ...bricolage, fontWeight: 800, fontSize: 20, color: scoreColor }}>{score}</div>
-                      <div className="mt-1.5"><AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge></div>
+                      {avg != null ? (
+                        <div className="tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: 14, color: "#2D6A4F" }}>
+                          Ø {avg.toFixed(1)}
+                        </div>
+                      ) : (
+                        <div className="text-[14px] text-[#A8A29E]">—</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 align-middle">
                       <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-[#78716C]">{p.status}</span>

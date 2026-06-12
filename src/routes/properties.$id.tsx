@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords, scoreBreakdown } from "@/lib/calc";
+import { calcDataQuality, calcProperty, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
@@ -10,11 +10,11 @@ import { OpenQuestionsPanel } from "@/components/OpenQuestionsPanel";
 import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
 import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
 import { ProjectionTable } from "@/components/ProjectionTable";
-import { ScoreInfo } from "@/components/ScoreInfo";
+
 import { PaymentsPanel } from "@/components/PaymentsPanel";
 import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
-import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
+import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -49,7 +49,6 @@ function Detail() {
   if (!p) throw notFound();
 
   const c = calcProperty(p, assumptions);
-  const s = calcScore(p, assumptions, c);
   const dq = calcDataQuality(p);
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
@@ -61,7 +60,6 @@ function Detail() {
   const mietrecht = inferMietrecht(p);
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
-  const cats = scoreBreakdown(p, assumptions, c, s);
 
   const [tab, setTab] = useState<TabKey>("uebersicht");
   const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
@@ -158,10 +156,6 @@ function Detail() {
           {[p.bezirk, p.platform, project?.name, `hinzugefügt ${new Date(p.createdAt).toLocaleDateString("de-AT")}`].filter(Boolean).join(" · ")}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-[#E8F5EE] text-[#2D6A4F] px-3 py-1 text-[12px] font-medium">
-            Score {s.total} · {s.entscheidung}
-          </span>
-          <ScoreInfo />
           <span className="inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
             DQ {dq.score}% · {dq.level}
           </span>
@@ -264,49 +258,21 @@ function Detail() {
           className="hidden lg:block bg-[#FAFAF8] border-l border-[#EAE6DF] px-4 py-5 overflow-y-auto"
           style={{ width: 240, flex: "0 0 240px", position: "sticky", top: 0, height: "100vh" }}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Score</div>
-          <div className="mt-1 text-[44px] leading-none text-[#1C1917]" style={{ ...bricolage, fontWeight: 800 }}>{s.total}</div>
-          <div className="text-[12px] text-[#78716C]">von 100 Punkten</div>
-
-          <div className="mt-5 space-y-2.5">
-            {cats.map((cat) => {
-              const pct = cat.max > 0 ? (cat.value / cat.max) * 100 : 0;
-              const color = pct >= 70 ? "#2D6A4F" : pct >= 40 ? "#D97706" : "#DC2626";
-              return (
-                <div key={cat.key}>
-                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                    <span className="text-[12px] font-medium text-[#1C1917] truncate">{cat.label}</span>
-                    <span className="text-[12px] text-[#78716C] tabular-nums shrink-0">{cat.value.toFixed(1)}/{cat.max}</span>
-                  </div>
-                  <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden">
-                    <div className="h-full rounded-[3px]" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: color }} />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-1.5">Datenqualität</div>
+          <div className="text-[44px] leading-none text-[#1C1917]" style={{ ...bricolage, fontWeight: 800 }}>{dq.score}%</div>
+          <div className="text-[12px] text-[#78716C]">{dq.level}</div>
+          <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden my-2">
+            <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
           </div>
-
-          <div className="mt-5 rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider font-semibold text-[#2D6A4F]">Einschätzung</div>
-            <div className="text-[14px] font-semibold text-[#1C1917] mt-0.5">{s.entscheidung}</div>
-            <div className="text-[11px] text-[#78716C] mt-0.5">Ampel {s.ampel}</div>
-          </div>
+          <div className="text-[12px] text-[#78716C]">{dq.filled} von {dq.total} Pflichtfeldern</div>
 
           {mietrecht.risiko !== "niedrig" && (
-            <div className="mt-3 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
+            <div className="mt-5 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
               <div className="text-[10px] uppercase tracking-wider font-semibold text-[#92400E]">Mietrecht-Risiko</div>
               <div className="text-[13px] font-semibold text-[#1C1917] mt-0.5">{mietrecht.kategorie}</div>
               <div className="text-[11px] text-[#78716C] mt-0.5">Risiko: {mietrecht.risiko}</div>
             </div>
           )}
-
-          <div className="mt-5">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-1.5">Datenqualität</div>
-            <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden mb-1.5">
-              <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
-            </div>
-            <div className="text-[12px] text-[#78716C]">{dq.filled} von {dq.total} Pflichtfeldern</div>
-          </div>
         </aside>
       </div>
     </AppShell>
@@ -610,6 +576,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <Section title="Zahlungen & Cashflow"><PaymentsPanel p={p} /></Section>
         </>
       )}
+
+      <MeineBewertung p={p} u={u} />
     </>
   );
 }
@@ -1733,3 +1701,67 @@ function SetupWalkthrough({ propertyId, navTo, p, dq }: {
   );
 }
 
+
+// ============ MEINE BEWERTUNG ============
+function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+  const [open, setOpen] = useState(false);
+  const r = p.userRating ?? {};
+  const avg = userRatingAvg(r);
+  const sliders: { key: keyof UserRating; label: string }[] = [
+    { key: "lage", label: "Lage" },
+    { key: "preisLeistung", label: "Preis-Leistung" },
+    { key: "zustand", label: "Zustand" },
+    { key: "vermietbarkeit", label: "Vermietbarkeit" },
+    { key: "bauchgefuehl", label: "Bauchgefühl" },
+  ];
+  const set = (k: keyof UserRating, v: number) => {
+    u({ userRating: { ...r, [k]: v } });
+  };
+  return (
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white" style={{ padding: "12px 16px" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 text-left"
+      >
+        <span className="text-[13px] font-semibold text-[#1C1917]">Meine Bewertung</span>
+        <span className="flex items-center gap-2">
+          {avg != null && !open && (
+            <span className="text-[12px] text-[#78716C]">⭐ {avg.toFixed(1)}</span>
+          )}
+          <ChevronRight className={`size-4 text-[#A8A29E] transition-transform ${open ? "rotate-90" : ""}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="mt-3 space-y-3">
+          {sliders.map((s) => {
+            const val = (r[s.key] ?? 5) as number;
+            return (
+              <div key={s.key} className="flex items-center gap-3">
+                <span className="text-[12px] text-[#1C1917] w-32 shrink-0">{s.label}</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={val}
+                  onChange={(e) => set(s.key, Number(e.target.value))}
+                  className="flex-1 accent-[#2D6A4F]"
+                />
+                <span className="text-[14px] w-7 text-right tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
+                  {r[s.key] != null ? val : "—"}
+                </span>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-end gap-2 border-t border-[#EAE6DF] pt-2">
+            <span className="text-[12px] text-[#78716C]">Ø</span>
+            <span className="text-[14px]" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
+              {avg != null ? avg.toFixed(1) : "—"} / 10
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

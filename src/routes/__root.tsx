@@ -6,7 +6,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 
@@ -117,6 +117,28 @@ function matchesPath(pathname: string, prefix: string) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target as HTMLInputElement | null;
+      if (!t || t.tagName !== "INPUT") return;
+      if (t.type !== "number") return;
+      // Select all on focus; if user types, the existing value (incl. "0") is replaced.
+      setTimeout(() => {
+        try {
+          if (t.value === "0") {
+            // Clear "0" so it isn't kept as a prefix when user starts typing digits.
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+            setter?.call(t, "");
+            t.dispatchEvent(new Event("input", { bubbles: true }));
+          } else {
+            t.select();
+          }
+        } catch {}
+      }, 0);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

@@ -205,8 +205,6 @@ function Pipeline() {
                     const c = calcProperty(p, a);
                     const bw = getBewertung(p);
                     const st = BEWERTUNG_STYLE[bw];
-                    const score = (p.scoreLage ?? 0) + (p.scoreVermietbarkeit ?? 0) + (p.scoreZustand ?? 0) + (p.scoreRecht ?? 0) + (p.scoreWiederverkauf ?? 0);
-                    const scoreColor = score >= 70 ? "#2D6A4F" : score >= 40 ? "#D97706" : "#DC2626";
                     const cashColor = c.cashflowMtl >= 0 ? "#2D6A4F" : "#DC2626";
                     const cashBg = c.cashflowMtl >= 0 ? "#E8F5EE" : "#FEE2E2";
 
@@ -253,7 +251,6 @@ function Pipeline() {
                         <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 mt-1">{p.title || "—"}</div>
                         <div className="text-[11px] text-[#A8A29E] mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[14px]" style={{ ...bricolage, fontWeight: 700, color: scoreColor }}>{score}</span>
                           <span className="text-[11px] px-1.5 py-0.5 rounded-[6px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
                         </div>
                         {p.nextAction && (
