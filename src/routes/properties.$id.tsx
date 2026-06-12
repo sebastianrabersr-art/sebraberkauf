@@ -491,21 +491,20 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           </F>
           <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
           <F label="Berechnungsbasis">
-            <select value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })} className={selectCls}>
+            <Sel value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })}>
               <option value="brutto">Kaufpreis brutto</option>
               <option value="netto">Kaufpreis netto</option>
-            </select>
+            </Sel>
           </F>
           <F label="Maklerkosten zahlbar?">
-            <select
+            <Sel
               value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
               onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
-              className={selectCls}
             >
               <option value="auto">Automatisch ({c.maklerKostenZahlbar ? "Ja" : "Nein"})</option>
               <option value="ja">Ja</option>
               <option value="nein">Nein</option>
-            </select>
+            </Sel>
           </F>
         </div>
         <div className="mt-3"><PurchaseCostsDetails p={p} c={c} u={u} /></div>
