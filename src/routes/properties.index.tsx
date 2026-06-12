@@ -175,52 +175,58 @@ function PropertiesList() {
       </div>
 
       {/* Filterleiste */}
-      <div className="bg-[#FAFAF8] border-b border-[#EAE6DF] -mx-6 px-6 py-2.5 mb-4">
+      <div className="bg-white border border-[#EAE6DF] rounded-[12px] px-4 py-2.5 mb-2">
         <div className="flex flex-wrap items-center gap-2">
           <input
             placeholder="Suche…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={`${inputClass} min-w-[200px] flex-1 sm:max-w-xs`}
+            className={`${inputClass} flex-1 min-w-[160px]`}
           />
-          <SelectWrap>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClass}>
-              <option value="all">Status: aktive Kandidaten</option>
-              <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
+          <SelectWrap className="max-w-[160px] w-full sm:w-auto">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`${selectClass} w-full max-w-[160px]`}>
+              <option value="all">Status: aktiv</option>
+              <option value="all-inkl">Status: alle</option>
               {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </SelectWrap>
-          <SelectWrap>
-            <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className={selectClass}>
+          <SelectWrap className="max-w-[160px] w-full sm:w-auto">
+            <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className={`${selectClass} w-full max-w-[160px]`}>
               <option value="all">Mietrecht: alle</option>
               {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </SelectWrap>
-          <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
-          <SelectWrap>
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
+          <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-28`} />
+          <SelectWrap className="max-w-[160px] w-full sm:w-auto">
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={`${selectClass} w-full max-w-[160px]`}>
               {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </SelectWrap>
-          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
-            Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1`}>
+            Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-10 bg-transparent outline-none" />
           </label>
-          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
-            DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1`}>
+            DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-10 bg-transparent outline-none" />
           </label>
           <button
             onClick={() => exportCSV(rows)}
             title="CSV exportieren"
-            className="ml-auto inline-flex items-center justify-center size-9 rounded-lg border border-[#EAE6DF] bg-white text-[#78716C] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/30"
+            className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-[#78716C] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40"
           >
             <Download className="size-4" />
           </button>
         </div>
-        <label className="inline-flex items-center gap-2 text-[12px] text-[#78716C] mt-2">
-          <input type="checkbox" checked={scopeAll} onChange={(e) => setScopeAll(e.target.checked)} className="accent-[#2D6A4F]" />
-          Alle Projekte anzeigen (sonst nur aktives Projekt)
-        </label>
       </div>
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setScopeAll((v) => !v)}
+          className="text-[12px] text-[#78716C] hover:text-[#2D6A4F] underline-offset-2 hover:underline"
+        >
+          {scopeAll ? "Nur aktives Projekt anzeigen" : "Alle Projekte anzeigen"}
+        </button>
+      </div>
+
 
       {sort !== DEFAULT_SORT && (
         <div className="mb-3">
