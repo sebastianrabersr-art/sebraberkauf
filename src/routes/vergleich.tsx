@@ -134,24 +134,30 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
       {/* Filter bar */}
       <div className="bg-[#FAFAF8] border-y border-[#EAE6DF] -mx-6 px-6 py-3 mb-5">
         <div className="flex flex-wrap items-center gap-2">
-          <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className={selectCls}>
-            <option value="">Projekt: Alle</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectCls}>
-            <option value="">Status: Alle</option>
-            {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SelectWrap>
+            <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className={selectCls}>
+              <option value="">Projekt: Alle</option>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </SelectWrap>
+          <SelectWrap>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectCls}>
+              <option value="">Status: Alle</option>
+              {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </SelectWrap>
           <input
             value={orteQuery}
             onChange={(e) => setOrteQuery(e.target.value)}
             placeholder="Stadt / Bezirk"
-            className={selectCls + " min-w-[160px]"}
+            className={inputCls + " min-w-[160px]"}
           />
-          <select value={objektartFilter} onChange={(e) => setObjektartFilter(e.target.value)} className={selectCls}>
-            <option value="">Objektart: Alle</option>
-            {objektarten.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <SelectWrap>
+            <select value={objektartFilter} onChange={(e) => setObjektartFilter(e.target.value)} className={selectCls}>
+              <option value="">Objektart: Alle</option>
+              {objektarten.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </SelectWrap>
           <label className="flex items-center gap-2 h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917]">
             <span className="text-[#78716C]">Mindest-Score</span>
             <input type="range" min={0} max={100} value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-24" />
