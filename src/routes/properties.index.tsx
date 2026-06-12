@@ -83,7 +83,7 @@ function PropertiesList() {
   const [minScore, setMinScore] = useState(0);
   const [minDQ, setMinDQ] = useState(0);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("bewertung");
+  const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [scopeAll, setScopeAll] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
