@@ -1,10 +1,8 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
-import { useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
+import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl, mapsUrlFromCoords, scoreBreakdown } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
-import { ActivitiesPanel } from "@/components/ActivitiesPanel";
-import { CrmPanel } from "@/components/CrmPanel";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
@@ -18,7 +16,7 @@ import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
-import { AlertTriangle, ArrowLeft, ChevronRight, Copy, ExternalLink, MapPin, Pencil, Trash2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -791,87 +789,522 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
   const mig = migrateLegacyStatus(p.status);
   const bewertung: Bewertung = p.bewertung ?? mig.bewertung;
   const prozess: ProzessStatus = (p.prozessStatus ?? mig.prozessStatus) as ProzessStatus;
+  const assumptions = useActiveAssumptions();
 
-  const chip = (active: boolean) => ({
-    background: active ? "#2D6A4F" : "#F5F3EE",
-    color: active ? "#FFFFFF" : "#78716C",
-    border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
-    borderRadius: 20,
-    padding: "5px 12px",
-    fontSize: 12,
-    fontWeight: active ? 600 : 500,
-  });
+  const card: React.CSSProperties = {
+    background: "#FFFFFF",
+    border: "1px solid #EAE6DF",
+    borderRadius: 12,
+    padding: "16px 20px",
+    marginBottom: 12,
+  };
+
+  // ---- Bewertung chip colors ----
+  const bewertungActiveBg: Record<Bewertung, string> = {
+    "Neu": "#78716C",
+    "Interessant": "#2D6A4F",
+    "Prüfen": "#D97706",
+    "Nicht interessant": "#DC2626",
+  };
 
   return (
     <>
-      <Section title="Status" defaultOpen>
-        <div className="space-y-3">
+      {/* SECTION A — STATUS */}
+      <div style={card}>
+        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#A8A29E", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+        <div className="flex flex-wrap gap-2 mb-1">
+          {ALL_PROZESS_STATUSES.map((s) => {
+            const active = prozess === s;
+            return (
+              <button
+                key={s}
+                onClick={() => u({ prozessStatus: active ? "" : s })}
+                className="inline-flex items-center gap-1.5 rounded-full transition-colors"
+                style={{
+                  fontSize: 13, fontWeight: 500, padding: "8px 16px",
+                  border: active ? "1.5px solid #1C1917" : "1.5px solid #EAE6DF",
+                  background: active ? "#1C1917" : "#F5F3EE",
+                  color: active ? "#FFFFFF" : "#78716C",
+                }}
+              >
+                {s}
+                {active && <X className="size-3" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ height: 1, background: "#EAE6DF", margin: "12px 0" }} />
+
+        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#A8A29E", letterSpacing: "0.05em", textTransform: "uppercase" }}>Bewertung</div>
+        <div className="flex flex-wrap gap-2">
+          {ALL_BEWERTUNGEN.map((b) => {
+            const active = bewertung === b;
+            return (
+              <button
+                key={b}
+                onClick={() => u({ bewertung: b })}
+                className="rounded-full transition-colors"
+                style={{
+                  fontSize: 12, fontWeight: 500, padding: "6px 12px",
+                  border: active ? `1.5px solid ${bewertungActiveBg[b]}` : "1.5px solid #EAE6DF",
+                  background: active ? bewertungActiveBg[b] : "#F5F3EE",
+                  color: active ? "#FFFFFF" : "#78716C",
+                }}
+              >
+                {b}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SECTION B — NÄCHSTE AKTION */}
+      <div style={card}>
+        <NextActionCard p={p} u={u} />
+      </div>
+
+      {/* SECTION C — KONTAKT */}
+      <div style={card}>
+        <ContactList p={p} u={u} />
+      </div>
+
+      {/* SECTION D — ANGEBOTE & VERHANDLUNG */}
+      <div style={card}>
+        <OffersCard p={p} u={u} assumptions={assumptions} />
+      </div>
+
+      {/* SECTION E — AKTIVITÄTEN TIMELINE */}
+      <div style={card}>
+        <ActivityTimeline propertyId={p.id} />
+      </div>
+
+      {/* SECTION F — BESCHREIBUNG & NOTIZEN (Accordion) */}
+      <details className="group" style={card}>
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <h3 className="text-[14px] font-semibold text-[#1C1917]">Beschreibung & Notizen</h3>
+          <ChevronDown className="size-4 text-[#A8A29E] transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-3 space-y-3">
           <div>
-            <div className="text-[11px] text-[#A8A29E] mb-1.5">Prozess-Status:</div>
-            <div className="flex flex-wrap gap-1.5">
-              <button onClick={() => u({ prozessStatus: "" })} style={chip(!prozess)}>—</button>
-              {ALL_PROZESS_STATUSES.map((s) => (
-                <button key={s} onClick={() => u({ prozessStatus: s })} style={chip(prozess === s)}>{s}</button>
-              ))}
-            </div>
+            <div className="text-[11px] text-[#78716C] mb-1">Beschreibung (aus Inserat)</div>
+            <textarea
+              value={p.beschreibung ?? ""}
+              onChange={(e) => u({ beschreibung: e.target.value })}
+              rows={3}
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] italic p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+            />
           </div>
           <div>
-            <div className="text-[11px] text-[#A8A29E] mb-1.5">Bewertung:</div>
-            <div className="flex flex-wrap gap-1.5">
-              {ALL_BEWERTUNGEN.map((b) => (
-                <button key={b} onClick={() => u({ bewertung: b })} style={chip(bewertung === b)}>{b}</button>
-              ))}
-            </div>
+            <div className="text-[11px] text-[#78716C] mb-1">Eigene Notizen</div>
+            <textarea
+              value={p.notizen}
+              onChange={(e) => u({ notizen: e.target.value })}
+              rows={4}
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+            />
           </div>
         </div>
-      </Section>
+      </details>
 
-      <Section title="Follow-ups & Nächste Aktion" defaultOpen>
-        <div className="grid md:grid-cols-3 gap-3">
-          <F label="Priorität">
-            <select value={p.priority ?? ""} onChange={(e) => u({ priority: (e.target.value || null) as any })} className={selectCls}>
-              <option value="">—</option>
-              <option value="A">A – hoch</option>
-              <option value="B">B – mittel</option>
-              <option value="C">C – niedrig</option>
-            </select>
-          </F>
-          <F label="Nächste Aktion"><T value={p.nextAction ?? ""} edit on={(v) => u({ nextAction: v })} /></F>
-          <F label="Fällig am">
-            <input type="date" value={p.nextActionDate ?? ""} onChange={(e) => u({ nextActionDate: e.target.value || undefined })} className={selectCls} />
-          </F>
+      {/* SECTION G — CHECKLISTE & FRAGEN */}
+      <details className="group" style={card}>
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <h3 className="text-[14px] font-semibold text-[#1C1917]">Checkliste & Fragen</h3>
+          <ChevronDown className="size-4 text-[#A8A29E] transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-3">
+          <OpenQuestionsPanel p={p} />
         </div>
-      </Section>
-
-      <Section title="Aktivitäten / Verlauf" defaultOpen>
-        <ActivitiesPanel propertyId={p.id} />
-      </Section>
-
-      <Section title="Verkäufer & Makler" defaultOpen>
-        <CrmPanel p={p} edit={true} u={u} />
-      </Section>
-
-      <Section title="Beschreibung & Notizen">
-        <textarea
-          value={p.beschreibung ?? ""}
-          onChange={(e) => u({ beschreibung: e.target.value })}
-          rows={3} placeholder="Beschreibung aus dem Inserat…"
-          className="w-full rounded-lg border border-[#EAE6DF] bg-white p-3 text-sm focus:border-[#2D6A4F] outline-none"
-        />
-        <textarea
-          value={p.notizen}
-          onChange={(e) => u({ notizen: e.target.value })}
-          rows={4} placeholder="Eigene Notizen…"
-          className="w-full rounded-lg border border-[#EAE6DF] bg-white p-3 text-sm mt-3 focus:border-[#2D6A4F] outline-none"
-        />
-      </Section>
-
-      <Section title="Offene Fragen für Besichtigung & Prüfung">
-        <OpenQuestionsPanel p={p} />
-      </Section>
+      </details>
     </>
   );
 }
+
+// ---------- CRM helper subcomponents ----------
+const CRM_INPUT = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+
+function activityIconFor(type?: string) {
+  if (type === "Telefonat") return Phone;
+  if (type === "E-Mail" || type === "WhatsApp") return Mail;
+  if (type === "Besichtigung") return Calendar;
+  return CalendarPlus;
+}
+
+function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(p.nextAction ?? "");
+  const [date, setDate] = useState(p.nextActionDate ?? "");
+  const [type, setType] = useState<string>("Telefonat");
+  const [prio, setPrio] = useState<"Hoch" | "Mittel" | "Niedrig">(p.priority ?? "Mittel");
+
+  useEffect(() => { setTitle(p.nextAction ?? ""); setDate(p.nextActionDate ?? ""); }, [p.nextAction, p.nextActionDate]);
+
+  const hasAction = !!(p.nextAction || p.nextActionDate);
+  const Icon = activityIconFor(type);
+
+  const save = () => {
+    u({ nextAction: title.trim(), nextActionDate: date || undefined, priority: prio });
+    setEditing(false);
+  };
+
+  if (!hasAction && !editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="w-full flex flex-col items-center justify-center gap-1.5 transition-colors hover:bg-[#F5F3EE]"
+        style={{ border: "1.5px dashed #D4CFC8", background: "#FAFAF8", borderRadius: 10, padding: 16 }}
+      >
+        <CalendarPlus className="size-6" style={{ color: "#A8A29E" }} />
+        <span className="text-[13px]" style={{ color: "#A8A29E" }}>Nächste Aktion planen</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {hasAction && (
+        <div
+          className="flex items-center gap-3"
+          style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", borderRadius: 10, padding: "12px 16px" }}
+        >
+          <div className="grid place-items-center shrink-0" style={{ width: 36, height: 36, background: "#2D6A4F", borderRadius: 8 }}>
+            <Icon className="size-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.nextAction || "Nächste Aktion"}</div>
+            <div className="text-[11px] text-[#78716C]">
+              {p.nextActionDate && <>Fällig: {p.nextActionDate}</>}
+              {p.nextActionDate && p.priority && " · "}
+              {p.priority && <>Priorität: {p.priority}</>}
+            </div>
+          </div>
+          <button
+            onClick={() => u({ nextAction: "", nextActionDate: "", lastContactDate: new Date().toISOString().slice(0, 10) })}
+            className="text-[12px] rounded-md px-3 py-1.5 hover:bg-[#FAFAF8]"
+            style={{ border: "1px solid #EAE6DF", background: "#FFFFFF", color: "#1C1917" }}
+          >
+            Erledigt
+          </button>
+        </div>
+      )}
+
+      {!editing && hasAction && (
+        <button onClick={() => setEditing(true)} className="text-[12px] text-[#2D6A4F] hover:underline">+ Weitere Aktion</button>
+      )}
+
+      {editing && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <select value={type} onChange={(e) => setType(e.target.value)} className={CRM_INPUT}>
+              {["Telefonat", "E-Mail", "WhatsApp", "Besichtigung", "Follow-up", "Notiz"].map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel der Aktion" className={CRM_INPUT} />
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={CRM_INPUT} />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {(["Hoch", "Mittel", "Niedrig"] as const).map((x) => {
+              const active = prio === x;
+              return (
+                <button
+                  key={x}
+                  onClick={() => setPrio(x)}
+                  className="rounded-full"
+                  style={{
+                    fontSize: 12, fontWeight: 500, padding: "6px 12px",
+                    border: active ? "1.5px solid #1C1917" : "1.5px solid #EAE6DF",
+                    background: active ? "#1C1917" : "#F5F3EE",
+                    color: active ? "#FFFFFF" : "#78716C",
+                  }}
+                >
+                  {x}
+                </button>
+              );
+            })}
+            <div className="flex-1" />
+            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 text-[#78716C] hover:underline">Abbrechen</button>
+            <button onClick={save} className="text-[13px] rounded-lg px-4 py-2 font-medium" style={{ background: "#2D6A4F", color: "#FFFFFF" }}>Speichern</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | undefined;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [local, setLocal] = useState(value ?? "");
+  useEffect(() => { setLocal(value ?? ""); }, [value]);
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
+        <Icon className="size-[14px] text-[#78716C]" />
+      </div>
+      <div className="text-[11px] text-[#A8A29E] w-20 shrink-0">{label}</div>
+      {editing ? (
+        <input
+          type={type}
+          autoFocus
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={() => { setEditing(false); if (local !== (value ?? "")) onChange(local); }}
+          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+          className={CRM_INPUT + " flex-1"}
+        />
+      ) : (
+        <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-[#2D6A4F]">
+          {value || <span className="text-[#A8A29E]">—</span>}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ContactList({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+  const empty = !p.sellerName && !p.sellerCompany && !p.sellerPhone && !p.sellerEmail && !p.sellerWebsite && !p.sellerAddress;
+  const [expand, setExpand] = useState(!empty);
+
+  if (empty && !expand) {
+    return (
+      <button onClick={() => setExpand(true)} className="w-full flex items-center justify-center gap-2 py-3 text-[13px] text-[#A8A29E] hover:text-[#1C1917]">
+        <Pencil className="size-3.5" /> Noch kein Kontakt eingetragen
+      </button>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-[#A8A29E] uppercase tracking-wider mb-2">Kontakt</div>
+      <div className="flex items-center gap-3 py-2">
+        <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
+          <User className="size-[14px] text-[#78716C]" />
+        </div>
+        <div className="text-[11px] text-[#A8A29E] w-20 shrink-0">Typ</div>
+        <select value={p.sellerType ?? "unklar"} onChange={(e) => u({ sellerType: e.target.value as Property["sellerType"] })} className={CRM_INPUT + " flex-1"}>
+          {(["Privat", "Makler", "Bauträger", "Bank", "Sonstige", "unklar"] as const).map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <ContactRow icon={User} label="Name" value={p.sellerName} onChange={(v) => u({ sellerName: v })} />
+      <ContactRow icon={Building2} label="Firma" value={p.sellerCompany} onChange={(v) => u({ sellerCompany: v })} />
+      <ContactRow icon={Phone} label="Telefon" value={p.sellerPhone} onChange={(v) => u({ sellerPhone: v })} type="tel" />
+      <ContactRow icon={Mail} label="E-Mail" value={p.sellerEmail} onChange={(v) => u({ sellerEmail: v })} type="email" />
+      <ContactRow icon={Globe} label="Website" value={p.sellerWebsite} onChange={(v) => u({ sellerWebsite: v })} type="url" />
+      <ContactRow icon={MapPin} label="Adresse" value={p.sellerAddress} onChange={(v) => u({ sellerAddress: v })} />
+    </div>
+  );
+}
+
+function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Property>) => void; assumptions: ReturnType<typeof useActiveAssumptions> }) {
+  const [adding, setAdding] = useState(false);
+  const [newAmount, setNewAmount] = useState<string>("");
+  const today = new Date().toISOString().slice(0, 10);
+
+  const offer = p.offerAmount;
+  const status = p.negotiationStatus || "Offen";
+  const statusStyles: Record<string, { bg: string; color: string }> = {
+    "Offen": { bg: "#FEF3C7", color: "#92400E" },
+    "Abgelehnt": { bg: "#FEE2E2", color: "#991B1B" },
+    "Angenommen": { bg: "#E8F5EE", color: "#2D6A4F" },
+  };
+
+  // Live preview at offer price
+  const previewPrice = offer ?? p.kaufpreis ?? 0;
+  const cPreview = previewPrice > 0
+    ? calcProperty({ ...p, kaufpreis: previewPrice }, assumptions)
+    : null;
+
+  const save = () => {
+    const n = Number(newAmount);
+    if (!isNaN(n) && n > 0) {
+      u({ offerAmount: n, negotiationStatus: "Offen" });
+      setAdding(false);
+      setNewAmount("");
+    }
+  };
+
+  return (
+    <div>
+      <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Angebote</h3>
+      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid #EAE6DF" }}>
+        <table className="w-full text-left">
+          <thead>
+            <tr style={{ background: "#FAFAF8" }}>
+              {["Preis", "Von", "Datum", "Status"].map((h) => (
+                <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ borderTop: "1px solid #EAE6DF" }}>
+              <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(p.kaufpreis ?? 0)}</td>
+              <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Inserat</td>
+              <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{p.inseratsdatum || "—"}</td>
+              <td className="px-3 py-2.5">
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#F5F3EE", color: "#78716C" }}>Original</span>
+              </td>
+            </tr>
+            {offer != null && offer > 0 && (
+              <tr style={{ borderTop: "1px solid #EAE6DF", background: status === "Offen" ? "#FFFBEB" : undefined }}>
+                <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(offer)}</td>
+                <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Ich</td>
+                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{today}</td>
+                <td className="px-3 py-2.5">
+                  <select
+                    value={status}
+                    onChange={(e) => u({ negotiationStatus: e.target.value })}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold border-0 outline-none"
+                    style={{ background: statusStyles[status]?.bg ?? "#F5F3EE", color: statusStyles[status]?.color ?? "#78716C" }}
+                  >
+                    {["Offen", "Abgelehnt", "Angenommen"].map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {adding ? (
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            type="number"
+            value={newAmount}
+            onChange={(e) => setNewAmount(e.target.value)}
+            placeholder="Angebotssumme €"
+            className={CRM_INPUT + " flex-1"}
+            autoFocus
+          />
+          <button onClick={save} className="text-[13px] rounded-lg px-4 py-2 font-medium" style={{ background: "#2D6A4F", color: "#FFFFFF" }}>Speichern</button>
+          <button onClick={() => setAdding(false)} className="text-[12px] px-3 py-2 text-[#78716C]">Abbrechen</button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="mt-3 w-full text-[13px] text-[#78716C] hover:text-[#1C1917] py-2.5"
+          style={{ border: "1.5px dashed #D4CFC8", borderRadius: 8, background: "transparent" }}
+        >
+          + Angebot hinzufügen
+        </button>
+      )}
+
+      {cPreview && previewPrice > 0 && (
+        <div className="mt-4 rounded-[10px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
+          <div className="text-[11px] text-[#78716C] mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
+          <div className="grid grid-cols-3 gap-2">
+            <PreviewStat label="Rendite" value={fmtPct(cPreview.bruttorendite)} />
+            <PreviewStat label="Cashflow/Mo" value={fmtEUR(cPreview.cashflowMtl)} tone={cPreview.cashflowMtl >= 0 ? "good" : "bad"} />
+            <PreviewStat label="Rate/Mo" value={fmtEUR(cPreview.kreditRateMtl)} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewStat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
+  const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: "#FFFFFF" }}>
+      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className="mt-0.5 text-[14px] font-semibold" style={{ color, ...bricolage }}>{value}</div>
+    </div>
+  );
+}
+
+function ActivityTimeline({ propertyId }: { propertyId: string }) {
+  const { activities, addActivity, deleteActivity } = useStore();
+  const items = activities.filter((a) => a.propertyId === propertyId)
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [type, setType] = useState<string>("Telefonat");
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [note, setNote] = useState("");
+
+  const dotColor: Record<string, string> = {
+    "Telefonat": "#2D6A4F",
+    "E-Mail": "#1A4FD6",
+    "Besichtigung": "#6D28D9",
+    "Angebot abgegeben": "#D97706",
+    "Import": "#D4CFC8",
+  };
+
+  const add = () => {
+    if (!title.trim()) return;
+    addActivity(makeActivity({
+      propertyId,
+      type: type as Parameters<typeof makeActivity>[0]["type"],
+      title: title.trim(),
+      description: note || undefined,
+      date: new Date(date).toISOString(),
+    }));
+    setTitle(""); setNote("");
+  };
+
+  return (
+    <div>
+      <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Aktivitäten</h3>
+
+      {items.length === 0 ? (
+        <div className="text-center py-6 text-[13px] text-[#A8A29E]">Noch keine Aktivitäten</div>
+      ) : (
+        <ol className="relative pl-5" style={{ borderLeft: "1.5px solid #EAE6DF" }}>
+          {items.map((a) => {
+            const color = dotColor[a.type] ?? "#A8A29E";
+            const open = expandedId === a.id;
+            return (
+              <li key={a.id} className="relative mb-3 last:mb-0">
+                <span className="absolute rounded-full" style={{ width: 8, height: 8, background: color, left: -24, top: 6 }} />
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(open ? null : a.id)}
+                  className="w-full text-left"
+                >
+                  <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
+                  <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
+                  <span className="text-[11px] text-[#A8A29E] ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                </button>
+                {open && a.description && (
+                  <div className="mt-1.5 text-[12px] text-[#78716C] whitespace-pre-wrap">{a.description}</div>
+                )}
+                {open && (
+                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[11px] text-[#DC2626] hover:underline ml-2">
+                    Löschen
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      <div className="mt-4 pt-4 border-t border-[#EAE6DF] space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <select value={type} onChange={(e) => setType(e.target.value)} className={CRM_INPUT}>
+            {["Telefonat", "E-Mail", "WhatsApp", "Besichtigung", "Follow-up", "Unterlagen angefragt", "Unterlagen erhalten", "Angebot abgegeben", "Notiz"].map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel" className={CRM_INPUT} />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={CRM_INPUT} />
+        </div>
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Notiz (optional)" className={CRM_INPUT} />
+        <div className="flex justify-end">
+          <button onClick={add} className="text-[13px] rounded-lg px-4 py-2 font-medium" style={{ background: "#FFFFFF", color: "#2D6A4F", border: "1px solid #EAE6DF" }}>
+            Hinzufügen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 // ============ HELPER COMPONENTS ============
 const selectCls = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Bell, Briefcase, Calculator, ClipboardCheck, Database, FolderKanban, GitCompareArrows, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
+import { BarChart3, Briefcase, Calculator, CalendarClock, Database, FolderKanban, GitCompareArrows, KanbanSquare, LogOut, Settings, Sparkles, UserCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
@@ -17,8 +17,7 @@ const NAV_SECONDARY: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/projects", label: "Projekte", icon: FolderKanban },
-  { to: "/followups", label: "Follow-ups", icon: Bell },
-  { to: "/viewing", label: "Besichtigungen", icon: ClipboardCheck },
+  { to: "/aktivitaeten", label: "Aktivitäten", icon: CalendarClock },
   { to: "/assumptions", label: "Einstellungen", icon: Settings },
 ];
 
