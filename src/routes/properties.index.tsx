@@ -13,7 +13,7 @@ export const Route = createFileRoute("/properties/")({
   component: PropertiesList,
 });
 
-type SortKey = "score" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
+type SortKey = "bewertung" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
 
 // Hilfsfunktion: leere/0-Werte als em-dash anzeigen
 function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
