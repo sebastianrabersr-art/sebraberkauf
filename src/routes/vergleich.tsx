@@ -7,9 +7,11 @@ import {
   calcDataQuality, calcProperty, calcScore, fmtEUR, fmtNum, fmtPct, getActiveFinance,
 } from "@/lib/calc";
 import { ALL_STATUSES, type Property } from "@/lib/types";
-import { ChevronDown, Plus, CheckCircle2 } from "lucide-react";
-import { planLimits, useAuth } from "@/lib/auth";
+import { ChevronDown, Plus, CheckCircle2, Download, Lock } from "lucide-react";
+import { planLimits, useAuth, usePlan } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { exportComparisonPdf, type ComparisonSection } from "@/lib/pdfExport";
 
 export const Route = createFileRoute("/vergleich")({
   head: () => ({ meta: [{ title: "Analyse – Immobilien vergleichen" }] }),
