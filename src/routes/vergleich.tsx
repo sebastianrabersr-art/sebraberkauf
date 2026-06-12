@@ -570,3 +570,56 @@ function toneRow(values: (number | null | undefined)[], dir?: Dir): ("best" | "w
   if (best === worst) return values.map(() => "");
   return nums.map((v) => (v == null ? "" : v === best ? "best" : v === worst ? "worst" : ""));
 }
+
+function ComparisonExportBar({
+  items,
+  sections,
+}: {
+  items: Property[];
+  sections: { title: string; rows: Row[] }[];
+}) {
+  const plan = usePlan();
+  const canExport = plan === "premium";
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const handleExport = () => {
+    if (!canExport) {
+      setUpgradeOpen(true);
+      return;
+    }
+    const pdfSections: ComparisonSection[] = sections.map((sec) => ({
+      title: sec.title,
+      rows: sec.rows.map((r) => {
+        const tones = toneRow(r.values, r.dir);
+        const values = r.values.map((v, i) => {
+          const txt = r.textValues?.[i];
+          if (txt != null) return txt;
+          if (v == null || !isFinite(v as number)) return "—";
+          return r.fmt(v);
+        });
+        return { label: r.label, values, tones };
+      }),
+    }));
+    exportComparisonPdf(items.map((p) => p.title || "—"), pdfSections);
+  };
+
+  return (
+    <>
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={handleExport}
+          className="inline-flex items-center gap-1.5 h-9 rounded-lg border border-[#EAE6DF] bg-white px-3 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
+        >
+          {canExport ? <Download className="size-3.5" /> : <Lock className="size-3.5" />} Vergleich exportieren
+        </button>
+      </div>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Vergleichs-Export ist in Premium enthalten"
+        description="Exportiere die komplette Vergleichstabelle als PDF."
+        recommendPlan="premium"
+      />
+    </>
+  );
+}
