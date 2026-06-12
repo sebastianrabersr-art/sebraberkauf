@@ -157,7 +157,7 @@ function PropertiesList() {
           </select>
           <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
           <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
-            <option value="score">Sort: Score</option>
+            <option value="bewertung">Sort: Bewertung</option>
             <option value="kaufpreis">Kaufpreis</option>
             <option value="preisM2">Preis/m²</option>
             <option value="brutto">Bruttorendite</option>
@@ -167,7 +167,7 @@ function PropertiesList() {
             <option value="createdAt">Datum</option>
           </select>
           <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
-            Score≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
+            Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
           </label>
           <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
             DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
