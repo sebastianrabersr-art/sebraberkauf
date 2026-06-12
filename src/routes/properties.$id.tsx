@@ -173,14 +173,6 @@ function Detail() {
               <ExternalLink className="size-3.5" /> Inserat öffnen
             </a>
           )}
-          {mapsUrl && (
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
-              <MapPin className="size-3.5" /> In Karte öffnen
-            </a>
-          )}
-          <button onClick={onDuplicate} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
-            <Copy className="size-3.5" /> Duplizieren
-          </button>
           <button
             onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
             className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1"
@@ -190,7 +182,9 @@ function Detail() {
           <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#DC2626] px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
           </button>
+          <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
         </div>
+
 
         {/* ============ TAB NAV ============ */}
         <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto">
