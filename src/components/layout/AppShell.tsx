@@ -70,9 +70,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-[#F5F3EE]">
       <aside className="hidden md:flex w-64 flex-col bg-[#F5F3EE] text-[#78716C] border-r border-[#EAE6DF]">
-        <div className="px-5 py-5 flex items-center gap-2">
-          <span className="font-display text-2xl font-bold tracking-tight text-[#1C1917] leading-none">kaufma</span>
-          <span className="inline-block size-[7px] rounded-full bg-[#2D6A4F]" />
+        <div className="px-5 py-5">
+          <Logo size={32} textSize={16} />
         </div>
         <div className="px-3 pb-3 space-y-1.5">
           <ProjectSwitcher />

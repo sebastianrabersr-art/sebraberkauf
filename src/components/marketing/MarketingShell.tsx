@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Building2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { Logo } from "@/components/Logo";
 
 export function MarketingShell({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -8,11 +8,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 font-semibold">
-            <div className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center">
-              <Building2 className="size-4" />
-            </div>
-            <span>kauf ma</span>
+          <a href="/" className="flex items-center">
+            <Logo size={32} textSize={16} />
           </a>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="/#features" className="text-muted-foreground hover:text-foreground">Features</a>
