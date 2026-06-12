@@ -229,3 +229,72 @@ function NumField({ label, v, onChange }: { label: string; v: any; onChange: (n:
     </div>
   );
 }
+
+function PromoCodeCard() {
+  const { refresh } = useAuth();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await redeemPromoCode({ data: { code: trimmed } });
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        const planLabelDe = res.plan === "premium" ? "Premium" : "Plus";
+        toast.success(`Code eingelöst! Du hast jetzt ${planLabelDe} für ${res.durationMonths} Monate.`);
+        setCode("");
+        await refresh();
+      }
+    } catch {
+      setError("Ungültiger oder bereits verwendeter Code");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section
+      className="bg-white"
+      style={{ border: "1px solid #EAE6DF", borderRadius: 12, padding: "16px 20px" }}
+    >
+      <h2
+        style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: "#1C1917" }}
+      >
+        Promo-Code einlösen
+      </h2>
+      <form onSubmit={submit} className="mt-3 flex items-center gap-2">
+        <input
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
+          placeholder="Code eingeben"
+          spellCheck={false}
+          autoCapitalize="characters"
+          className="flex-1 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] uppercase tracking-wider focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]"
+        />
+        <button
+          type="submit"
+          disabled={busy || !code.trim()}
+          className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-[#235740] disabled:opacity-60"
+        >
+          {busy && <Loader2 className="size-3.5 animate-spin" />}
+          Einlösen
+        </button>
+      </form>
+      {error && (
+        <div
+          className="mt-2"
+          style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "#D97706" }}
+        >
+          {error}
+        </div>
+      )}
+    </section>
+  );
+}
