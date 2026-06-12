@@ -219,6 +219,7 @@ function Detail() {
               onGoCrm={() => navTo("crm")}
               dqBannerDismissed={dqBannerDismissed}
               setDqBannerDismissed={setDqBannerDismissed}
+              navTo={navTo}
             />
           )}
           {tab === "finanzierung" && (
