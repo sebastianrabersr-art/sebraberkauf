@@ -245,6 +245,8 @@ function Pipeline() {
                               <button key={b} onClick={() => { setBewertung(p.id, b); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Als {b} markieren</button>
                             ))}
                             <div className="border-t border-[#EAE6DF] my-1" />
+                            <button onClick={() => { updateProperty(p.id, { prozessStatus: "" }); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-[#DC2626]">Aus Pipeline entfernen</button>
+                            <div className="border-t border-[#EAE6DF] my-1" />
                             <button onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Detail öffnen</button>
                           </div>
                         )}

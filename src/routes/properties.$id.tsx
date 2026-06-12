@@ -64,6 +64,7 @@ function Detail() {
   const cats = scoreBreakdown(p, assumptions, c, s);
 
   const [tab, setTab] = useState<TabKey>("uebersicht");
+  const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
 
   const applyRegionDefaults = () => {
     const d = regionDefaultsForProperty(p);
@@ -216,6 +217,8 @@ function Detail() {
               applyRegionDefaults={applyRegionDefaults} linkValid={linkValid}
               onGoMietrecht={() => navTo("mietrecht")}
               onGoCrm={() => navTo("crm")}
+              dqBannerDismissed={dqBannerDismissed}
+              setDqBannerDismissed={setDqBannerDismissed}
             />
           )}
           {tab === "finanzierung" && (
@@ -311,13 +314,15 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm }: {
+function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>;
   u: (patch: Partial<Property>) => void;
   projects: { id: string; name: string }[]; regions: ReturnType<typeof regionsOf>;
   applyRegionDefaults: () => void; linkValid: boolean;
   onGoMietrecht: () => void; onGoCrm: () => void;
+  dqBannerDismissed: boolean;
+  setDqBannerDismissed: (v: boolean) => void;
 }) {
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
@@ -339,7 +344,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
   return (
     <>
-      <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} />
+      {!dqBannerDismissed && <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} onDismiss={() => setDqBannerDismissed(true)} />}
 
       {/* === SECTION A: Kennzahlen === */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1527,7 +1532,7 @@ function VerificationChecklist({ p, dq, u }: {
 function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
   return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
 }
-function DataQualityBanner({ dq, onScroll }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void }) {
+function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
   if (dq.score === 100) return null;
   if (dq.score >= 70) {
     return (
@@ -1541,7 +1546,7 @@ function DataQualityBanner({ dq, onScroll }: { dq: ReturnType<typeof calcDataQua
     );
   }
   return (
-    <div className="rounded-[10px] flex items-start gap-2.5" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
+    <div className="rounded-[10px] flex items-start gap-2.5 relative" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
       <AlertTriangle className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} />
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium" style={{ color: "#92400E" }}>
@@ -1561,6 +1566,15 @@ function DataQualityBanner({ dq, onScroll }: { dq: ReturnType<typeof calcDataQua
       >
         Felder ausfüllen ↓
       </button>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute top-2 right-2 text-[#92400E] hover:text-[#1C1917]"
+        >
+          <X className="size-4" />
+        </button>
+      )}
     </div>
   );
 }
