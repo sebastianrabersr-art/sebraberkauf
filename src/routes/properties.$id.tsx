@@ -49,7 +49,6 @@ function Detail() {
   if (!p) throw notFound();
 
   const c = calcProperty(p, assumptions);
-  const s = calcScore(p, assumptions, c);
   const dq = calcDataQuality(p);
   const project = projects.find((x) => x.id === p.projectId);
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
@@ -61,7 +60,6 @@ function Detail() {
   const mietrecht = inferMietrecht(p);
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
-  const cats = scoreBreakdown(p, assumptions, c, s);
 
   const [tab, setTab] = useState<TabKey>("uebersicht");
   const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
