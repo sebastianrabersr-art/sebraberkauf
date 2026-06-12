@@ -11,6 +11,8 @@ export interface Subscription {
   property_limit: number | null;
   project_limit: number | null;
   subscription_status: string;
+  promo_plan?: Plan | null;
+  promo_expires_at?: string | null;
 }
 
 export interface Profile {
