@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix, UserCircle, Sparkle, SignOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { planLabel, useAuth } from "@/lib/auth";
