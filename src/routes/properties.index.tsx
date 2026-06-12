@@ -5,7 +5,7 @@ import { calcDataQuality, calcProperty, fmtEUR, fmtPct, googleMapsUrl, inferMiet
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
@@ -45,8 +45,15 @@ function exportCSV(rows: any[]) {
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
 const selectClass =
-  "rounded-lg border border-[#EAE6DF] bg-white px-3 py-2 text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F]/40";
-const inputClass = selectClass;
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const inputClass =
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const SelectWrap = ({ children }: { children: React.ReactNode }) => (
+  <div className="relative">
+    {children}
+    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+  </div>
+);
 
 const COL_NUMERIC = "py-3 px-4 text-right whitespace-nowrap text-[13px] text-[#1C1917]";
 
@@ -146,30 +153,36 @@ function PropertiesList() {
             onChange={(e) => setSearch(e.target.value)}
             className={`${inputClass} min-w-[200px] flex-1 sm:max-w-xs`}
           />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClass}>
-            <option value="all">Status: aktive Kandidaten</option>
-            <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
-            {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className={selectClass}>
-            <option value="all">Mietrecht: alle</option>
-            {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SelectWrap>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClass}>
+              <option value="all">Status: aktive Kandidaten</option>
+              <option value="all-inkl">Status: alle (inkl. Gekauft/Abgelehnt)</option>
+              {["Neu","Prüfen","Interessant","Besichtigung","Angebot","Abgelehnt","Gekauft"].map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </SelectWrap>
+          <SelectWrap>
+            <select value={mietrechtFilter} onChange={(e) => setMietrechtFilter(e.target.value)} className={selectClass}>
+              <option value="all">Mietrecht: alle</option>
+              {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </SelectWrap>
           <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-32`} />
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
-            <option value="bewertung">Sort: Bewertung</option>
-            <option value="kaufpreis">Kaufpreis</option>
-            <option value="preisM2">Preis/m²</option>
-            <option value="brutto">Bruttorendite</option>
-            <option value="netto">Nettorendite</option>
-            <option value="cashflow">Cashflow</option>
-            <option value="dq">Datenqualität</option>
-            <option value="createdAt">Datum</option>
-          </select>
-          <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
+          <SelectWrap>
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={selectClass}>
+              <option value="bewertung">Sort: Bewertung</option>
+              <option value="kaufpreis">Kaufpreis</option>
+              <option value="preisM2">Preis/m²</option>
+              <option value="brutto">Bruttorendite</option>
+              <option value="netto">Nettorendite</option>
+              <option value="cashflow">Cashflow</option>
+              <option value="dq">Datenqualität</option>
+              <option value="createdAt">Datum</option>
+            </select>
+          </SelectWrap>
+          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
             Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
           </label>
-          <label className={`${selectClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
+          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1 py-1.5`}>
             DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-12 bg-transparent outline-none" />
           </label>
           <button

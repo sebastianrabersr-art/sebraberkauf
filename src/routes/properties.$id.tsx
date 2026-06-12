@@ -17,7 +17,7 @@ import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/$id")({
@@ -229,9 +229,9 @@ function Detail() {
                     label="Mietrechtliche Einschätzung"
                     hint={p.mietrecht === "unklar – rechtlich prüfen" ? <RequiredHint text="Mietrechtskategorie prüfen – beeinflusst Score und Risikoeinschätzung" /> : undefined}
                   >
-                    <select value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })} className={selectCls}>
+                    <Sel value={p.mietrecht} onChange={(e) => u({ mietrecht: e.target.value as Mietrecht })}>
                       {MIETRECHTE.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </select>
+                    </Sel>
                   </F>
 
                   <F label="Fehlende Daten (komma-getrennt)">
@@ -361,33 +361,44 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               {!linkValid && p.link && <div className="text-[10px] text-[#DC2626] mt-1">Ungültige URL</div>}
             </F>
             <F label="Projekt">
-              <select value={p.projectId} onChange={(e) => u({ projectId: e.target.value })} className={selectCls}>
+              <Sel value={p.projectId} onChange={(e) => u({ projectId: e.target.value })}>
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
-              </select>
+              </Sel>
             </F>
             <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
             <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
-            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}><T value={p.zustand} edit on={(v) => u({ zustand: v })} /></F>
+            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
+              <Sel value={p.zustand ?? ""} onChange={(e) => u({ zustand: e.target.value })}>
+                <option value="">—</option>
+                {["Erstbezug","Neuwertig","Sehr gut","Gut","Sanierungsbedürftig","Abrissreif"].map((o) => <option key={o} value={o}>{o}</option>)}
+              </Sel>
+            </F>
             <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
-            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}><T value={p.energyClass ?? ""} edit on={(v) => u({ energyClass: v })} /></F>
+            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}>
+              <Sel value={p.energyClass ?? ""} onChange={(e) => u({ energyClass: e.target.value })}>
+                <option value="">—</option>
+                {["A++","A+","A","B","C","D","E","F","G","Unbekannt"].map((o) => <option key={o} value={o}>{o}</option>)}
+              </Sel>
+            </F>
 
             <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
             <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit on={(v) => u({ verfuegbarkeit: v })} /></F>
             <F label="Land">
-              <select value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })} className={selectCls}>
+              <Sel value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })}>
                 <option value="">—</option>
                 <option value="Österreich">Österreich</option>
                 <option value="Deutschland">Deutschland</option>
-              </select>
+                <option value="Schweiz">Schweiz</option>
+              </Sel>
             </F>
             <F label="Bundesland / Region">
               {regions.length > 0 ? (
-                <select value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })} className={selectCls}>
+                <Sel value={p.bundesland ?? ""} onChange={(e) => u({ bundesland: e.target.value })}>
                   <option value="">—</option>
                   {regions.map((r) => <option key={r.code} value={r.name}>{r.name}</option>)}
-                </select>
+                </Sel>
               ) : (
                 <T value={p.bundesland ?? ""} edit on={(v) => u({ bundesland: v })} />
               )}
@@ -396,14 +407,16 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
-              <select value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })} className={selectCls}>
+              <Sel value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })}>
                 {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              </Sel>
             </F>
             <F label="Makler?">
-              <select value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })} className={selectCls}>
-                {["Ja","Nein","unklar"].map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <Sel value={p.makler} onChange={(e) => u({ makler: e.target.value as Property["makler"] })}>
+                <option value="Ja">Ja</option>
+                <option value="Nein">Nein</option>
+                <option value="unklar">Unbekannt</option>
+              </Sel>
             </F>
           </div>
         </Section>
@@ -413,9 +426,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       <Section id="sec-kauf-nebenkosten" title="Kauf & Nebenkosten">
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Objektart">
-            <select value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })} className={selectCls}>
+            <Sel value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })}>
               {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </Sel>
           </F>
           {(p.propertyType ?? "apartment") === "house_with_separate_land" ? (
             <>
@@ -478,21 +491,20 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           </F>
           <F label="Maklerprovision USt €"><Ro>{fmtEUR(c.maklerProvisionUst)}</Ro></F>
           <F label="Berechnungsbasis">
-            <select value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })} className={selectCls}>
+            <Sel value={p.provisionBasis ?? "brutto"} onChange={(e) => u({ provisionBasis: e.target.value as "netto" | "brutto" })}>
               <option value="brutto">Kaufpreis brutto</option>
               <option value="netto">Kaufpreis netto</option>
-            </select>
+            </Sel>
           </F>
           <F label="Maklerkosten zahlbar?">
-            <select
+            <Sel
               value={p.maklerkostenZahlbar == null ? "auto" : p.maklerkostenZahlbar ? "ja" : "nein"}
               onChange={(e) => u({ maklerkostenZahlbar: e.target.value === "auto" ? null : e.target.value === "ja" })}
-              className={selectCls}
             >
               <option value="auto">Automatisch ({c.maklerKostenZahlbar ? "Ja" : "Nein"})</option>
               <option value="ja">Ja</option>
               <option value="nein">Nein</option>
-            </select>
+            </Sel>
           </F>
         </div>
         <div className="mt-3"><PurchaseCostsDetails p={p} c={c} u={u} /></div>
@@ -1280,7 +1292,16 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
 
 
 // ============ HELPER COMPONENTS ============
-const selectCls = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";
+const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+function Sel({ children, className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select {...props} className={selectCls + (className ? " " + className : "")}>{children}</select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+    </div>
+  );
+}
 
 function OverviewStat({ label, value, sub, tone, editable }: {
   label: string; value: string; sub?: string; tone?: "good" | "bad" | "neutral";
@@ -1579,7 +1600,7 @@ function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: 
         if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
-      className={selectCls}
+      className={inputCls}
     />
   );
 }
@@ -1606,7 +1627,7 @@ function N({ value, on, edit }: { value: number | null | undefined; on: (v: numb
         if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); }
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
-      className={selectCls}
+      className={inputCls}
     />
   );
 }
