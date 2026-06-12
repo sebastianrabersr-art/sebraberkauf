@@ -229,12 +229,10 @@ function PropertiesList() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ p, c, s, dq, projectName }) => {
+              {rows.map(({ p, c, dq, projectName, avg }) => {
                 const maps = (p.lat && p.lng)
                   ? mapsUrlFromCoords(p.lat, p.lng)
                   : googleMapsUrl(p);
-                const score = s.total as number;
-                const scoreColor = score >= 65 ? "#2D6A4F" : score >= 50 ? "#D97706" : "#A8A29E";
                 return (
                   <tr
                     key={p.id}
@@ -243,8 +241,13 @@ function PropertiesList() {
                     style={{ minHeight: 64 }}
                   >
                     <td className="py-3 px-4 align-middle" style={{ minHeight: 64 }}>
-                      <div className="leading-none tabular-nums" style={{ ...bricolage, fontWeight: 800, fontSize: 20, color: scoreColor }}>{score}</div>
-                      <div className="mt-1.5"><AmpelBadge ampel={s.ampel}>{s.entscheidung}</AmpelBadge></div>
+                      {avg != null ? (
+                        <div className="tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: 14, color: "#2D6A4F" }}>
+                          Ø {avg.toFixed(1)}
+                        </div>
+                      ) : (
+                        <div className="text-[14px] text-[#A8A29E]">—</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 align-middle">
                       <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-[#78716C]">{p.status}</span>
