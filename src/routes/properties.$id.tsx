@@ -1701,3 +1701,67 @@ function SetupWalkthrough({ propertyId, navTo, p, dq }: {
   );
 }
 
+
+// ============ MEINE BEWERTUNG ============
+function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+  const [open, setOpen] = useState(false);
+  const r = p.userRating ?? {};
+  const avg = userRatingAvg(r);
+  const sliders: { key: keyof UserRating; label: string }[] = [
+    { key: "lage", label: "Lage" },
+    { key: "preisLeistung", label: "Preis-Leistung" },
+    { key: "zustand", label: "Zustand" },
+    { key: "vermietbarkeit", label: "Vermietbarkeit" },
+    { key: "bauchgefuehl", label: "Bauchgefühl" },
+  ];
+  const set = (k: keyof UserRating, v: number) => {
+    u({ userRating: { ...r, [k]: v } });
+  };
+  return (
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white" style={{ padding: "12px 16px" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 text-left"
+      >
+        <span className="text-[13px] font-semibold text-[#1C1917]">Meine Bewertung</span>
+        <span className="flex items-center gap-2">
+          {avg != null && !open && (
+            <span className="text-[12px] text-[#78716C]">⭐ {avg.toFixed(1)}</span>
+          )}
+          <ChevronRight className={`size-4 text-[#A8A29E] transition-transform ${open ? "rotate-90" : ""}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="mt-3 space-y-3">
+          {sliders.map((s) => {
+            const val = (r[s.key] ?? 5) as number;
+            return (
+              <div key={s.key} className="flex items-center gap-3">
+                <span className="text-[12px] text-[#1C1917] w-32 shrink-0">{s.label}</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={val}
+                  onChange={(e) => set(s.key, Number(e.target.value))}
+                  className="flex-1 accent-[#2D6A4F]"
+                />
+                <span className="text-[14px] w-7 text-right tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
+                  {r[s.key] != null ? val : "—"}
+                </span>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-end gap-2 border-t border-[#EAE6DF] pt-2">
+            <span className="text-[12px] text-[#78716C]">Ø</span>
+            <span className="text-[14px]" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
+              {avg != null ? avg.toFixed(1) : "—"} / 10
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
