@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
@@ -76,6 +76,14 @@ function Pipeline() {
     setShowAddModal(false);
     setFilter("Alle");
   };
+  useEffect(() => {
+    if (!showAddModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowAddModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showAddModal]);
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
     <div
@@ -270,24 +278,22 @@ function Pipeline() {
 
         {/* Add modal */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
-            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[12px] border border-[#EAE6DF] w-full max-w-[520px] max-h-[80vh] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-[#EAE6DF]">
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" onClick={() => setShowAddModal(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="rounded-[16px] bg-white border border-[#EAE6DF] w-full max-w-md p-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="text-[15px] font-semibold text-[#1C1917]" style={bricolage}>Aus Kaufkandidaten hinzufügen</div>
                 <button onClick={() => setShowAddModal(false)} className="text-[#A8A29E] hover:text-[#1C1917]"><X className="w-4 h-4" /></button>
               </div>
-              <div className="p-4 border-b border-[#EAE6DF]">
-                <div className="relative">
-                  <Search className="w-4 h-4 text-[#A8A29E] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    value={addSearch}
-                    onChange={(e) => setAddSearch(e.target.value)}
-                    placeholder="Nach Titel oder Bezirk suchen…"
-                    className="w-full pl-9 pr-3 py-[9px] text-[13px] border-[1.5px] border-[#EAE6DF] rounded-[8px] outline-none focus:border-[#2D6A4F]"
-                  />
-                </div>
+              <div className="relative mb-4">
+                <Search className="w-4 h-4 text-[#A8A29E] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  value={addSearch}
+                  onChange={(e) => setAddSearch(e.target.value)}
+                  placeholder="Nach Titel oder Bezirk suchen…"
+                  className="w-full pl-9 pr-3 py-[9px] text-[13px] border-[1.5px] border-[#EAE6DF] rounded-[8px] outline-none focus:border-[#2D6A4F]"
+                />
               </div>
-              <div className="overflow-y-auto p-2">
+              <div className="space-y-1 max-h-[50vh] overflow-y-auto">
                 {candidates.length === 0 && (
                   <div className="text-[12px] text-[#A8A29E] p-6 text-center">Keine Kandidaten gefunden.</div>
                 )}
