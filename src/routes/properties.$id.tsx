@@ -426,9 +426,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       <Section id="sec-kauf-nebenkosten" title="Kauf & Nebenkosten">
         <div className="grid md:grid-cols-3 gap-3">
           <F label="Objektart">
-            <select value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })} className={selectCls}>
+            <Sel value={p.propertyType ?? "apartment"} onChange={(e) => u({ propertyType: e.target.value as PropertyType })}>
               {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </Sel>
           </F>
           {(p.propertyType ?? "apartment") === "house_with_separate_land" ? (
             <>
