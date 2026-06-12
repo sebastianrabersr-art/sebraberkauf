@@ -207,7 +207,7 @@ function Detail() {
           {tab === "uebersicht" && (
             <>
               <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("analysen")} />
-              <SetupWalkthrough propertyId={p.id} navTo={navTo} />
+              <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
             </>
           )}
           {tab === "uebersicht" && (
@@ -1670,58 +1670,62 @@ function DataCheckBanner({ propertyId, dqScore, onCheck }: { propertyId: string;
 }
 
 // ============ SETUP WALKTHROUGH ============
-function SetupWalkthrough({ propertyId, navTo }: { propertyId: string; navTo: (tab: TabKey, sectionId?: string) => void }) {
-  const dismissKey = `pwt:${propertyId}:walkthroughDismissed`;
-  const stepKey = (n: number) => `pwt:${propertyId}:step${n}`;
-  const [dismissed, setDismissed] = useState<boolean | null>(null);
-  const [checked, setChecked] = useState<boolean[]>([false, false, false, false]);
+function SetupWalkthrough({ propertyId, navTo, p, dq }: {
+  propertyId: string;
+  navTo: (tab: TabKey, sectionId?: string) => void;
+  p: Property;
+  dq: ReturnType<typeof calcDataQuality>;
+}) {
+  const seenKey = `walkthrough_${propertyId}`;
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    try {
-      setDismissed(localStorage.getItem(dismissKey) === "1");
-      setChecked([1, 2, 3, 4].map((n) => localStorage.getItem(stepKey(n)) === "1"));
-    } catch { setDismissed(false); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId]);
+    try { if (localStorage.getItem(seenKey) === "1") setDismissed(true); } catch {}
+  }, [seenKey]);
 
-  if (dismissed === null) return null;
-  const allDone = checked.every(Boolean);
-  if (dismissed || allDone) return null;
+  const activeScenario = p.financeScenarios?.find((s) => s.id === p.activeFinanceId) ?? p.financeScenarios?.[0];
 
-  const steps: { label: string; go: () => void }[] = [
-    { label: "Kaufpreis & Fläche prüfen (Übersicht → Objektdaten)", go: () => navTo("uebersicht", "sec-objektdaten") },
-    { label: "Erwartete Miete eingeben (Übersicht → Kauf & Nebenkosten)", go: () => navTo("uebersicht", "sec-kauf-nebenkosten") },
-    { label: "Finanzierung eintragen (Finanzierung Tab)", go: () => navTo("finanzierung", "sec-finanzierung") },
-    { label: "Score & Cashflow prüfen (du bist hier)", go: () => navTo("uebersicht") },
+  const steps = [
+    { label: "Kaufpreis & Fläche prüfen", go: () => navTo("uebersicht", "sec-objektdaten"), checked: (p.kaufpreis ?? 0) > 0 && (p.wohnflaecheM2 ?? 0) > 0 },
+    { label: "Erwartete Miete eingeben", go: () => navTo("uebersicht", "sec-kauf-nebenkosten"), checked: (p.nettomieteMtl ?? 0) > 0 },
+    { label: "Finanzierung eintragen", go: () => navTo("finanzierung", "sec-finanzierung"), checked: (activeScenario?.eigenkapital ?? 0) > 0 && (activeScenario?.zinssatz ?? 0) > 0 },
+    { label: "Score & Cashflow prüfen", go: () => navTo("uebersicht"), checked: dq.score >= 70 },
   ];
 
-  const toggle = (i: number) => {
-    const next = [...checked];
-    next[i] = !next[i];
-    setChecked(next);
-    try { localStorage.setItem(stepKey(i + 1), next[i] ? "1" : "0"); } catch {}
-  };
+  const allDone = steps.every((s) => s.checked);
+
+  useEffect(() => {
+    if (!allDone || dismissed) return;
+    const t = setTimeout(() => {
+      setDismissed(true);
+      try { localStorage.setItem(seenKey, "1"); } catch {}
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [allDone, dismissed, seenKey]);
+
+  if (dismissed) return null;
 
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px]">
       <div className="text-[13px] font-semibold text-[#1C1917] mb-3">In 4 Schritten zur ersten Einschätzung</div>
       <ol className="space-y-2">
         {steps.map((s, i) => (
-          <li key={i} className="flex items-center gap-3 text-[13px] text-[#78716C]">
+          <li key={i} className="flex items-center gap-3">
             <input
               type="checkbox"
-              checked={checked[i]}
-              onChange={() => toggle(i)}
-              className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F] cursor-pointer"
+              checked={s.checked}
+              readOnly
+              className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F]"
             />
-            <span className="text-[11px] text-[#A8A29E] font-medium w-4">{i + 1}.</span>
-            <button onClick={s.go} className="text-left hover:text-[#1C1917] hover:underline flex-1">{s.label}</button>
+            <span className={`text-[13px] ${s.checked ? "text-[#2D6A4F] line-through" : "text-[#78716C]"}`}>
+              {s.label}
+            </span>
           </li>
         ))}
       </ol>
       <div className="flex justify-end mt-3">
         <button
-          onClick={() => { try { localStorage.setItem(dismissKey, "1"); } catch {} setDismissed(true); }}
+          onClick={() => { try { localStorage.setItem(seenKey, "1"); } catch {} setDismissed(true); }}
           className="text-[12px] text-[#A8A29E] hover:text-[#78716C]"
         >Walkthrough ausblenden</button>
       </div>
