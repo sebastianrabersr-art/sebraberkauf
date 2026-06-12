@@ -13,7 +13,22 @@ export const Route = createFileRoute("/properties/")({
   component: PropertiesList,
 });
 
-type SortKey = "bewertung" | "kaufpreis" | "preisM2" | "brutto" | "netto" | "cashflow" | "dq" | "createdAt";
+type SortKey = "score" | "userRating" | "kaufpreis_asc" | "kaufpreis_desc" | "preisM2" | "brutto" | "cashflow" | "dq" | "createdAt" | "lastViewed" | "title";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "score", label: "Bester Score" },
+  { value: "userRating", label: "Meine Bewertung" },
+  { value: "brutto", label: "Höchste Rendite" },
+  { value: "cashflow", label: "Bester Cashflow" },
+  { value: "kaufpreis_asc", label: "Günstigster Preis" },
+  { value: "kaufpreis_desc", label: "Teuerster Preis" },
+  { value: "preisM2", label: "Günstiger €/m²" },
+  { value: "lastViewed", label: "Zuletzt angesehen" },
+  { value: "createdAt", label: "Zuletzt hinzugefügt" },
+  { value: "title", label: "Name A–Z" },
+  { value: "dq", label: "Datenqualität" },
+];
+const DEFAULT_SORT: SortKey = "score";
 
 // Hilfsfunktion: leere/0-Werte als em-dash anzeigen
 function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
