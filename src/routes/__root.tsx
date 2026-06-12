@@ -6,7 +6,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 
