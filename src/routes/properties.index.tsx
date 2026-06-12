@@ -243,9 +243,7 @@ function PropertiesList() {
             </thead>
             <tbody>
               {rows.map(({ p, c, dq, projectName, avg }) => {
-                const maps = (p.lat && p.lng)
-                  ? mapsUrlFromCoords(p.lat, p.lng)
-                  : googleMapsUrl(p);
+                const maps = googleMapsUrl(p);
                 return (
                   <tr
                     key={p.id}
