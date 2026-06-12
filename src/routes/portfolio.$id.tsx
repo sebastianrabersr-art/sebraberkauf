@@ -6,13 +6,18 @@ import { fmtEUR, summarizePayments } from "@/lib/calc";
 import {
   AUSGABE_KATEGORIEN,
   EINNAHME_KATEGORIEN,
+  PORTFOLIO_DOCUMENT_TYPES,
   type Payment,
   type PaymentKategorie,
+  type PortfolioDocument,
+  type PortfolioDocumentTyp,
   type Property,
+  type VerwaltungInfo,
 } from "@/lib/types";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
+import { ChartCard, CHART_STYLE, type ChartRange } from "@/components/ChartCard";
 import {
   LineChart,
   Line,
@@ -22,6 +27,7 @@ import {
   Legend,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 export const Route = createFileRoute("/portfolio/$id")({
