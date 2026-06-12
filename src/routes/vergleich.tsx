@@ -61,7 +61,15 @@ function PageHead({ compareLimit }: { compareLimit: number }) {
 }
 
 const selectCls =
-  "h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30";
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const inputCls =
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const SelectWrap = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  <div className={"relative " + (className ?? "")}>
+    {children}
+    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+  </div>
+);
 
 function ComparePageInner({ compareLimit }: { compareLimit: number }) {
   const navigate = useNavigate();
