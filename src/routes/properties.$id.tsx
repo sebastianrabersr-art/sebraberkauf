@@ -156,10 +156,6 @@ function Detail() {
           {[p.bezirk, p.platform, project?.name, `hinzugefügt ${new Date(p.createdAt).toLocaleDateString("de-AT")}`].filter(Boolean).join(" · ")}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-[#E8F5EE] text-[#2D6A4F] px-3 py-1 text-[12px] font-medium">
-            Score {s.total} · {s.entscheidung}
-          </span>
-          <ScoreInfo />
           <span className="inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
             DQ {dq.score}% · {dq.level}
           </span>
