@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 export const Route = createFileRoute("/properties/$id")({
   head: () => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
@@ -664,7 +665,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
           <CfLine label="Rücklage" value={-ruecklage} />
           <CfLine label="Instandhaltung (mtl.)" value={-instandh} />
           <div className="border-t border-[#EAE6DF] pt-1.5 mt-1.5 flex justify-between">
-            <span className="font-semibold">= Cashflow / Monat</span>
+            <span className="font-semibold">= Cashflow / Monat<GlossaryTooltip termId="cashflow" /></span>
             <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{fmtEUR(c.cashflowMtl)}</span>
           </div>
           <div className="flex justify-between text-[#78716C]">
@@ -680,8 +681,8 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
 
       <AccordionCard title="Rendite im Detail">
         <div className="space-y-2 text-[13px]">
-          <RendLine label="Bruttorendite" formula="Jahresmiete / Kaufpreis" value={fmtPct(c.bruttorendite)} />
-          <RendLine label="Nettorendite" formula="(Miete − lfd. Kosten) / Gesamtinvest." value={fmtPct(c.nettorendite)} />
+          <RendLine label="Bruttorendite" termId="bruttorendite" formula="Jahresmiete / Kaufpreis" value={fmtPct(c.bruttorendite)} />
+          <RendLine label="Nettorendite" termId="nettorendite" formula="(Miete − lfd. Kosten) / Gesamtinvest." value={fmtPct(c.nettorendite)} />
           <RendLine label="Eigenkapitalrendite" formula="Jahres-Cashflow / Eigenkapital" value={fmtPct(c.eigenkapitalrendite)} />
           <div className="pt-2 border-t border-[#EAE6DF] flex justify-between">
             <span>vs. Renditeziel ({fmtPct(a.zielBrutto ?? 0)})</span>
@@ -745,11 +746,11 @@ function CfLine({ label, value, sign }: { label: string; value: number; sign?: "
     </div>
   );
 }
-function RendLine({ label, formula, value }: { label: string; formula: string; value: string }) {
+function RendLine({ label, formula, value, termId }: { label: string; formula: string; value: string; termId?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <div>
-        <div className="text-[#1C1917]">{label}</div>
+        <div className="text-[#1C1917]">{label}{termId && <GlossaryTooltip termId={termId} />}</div>
         <div className="text-[11px] text-[#A8A29E]">{formula}</div>
       </div>
       <span className="tabular-nums font-medium text-[#1C1917]">{value}</span>

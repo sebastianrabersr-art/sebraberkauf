@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix, UserCircle, Sparkle, SignOut } from "@phosphor-icons/react";
+import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix, UserCircle, Sparkle, SignOut, BookOpen } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import type { ReactNode } from "react";
@@ -18,6 +18,7 @@ const NAV_SECONDARY: { to: string; label: string; icon: React.ComponentType<any>
   { to: "/pipeline", label: "Pipeline", icon: Kanban },
   { to: "/portfolio", label: "Portfolio", icon: Vault },
   { to: "/projects", label: "Projekte", icon: FolderSimple },
+  { to: "/glossar", label: "Glossar", icon: BookOpen },
   { to: "/assumptions", label: "Einstellungen", icon: GearSix },
 ];
 

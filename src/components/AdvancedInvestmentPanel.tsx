@@ -4,6 +4,7 @@ import { HelpCircle } from "lucide-react";
 import type { AfaLand, AfaMethode, ObjektartDetail, Property } from "@/lib/types";
 import { calcAfa, calcFollowUpFinance, calcLongTermProjection, calcProperty, fmtEUR, fmtPct, getActiveFinance } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 const OBJEKTARTEN: ObjektartDetail[] = ["Wohnung", "Haus", "Grundstück", "Zinshaus", "Sonstiges"];
 
@@ -55,11 +56,11 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
       {/* Projections */}
       <Block title="Langfristige Projektion (Mietsteigerung, Wertsteigerung, Leerstand)">
         <div className="grid md:grid-cols-3 gap-3">
-          <Fld label="Jährliche Mietpreissteigerung %"><NumInp v={proj.mietsteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, mietsteigerungPct: v } })} step={0.1} placeholder="2.0" /></Fld>
-          <Fld label="Jährliche Kostensteigerung %"><NumInp v={proj.kostensteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, kostensteigerungPct: v } })} step={0.1} placeholder="2.0" /></Fld>
-          <Fld label="Jährliche Wertsteigerung %"><NumInp v={proj.wertsteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, wertsteigerungPct: v } })} step={0.1} placeholder="1.5" /></Fld>
-          <Fld label="Leerstand %"><NumInp v={proj.leerstandPct ?? null} onChange={(v) => u({ projections: { ...proj, leerstandPct: v } })} step={0.5} placeholder="4.0" /></Fld>
-          <Fld label="Instandhaltungsreserve pro Jahr €"><NumInp v={proj.instandhaltungProJahr ?? null} onChange={(v) => u({ projections: { ...proj, instandhaltungProJahr: v } })} placeholder="0" /></Fld>
+          <Fld label={<>Jährliche Mietpreissteigerung %<GlossaryTooltip termId="mietsteigerung" /></>}><NumInp v={proj.mietsteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, mietsteigerungPct: v } })} step={0.1} placeholder="2.0" /></Fld>
+          <Fld label={<>Jährliche Kostensteigerung %<GlossaryTooltip termId="kostensteigerung" /></>}><NumInp v={proj.kostensteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, kostensteigerungPct: v } })} step={0.1} placeholder="2.0" /></Fld>
+          <Fld label={<>Jährliche Wertsteigerung %<GlossaryTooltip termId="wertsteigerung" /></>}><NumInp v={proj.wertsteigerungPct ?? null} onChange={(v) => u({ projections: { ...proj, wertsteigerungPct: v } })} step={0.1} placeholder="1.5" /></Fld>
+          <Fld label={<>Leerstand %<GlossaryTooltip termId="leerstand" /></>}><NumInp v={proj.leerstandPct ?? null} onChange={(v) => u({ projections: { ...proj, leerstandPct: v } })} step={0.5} placeholder="4.0" /></Fld>
+          <Fld label={<>Instandhaltungsreserve pro Jahr €<GlossaryTooltip termId="instandhaltungsreserve" /></>}><NumInp v={proj.instandhaltungProJahr ?? null} onChange={(v) => u({ projections: { ...proj, instandhaltungProJahr: v } })} placeholder="0" /></Fld>
           <Fld label="Horizont (Jahre)"><NumInp v={proj.horizonJahre ?? null} onChange={(v) => u({ projections: { ...proj, horizonJahre: v } })} placeholder="10" /></Fld>
         </div>
 
@@ -246,7 +247,7 @@ function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) 
 
   return (
     <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
-      <h4 className="font-semibold text-[13px] text-[#1C1917] mb-3">Abschreibung / AfA</h4>
+      <h4 className="font-semibold text-[13px] text-[#1C1917] mb-3">Abschreibung / AfA<GlossaryTooltip termId="abschreibung" /></h4>
 
       {!expert ? (
         <>

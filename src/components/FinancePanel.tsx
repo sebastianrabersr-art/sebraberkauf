@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
 import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
   "Anfrage": "bg-muted text-muted-foreground border-muted-foreground/30",
@@ -136,13 +137,13 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
         <Fld label="Kreditbetrag €"><NumInp v={scn.kreditBetrag} onChange={(v) => onChange({ kreditBetrag: v })} /></Fld>
         <Fld label="Eigenkapital €"><NumInp v={scn.eigenkapital} onChange={(v) => onChange({ eigenkapital: v })} /></Fld>
         <Fld label="Zinssatz % p.a."><NumInp v={scn.zinssatz * 100} onChange={(v) => onChange({ zinssatz: v == null ? 0 : v / 100 })} step={0.01} /></Fld>
-        <Fld label="Zinsbindung">
+        <Fld label={<>Zinsbindung<GlossaryTooltip termId="zinsbindung" /></>}>
           <select value={scn.zinsbindung ?? "fix"} onChange={(e) => onChange({ zinsbindung: e.target.value as any })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
             <option value="fix">Fixzins</option>
             <option value="variabel">Variabel</option>
           </select>
         </Fld>
-        <Fld label="Fixzins-Periode (Jahre)"><NumInp v={scn.zinsbindungJahre ?? null} onChange={(v) => onChange({ zinsbindungJahre: v })} /></Fld>
+        <Fld label={<>Fixzins-Periode (Jahre)<GlossaryTooltip termId="fixzins_periode" /></>}><NumInp v={scn.zinsbindungJahre ?? null} onChange={(v) => onChange({ zinsbindungJahre: v })} /></Fld>
         <Fld label="Laufzeit (Jahre)"><NumInp v={scn.laufzeitJahre} onChange={(v) => onChange({ laufzeitJahre: v ?? 0 })} /></Fld>
         <Fld label="Zahlungsintervall">
           <select value={scn.intervall} onChange={(e) => onChange({ intervall: e.target.value as ZahlungsIntervall })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
@@ -151,7 +152,7 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
             <option value="jaehrlich">jährlich</option>
           </select>
         </Fld>
-        <Fld label="Tilgungsart">
+        <Fld label={<>Tilgungsart<GlossaryTooltip termId="tilgungsarten" /></>}>
           <select value={scn.tilgungsart} onChange={(e) => onChange({ tilgungsart: e.target.value as Tilgungsart })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
             <option value="annuitaet">Annuität</option>
             <option value="endfaellig">Endfällig</option>
@@ -253,7 +254,7 @@ function SondertilgungenEditor({ scn, onChange }: { scn: FinanceScenario; onChan
   return (
     <div className="border rounded-md p-3">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium">Sondertilgungen</div>
+        <div className="text-sm font-medium">Sondertilgungen<GlossaryTooltip termId="sondertilgung" /></div>
         <button onClick={add} className="text-xs inline-flex items-center gap-1 border rounded-md px-2 py-1 hover:bg-accent">
           <Plus className="size-3" /> Hinzufügen
         </button>
@@ -434,8 +435,8 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
               <th className="py-2 pr-2 text-right">Gesamtkosten Laufzeit</th>
               <th className="py-2 pr-2 text-right">Rest n. 5 J</th>
               <th className="py-2 pr-2 text-right">Rest n. 10 J</th>
-              <th className="py-2 pr-2 text-right">Cashflow</th>
-              <th className="py-2 pr-2 text-right">DSCR</th>
+              <th className="py-2 pr-2 text-right">Cashflow<GlossaryTooltip termId="cashflow" /></th>
+              <th className="py-2 pr-2 text-right">DSCR<GlossaryTooltip termId="dscr" /></th>
               <th className="py-2 pr-2 text-right">Break-even</th>
             </tr>
           </thead>
@@ -550,7 +551,7 @@ function MiniBarChart({
   );
 }
 
-function Fld({ label, children }: { label: string; children: React.ReactNode }) {
+function Fld({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return <label className="block"><div className="text-xs text-muted-foreground mb-1">{label}</div>{children}</label>;
 }
 function Inp({ v, onChange, type }: { v: string; onChange: (v: string) => void; type?: string }) {
