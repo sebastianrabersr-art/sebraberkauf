@@ -27,6 +27,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KontaktRouteImport } from './routes/kontakt'
 import { Route as ImpressumRouteImport } from './routes/impressum'
+import { Route as GlossarRouteImport } from './routes/glossar'
 import { Route as FromCalcRouteImport } from './routes/from-calc'
 import { Route as FollowupsRouteImport } from './routes/followups'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -141,6 +142,11 @@ const KontaktRoute = KontaktRouteImport.update({
 const ImpressumRoute = ImpressumRouteImport.update({
   id: '/impressum',
   path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GlossarRoute = GlossarRouteImport.update({
+  id: '/glossar',
+  path: '/glossar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FromCalcRoute = FromCalcRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/glossar': typeof GlossarRoute
   '/impressum': typeof ImpressumRoute
   '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
@@ -329,6 +336,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/glossar': typeof GlossarRoute
   '/impressum': typeof ImpressumRoute
   '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
@@ -372,6 +380,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/followups': typeof FollowupsRoute
   '/from-calc': typeof FromCalcRoute
+  '/glossar': typeof GlossarRoute
   '/impressum': typeof ImpressumRoute
   '/kontakt': typeof KontaktRoute
   '/login': typeof LoginRoute
@@ -419,6 +428,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/glossar'
     | '/impressum'
     | '/kontakt'
     | '/login'
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/glossar'
     | '/impressum'
     | '/kontakt'
     | '/login'
@@ -506,6 +517,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/followups'
     | '/from-calc'
+    | '/glossar'
     | '/impressum'
     | '/kontakt'
     | '/login'
@@ -552,6 +564,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   FollowupsRoute: typeof FollowupsRoute
   FromCalcRoute: typeof FromCalcRoute
+  GlossarRoute: typeof GlossarRoute
   ImpressumRoute: typeof ImpressumRoute
   KontaktRoute: typeof KontaktRoute
   LoginRoute: typeof LoginRoute
@@ -704,6 +717,13 @@ declare module '@tanstack/react-router' {
       path: '/impressum'
       fullPath: '/impressum'
       preLoaderRoute: typeof ImpressumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/glossar': {
+      id: '/glossar'
+      path: '/glossar'
+      fullPath: '/glossar'
+      preLoaderRoute: typeof GlossarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/from-calc': {
@@ -940,6 +960,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   FollowupsRoute: FollowupsRoute,
   FromCalcRoute: FromCalcRoute,
+  GlossarRoute: GlossarRoute,
   ImpressumRoute: ImpressumRoute,
   KontaktRoute: KontaktRoute,
   LoginRoute: LoginRoute,

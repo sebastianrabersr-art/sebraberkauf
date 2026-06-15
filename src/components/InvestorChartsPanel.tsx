@@ -68,18 +68,25 @@ const tooltipStyle: React.CSSProperties = {
   color: "var(--card-foreground)",
 };
 
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
+
 function ChartCard({
   title,
   caption,
+  termId,
   children,
 }: {
   title: string;
   caption: string;
+  termId?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border bg-card p-4">
-      <h4 className="font-semibold text-sm mb-3">{title}</h4>
+      <h4 className="font-semibold text-sm mb-3 flex items-center">
+        {title}
+        {termId && <GlossaryTooltip termId={termId} />}
+      </h4>
       <div className="h-72 w-full">{children}</div>
       <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">{caption}</p>
     </div>
@@ -144,6 +151,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 1. Darlehen */}
       <ChartCard
         title="Darlehenshöhe im Zeitverlauf"
+        termId="darlehenshoehe"
         caption="Verlauf der Restschuld über die geplante Halteperiode."
       >
         <ResponsiveContainer>
@@ -168,6 +176,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 2. Asset */}
       <ChartCard
         title="Asset-Entwicklung"
+        termId="asset_entwicklung"
         caption="Immobilienwert vs. Restschuld ergibt das Eigenkapital im Objekt."
       >
         <ResponsiveContainer>
@@ -187,6 +196,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 3. Cash */}
       <ChartCard
         title="Cash-Entwicklung"
+        termId="cash_entwicklung"
         caption="Jährlicher Cashflow (grün/rot), kumulierter Cashflow und liquide Mittel."
       >
         <ResponsiveContainer>
@@ -250,6 +260,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 5. AfA */}
       <ChartCard
         title="Abschreibung (AfA)"
+        termId="abschreibung"
         caption="Jährliche AfA in €. Bei sehr kleinen Werten wird als Balkendiagramm dargestellt, um Skalenprobleme zu vermeiden."
       >
         <ResponsiveContainer>
