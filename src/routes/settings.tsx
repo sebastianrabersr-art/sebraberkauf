@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
+import { GlossarList } from "@/components/GlossarList";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
@@ -214,6 +215,16 @@ function SettingsPage() {
             })}
           </div>
           <Button className="mt-4" disabled={busy} onClick={saveSettings}>Benachrichtigungen speichern</Button>
+        </section>
+
+        <section className="rounded-xl border bg-card p-6">
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 600, color: "#1C1917" }}>
+            Fachbegriffe
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+            Alle wichtigen Begriffe rund um Rendite, Finanzierung und Analyse.
+          </p>
+          <GlossarList />
         </section>
       </div>
       {checkoutDialog}

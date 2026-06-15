@@ -16,6 +16,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <a href="/demo" className="text-muted-foreground hover:text-foreground">Demo</a>
             <a href="/rechner" className="text-muted-foreground hover:text-foreground">Rechner</a>
             <a href="/ratgeber" className="text-muted-foreground hover:text-foreground">Ratgeber</a>
+            <a href="/glossar" className="text-muted-foreground hover:text-foreground">Glossar</a>
             <a href="/pricing" className="text-muted-foreground hover:text-foreground">Preise</a>
             <a href="/faq" className="text-muted-foreground hover:text-foreground">FAQ</a>
           </nav>
@@ -40,6 +41,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground flex flex-wrap gap-6 justify-between">
           <span>© {new Date().getFullYear()} kauf ma</span>
           <nav className="flex flex-wrap gap-x-5 gap-y-2">
+            <a href="/glossar" className="hover:text-foreground">Glossar</a>
             <a href="/impressum" className="hover:text-foreground">Impressum</a>
             <a href="/datenschutz" className="hover:text-foreground">Datenschutz</a>
             <a href="/agb" className="hover:text-foreground">AGB</a>
