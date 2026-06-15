@@ -68,18 +68,25 @@ const tooltipStyle: React.CSSProperties = {
   color: "var(--card-foreground)",
 };
 
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
+
 function ChartCard({
   title,
   caption,
+  termId,
   children,
 }: {
   title: string;
   caption: string;
+  termId?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border bg-card p-4">
-      <h4 className="font-semibold text-sm mb-3">{title}</h4>
+      <h4 className="font-semibold text-sm mb-3 flex items-center">
+        {title}
+        {termId && <GlossaryTooltip termId={termId} />}
+      </h4>
       <div className="h-72 w-full">{children}</div>
       <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">{caption}</p>
     </div>
