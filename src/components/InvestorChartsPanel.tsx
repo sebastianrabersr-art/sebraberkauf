@@ -151,6 +151,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 1. Darlehen */}
       <ChartCard
         title="Darlehenshöhe im Zeitverlauf"
+        termId="darlehenshoehe"
         caption="Verlauf der Restschuld über die geplante Halteperiode."
       >
         <ResponsiveContainer>
@@ -175,6 +176,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 2. Asset */}
       <ChartCard
         title="Asset-Entwicklung"
+        termId="asset_entwicklung"
         caption="Immobilienwert vs. Restschuld ergibt das Eigenkapital im Objekt."
       >
         <ResponsiveContainer>
@@ -194,6 +196,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 3. Cash */}
       <ChartCard
         title="Cash-Entwicklung"
+        termId="cash_entwicklung"
         caption="Jährlicher Cashflow (grün/rot), kumulierter Cashflow und liquide Mittel."
       >
         <ResponsiveContainer>
@@ -257,6 +260,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       {/* 5. AfA */}
       <ChartCard
         title="Abschreibung (AfA)"
+        termId="abschreibung"
         caption="Jährliche AfA in €. Bei sehr kleinen Werten wird als Balkendiagramm dargestellt, um Skalenprobleme zu vermeiden."
       >
         <ResponsiveContainer>
