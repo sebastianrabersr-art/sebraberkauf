@@ -3,6 +3,7 @@ import { inferMietrecht } from "@/lib/calc";
 import { countryOf, findRegion, sourcesFor } from "@/lib/regions";
 import type { Property } from "@/lib/types";
 import { ExternalLink, Scale } from "lucide-react";
+import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 interface Props {
   p: Property;
@@ -21,7 +22,7 @@ export function MietrechtRiskCard({ p, compact }: Props) {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Scale className="size-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm">Mietrechtliche Einschätzung</h3>
+          <h3 className="font-semibold text-sm">Mietrechtliche Einschätzung<GlossaryTooltip termId="mietrechtliche_einschaetzung" /></h3>
         </div>
         <AmpelBadge ampel={ampel}>{m.kategorie} · Risiko {m.risiko}</AmpelBadge>
       </div>
