@@ -150,7 +150,15 @@ function Dashboard() {
 
       {/* Haupteingabe – Analyse starten */}
       <div className="mt-6">
-        <AnalyzeCard />
+        <div style={{ background: "white", border: "1px solid #EAE6DF", borderRadius: 12, padding: "20px 24px" }}>
+          <div className="text-[11px] font-semibold uppercase text-[#2D6A4F] mb-1" style={{ letterSpacing: "0.07em" }}>
+            Neue Analyse
+          </div>
+          <h2 className="mb-4 text-[20px] leading-tight text-[#1C1917]" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}>
+            Immobilie gefunden? Sofort prüfen.
+          </h2>
+          <ImportTabsCard />
+        </div>
       </div>
 
       {/* Top-Kandidaten – eine einheitliche Liste */}
