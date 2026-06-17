@@ -85,6 +85,7 @@ function PropertiesList() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [scopeAll, setScopeAll] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
 
