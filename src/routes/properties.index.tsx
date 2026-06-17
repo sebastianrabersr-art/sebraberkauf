@@ -151,18 +151,12 @@ function PropertiesList() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            to="/properties/new"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#EAE6DF] bg-transparent px-3.5 py-2 text-[13px] font-medium text-[#1C1917] hover:bg-[#FAFAF8]"
-          >
-            <Plus className="size-4" /> Manuell hinzufügen
-          </Link>
-          <Link
-            to="/analyze"
+          <button
+            onClick={() => setShowImport((v) => !v)}
             className="inline-flex items-center gap-2 rounded-lg bg-[#2D6A4F] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#235740]"
           >
-            Link analysieren
-          </Link>
+            <Plus className="size-4" /> {showImport ? "Schließen" : "Immobilie hinzufügen"}
+          </button>
           {hasDemo && (
             <button
               onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
@@ -173,6 +167,12 @@ function PropertiesList() {
           )}
         </div>
       </div>
+
+      {showImport && (
+        <div className="mb-6">
+          <ImportTabsCard />
+        </div>
+      )}
 
       {/* Filterleiste */}
       <div className="bg-white border border-[#EAE6DF] rounded-[12px] px-4 py-2.5 mb-2">
