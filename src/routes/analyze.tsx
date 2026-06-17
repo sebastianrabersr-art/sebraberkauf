@@ -128,6 +128,7 @@ function AnalyzePage() {
   const { addProperty, findByLink, properties } = useStore();
 
   const [tab, setTab] = useState<TabKey>("link");
+  const [activeTab, setActiveTab] = useState<"link" | "text" | "excel" | "manuell">("link");
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [textUrl, setTextUrl] = useState("");
