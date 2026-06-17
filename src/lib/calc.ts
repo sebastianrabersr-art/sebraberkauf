@@ -717,13 +717,10 @@ const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boo
   { key: "wohnflaecheM2",   label: "Wohnfläche m²",      group: "basis",        check: (p) => !!p.wohnflaecheM2 && p.wohnflaecheM2 > 0 },
   { key: "nettomieteMtl",   label: "Erwartete Miete",    group: "basis",        check: (p) => !!p.nettomieteMtl && p.nettomieteMtl > 0 },
   { key: "zimmer",          label: "Zimmer",             group: "basis",        check: (p) => !!p.zimmer && p.zimmer > 0 },
-  { key: "bezirk",          label: "Bezirk / PLZ",       group: "basis",        check: (p) => !!p.bezirk?.trim() || !!p.land?.trim() },
+  { key: "bezirk",          label: "Bezirk / PLZ",       group: "basis",        check: (p) => !!p.bezirk?.trim() || !!p.city?.trim() },
   // KOSTEN
   { key: "makler",            label: "Makler Ja/Nein",      group: "kosten",     check: (p) => p.makler === "Ja" || p.makler === "Nein" },
   { key: "betriebskostenMtl", label: "Betriebskosten",      group: "kosten",     check: (p) => p.betriebskostenMtl != null && p.betriebskostenMtl >= 0 },
-  { key: "grunderwerbsteuer", label: "Grunderwerbsteuer",   group: "kosten",     check: (p) => p.grunderwerbsteuer != null },
-  { key: "grundbuchkosten",   label: "Grundbucheintragung", group: "kosten",     check: (p) => p.grundbuchkosten != null },
-  { key: "vertragskosten",    label: "Notar / Vertrag",     group: "kosten",     check: (p) => p.vertragskosten != null },
   // FINANZIERUNG
   { key: "eigenkapital", label: "Eigenkapital", group: "finanzierung", check: (p) => {
     const fin = getActiveFinance(p);
@@ -736,7 +733,8 @@ const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boo
   // BEWERTUNG
   { key: "baujahr",     label: "Baujahr",      group: "bewertung", check: (p) => !!p.baujahr && p.baujahr > 1800 },
   { key: "zustand",     label: "Zustand",      group: "bewertung", check: (p) => !!p.zustand?.trim() },
-  { key: "mietrecht",   label: "Mietrecht",    group: "bewertung", check: (p) => !!p.energyClass?.trim() },
+  { key: "mietrecht",   label: "Mietrecht",    group: "bewertung", check: (p) => !!p.mietrecht && p.mietrecht !== "unklar – rechtlich prüfen" },
+  { key: "energyClass", label: "Energieklasse", group: "bewertung", check: (p) => !!p.energyClass?.trim() },
 ];
 
 export function getRequiredFieldGroups() {
