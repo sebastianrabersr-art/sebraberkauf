@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
-import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
-import { ChevronRight, FileText, Pencil, Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
-import { toast } from "sonner";
+import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
@@ -150,7 +149,15 @@ function Dashboard() {
 
       {/* Haupteingabe – Analyse starten */}
       <div className="mt-6">
-        <AnalyzeCard />
+        <div style={{ background: "white", border: "1px solid #EAE6DF", borderRadius: 12, padding: "20px 24px" }}>
+          <div className="text-[11px] font-semibold uppercase text-[#2D6A4F] mb-1" style={{ letterSpacing: "0.07em" }}>
+            Neue Analyse
+          </div>
+          <h2 className="mb-4 text-[20px] leading-tight text-[#1C1917]" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}>
+            Immobilie gefunden? Sofort prüfen.
+          </h2>
+          <ImportTabsCard />
+        </div>
       </div>
 
       {/* Top-Kandidaten – eine einheitliche Liste */}
@@ -318,64 +325,5 @@ function Dashboard() {
         </Tabs>
       </div>
     </AppShell>
-  );
-}
-
-function AnalyzeCard() {
-  const navigate = useNavigate();
-  const [url, setUrl] = useState("");
-
-  const start = () => {
-    const u = url.trim();
-    if (!u) {
-      navigate({ to: "/analyze" });
-      return;
-    }
-    if (!isValidUrl(u)) {
-      toast.error("Bitte eine gültige URL (mit https://) einfügen.");
-      return;
-    }
-    try { localStorage.setItem("pending_analyze_url", u); } catch { /* ignore */ }
-    navigate({ to: "/analyze" });
-  };
-
-  return (
-    <div className="rounded-[14px] border border-[#EAE6DF] bg-white p-6">
-      <div className="text-[11px] font-semibold uppercase text-[#2D6A4F]" style={{ letterSpacing: "0.07em" }}>
-        Neue Analyse
-      </div>
-      <h2
-        className="mt-2 text-[20px] leading-tight text-[#1C1917]"
-        style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}
-      >
-        Immobilie gefunden? Sofort prüfen.
-      </h2>
-
-      <div className="mt-4 flex flex-col sm:flex-row gap-2">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") start(); }}
-          placeholder="Immobilienlink einfügen (willhaben, ImmoScout, immowelt …)"
-          className="flex-1 rounded-lg border border-[#EAE6DF] bg-white px-4 py-2.5 text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] outline-none focus:border-[#2D6A4F]/50"
-        />
-        <button
-          onClick={start}
-          className="inline-flex items-center justify-center rounded-lg bg-[#2D6A4F] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#235740] transition-colors"
-        >
-          Analysieren
-        </button>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-[#A8A29E]">
-        <Link to="/analyze" className="inline-flex items-center gap-1.5 hover:text-[#2D6A4F]">
-          <FileText className="size-3.5" /> PDF hochladen
-        </Link>
-        <Link to="/properties/new" className="inline-flex items-center gap-1.5 hover:text-[#2D6A4F]">
-          <Pencil className="size-3.5" /> Manuell eingeben
-        </Link>
-      </div>
-    </div>
   );
 }

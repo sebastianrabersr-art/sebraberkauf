@@ -1,5 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
+import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
@@ -85,6 +86,7 @@ function PropertiesList() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [scopeAll, setScopeAll] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
 
@@ -151,18 +153,12 @@ function PropertiesList() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            to="/properties/new"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#EAE6DF] bg-transparent px-3.5 py-2 text-[13px] font-medium text-[#1C1917] hover:bg-[#FAFAF8]"
-          >
-            <Plus className="size-4" /> Manuell hinzufügen
-          </Link>
-          <Link
-            to="/analyze"
+          <button
+            onClick={() => setShowImport((v) => !v)}
             className="inline-flex items-center gap-2 rounded-lg bg-[#2D6A4F] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#235740]"
           >
-            Link analysieren
-          </Link>
+            <Plus className="size-4" /> {showImport ? "Schließen" : "Immobilie hinzufügen"}
+          </button>
           {hasDemo && (
             <button
               onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
@@ -173,6 +169,12 @@ function PropertiesList() {
           )}
         </div>
       </div>
+
+      {showImport && (
+        <div className="mb-6">
+          <ImportTabsCard />
+        </div>
+      )}
 
       {/* Filterleiste */}
       <div className="bg-white border border-[#EAE6DF] rounded-[12px] px-4 py-2.5 mb-2">
