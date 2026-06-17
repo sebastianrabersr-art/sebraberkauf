@@ -205,7 +205,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
           <RangeChips
             value={loanRange}
             onChange={setLoanRange}
-            options={["5J", "10J", "20J", "30J", "Alle"]}
+            options={availableRanges}
           />
         }
       >
