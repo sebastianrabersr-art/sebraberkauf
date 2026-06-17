@@ -14,7 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import type { Property } from "@/lib/types";
-import { calcProperty, fmtEUR } from "@/lib/calc";
+import { calcProperty, fmtEUR, getActiveFinance, calcTotalInterestPaid } from "@/lib/calc";
 import { useActiveAssumptions } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
