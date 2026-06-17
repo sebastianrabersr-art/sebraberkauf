@@ -128,6 +128,7 @@ function AnalyzePage() {
   const { addProperty, findByLink, properties } = useStore();
 
   const [tab, setTab] = useState<TabKey>("link");
+  const [activeTab, setActiveTab] = useState<"link" | "text" | "excel" | "manuell">("link");
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [textUrl, setTextUrl] = useState("");
@@ -251,6 +252,7 @@ function AnalyzePage() {
         // Auto-switch to text tab
         setTextUrl(url);
         setTab("text");
+        setActiveTab("text");
         setAutoSwitchNotice(true);
         return;
       }
@@ -329,72 +331,66 @@ function AnalyzePage() {
     }
   };
 
-  const tabs: { key: TabKey; label: string; icon: typeof LinkIcon }[] = [
-    { key: "link", label: "Link", icon: LinkIcon },
-    { key: "text", label: "Text / Seite kopieren", icon: FileText },
-    { key: "excel", label: "Excel-Vorlage", icon: FileSpreadsheet },
-    { key: "manuell", label: "Manuell", icon: Pencil },
-  ];
-
   return (
-    <AppShell>
-      <PageHeader
-        title="Immobilie importieren"
-        description={`Aktives Projekt: ${project.name}`}
-      />
+    <div className="max-w-2xl mx-auto py-8 px-4">
+      <h1 style={{fontFamily:"'Bricolage Grotesque',sans-serif", fontWeight:800, fontSize:28, letterSpacing:"-0.03em", marginBottom:4}}>
+        Immobilie hinzufügen
+      </h1>
+      <p className="text-[13px] text-[#78716C] mb-6">Link einfügen, Text kopieren, Excel-Vorlage nutzen oder manuell erfassen.</p>
 
-      <div
-        className="rounded-[12px] border border-[#EAE6DF] bg-white px-6 py-5"
-        style={FONT}
-      >
-        {/* Pill tabs */}
-        <div className="flex flex-wrap gap-2 mb-5">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.key;
-            return (
-              <button
-                key={t.key}
-                onClick={() => { setTab(t.key); setAutoSwitchNotice(false); }}
-                className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
-                style={{
-                  background: active ? "#1C1917" : "#F5F3EE",
-                  color: active ? "#ffffff" : "#78716C",
-                  border: active ? "1px solid #1C1917" : "1px solid #EAE6DF",
-                }}
-              >
-                <Icon className="size-3.5" />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Tab Pills */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {[
+          { key: "link", label: "🔗 Link" },
+          { key: "text", label: "📋 Text / Seite kopieren" },
+          { key: "excel", label: "📊 Excel-Vorlage" },
+          { key: "manuell", label: "✏️ Manuell" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as typeof activeTab)}
+            className="px-4 py-2 rounded-full text-[13px] font-medium border transition-all"
+            style={{
+              background: activeTab === tab.key ? "#1C1917" : "#F5F3EE",
+              color: activeTab === tab.key ? "#fff" : "#78716C",
+              borderColor: activeTab === tab.key ? "#1C1917" : "#EAE6DF",
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        {/* TAB: LINK */}
-        {tab === "link" && (
+      {/* Card */}
+      <div style={{background:"white", border:"1px solid #EAE6DF", borderRadius:12, padding:"20px 24px"}}>
+
+        {/* TAB 1: Link */}
+        {activeTab === "link" && (
           <div>
-            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Immobilien-Link</label>
-            <div className="flex gap-2 flex-col sm:flex-row">
+            {autoSwitchNotice && (
+              <div style={{background:"#FEF3C7", border:"1px solid #FCD34D", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#92400E"}}>
+                Dieser Link konnte nicht automatisch ausgelesen werden — das passiert bei ImmoScout24 und Immowelt. Öffne das Inserat, drücke <strong>Strg+A → Strg+C</strong> und füge den Text in "Text / Seite kopieren" ein.
+              </div>
+            )}
+            <label className="block text-[13px] font-medium text-[#1C1917] mb-2">Link zum Inserat</label>
+            <div className="flex gap-2">
               <input
                 type="url"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://…"
-                className={inputClass + " flex-1"}
+                placeholder="https://www.willhaben.at/..."
+                onChange={(e) => { setUrl(e.target.value); setAutoSwitchNotice(false); setResult(null); }}
+                onKeyDown={(e) => e.key === "Enter" && runLink()}
+                style={{flex:1, border:"1.5px solid #EAE6DF", borderRadius:8, padding:"9px 12px", fontSize:13, outline:"none"}}
               />
               <button
                 onClick={runLink}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white disabled:opacity-60"
-                style={{ background: "#2D6A4F" }}
+                style={{background:"#2D6A4F", color:"white", border:"none", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:500, cursor:"pointer", opacity: loading ? 0.6 : 1}}
               >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Analysieren
+                {loading ? "Lädt…" : "Analysieren"}
               </button>
             </div>
-            <p className="text-[12px] text-[#78716C] mt-2">
-              Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren.
-            </p>
+            <p className="text-[11px] text-[#A8A29E] mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
             {(platform || country) && (
               <div className="mt-2 flex gap-1">
                 {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-[#78716C]">{platform}</span>}
@@ -407,102 +403,89 @@ function AnalyzePage() {
           </div>
         )}
 
-        {/* TAB: TEXT */}
-        {tab === "text" && (
+        {/* TAB 2: Text */}
+        {activeTab === "text" && (
           <div>
-            {autoSwitchNotice && (
-              <div className="mb-4 rounded-[10px] border border-[#F59E0B]/40 bg-[#FEF3C7] p-3 text-[13px] text-[#92400E] flex items-start gap-2">
-                <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-                <div>
-                  Dieser Link konnte nicht automatisch ausgelesen werden — das passiert bei ImmoScout24 und Immowelt. Öffne das Inserat, drücke Strg+A → Strg+C und füge den Text unten ein.
-                </div>
-              </div>
-            )}
-            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Inseratstext</label>
+            <label className="block text-[13px] font-medium text-[#1C1917] mb-2">Seiteninhalt einfügen</label>
             <textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
-              onPaste={onTextPaste}
               placeholder={"Gesamten Seiteninhalt hier einfügen — inklusive Werbung und Navigation.\n\nTipp: Strg+A → Strg+C auf der Inseratsseite, dann hier einfügen.\n\nFunktioniert auch mit kopierten Excel-Zeilen aus dem kaufma Template."}
-              className={inputClass + " font-mono"}
-              style={{ minHeight: 200, resize: "vertical" }}
-            />
-            <label className="block text-[13px] font-medium mt-3 mb-2 text-[#1C1917]">Link zur Immobilie (optional)</label>
-            <input
-              type="url"
-              value={textUrl}
-              onChange={(e) => setTextUrl(e.target.value)}
-              placeholder="https://…"
-              className={inputClass}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.startsWith("http") && !val.includes("\n") && !val.includes("\t")) {
+                  setUrl(val.trim());
+                  setActiveTab("link");
+                  return;
+                }
+                setText(val);
+              }}
+              style={{width:"100%", minHeight:200, border:"1.5px solid #EAE6DF", borderRadius:8, padding:"9px 12px", fontSize:13, resize:"vertical", outline:"none", fontFamily:"inherit"}}
             />
             <div className="mt-3">
-              <button
-                onClick={runText}
-                disabled={loading || !text.trim()}
-                className="inline-flex items-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white disabled:opacity-60"
-                style={{ background: "#2D6A4F" }}
-              >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Text analysieren
-              </button>
+              <label className="block text-[11px] text-[#A8A29E] mb-1">Link zur Immobilie (optional)</label>
+              <input
+                type="url"
+                value={textUrl}
+                placeholder="https://..."
+                onChange={(e) => setTextUrl(e.target.value)}
+                style={{width:"100%", border:"1.5px solid #EAE6DF", borderRadius:8, padding:"7px 12px", fontSize:12, outline:"none"}}
+              />
             </div>
+            <button
+              onClick={runText}
+              disabled={loading}
+              style={{marginTop:12, background:"#2D6A4F", color:"white", border:"none", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:500, cursor:"pointer", opacity: loading ? 0.6 : 1}}
+            >
+              {loading ? "Analysiert…" : "Text analysieren"}
+            </button>
             {loading && (
               <div className="mt-3 text-center text-[12px] text-[#A8A29E]">{loadingTexts[loadingPhase]}</div>
             )}
           </div>
         )}
 
-        {/* TAB: EXCEL */}
-        {tab === "excel" && (
+        {/* TAB 3: Excel */}
+        {activeTab === "excel" && (
           <div>
-            <div className="text-[13px] font-semibold text-[#1C1917]">Excel-Vorlage verwenden</div>
-            <p className="text-[13px] text-[#78716C] mt-1">
-              Lade die Vorlage herunter, fülle sie aus und kopiere die Zeilen direkt in Tab 2.
-            </p>
-            <ol className="mt-3 space-y-1 text-[13px] text-[#78716C] list-decimal pl-5">
-              <li>Vorlage herunterladen</li>
-              <li>Daten eintragen</li>
-              <li>Zeilen markieren (inklusive Header) → Strg+C</li>
-              <li>In Tab "Text / Seite kopieren" einfügen</li>
-            </ol>
+            <p className="text-[13px] text-[#1C1917] font-medium mb-3">Excel-Vorlage verwenden</p>
+            <div style={{background:"#F5F3EE", borderRadius:10, padding:"14px 16px", marginBottom:16}}>
+              <div className="text-[13px] text-[#1C1917] font-medium mb-2">So geht's:</div>
+              <ol style={{fontSize:13, color:"#78716C", lineHeight:1.8, paddingLeft:16}}>
+                <li>Vorlage herunterladen</li>
+                <li>Daten eintragen (Pflichtfelder sind grün markiert)</li>
+                <li>Ausgefüllte Zeilen markieren (ohne Header-Zeile) → Strg+C</li>
+                <li>In "Text / Seite kopieren" einfügen → automatisch erkannt</li>
+              </ol>
+            </div>
             <a
               href="/kaufma_import_vorlage.xlsx"
               download
-              className="mt-4 inline-flex items-center gap-2 rounded-[8px] border border-[#EAE6DF] bg-white px-4 py-[9px] text-[13px] font-medium text-[#1C1917] hover:bg-[#F5F3EE]"
+              style={{display:"inline-flex", alignItems:"center", gap:8, background:"white", border:"1.5px solid #EAE6DF", borderRadius:8, padding:"9px 16px", fontSize:13, fontWeight:500, color:"#1C1917", textDecoration:"none"}}
             >
-              <Download className="size-4" />
-              Vorlage herunterladen
+              ⬇ Vorlage herunterladen
             </a>
-            <p className="text-[12px] text-[#78716C] mt-3">
-              Pflichtfelder sind grün markiert. Alle anderen Felder sind optional.
-            </p>
+            <p className="text-[11px] text-[#A8A29E] mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
         )}
 
-        {/* TAB: MANUELL */}
-        {tab === "manuell" && (
+        {/* TAB 4: Manuell */}
+        {activeTab === "manuell" && (
           <div>
-            <p className="text-[13px] text-[#78716C] mb-3">Immobilie ohne Link manuell erfassen.</p>
-            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Titel</label>
+            <p className="text-[13px] text-[#78716C] mb-4">Immobilie ohne Link manuell erfassen. Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.</p>
+            <label className="block text-[13px] font-medium text-[#1C1917] mb-2">Titel *</label>
             <input
               type="text"
               value={manualTitle}
+              placeholder="z.B. Schöne 2-Zimmer Wohnung Wien 1020"
               onChange={(e) => setManualTitle(e.target.value)}
-              placeholder="z. B. Altbauwohnung 1070"
-              className={inputClass}
+              style={{width:"100%", border:"1.5px solid #EAE6DF", borderRadius:8, padding:"9px 12px", fontSize:13, outline:"none"}}
             />
-            <div className="mt-3">
-              <button
-                onClick={createManual}
-                className="inline-flex items-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white"
-                style={{ background: "#2D6A4F" }}
-              >
-                Leere Immobilie erstellen
-              </button>
-            </div>
-            <p className="text-[12px] text-[#78716C] mt-3">
-              Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.
-            </p>
+            <button
+              onClick={createManual}
+              style={{marginTop:12, background:"#2D6A4F", color:"white", border:"none", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:500, cursor:"pointer"}}
+            >
+              Leere Immobilie erstellen
+            </button>
           </div>
         )}
 
@@ -533,6 +516,6 @@ function AnalyzePage() {
           </div>
         )}
       </div>
-    </AppShell>
+    </div>
   );
 }
