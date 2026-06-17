@@ -8,6 +8,7 @@ import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
+import * as XLSX from "xlsx";
 
 type TabKey = "link" | "text" | "excel" | "manuell";
 
@@ -104,6 +105,30 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
     return () => clearInterval(id);
   }, [loading]);
   const loadingTexts = ["Link wird geladen…", "Daten werden extrahiert…", "KI analysiert…"];
+
+  const downloadTemplate = () => {
+    const headers = [
+      "Titel","Kaufpreis €","Wohnfläche m²","Zimmer","Objektart","Baujahr","Zustand",
+      "Energieklasse","Verfügbarkeit","Adresse","Bezirk / PLZ","Stadt","Bundesland","Land",
+      "Nettomiete mtl. €","Betriebskosten mtl. €","Heizkosten mtl. €","Rücklagenfonds mtl. €",
+      "Reserve €","Sanierungskosten €","Makler","Provision % netto","Provision % brutto",
+      "Grunderwerbsteuer %","Notar & Grundbuch %","Sonstige Nebenkosten €",
+      "Eigenkapital €","Zinssatz %","Laufzeit Jahre","Tilgungsart","Zinsbindung Jahre",
+      "Beschreibung","Eigene Notizen","Link zum Inserat"
+    ];
+    const example = [
+      "Schöne 2-Zimmer Wohnung Wien","350000","65","2","Wohnung","1995","Gut","C",
+      "sofort","Quellenstraße 12/15","1100","Wien","Wien","Österreich",
+      "1200","180","80","60","5000","15000","Ja","3","3.6","3.5","1.1","500",
+      "80000","3.8","30","Annuität","10","Helle Wohnung mit Balkon","Gute Lage, nahe U-Bahn",
+      "https://www.willhaben.at/..."
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    ws['!cols'] = headers.map(() => ({ wch: 22 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Immobilien Import");
+    XLSX.writeFile(wb, "kaufma_import_vorlage.xlsx");
+  };
 
   useEffect(() => {
     try {
@@ -369,10 +394,12 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 <li>In "Text einfügen" einfügen → automatisch erkannt</li>
               </ol>
             </div>
-            <a href="/kaufma_import_vorlage.xlsx" download="kaufma_import_vorlage.xlsx"
-              style={{display:"inline-flex",alignItems:"center",gap:8,background:"white",border:"1.5px solid #EAE6DF",borderRadius:8,padding:"9px 16px",fontSize:13,fontWeight:500,color:"#1C1917",textDecoration:"none"}}>
+            <button
+              onClick={downloadTemplate}
+              style={{display:"inline-flex",alignItems:"center",gap:8,background:"white",border:"1.5px solid #EAE6DF",borderRadius:8,padding:"9px 16px",fontSize:13,fontWeight:500,color:"#1C1917",cursor:"pointer"}}
+            >
               <DownloadSimple weight="duotone" size={16} /> Vorlage herunterladen
-            </a>
+            </button>
             <p className="text-[11px] text-[#A8A29E] mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
         )}
