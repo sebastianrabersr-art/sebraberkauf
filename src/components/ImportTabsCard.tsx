@@ -7,7 +7,7 @@ import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple } from "@phosphor-icons/react";
+import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 
 type TabKey = "link" | "text" | "excel" | "manuell";
 
@@ -369,9 +369,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 <li>In "Text einfügen" einfügen → automatisch erkannt</li>
               </ol>
             </div>
-            <a href="/kaufma_import_vorlage.xlsx" download
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "white", border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 500, color: "#1C1917", textDecoration: "none" }}>
-              ⬇ Vorlage herunterladen
+            <a href="/kaufma_import_vorlage.xlsx" download="kaufma_import_vorlage.xlsx"
+              style={{display:"inline-flex",alignItems:"center",gap:8,background:"white",border:"1.5px solid #EAE6DF",borderRadius:8,padding:"9px 16px",fontSize:13,fontWeight:500,color:"#1C1917",textDecoration:"none"}}>
+              <DownloadSimple weight="duotone" size={16} /> Vorlage herunterladen
             </a>
             <p className="text-[11px] text-[#A8A29E] mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
