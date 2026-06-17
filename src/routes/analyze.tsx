@@ -252,6 +252,7 @@ function AnalyzePage() {
         // Auto-switch to text tab
         setTextUrl(url);
         setTab("text");
+        setActiveTab("text");
         setAutoSwitchNotice(true);
         return;
       }
