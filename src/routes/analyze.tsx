@@ -1,18 +1,119 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.functions";
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
-import type { Mietrecht, Property } from "@/lib/types";
+import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { Link as LinkIcon, Loader2, Sparkles, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
+import { Loader2, Sparkles, AlertTriangle, CheckCircle2, Download, Link as LinkIcon, FileSpreadsheet, FileText, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/analyze")({
-  head: () => ({ meta: [{ title: "Link analysieren – Immo Invest" }] }),
+  head: () => ({ meta: [{ title: "Immobilie importieren – kaufma" }] }),
   component: AnalyzePage,
 });
+
+type TabKey = "link" | "text" | "excel" | "manuell";
+
+const FONT = { fontFamily: "Inter, sans-serif" } as const;
+
+const inputClass =
+  "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
+const EXCEL_MAP: Record<string, string> = {
+  "Titel": "title",
+  "Kaufpreis €": "kaufpreis",
+  "Kaufpreis": "kaufpreis",
+  "Wohnfläche m²": "wohnflaecheM2",
+  "Wohnfläche": "wohnflaecheM2",
+  "Zimmer": "zimmer",
+  "Bezirk / PLZ": "bezirk",
+  "Bezirk": "bezirk",
+  "Stadt": "city",
+  "Bundesland": "bundesland",
+  "Land": "land",
+  "Baujahr": "baujahr",
+  "Zustand": "zustand",
+  "Energieklasse": "energyClass",
+  "Objektart": "objekttyp",
+  "Adresse": "adresse",
+  "Nettomiete mtl. €": "nettomieteMtl",
+  "Nettomiete mtl.": "nettomieteMtl",
+  "Betriebskosten mtl. €": "betriebskostenMtl",
+  "Betriebskosten mtl.": "betriebskostenMtl",
+  "Heizkosten mtl. €": "heizkostenMtl",
+  "Heizkosten mtl.": "heizkostenMtl",
+  "Rücklagenfonds mtl. €": "ruecklageMtl",
+  "Rücklagenfonds mtl.": "ruecklageMtl",
+  "Beschreibung": "beschreibung",
+  "Link zum Inserat": "link",
+};
+
+const FINANCE_KEYS = new Set(["Eigenkapital €", "Eigenkapital", "Zinssatz %", "Zinssatz", "Laufzeit Jahre", "Laufzeit"]);
+
+const NUMERIC_FIELDS = new Set([
+  "kaufpreis","wohnflaecheM2","zimmer","baujahr","nettomieteMtl","betriebskostenMtl","heizkostenMtl","ruecklageMtl",
+]);
+
+function parseNum(s: string): number | null {
+  if (!s) return null;
+  const cleaned = s.replace(/\s/g, "").replace(/\./g, "").replace(",", ".").replace(/[^\d.\-]/g, "");
+  if (!cleaned) return null;
+  const n = parseFloat(cleaned);
+  return isFinite(n) ? n : null;
+}
+
+function parseTSV(input: string): { rows: Record<string, string>[]; hasHeader: boolean } {
+  const lines = input.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return { rows: [], hasHeader: false };
+  const firstCells = lines[0].split("\t");
+  // Heuristic: header row if any cell matches a known key
+  const hasHeader = firstCells.some((c) => EXCEL_MAP[c.trim()] || FINANCE_KEYS.has(c.trim()));
+  if (!hasHeader) {
+    // Treat all rows as data with no header → cannot map; bail
+    return { rows: [], hasHeader: false };
+  }
+  const headers = firstCells.map((c) => c.trim());
+  const rows: Record<string, string>[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split("\t");
+    const row: Record<string, string> = {};
+    headers.forEach((h, j) => { row[h] = (cells[j] ?? "").trim(); });
+    if (Object.values(row).some((v) => v !== "")) rows.push(row);
+  }
+  return { rows, hasHeader: true };
+}
+
+function rowToProperty(row: Record<string, string>, projectId: string): Partial<Property> & { financeScenarios?: FinanceScenario[] } {
+  const out: Record<string, unknown> = { projectId };
+  for (const [key, val] of Object.entries(row)) {
+    const propKey = EXCEL_MAP[key];
+    if (!propKey || !val) continue;
+    out[propKey] = NUMERIC_FIELDS.has(propKey) ? parseNum(val) : val;
+  }
+  // Finance scenario
+  const ek = parseNum(row["Eigenkapital €"] ?? row["Eigenkapital"] ?? "");
+  const zs = parseNum(row["Zinssatz %"] ?? row["Zinssatz"] ?? "");
+  const lz = parseNum(row["Laufzeit Jahre"] ?? row["Laufzeit"] ?? "");
+  if (ek != null || zs != null || lz != null) {
+    const kp = (out.kaufpreis as number | null) ?? null;
+    const scenario: FinanceScenario = {
+      id: crypto.randomUUID(),
+      name: "Importiert",
+      kreditBetrag: kp != null && ek != null ? Math.max(0, kp - ek) : null,
+      eigenkapital: ek,
+      zinssatz: zs != null ? zs / 100 : 0.035,
+      laufzeitJahre: lz ?? 25,
+      intervall: "monatlich" as FinanceScenario["intervall"],
+      tilgungsart: "annuitaet" as FinanceScenario["tilgungsart"],
+      startDate: new Date().toISOString(),
+    };
+    out.financeScenarios = [scenario];
+  }
+  if (row["Link zum Inserat"]) out.link = row["Link zum Inserat"];
+  return out as Partial<Property> & { financeScenarios?: FinanceScenario[] };
+}
 
 type ImportResult = {
   property: Property;
@@ -25,11 +126,15 @@ function AnalyzePage() {
   const extract = useServerFn(extractProperty);
   const project = useActiveProject();
   const { addProperty, findByLink, properties } = useStore();
+
+  const [tab, setTab] = useState<TabKey>("link");
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
+  const [textUrl, setTextUrl] = useState("");
+  const [manualTitle, setManualTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState(0);
-  const [needsText, setNeedsText] = useState(false);
+  const [autoSwitchNotice, setAutoSwitchNotice] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
 
   useEffect(() => {
@@ -39,7 +144,6 @@ function AnalyzePage() {
   }, [loading]);
   const loadingTexts = ["Link wird geladen…", "Daten werden extrahiert…", "KI analysiert…"];
 
-  // Pick up a link the visitor pasted on the landing page before signup
   useEffect(() => {
     try {
       const pending = localStorage.getItem("pending_analyze_url");
@@ -70,18 +174,123 @@ function AnalyzePage() {
     return s || "";
   };
 
-  const run = async () => {
+  const applyExtracted = (d: any, linkUrl: string) => {
+    const mietrecht: Mietrecht = (d.mietrecht_hint as Mietrecht) || "unklar – rechtlich prüfen";
+    const objektart = mapObjektart(d.property_type);
+    const adresseFull = d.address || d.location || "";
+    const draft = makeEmptyProperty({
+      projectId: project.id,
+      link: linkUrl.trim(),
+      platform: d.platform || detectPlatform(linkUrl),
+      land: d.country || detectCountry(linkUrl) || "",
+      bundesland: d.region || "",
+      title: d.title || "Ohne Titel",
+      bezirk: d.district,
+      adresse: adresseFull,
+      city: d.city || (detectCountry(linkUrl) === "Österreich" ? "Wien" : ""),
+      objekttyp: objektart,
+      baujahr: d.year_built,
+      mietrecht,
+      zustand: d.condition,
+      wohnflaecheM2: d.living_area_m2,
+      grundstuecksflaecheM2: d.plot_area_m2,
+      aussenflaecheM2: d.outdoor_area_m2,
+      zimmer: d.rooms,
+      kaufpreis: d.purchase_price,
+      makler: d.seller_type === "Makler" ? "Ja" : d.seller_type === "Privat" ? "Nein" : "unklar",
+      sellerType: (d.seller_type as Property["sellerType"]) || undefined,
+      provisionPct: d.commission_pct,
+      provisionEUR: d.commission_eur,
+      stockwerk: d.floor,
+      hasElevator: d.has_elevator,
+      hasBalkon: d.has_balcony,
+      hasTerrasse: d.has_terrace,
+      hasLoggia: d.has_loggia,
+      hasGarten: d.has_garden,
+      hasKeller: d.has_basement,
+      hasStellplatz: d.has_parking,
+      betriebskostenMtl: d.monthly_operating_costs,
+      heizkostenMtl: d.monthly_heating_costs,
+      energyClass: d.energy_class,
+      hwb: d.hwb,
+      verfuegbarkeit: d.availability,
+      beschreibung: d.description,
+      ausstattung: d.features,
+      nettomieteMtl: d.estimated_rent_monthly,
+      nettomieteGeschaetzt: d.rent_is_estimate,
+      missingData: d.missing_data,
+    });
+    const dq = calcDataQuality(draft);
+    const status: Property["extractionStatus"] = dq.score >= 60 ? "ok" : "partial";
+    const p = makeEmptyProperty({ ...draft, extractionStatus: status });
+    addProperty(p);
+    setResult({ property: p, quality: dq, partial: dq.score < 60 });
+    if (dq.score < 60) {
+      toast.warning(`Nur ${dq.score}% der wichtigen Daten gefunden – Import unvollständig.`);
+    } else {
+      toast.success(`Immobilie analysiert (${dq.score}% Datenqualität).`);
+    }
+  };
+
+  const runLink = async () => {
     setResult(null);
-    if (url && !isValidUrl(url)) {
-      toast.error("Bitte eine gültige URL (mit https://) einfügen.");
+    setAutoSwitchNotice(false);
+    if (!url) { toast.error("Bitte einen Link einfügen."); return; }
+    if (!isValidUrl(url)) { toast.error("Bitte eine gültige URL (mit https://) einfügen."); return; }
+    const dup = checkDuplicate(url);
+    if (dup) {
+      toast.warning("Diese Immobilie existiert bereits.", {
+        action: { label: "Bestehende öffnen", onClick: () => navigate({ to: "/properties/$id", params: { id: dup.id } }) },
+      });
       return;
     }
-    if (!url && !text) {
-      toast.error("Bitte Link oder Inseratstext eingeben.");
-      return;
+    setLoading(true);
+    try {
+      const res = await extract({ data: { url, text: "" } });
+      if (!res.ok) {
+        // Auto-switch to text tab
+        setTextUrl(url);
+        setTab("text");
+        setAutoSwitchNotice(true);
+        return;
+      }
+      applyExtracted(res.data, url);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
+    } finally {
+      setLoading(false);
     }
-    if (url) {
-      const dup = checkDuplicate(url);
+  };
+
+  const runText = async () => {
+    setResult(null);
+    if (!text.trim()) { toast.error("Bitte Inseratstext einfügen."); return; }
+    // Excel TSV detection
+    if (text.includes("\t")) {
+      const { rows, hasHeader } = parseTSV(text);
+      if (hasHeader && rows.length > 0) {
+        let created = 0;
+        for (const row of rows) {
+          const partial = rowToProperty(row, project.id);
+          if (partial.link) {
+            const dup = checkDuplicate(partial.link as string);
+            if (dup) continue;
+          }
+          const p = makeEmptyProperty({ ...partial, projectId: project.id, extractionStatus: "manuell" });
+          addProperty(p);
+          created++;
+          if (rows.length === 1) {
+            const dq = calcDataQuality(p);
+            setResult({ property: p, quality: dq, partial: dq.score < 60 });
+          }
+        }
+        toast.success(rows.length === 1 ? "Immobilie aus Excel importiert" : `${created} Immobilien aus Excel importiert`);
+        setText("");
+        return;
+      }
+    }
+    if (textUrl) {
+      const dup = checkDuplicate(textUrl);
       if (dup) {
         toast.warning("Diese Immobilie existiert bereits.", {
           action: { label: "Bestehende öffnen", onClick: () => navigate({ to: "/properties/$id", params: { id: dup.id } }) },
@@ -91,85 +300,9 @@ function AnalyzePage() {
     }
     setLoading(true);
     try {
-      const res = await extract({ data: { url, text } });
-
-      // Always save the link as a property, even if extraction fails
-      if (!res.ok) {
-        const fallbackTitle = url ? `Inserat (${platform || "unbekannt"})` : "Manuelle Immobilie";
-        const p = makeEmptyProperty({
-          projectId: project.id,
-          link: url.trim(),
-          platform: platform,
-          land: country || "",
-          title: fallbackTitle,
-          extractionStatus: "failed",
-          missingData: ["Automatische Extraktion fehlgeschlagen – bitte Inseratstext einfügen oder PDF hochladen."],
-        });
-        addProperty(p);
-        const q = calcDataQuality(p);
-        setResult({ property: p, quality: q, partial: true });
-        setNeedsText(true);
-        toast.warning(res.error || "Daten konnten nicht ausgelesen werden – Link wurde trotzdem gespeichert.");
-        return;
-      }
-
-      const d = res.data;
-      const mietrecht: Mietrecht = (d.mietrecht_hint as Mietrecht) || "unklar – rechtlich prüfen";
-      const objektart = mapObjektart(d.property_type);
-      const adresseFull = d.address || d.location || "";
-      const draft = makeEmptyProperty({
-        projectId: project.id,
-        link: url.trim(),
-        platform: d.platform || platform,
-        land: d.country || country || "",
-        bundesland: d.region || "",
-        title: d.title || "Ohne Titel",
-        bezirk: d.district,
-        adresse: adresseFull,
-        city: d.city || (country === "Österreich" ? "Wien" : ""),
-        objekttyp: objektart,
-        baujahr: d.year_built,
-        mietrecht,
-        zustand: d.condition,
-        wohnflaecheM2: d.living_area_m2,
-        grundstuecksflaecheM2: d.plot_area_m2,
-        aussenflaecheM2: d.outdoor_area_m2,
-        zimmer: d.rooms,
-        kaufpreis: d.purchase_price,
-        makler: d.seller_type === "Makler" ? "Ja" : d.seller_type === "Privat" ? "Nein" : "unklar",
-        sellerType: (d.seller_type as Property["sellerType"]) || undefined,
-        provisionPct: d.commission_pct,
-        provisionEUR: d.commission_eur,
-        stockwerk: d.floor,
-        hasElevator: d.has_elevator,
-        hasBalkon: d.has_balcony,
-        hasTerrasse: d.has_terrace,
-        hasLoggia: d.has_loggia,
-        hasGarten: d.has_garden,
-        hasKeller: d.has_basement,
-        hasStellplatz: d.has_parking,
-        betriebskostenMtl: d.monthly_operating_costs,
-        heizkostenMtl: d.monthly_heating_costs,
-        energyClass: d.energy_class,
-        hwb: d.hwb,
-        verfuegbarkeit: d.availability,
-        beschreibung: d.description,
-        ausstattung: d.features,
-        nettomieteMtl: d.estimated_rent_monthly,
-        nettomieteGeschaetzt: d.rent_is_estimate,
-        missingData: d.missing_data,
-      });
-      const dq = calcDataQuality(draft);
-      const status: Property["extractionStatus"] = dq.score >= 60 ? "ok" : "partial";
-      const p = makeEmptyProperty({ ...draft, extractionStatus: status });
-      addProperty(p);
-      setResult({ property: p, quality: dq, partial: dq.score < 60 });
-      if (dq.score < 60) {
-        setNeedsText(true);
-        toast.warning(`Nur ${dq.score}% der wichtigen Daten gefunden – Import unvollständig.`);
-      } else {
-        toast.success(`Immobilie analysiert (${dq.score}% Datenqualität).`);
-      }
+      const res = await extract({ data: { url: textUrl, text } });
+      if (!res.ok) { toast.error(res.error || "Extraktion fehlgeschlagen."); return; }
+      applyExtracted(res.data, textUrl);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
     } finally {
@@ -177,204 +310,228 @@ function AnalyzePage() {
     }
   };
 
-  const rerunWithText = async () => {
-    if (!text.trim() || !result) return;
-    setLoading(true);
-    try {
-      const res = await extract({ data: { url, text } });
-      if (!res.ok) {
-        toast.error(res.error);
-        return;
-      }
-      const d = res.data;
-      const mietrecht: Mietrecht = (d.mietrecht_hint as Mietrecht) || "unklar – rechtlich prüfen";
-      const patch: Partial<Property> = {
-        title: d.title || result.property.title,
-        bezirk: d.district || result.property.bezirk,
-        adresse: d.address || d.location || result.property.adresse,
-        city: d.city || result.property.city,
-        land: d.country || result.property.land,
-        bundesland: d.region || result.property.bundesland,
-        objekttyp: mapObjektart(d.property_type) || result.property.objekttyp,
-        baujahr: d.year_built ?? result.property.baujahr,
-        mietrecht,
-        zustand: d.condition || result.property.zustand,
-        wohnflaecheM2: d.living_area_m2 ?? result.property.wohnflaecheM2,
-        grundstuecksflaecheM2: d.plot_area_m2 ?? result.property.grundstuecksflaecheM2,
-        aussenflaecheM2: d.outdoor_area_m2 ?? result.property.aussenflaecheM2,
-        zimmer: d.rooms ?? result.property.zimmer,
-        kaufpreis: d.purchase_price ?? result.property.kaufpreis,
-        provisionPct: d.commission_pct ?? result.property.provisionPct,
-        provisionEUR: d.commission_eur ?? result.property.provisionEUR,
-        betriebskostenMtl: d.monthly_operating_costs ?? result.property.betriebskostenMtl,
-        heizkostenMtl: d.monthly_heating_costs ?? result.property.heizkostenMtl,
-        energyClass: d.energy_class || result.property.energyClass,
-        hwb: d.hwb ?? result.property.hwb,
-        beschreibung: d.description || result.property.beschreibung,
-        ausstattung: d.features || result.property.ausstattung,
-        nettomieteMtl: d.estimated_rent_monthly ?? result.property.nettomieteMtl,
-        missingData: d.missing_data,
-      };
-      const merged = { ...result.property, ...patch } as Property;
-      const dq = calcDataQuality(merged);
-      merged.extractionStatus = dq.score >= 60 ? "ok" : "partial";
-      // overwrite the existing record
-      useStore.getState().updateProperty(result.property.id, merged);
-      setResult({ property: merged, quality: dq, partial: dq.score < 60 });
-      toast.success(`Aktualisiert – ${dq.score}% Datenqualität.`);
-    } finally {
-      setLoading(false);
+  const createManual = () => {
+    const title = manualTitle.trim() || "Neue Immobilie";
+    const p = makeEmptyProperty({ projectId: project.id, title, extractionStatus: "manuell" });
+    addProperty(p);
+    navigate({ to: "/properties/$id", params: { id: p.id } });
+  };
+
+  // Smart paste on textarea
+  const onTextPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pasted = e.clipboardData.getData("text");
+    const trimmed = pasted.trim();
+    if (/^https?:\/\/\S+$/.test(trimmed) && !trimmed.includes("\n")) {
+      e.preventDefault();
+      setUrl(trimmed);
+      setTab("link");
+      toast.info("Link erkannt – zu Tab 'Link' gewechselt.");
     }
   };
+
+  const tabs: { key: TabKey; label: string; icon: typeof LinkIcon }[] = [
+    { key: "link", label: "Link", icon: LinkIcon },
+    { key: "text", label: "Text / Seite kopieren", icon: FileText },
+    { key: "excel", label: "Excel-Vorlage", icon: FileSpreadsheet },
+    { key: "manuell", label: "Manuell", icon: Pencil },
+  ];
 
   return (
     <AppShell>
       <PageHeader
-        title="Immobilie analysieren"
-        description={`Aktives Projekt: ${project.name} – die Immobilie wird hier zugeordnet.`}
-        actions={
-          <Link to="/properties/new" className="rounded-md border px-4 py-2 text-sm hover:bg-accent">
-            Manuell hinzufügen
-          </Link>
-        }
+        title="Immobilie importieren"
+        description={`Aktives Projekt: ${project.name}`}
       />
 
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <label className="block text-sm font-medium mb-2">Immobilien-Link einfügen</label>
-        <div className="flex gap-2 flex-col sm:flex-row">
-          <div className="flex-1 flex items-center gap-2 border rounded-md px-3 py-2.5 bg-background focus-within:ring-2 ring-ring">
-            <LinkIcon className="size-4 text-muted-foreground" />
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => { setUrl(e.target.value); setNeedsText(false); setResult(null); }}
-              placeholder="https://… (willhaben, ImmoScout24, immowelt, kleinanzeigen, Makler-/Bauträgerseiten …)"
-              className="flex-1 outline-none bg-transparent text-sm"
-            />
-            {platform && <span className="text-xs px-2 py-0.5 rounded-full bg-muted">{platform}</span>}
-            {country && <span className="text-xs px-2 py-0.5 rounded-full bg-muted">{country}</span>}
-          </div>
-          <button
-            onClick={run}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-60"
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            Analysieren
-          </button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Akzeptiert AT & DE: willhaben, ImmoScout24 AT/DE, derStandard, immowelt, immobazar, immonet, kleinanzeigen, Makler-, Bauträger- und Bank-/Verwertungsseiten – sowie unbekannte Immobilienseiten. Der Original-Link wird in jedem Fall gespeichert.
-        </p>
-
-        <div className="mt-2 flex flex-wrap gap-1">
-          {["willhaben", "ImmoScout24", "immowelt", "immo.at", "kleinanzeigen", "RE/MAX", "Bauträger", "und mehr"].map((p) => (
-            <span
-              key={p}
-              className="text-[11px] text-[#A8A29E] bg-[#F5F3EE] border border-[#EAE6DF] rounded-[20px] px-2 py-0.5"
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              {p}
-            </span>
-          ))}
+      <div
+        className="rounded-[12px] border border-[#EAE6DF] bg-white px-6 py-5"
+        style={FONT}
+      >
+        {/* Pill tabs */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); setAutoSwitchNotice(false); }}
+                className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
+                style={{
+                  background: active ? "#1C1917" : "#F5F3EE",
+                  color: active ? "#ffffff" : "#78716C",
+                  border: active ? "1px solid #1C1917" : "1px solid #EAE6DF",
+                }}
+              >
+                <Icon className="size-3.5" />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
-        {loading && (
-          <div className="mt-3 text-center text-[12px] text-[#A8A29E]" style={{ fontFamily: "Inter, sans-serif" }}>
-            {loadingTexts[loadingPhase]}
+        {/* TAB: LINK */}
+        {tab === "link" && (
+          <div>
+            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Immobilien-Link</label>
+            <div className="flex gap-2 flex-col sm:flex-row">
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://…"
+                className={inputClass + " flex-1"}
+              />
+              <button
+                onClick={runLink}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white disabled:opacity-60"
+                style={{ background: "#2D6A4F" }}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                Analysieren
+              </button>
+            </div>
+            <p className="text-[12px] text-[#78716C] mt-2">
+              Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren.
+            </p>
+            {(platform || country) && (
+              <div className="mt-2 flex gap-1">
+                {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-[#78716C]">{platform}</span>}
+                {country && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-[#78716C]">{country}</span>}
+              </div>
+            )}
+            {loading && (
+              <div className="mt-3 text-center text-[12px] text-[#A8A29E]">{loadingTexts[loadingPhase]}</div>
+            )}
           </div>
         )}
 
-        {result && (
-          <div className={`mt-5 rounded-md border p-4 text-sm ${result.partial ? "border-warning/50 bg-warning/10" : "border-success/50 bg-success/10"}`}>
-            <div className="flex items-start gap-2">
-              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0" />}
-              <div className="flex-1">
-                <div className="font-semibold">
-                  {result.partial ? "Der automatische Import war unvollständig." : "Import erfolgreich."}
+        {/* TAB: TEXT */}
+        {tab === "text" && (
+          <div>
+            {autoSwitchNotice && (
+              <div className="mb-4 rounded-[10px] border border-[#F59E0B]/40 bg-[#FEF3C7] p-3 text-[13px] text-[#92400E] flex items-start gap-2">
+                <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+                <div>
+                  Dieser Link konnte nicht automatisch ausgelesen werden — das passiert bei ImmoScout24 und Immowelt. Öffne das Inserat, drücke Strg+A → Strg+C und füge den Text unten ein.
                 </div>
-                <div className="mt-1">Datenqualität: <strong>{result.quality.score}%</strong> ({result.quality.filled}/{result.quality.total} Pflichtfelder)</div>
+              </div>
+            )}
+            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Inseratstext</label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onPaste={onTextPaste}
+              placeholder={"Gesamten Seiteninhalt hier einfügen — inklusive Werbung und Navigation.\n\nTipp: Strg+A → Strg+C auf der Inseratsseite, dann hier einfügen.\n\nFunktioniert auch mit kopierten Excel-Zeilen aus dem kaufma Template."}
+              className={inputClass + " font-mono"}
+              style={{ minHeight: 200, resize: "vertical" }}
+            />
+            <label className="block text-[13px] font-medium mt-3 mb-2 text-[#1C1917]">Link zur Immobilie (optional)</label>
+            <input
+              type="url"
+              value={textUrl}
+              onChange={(e) => setTextUrl(e.target.value)}
+              placeholder="https://…"
+              className={inputClass}
+            />
+            <div className="mt-3">
+              <button
+                onClick={runText}
+                disabled={loading || !text.trim()}
+                className="inline-flex items-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white disabled:opacity-60"
+                style={{ background: "#2D6A4F" }}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                Text analysieren
+              </button>
+            </div>
+            {loading && (
+              <div className="mt-3 text-center text-[12px] text-[#A8A29E]">{loadingTexts[loadingPhase]}</div>
+            )}
+          </div>
+        )}
+
+        {/* TAB: EXCEL */}
+        {tab === "excel" && (
+          <div>
+            <div className="text-[13px] font-semibold text-[#1C1917]">Excel-Vorlage verwenden</div>
+            <p className="text-[13px] text-[#78716C] mt-1">
+              Lade die Vorlage herunter, fülle sie aus und kopiere die Zeilen direkt in Tab 2.
+            </p>
+            <ol className="mt-3 space-y-1 text-[13px] text-[#78716C] list-decimal pl-5">
+              <li>Vorlage herunterladen</li>
+              <li>Daten eintragen</li>
+              <li>Zeilen markieren (inklusive Header) → Strg+C</li>
+              <li>In Tab "Text / Seite kopieren" einfügen</li>
+            </ol>
+            <a
+              href="/kaufma_import_vorlage.xlsx"
+              download
+              className="mt-4 inline-flex items-center gap-2 rounded-[8px] border border-[#EAE6DF] bg-white px-4 py-[9px] text-[13px] font-medium text-[#1C1917] hover:bg-[#F5F3EE]"
+            >
+              <Download className="size-4" />
+              Vorlage herunterladen
+            </a>
+            <p className="text-[12px] text-[#78716C] mt-3">
+              Pflichtfelder sind grün markiert. Alle anderen Felder sind optional.
+            </p>
+          </div>
+        )}
+
+        {/* TAB: MANUELL */}
+        {tab === "manuell" && (
+          <div>
+            <p className="text-[13px] text-[#78716C] mb-3">Immobilie ohne Link manuell erfassen.</p>
+            <label className="block text-[13px] font-medium mb-2 text-[#1C1917]">Titel</label>
+            <input
+              type="text"
+              value={manualTitle}
+              onChange={(e) => setManualTitle(e.target.value)}
+              placeholder="z. B. Altbauwohnung 1070"
+              className={inputClass}
+            />
+            <div className="mt-3">
+              <button
+                onClick={createManual}
+                className="inline-flex items-center gap-2 rounded-[8px] px-5 py-[9px] text-[13px] font-medium text-white"
+                style={{ background: "#2D6A4F" }}
+              >
+                Leere Immobilie erstellen
+              </button>
+            </div>
+            <p className="text-[12px] text-[#78716C] mt-3">
+              Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.
+            </p>
+          </div>
+        )}
+
+        {/* Result card */}
+        {result && (
+          <div className={`mt-5 rounded-[10px] border p-4 text-[13px] ${result.partial ? "border-[#F59E0B]/40 bg-[#FEF3C7]" : "border-[#2D6A4F]/30 bg-[#ECFDF5]"}`}>
+            <div className="flex items-start gap-2">
+              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0 text-[#92400E]" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-[#2D6A4F]" />}
+              <div className="flex-1">
+                <div className="font-semibold text-[#1C1917]">
+                  {result.partial ? "Import unvollständig" : "Import erfolgreich"}
+                </div>
+                <div className="mt-1 text-[#78716C]">Datenqualität: <strong className="text-[#1C1917]">{result.quality.score}%</strong> ({result.quality.filled}/{result.quality.total} Pflichtfelder)</div>
                 {result.quality.missing.length > 0 && (
-                  <div className="mt-1 text-xs text-muted-foreground">Fehlend: {result.quality.missing.join(", ")}</div>
+                  <div className="mt-1 text-[12px] text-[#78716C]">Fehlend: {result.quality.missing.join(", ")}</div>
                 )}
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3">
                   <button
                     onClick={() => navigate({ to: "/properties/$id", params: { id: result.property.id } })}
-                    className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium"
+                    className="rounded-[8px] px-3 py-1.5 text-[12px] font-medium text-white"
+                    style={{ background: "#2D6A4F" }}
                   >
                     Zur Immobilie
                   </button>
-                  {result.partial && (
-                    <>
-                      <button
-                        onClick={() => { setNeedsText(true); document.getElementById("fallback-text")?.scrollIntoView({ behavior: "smooth" }); }}
-                        className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
-                      >
-                        Inseratstext einfügen
-                      </button>
-                      <Link
-                        to="/properties/$id"
-                        params={{ id: result.property.id }}
-                        hash="pdf"
-                        className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent inline-flex items-center gap-1"
-                      >
-                        <FileText className="size-3" /> PDF/Exposé hochladen
-                      </Link>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
-
-        {needsText && !result && (
-          <div className="mt-4 rounded-[10px] border border-[#EAE6DF] bg-[#FAFAF8] p-[14px_16px]" style={{ fontFamily: "Inter, sans-serif" }}>
-            <div className="text-[13px] font-semibold text-[#1C1917]">Link konnte nicht automatisch ausgelesen werden</div>
-            <div className="text-[13px] text-[#78716C] mt-1">Das passiert manchmal bei willhaben und ImmoScout. So gehst du vor:</div>
-            <ol className="mt-2 space-y-1 text-[13px] text-[#78716C] list-decimal pl-5">
-              <li>Öffne das Inserat im Browser</li>
-              <li>Markiere alles (Strg+A / Cmd+A) und kopiere (Strg+C / Cmd+C)</li>
-              <li>Füge den kopierten Text unten ein — die KI ignoriert Werbung automatisch</li>
-            </ol>
-          </div>
-        )}
-
-        <details id="fallback-text" open={needsText} className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium select-none">
-            Inseratstext einfügen (wenn Link nicht funktioniert)
-          </summary>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={10}
-            placeholder={"Gesamten Seiteninhalt hier einfügen — inklusive Werbung und Navigation.\nDie KI erkennt automatisch alle relevanten Immobiliendaten."}
-            className="mt-3 w-full rounded-md border bg-background p-3 text-sm font-mono"
-          />
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={result ? rerunWithText : run}
-              disabled={loading || !text}
-              className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm disabled:opacity-50"
-            >
-              {result ? "Text neu auswerten" : "Text analysieren"}
-            </button>
-          </div>
-        </details>
-      </div>
-
-
-      <div className="mt-6 grid md:grid-cols-3 gap-4">
-        {[
-          { t: "1. Link einfügen", d: "Original-URL, Plattform, Land und Importdatum werden immer gespeichert." },
-          { t: "2. KI extrahiert Daten", d: "Bei < 60 % Datenqualität: Inseratstext einfügen oder Exposé-PDF hochladen." },
-          { t: "3. Kalkulation & Score", d: "Berechnet mit den Annahmen des aktiven Projekts." },
-        ].map((s) => (
-          <div key={s.t} className="rounded-xl border bg-card p-5">
-            <div className="font-semibold">{s.t}</div>
-            <div className="text-sm text-muted-foreground mt-1">{s.d}</div>
-          </div>
-        ))}
       </div>
     </AppShell>
   );
