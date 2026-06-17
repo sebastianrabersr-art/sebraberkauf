@@ -134,13 +134,45 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
     );
   }
 
-  const loanAll = im.loanDevelopment.map((l) => ({
-    jahr: l.jahr,
-    restschuld: Math.round(l.remainingDebt),
-  }));
+  // Rebuild full loan schedule for range chips (up to actual loan term)
+  const activeFin = getActiveFinance(p);
+  const loanTermYears = Math.max(
+    im.horizonJahre,
+    activeFin?.laufzeitJahre ?? 30
+  );
 
-  const rangeYears: Record<RangeKey, number> = { "5J": 5, "10J": 10, "20J": 20, "30J": 30, Alle: Infinity };
-  const loan = loanAll.filter((l) => l.jahr <= rangeYears[loanRange]);
+  // Build loan data for full term using simple annuity math
+  const fullLoanData = useMemo(() => {
+    const loanAmount = im.loanNeed.requiredLoan;
+    const annualRate = activeFin?.zinssatz ?? 0.038;
+    const termYears = activeFin?.laufzeitJahre ?? 30;
+    const monthlyRate = annualRate / 12;
+    const n = termYears * 12;
+    const monthlyPay = monthlyRate === 0
+      ? loanAmount / n
+      : (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
+
+    const result: { jahr: number; restschuld: number }[] = [];
+    let balance = loanAmount;
+    for (let year = 1; year <= termYears; year++) {
+      for (let m = 0; m < 12 && balance > 0; m++) {
+        const interest = balance * monthlyRate;
+        const principal = Math.min(monthlyPay - interest, balance);
+        balance -= principal;
+      }
+      result.push({ jahr: year, restschuld: Math.max(0, Math.round(balance)) });
+      if (balance <= 0) break;
+    }
+    return result;
+  }, [p, a]);
+
+  const rangeYears: Record<RangeKey, number> = { "5J": 5, "10J": 10, "20J": 20, "30J": 30, Alle: loanTermYears };
+  const loan = fullLoanData.filter((l) => l.jahr <= rangeYears[loanRange]);
+
+  const availableRanges: RangeKey[] = ["5J", "10J", "20J", "30J", "Alle"].filter((r) => {
+    const years = rangeYears[r as RangeKey];
+    return years <= loanTermYears || r === "Alle";
+  }) as RangeKey[];
 
   const asset = im.assetDevelopment.map((x) => ({
     jahr: x.jahr,
