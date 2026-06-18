@@ -85,41 +85,6 @@ function ChartCard({
 
 type RangeKey = "5J" | "10J" | "20J" | "30J" | "Alle";
 
-function RangeChips({
-  value,
-  onChange,
-  options,
-}: {
-  value: RangeKey;
-  onChange: (v: RangeKey) => void;
-  options: RangeKey[];
-}) {
-  return (
-    <div style={{ display: "flex", gap: 6 }}>
-      {options.map((opt) => {
-        const active = value === opt;
-        return (
-          <button
-            key={opt}
-            onClick={() => onChange(opt)}
-            style={{
-              background: active ? "#1C1917" : "#F5F3EE",
-              color: active ? "#FFFFFF" : "#78716C",
-              border: `1px solid ${active ? "#1C1917" : "#EAE6DF"}`,
-              borderRadius: 6,
-              padding: "4px 10px",
-              fontSize: 12,
-              cursor: "pointer",
-            }}
-          >
-            {opt}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function InvestorChartsPanel({ p }: { p: Property }) {
   const a = useActiveAssumptions();
   const c = useMemo(() => calcProperty(p, a), [p, a]);
