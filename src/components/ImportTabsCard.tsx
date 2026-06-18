@@ -273,7 +273,19 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
 
   const createManual = () => {
     const title = manualTitle.trim() || "Neue Immobilie";
-    const p = makeEmptyProperty({ projectId: project.id, title, extractionStatus: "manuell" });
+    const mappedType: Property["propertyType"] =
+      propertyType === "house" || propertyType === "multi_family"
+        ? "house_with_land"
+        : propertyType === "land"
+        ? "land_only"
+        : "apartment";
+    const p = makeEmptyProperty({
+      projectId: project.id,
+      title,
+      extractionStatus: "manuell",
+      investmentStrategy: strategy,
+      propertyType: mappedType,
+    });
     addProperty(p);
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
