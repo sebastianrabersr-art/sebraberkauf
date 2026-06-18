@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
-import { migrateLegacyStatus, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
-import { MoreHorizontal, Phone, Mail, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
+import { migrateLegacyStatus, userRatingAvg, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
+import { MoreHorizontal, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline")({
   head: () => ({ meta: [{ title: "Pipeline – Immo Invest CRM" }] }),
@@ -83,6 +83,17 @@ function Pipeline() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showAddModal]);
+  useEffect(() => {
+    if (!menuFor) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-stop]")) {
+        setMenuFor(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuFor]);
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
     <div
@@ -296,15 +307,16 @@ function Pipeline() {
                   <div className="text-[12px] text-[#A8A29E] p-6 text-center">Keine Kandidaten gefunden.</div>
                 )}
                 {candidates.map((p) => {
-                  const score = (p.scoreLage ?? 0) + (p.scoreVermietbarkeit ?? 0) + (p.scoreZustand ?? 0) + (p.scoreRecht ?? 0) + (p.scoreWiederverkauf ?? 0);
-                  const scoreColor = score >= 70 ? "#2D6A4F" : score >= 40 ? "#D97706" : "#DC2626";
+                  const avg = userRatingAvg(p.userRating ?? {});
+                  const scoreDisplay = avg != null ? avg.toFixed(1) : "—";
+                  const scoreColor = avg == null ? "#A8A29E" : avg >= 7 ? "#2D6A4F" : avg >= 4 ? "#D97706" : "#DC2626";
                   return (
                     <div key={p.id} className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-[#FAFAF8]">
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
                         <div className="text-[11px] text-[#A8A29E]">{p.bezirk || "—"}</div>
                       </div>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{score}</span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
                       <button
                         onClick={() => addToPipeline(p.id)}
                         className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235940]"
@@ -323,5 +335,3 @@ function Pipeline() {
   );
 }
 
-// silence unused warnings
-void Phone; void Mail;

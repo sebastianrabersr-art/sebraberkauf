@@ -7,7 +7,7 @@ import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel } from "@/components/OpenQuestionsPanel";
-import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
+
 import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
 import { ProjectionTable } from "@/components/ProjectionTable";
 
@@ -51,6 +51,11 @@ function Detail() {
   const assumptions = useActiveAssumptions();
   const p = properties.find((x) => x.id === id);
   if (!p) throw notFound();
+
+  useEffect(() => {
+    if (p?.title) document.title = `${p.title} – kaufma`;
+    return () => { document.title = "kaufma"; };
+  }, [p?.title]);
 
   const c = calcProperty(p, assumptions);
   const dq = calcDataQuality(p);
@@ -101,7 +106,11 @@ function Detail() {
   };
   const onDuplicate = () => {
     const newId = duplicateProperty(p.id);
-    if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
+    if (newId) {
+      suppressLeaveWarnRef.current = true;
+      toast.success("Dupliziert.");
+      navigate({ to: "/properties/$id", params: { id: newId } });
+    }
   };
 
   // Leave-warning: fire toast on unmount if required fields are missing
@@ -498,7 +507,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
           <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
-          <F label="Nettomiete mtl. €" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+
 
         </div>
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] grid md:grid-cols-2 gap-3">
@@ -707,13 +716,6 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
         </div>
       </AccordionCard>
 
-      <AccordionCard title="Finanzierungsszenarien-Vergleich">
-        <FinancePanel p={p} />
-      </AccordionCard>
-
-      <AccordionCard title="Abschreibung / AfA · Anschlussfinanzierung">
-        <AdvancedInvestmentPanel p={p} />
-      </AccordionCard>
 
       {/* Rechner-Links */}
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-4">
@@ -1151,7 +1153,11 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
   const save = () => {
     const n = Number(newAmount);
     if (!isNaN(n) && n > 0) {
-      u({ offerAmount: n, negotiationStatus: "Offen" });
+      u({
+        offerAmount: n,
+        negotiationStatus: "Offen",
+        offerDate: new Date().toISOString().slice(0, 10),
+      });
       setAdding(false);
       setNewAmount("");
     }
@@ -1182,7 +1188,7 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
               <tr style={{ borderTop: "1px solid #EAE6DF", background: status === "Offen" ? "#FFFBEB" : undefined }}>
                 <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(offer)}</td>
                 <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Ich</td>
-                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{today}</td>
+                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{p.offerDate || today}</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={status}
@@ -1417,18 +1423,6 @@ function AccordionCard({ title, children, defaultOpen = false, id }: { title: st
   );
 }
 
-function FieldGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5">{children}</div>;
-}
-
-function ReadField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
-      <div className="text-[13px] text-[#1C1917] mt-0.5 truncate" title={value}>{value}</div>
-    </div>
-  );
-}
 
 function Section({ title, children, actions, defaultOpen = false, id }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
