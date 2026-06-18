@@ -203,6 +203,14 @@ export interface Property {
   // Objekt-Kategorie & zusätzliche Flächen/Preise für Häuser & Grundstücke.
   // Alle optional – Bestandsdaten ohne propertyType werden als "apartment" behandelt.
   propertyType?: PropertyType;
+  /** Investmentstrategie: Buy & Hold (vermieten) oder Fix & Flip (kaufen, sanieren, verkaufen). */
+  investmentStrategy?: "buy_and_hold" | "fix_and_flip";
+  /** Persönlicher Steuersatz (z. B. 0.35 = 35 %). */
+  persSteuersatz?: number | null;
+  /** AfA-Satz auf Gebäudewert (AT 0.015, DE 0.02). */
+  afaSatz?: number | null;
+  /** Gebäudewert in % vom Kaufpreis (Default 0.7). */
+  gebaeudewertPct?: number | null;
   landAreaSqm?: number | null;        // Grundstücksfläche m²
   livingAreaSqm?: number | null;      // Wohnfläche m² (parallel zu wohnflaecheM2 für Haus/Gewerbe)
   usableAreaSqm?: number | null;      // Nutzfläche m² (Keller, Lager, Gewerbe …)
