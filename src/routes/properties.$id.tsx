@@ -740,6 +740,10 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
         </div>
       </AccordionCard>
 
+      <AccordionCard title="Steuer & AfA">
+        <TaxPanel p={p} c={c} />
+      </AccordionCard>
+
       <AccordionCard title="Break-even & Leistbarkeit">
         <div className="grid md:grid-cols-2 gap-3 text-[13px]">
           <MiniBox label="Break-even Miete" value={fmtEUR(c.breakEvenMiete)} sub="Rate + nicht-umlegbare BK + Rücklage" />
