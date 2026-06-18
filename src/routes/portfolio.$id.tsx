@@ -157,11 +157,9 @@ function UebersichtTab({ p }: { p: Property }) {
       (pi.versicherungMtl ?? 0) + (pi.verwaltungMtl ?? 0) + (pi.sonstigeMtlKosten ?? 0));
   const mtlCash = mtlMiete - mtlRate - mtlKosten;
 
-  const [range, setRange] = useState<ChartRange>("10J");
+  const [years, setYears] = useState<number>(10);
   const [wertSteigPct, setWertSteigPct] = useState<number>(2.5);
   const [tilgungAnteilPct, setTilgungAnteilPct] = useState<number>(40);
-
-  const years = useMemo(() => ({ "5J": 5, "10J": 10, "20J": 20, "30J": 30 }[range]), [range]);
 
   const { chartData, kreditAbbezahltJahr, breakEvenJahr, ekIn10J } = useMemo(() => {
     const wertSteig = wertSteigPct / 100;
