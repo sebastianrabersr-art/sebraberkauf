@@ -7,7 +7,7 @@ import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
 import { MietrechtRiskCard } from "@/components/MietrechtRiskCard";
 import { OpenQuestionsPanel } from "@/components/OpenQuestionsPanel";
-import { AdvancedInvestmentPanel } from "@/components/AdvancedInvestmentPanel";
+
 import { InvestorChartsPanel } from "@/components/InvestorChartsPanel";
 import { ProjectionTable } from "@/components/ProjectionTable";
 
