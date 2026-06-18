@@ -511,16 +511,55 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
 
         </div>
-        <div className="mt-4 pt-3 border-t border-[#EAE6DF] grid md:grid-cols-2 gap-3">
-          <div className="rounded-lg bg-[#FAFAF8] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-semibold">Kaufnebenkosten gesamt</div>
-            <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.kaufNebenkosten)}</div>
-          </div>
-          <div className="rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Gesamter Kapitalbedarf</div>
-            <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.gesamtkosten)}</div>
-          </div>
-        </div>
+        {(() => {
+          const rules = resolvePurchaseCostRules(p);
+          const kp = p.kaufpreisBrutto ?? p.kaufpreis ?? 0;
+          const kredit = c.kreditBetrag ?? 0;
+          const grESt = p.grunderwerbsteuer ?? kp * rules.realEstateTransferTaxRate;
+          const grundbuch = p.grundbuchkosten ?? kp * rules.landRegisterRate;
+          const vertrag = p.vertragskosten ?? kp * rules.notaryContractRate;
+          const finReg = p.finanzierungskosten ?? (kredit > 0 ? kredit * rules.mortgageRegisterRate : 0);
+          const sonstige = p.sonstigeNK ?? 0;
+          const rows = [
+            { label: "Kaufpreis", value: kp, pct: null as string | null, highlight: true },
+            { label: "Maklerprovision (brutto)", value: c.maklerProvisionBrutto, pct: p.provisionPct != null ? `${(p.provisionPct * 100).toFixed(2)}%` : null },
+            { label: "Grunderwerbsteuer", value: grESt, pct: `${(rules.realEstateTransferTaxRate * 100).toFixed(2)}%` },
+            { label: "Grundbucheintragung", value: grundbuch, pct: `${(rules.landRegisterRate * 100).toFixed(2)}%` },
+            { label: "Notar / Vertrag", value: vertrag, pct: `${(rules.notaryContractRate * 100).toFixed(2)}%` },
+            { label: "Finanzierung / Pfandrecht", value: finReg, pct: kredit > 0 ? `${(rules.mortgageRegisterRate * 100).toFixed(2)}%` : null },
+            { label: "Sonstige Nebenkosten", value: sonstige, pct: null },
+            { label: "Sanierung", value: p.sanierung ?? 0, pct: null },
+            { label: "Einrichtung", value: p.einrichtung ?? 0, pct: null },
+            { label: "Reserve", value: p.reserve ?? 0, pct: null },
+          ].filter((item) => item.value > 0);
+          return (
+            <div className="mt-4 pt-3 border-t border-[#EAE6DF] space-y-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Kaufkostenaufschlüsselung</div>
+              {rows.map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-[#F5F3EE] last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] text-[#78716C]">{item.label}</span>
+                    {item.pct && <span className="text-[11px] text-[#A8A29E] bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
+                  </div>
+                  <span
+                    className="text-[13px] font-medium text-[#1C1917] tabular-nums"
+                    style={item.highlight ? { ...bricolage, fontWeight: 700, fontSize: 15 } : undefined}
+                  >
+                    {fmtEUR(item.value)}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 border-t-2 border-[#EAE6DF]">
+                <span className="text-[13px] font-semibold text-[#1C1917]">Kaufnebenkosten gesamt</span>
+                <span className="tabular-nums font-bold text-[#1C1917]" style={{ ...bricolage, fontSize: 16 }}>{fmtEUR(c.kaufNebenkosten)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#2D6A4F]">Gesamter Kapitalbedarf</span>
+                <span className="tabular-nums font-bold text-[#2D6A4F]" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
+              </div>
+            </div>
+          );
+        })()}
       </Section>
 
       {/* === SECTION D: Maklerprovision Details === */}
