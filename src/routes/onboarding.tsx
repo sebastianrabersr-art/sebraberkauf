@@ -41,12 +41,12 @@ function Onboarding() {
       location_focus: location,
       default_equity: Number(equity) || null,
       default_zinssatz: Number(zinssatz) || null,
-    });
+    } as any);
     await supabase.from("profiles").update({
       onboarding_completed: true,
       first_name: vorname.trim() || null,
       last_name: nachname.trim() || null,
-    }).eq("id", user.id);
+    } as any).eq("id", user.id);
     await refresh();
     setBusy(false);
     toast.success("Alles bereit – viel Erfolg!");
