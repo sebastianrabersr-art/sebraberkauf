@@ -178,6 +178,13 @@ export const PLAN_PRICING = {
   premium: { monthly: 29.99, yearly: 299.99 },
 } as const;
 
+export const PRICE_IDS = {
+  plus_monthly: "price_1TjkUHLIFLGcw1KpQENTNcPz",
+  plus_yearly: "price_1TjkVWLIFLGcw1KpWfejnxYj",
+  premium_monthly: "price_1TjkZXLIFLGcw1KpXV0NiXb3",
+  premium_yearly: "price_1TjkYzLIFLGcw1Kpwt98P8jD",
+} as const;
+
 /**
  * Resolves the effective plan for a subscription row.
  * Promo plan wins while promo_expires_at is in the future; otherwise the

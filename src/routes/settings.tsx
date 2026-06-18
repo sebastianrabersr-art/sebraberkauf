@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/integrations/supabase/client";
-import { planLabel, planLimits, PLAN_PRICING, useAuth } from "@/lib/auth";
+import { planLabel, planLimits, PLAN_PRICING, PRICE_IDS, useAuth } from "@/lib/auth";
 import { redeemPromoCode } from "@/lib/api/redeem-promo.functions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -178,7 +178,8 @@ function SettingsPage() {
 
   const upgrade = (plan: "plus" | "premium") => {
     if (!isStripeConfigured()) return toast.error("Zahlungen sind noch nicht konfiguriert.");
-    const priceId: PriceKey = `${plan}_${cycle === "monthly" ? "monthly" : "yearly"}` as PriceKey;
+    const key = `${plan}_${cycle}` as keyof typeof PRICE_IDS;
+    const priceId = PRICE_IDS[key];
     openCheckout({
       priceId,
       title: `Upgrade auf ${plan === "plus" ? "Plus" : "Premium"}`,

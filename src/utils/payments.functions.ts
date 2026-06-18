@@ -41,9 +41,15 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     try {
       const stripe = createStripeClient(data.environment);
-      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data?.length) return { error: `Preis '${data.priceId}' nicht gefunden` };
-      const price = prices.data[0];
+      // Use price ID directly (price_xxx format) or lookup key
+      let price;
+      if (data.priceId.startsWith("price_")) {
+        price = await stripe.prices.retrieve(data.priceId);
+      } else {
+        const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
+        if (!prices.data?.length) return { error: `Preis '${data.priceId}' nicht gefunden` };
+        price = prices.data[0];
+      }
 
       // Get user email
       const { data: prof } = await context.supabase

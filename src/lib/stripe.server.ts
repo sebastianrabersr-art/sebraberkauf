@@ -94,6 +94,7 @@ export function createStripeClient(env: StripeEnv) {
     prices: {
       list: (p: { lookup_keys?: string[]; limit?: number; expand?: string[] }) =>
         call(env, "GET", "/v1/prices", p),
+      retrieve: (id: string) => call(env, "GET", `/v1/prices/${id}`),
     },
     products: {
       retrieve: (id: string) => call(env, "GET", `/v1/products/${id}`),
