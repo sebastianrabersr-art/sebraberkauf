@@ -6,7 +6,7 @@ import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, ChevronDown, Coins, Home, PiggyBank, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import { Calculator, ChevronDown, Coins, Hammer, Home, PiggyBank, TrendingUp, Wallet, ArrowRight } from "lucide-react";
 import type { Property } from "@/lib/types";
 
 export const Route = createFileRoute("/rechner/")({
