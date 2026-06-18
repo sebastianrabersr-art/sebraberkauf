@@ -1423,18 +1423,6 @@ function AccordionCard({ title, children, defaultOpen = false, id }: { title: st
   );
 }
 
-function FieldGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5">{children}</div>;
-}
-
-function ReadField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
-      <div className="text-[13px] text-[#1C1917] mt-0.5 truncate" title={value}>{value}</div>
-    </div>
-  );
-}
 
 function Section({ title, children, actions, defaultOpen = false, id }: { title: string; children: React.ReactNode; actions?: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
