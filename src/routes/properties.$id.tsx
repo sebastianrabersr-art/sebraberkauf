@@ -1153,7 +1153,11 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
   const save = () => {
     const n = Number(newAmount);
     if (!isNaN(n) && n > 0) {
-      u({ offerAmount: n, negotiationStatus: "Offen" });
+      u({
+        offerAmount: n,
+        negotiationStatus: "Offen",
+        offerDate: new Date().toISOString().slice(0, 10),
+      });
       setAdding(false);
       setNewAmount("");
     }
