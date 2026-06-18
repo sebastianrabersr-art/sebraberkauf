@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
-import { migrateLegacyStatus, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
-import { MoreHorizontal, Phone, Mail, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
+import { migrateLegacyStatus, userRatingAvg, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
+import { MoreHorizontal, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline")({
   head: () => ({ meta: [{ title: "Pipeline – Immo Invest CRM" }] }),
