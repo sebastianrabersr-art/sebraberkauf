@@ -6,7 +6,7 @@ import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.fu
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Home, Hammer } from "lucide-react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
 
