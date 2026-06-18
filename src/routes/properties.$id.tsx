@@ -16,6 +16,7 @@ import { PurchaseInfoPanel } from "@/components/PurchaseInfoPanel";
 import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
+import { resolvePurchaseCostRules } from "@/lib/purchaseCostRules";
 import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Mail, MapPin, MoreHorizontal, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
@@ -510,16 +511,55 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
 
         </div>
-        <div className="mt-4 pt-3 border-t border-[#EAE6DF] grid md:grid-cols-2 gap-3">
-          <div className="rounded-lg bg-[#FAFAF8] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-semibold">Kaufnebenkosten gesamt</div>
-            <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.kaufNebenkosten)}</div>
-          </div>
-          <div className="rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Gesamter Kapitalbedarf</div>
-            <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.gesamtkosten)}</div>
-          </div>
-        </div>
+        {(() => {
+          const rules = resolvePurchaseCostRules(p);
+          const kp = p.kaufpreisBrutto ?? p.kaufpreis ?? 0;
+          const kredit = c.kreditBetrag ?? 0;
+          const grESt = p.grunderwerbsteuer ?? kp * rules.realEstateTransferTaxRate;
+          const grundbuch = p.grundbuchkosten ?? kp * rules.landRegisterRate;
+          const vertrag = p.vertragskosten ?? kp * rules.notaryContractRate;
+          const finReg = p.finanzierungskosten ?? (kredit > 0 ? kredit * rules.mortgageRegisterRate : 0);
+          const sonstige = p.sonstigeNK ?? 0;
+          const rows = [
+            { label: "Kaufpreis", value: kp, pct: null as string | null, highlight: true },
+            { label: "Maklerprovision (brutto)", value: c.maklerProvisionBrutto, pct: p.provisionPct != null ? `${(p.provisionPct * 100).toFixed(2)}%` : null },
+            { label: "Grunderwerbsteuer", value: grESt, pct: `${(rules.realEstateTransferTaxRate * 100).toFixed(2)}%` },
+            { label: "Grundbucheintragung", value: grundbuch, pct: `${(rules.landRegisterRate * 100).toFixed(2)}%` },
+            { label: "Notar / Vertrag", value: vertrag, pct: `${(rules.notaryContractRate * 100).toFixed(2)}%` },
+            { label: "Finanzierung / Pfandrecht", value: finReg, pct: kredit > 0 ? `${(rules.mortgageRegisterRate * 100).toFixed(2)}%` : null },
+            { label: "Sonstige Nebenkosten", value: sonstige, pct: null },
+            { label: "Sanierung", value: p.sanierung ?? 0, pct: null },
+            { label: "Einrichtung", value: p.einrichtung ?? 0, pct: null },
+            { label: "Reserve", value: p.reserve ?? 0, pct: null },
+          ].filter((item) => item.value > 0);
+          return (
+            <div className="mt-4 pt-3 border-t border-[#EAE6DF] space-y-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Kaufkostenaufschlüsselung</div>
+              {rows.map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-[#F5F3EE] last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] text-[#78716C]">{item.label}</span>
+                    {item.pct && <span className="text-[11px] text-[#A8A29E] bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
+                  </div>
+                  <span
+                    className="text-[13px] font-medium text-[#1C1917] tabular-nums"
+                    style={item.highlight ? { ...bricolage, fontWeight: 700, fontSize: 15 } : undefined}
+                  >
+                    {fmtEUR(item.value)}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 border-t-2 border-[#EAE6DF]">
+                <span className="text-[13px] font-semibold text-[#1C1917]">Kaufnebenkosten gesamt</span>
+                <span className="tabular-nums font-bold text-[#1C1917]" style={{ ...bricolage, fontSize: 16 }}>{fmtEUR(c.kaufNebenkosten)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#2D6A4F]">Gesamter Kapitalbedarf</span>
+                <span className="tabular-nums font-bold text-[#2D6A4F]" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
+              </div>
+            </div>
+          );
+        })()}
       </Section>
 
       {/* === SECTION D: Maklerprovision Details === */}
@@ -700,6 +740,10 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
         </div>
       </AccordionCard>
 
+      <AccordionCard title="Steuer & AfA">
+        <TaxPanel p={p} c={c} />
+      </AccordionCard>
+
       <AccordionCard title="Break-even & Leistbarkeit">
         <div className="grid md:grid-cols-2 gap-3 text-[13px]">
           <MiniBox label="Break-even Miete" value={fmtEUR(c.breakEvenMiete)} sub="Rate + nicht-umlegbare BK + Rücklage" />
@@ -729,6 +773,94 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
     </>
   );
 }
+
+function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> }) {
+  const { updateProperty } = useStore();
+  const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
+
+  const steuersatz = p.persSteuersatz ?? 0.35;
+  const afaSatz = p.afaSatz ?? 0.015;
+  const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
+
+  const kaufpreis = p.kaufpreis ?? 0;
+  const gebaeudewert = kaufpreis * gebaeudewertPct;
+  const afaJahr = gebaeudewert * afaSatz;
+  const afaMtl = afaJahr / 12;
+
+  const miete = p.nettomieteMtl ?? 0;
+  const kosten = (p.betriebskostenMtl ?? 0) + c.ruecklageMtl + (c.kreditRateMtl * 0.6);
+  const gewinnVorAfa = (miete - kosten) * 12;
+  const gewinnNachAfa = gewinnVorAfa - afaJahr;
+  const steuerBetrag = Math.max(0, gewinnNachAfa * steuersatz);
+  const cashflowNachSteuer = c.cashflowJahr - steuerBetrag;
+
+  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
+
+  return (
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-3">
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">Persönlicher Steuersatz %</div>
+          <input
+            type="number"
+            value={(steuersatz * 100).toFixed(0)}
+            onChange={(e) => u({ persSteuersatz: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <input
+            type="number"
+            step="0.1"
+            value={(afaSatz * 100).toFixed(1)}
+            onChange={(e) => u({ afaSatz: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">Gebäudewert % vom Kaufpreis</div>
+          <input
+            type="number"
+            value={(gebaeudewertPct * 100).toFixed(0)}
+            onChange={(e) => u({ gebaeudewertPct: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-[10px] border border-[#EAE6DF] overflow-hidden">
+        <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">Berechnung</div>
+        {[
+          { label: "Gebäudewert", value: fmtEUR(gebaeudewert), sub: `${(gebaeudewertPct * 100).toFixed(0)}% von ${fmtEUR(kaufpreis)}` },
+          { label: "AfA pro Jahr", value: fmtEUR(afaJahr), sub: `${(afaSatz * 100).toFixed(1)}% von ${fmtEUR(gebaeudewert)}` },
+          { label: "AfA pro Monat", value: fmtEUR(afaMtl), sub: "steuerliche Abschreibung" },
+          { label: "Gewinn vor AfA", value: fmtEUR(gewinnVorAfa), sub: "Mieteinnahmen − Kosten" },
+          { label: "Gewinn nach AfA", value: fmtEUR(gewinnNachAfa), sub: "steuerlich relevanter Gewinn" },
+          { label: `Steuer (${(steuersatz * 100).toFixed(0)}%)`, value: fmtEUR(steuerBetrag), sub: "geschätzte Steuerlast" },
+        ].map((row) => (
+          <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-[#EAE6DF] first:border-0">
+            <div>
+              <div className="text-[13px] text-[#78716C]">{row.label}</div>
+              <div className="text-[11px] text-[#A8A29E]">{row.sub}</div>
+            </div>
+            <div className="text-[13px] font-medium text-[#1C1917] tabular-nums">{row.value}</div>
+          </div>
+        ))}
+        <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[#EAE6DF] bg-[#E8F5EE]">
+          <span className="text-[13px] font-semibold text-[#2D6A4F]">Cashflow nach Steuer (p.a.)</span>
+          <span className="text-[16px] font-bold tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", color: cashflowNachSteuer >= 0 ? "#2D6A4F" : "#DC2626" }}>
+            {fmtEUR(cashflowNachSteuer)}
+          </span>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-[#A8A29E]">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
+    </div>
+  );
+}
+
+
 
 function AnalyseStat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";

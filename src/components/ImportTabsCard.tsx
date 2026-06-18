@@ -6,7 +6,7 @@ import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.fu
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Home, Hammer } from "lucide-react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
 
@@ -94,6 +94,8 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   const [text, setText] = useState("");
   const [textUrl, setTextUrl] = useState("");
   const [manualTitle, setManualTitle] = useState("");
+  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip">("buy_and_hold");
+  const [propertyType, setPropertyType] = useState<"apartment" | "house" | "multi_family" | "land">("apartment");
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState(0);
   const [autoSwitchNotice, setAutoSwitchNotice] = useState(false);
@@ -271,7 +273,19 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
 
   const createManual = () => {
     const title = manualTitle.trim() || "Neue Immobilie";
-    const p = makeEmptyProperty({ projectId: project.id, title, extractionStatus: "manuell" });
+    const mappedType: Property["propertyType"] =
+      propertyType === "house" || propertyType === "multi_family"
+        ? "house_with_land"
+        : propertyType === "land"
+        ? "land_only"
+        : "apartment";
+    const p = makeEmptyProperty({
+      projectId: project.id,
+      title,
+      extractionStatus: "manuell",
+      investmentStrategy: strategy,
+      propertyType: mappedType,
+    });
     addProperty(p);
     navigate({ to: "/properties/$id", params: { id: p.id } });
   };
@@ -407,6 +421,65 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         {activeTab === "manuell" && (
           <div>
             <p className="text-[13px] text-[#78716C] mb-4">Immobilie ohne Link manuell erfassen. Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.</p>
+
+            <div className="mb-4">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Investmentstrategie</div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {([
+                  { key: "buy_and_hold" as const, label: "Buy & Hold", sub: "Kaufen & vermieten" },
+                  { key: "fix_and_flip" as const, label: "Fix & Flip", sub: "Kaufen, sanieren, verkaufen" },
+                ]).map((s) => {
+                  const active = strategy === s.key;
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => setStrategy(s.key)}
+                      className="flex items-center gap-3 rounded-[10px] border-[1.5px] px-4 py-3 text-left transition-all"
+                      style={{ borderColor: active ? "#2D6A4F" : "#EAE6DF", background: active ? "#E8F5EE" : "white" }}
+                    >
+                      <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
+                        style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
+                        {s.key === "buy_and_hold"
+                          ? <Home className="size-4" style={{ color: active ? "white" : "#78716C" }} />
+                          : <Hammer className="size-4" style={{ color: active ? "white" : "#78716C" }} />}
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{s.label}</div>
+                        <div className="text-[11px] text-[#A8A29E]">{s.sub}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Objektart</div>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { key: "apartment" as const, label: "Wohnung" },
+                  { key: "house" as const, label: "Haus" },
+                  { key: "multi_family" as const, label: "Mehrfamilienhaus" },
+                  { key: "land" as const, label: "Grundstück" },
+                ]).map((t) => {
+                  const active = propertyType === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setPropertyType(t.key)}
+                      className="rounded-full px-4 py-2 text-[13px] font-medium transition-all border-[1.5px]"
+                      style={{
+                        borderColor: active ? "#1C1917" : "#EAE6DF",
+                        background: active ? "#1C1917" : "#F5F3EE",
+                        color: active ? "white" : "#78716C",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <label className="block text-[13px] font-medium text-[#1C1917] mb-2">Titel *</label>
             <input type="text" value={manualTitle} placeholder="z.B. Schöne 2-Zimmer Wohnung Wien 1020"
               onChange={(e) => setManualTitle(e.target.value)}
