@@ -96,9 +96,21 @@ const META: Record<CalcSlug, CalcMeta> = {
       { q: "Was passiert bei steigenden Zinsen?", a: "Bei gleicher Rate sinkt der Kaufpreis. Teste verschiedene Szenarien, um das Risiko einzuschätzen." },
     ],
   },
+  fixflip: {
+    title: "Fix & Flip Rechner – Gewinn nach Steuer berechnen | kauf ma",
+    description: "Berechne Gewinn, ROI und Rendite deines Fix & Flip Projekts. Inkl. Renovierung, Finanzierungszinsen, Verkauf und Immo-ESt.",
+    category: "Fix & Flip",
+    h1: "Fix & Flip Rechner",
+    intro: "Einkauf, Renovierung, Verkauf – was bleibt nach Steuern übrig? Berechne ROI, annualisierte Rendite und Gesamtgewinn deines Flip-Projekts.",
+    faq: [
+      { q: "Wie wird der Gewinn beim Fix & Flip versteuert?", a: "In Österreich greift die Immo-ESt (i. d. R. 30 % auf den Veräußerungsgewinn). In Deutschland fällt innerhalb der 10-Jahres-Spekulationsfrist Einkommensteuer auf den Gewinn an." },
+      { q: "Welche Kosten gehören in die Kalkulation?", a: "Kaufpreis, Kaufnebenkosten, Renovierungskosten, Finanzierungszinsen während der Haltedauer und Maklerprovision beim Verkauf." },
+      { q: "Was ist ein guter ROI für Fix & Flip?", a: "Erfahrene Investoren peilen oft 15–25 % ROI auf das eingesetzte Eigenkapital pro Projekt an – abhängig von Risiko und Haltedauer." },
+    ],
+  },
 };
 
-const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow", "finanzierung", "breakeven", "leistbarkeit"];
+const VALID: CalcSlug[] = ["kaufnebenkosten", "rendite", "cashflow", "finanzierung", "breakeven", "leistbarkeit", "fixflip"];
 
 function isCalcSlug(v: string): v is CalcSlug {
   return (VALID as string[]).includes(v);
