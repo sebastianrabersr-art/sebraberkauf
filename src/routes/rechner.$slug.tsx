@@ -12,7 +12,7 @@ import {
 import { fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
-type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit";
+type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit" | "fixflip";
 
 type CalcMeta = {
   title: string;
