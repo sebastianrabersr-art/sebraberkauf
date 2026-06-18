@@ -83,6 +83,17 @@ function Pipeline() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showAddModal]);
+  useEffect(() => {
+    if (!menuFor) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-stop]")) {
+        setMenuFor(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuFor]);
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
     <div
