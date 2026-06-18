@@ -89,7 +89,12 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
   const a = useActiveAssumptions();
   const c = useMemo(() => calcProperty(p, a), [p, a]);
   const im = c.investorModel;
-  const [loanRange, setLoanRange] = useState<RangeKey>("Alle");
+  const activeFin = getActiveFinance(p);
+  const loanTermYears = Math.max(
+    im?.horizonJahre ?? 30,
+    activeFin?.laufzeitJahre ?? 30
+  );
+  const [sliderYears, setSliderYears] = useState<number>(loanTermYears);
 
   if (!im) {
     return (
@@ -98,13 +103,6 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
       </div>
     );
   }
-
-  // Rebuild full loan schedule for range chips (up to actual loan term)
-  const activeFin = getActiveFinance(p);
-  const loanTermYears = Math.max(
-    im.horizonJahre,
-    activeFin?.laufzeitJahre ?? 30
-  );
 
   // Build loan data for full term using simple annuity math
   const fullLoanData = useMemo(() => {
@@ -132,13 +130,8 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
     return result;
   }, [p, a]);
 
-  const rangeYears: Record<RangeKey, number> = { "5J": 5, "10J": 10, "20J": 20, "30J": 30, Alle: loanTermYears };
-  const loan = fullLoanData.filter((l) => l.jahr <= rangeYears[loanRange]);
-
-  const availableRanges: RangeKey[] = ["5J", "10J", "20J", "30J", "Alle"].filter((r) => {
-    const years = rangeYears[r as RangeKey];
-    return years <= loanTermYears || r === "Alle";
-  }) as RangeKey[];
+  const loan = fullLoanData.filter((l) => l.jahr <= sliderYears);
+  const paidOffIdx = fullLoanData.findIndex((l) => l.restschuld <= 0);
 
   const asset = im.assetDevelopment.map((x) => ({
     jahr: x.jahr,
@@ -168,11 +161,30 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
         termId="darlehenshoehe"
         caption="Verlauf der Restschuld über die geplante Halteperiode. Wenn die Linie 0 erreicht, ist das Darlehen abbezahlt."
         controls={
-          <RangeChips
-            value={loanRange}
-            onChange={setLoanRange}
-            options={availableRanges}
-          />
+          <div className="w-full sm:w-80 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-[#78716C]">Zeitraum: <strong>{sliderYears} Jahre</strong></span>
+              <span className="text-[12px] text-[#A8A29E]">
+                {paidOffIdx >= 0
+                  ? `Abbezahlt in Jahr ${paidOffIdx + 1}`
+                  : `Restschuld: ${fmtEUR(loan[loan.length - 1]?.restschuld ?? 0)}`}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={loanTermYears}
+              step={1}
+              value={sliderYears}
+              onChange={(e) => setSliderYears(Number(e.target.value))}
+              className="w-full accent-[#2D6A4F]"
+            />
+            <div className="flex justify-between text-[10px] text-[#A8A29E]">
+              <span>5J</span>
+              <span>{Math.round(loanTermYears / 2)}J</span>
+              <span>{loanTermYears}J</span>
+            </div>
+          </div>
         }
       >
         {loan.length > 0 ? (
