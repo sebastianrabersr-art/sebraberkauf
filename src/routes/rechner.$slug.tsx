@@ -161,6 +161,7 @@ function CalcPage() {
   if (slug === "cashflow") return <CashflowCalculator />;
   if (slug === "finanzierung") return <FinanceCalculator />;
   if (slug === "breakeven") return <BreakEvenCalculator />;
+  if (slug === "fixflip") return <FixFlipCalculator />;
   return <LeistbarkeitCalculator />;
 }
 
