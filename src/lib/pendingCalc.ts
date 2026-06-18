@@ -35,6 +35,17 @@ export type PendingCalc =
       createdAt: string;
       inputs: { ek: number; zins: number; laufzeit: number; rate: number; nkPct: number };
       result: { maxKp: number; kredit: number; nk: number; gesamt: number };
+    }
+  | {
+      type: "fixflip";
+      createdAt: string;
+      inputs: {
+        kaufpreis: number; nebenkosten: number; renovierung: number; sonstigeKosten: number;
+        eigenkapital: number; zinssatz: number; haltedauerMonate: number;
+        mieteinnahmen: number; betriebskosten: number;
+        verkaufspreis: number; maklerVerkaufPct: number; immoEstSteuer: number;
+      };
+      result: { gewinnNachSteuer: number; roiPct: number; annualisiertePct: number };
     };
 
 const KEY = "pending_calc_v1";
@@ -103,6 +114,14 @@ export function calcToPropertyDraft(calc: PendingCalc): {
       kaufpreis: null,
       nettomieteMtl: calc.inputs.aktMiete || null,
       notizen: `Aus Break-even-Rechner übernommen.\nBenötigte Miete: ${Math.round(calc.result.required)} €/M\nAktuelle Miete: ${calc.inputs.aktMiete} €/M\nWohnfläche: ${calc.inputs.wfl} m²`,
+    };
+  }
+  if (calc.type === "fixflip") {
+    return {
+      title: "Kalkulation Fix & Flip",
+      kaufpreis: calc.inputs.kaufpreis || null,
+      nettomieteMtl: calc.inputs.mieteinnahmen || null,
+      notizen: `Aus Fix & Flip Rechner übernommen.\nGewinn nach Steuer: ${Math.round(calc.result.gewinnNachSteuer)} €\nROI: ${(calc.result.roiPct * 100).toFixed(1)} %\nHaltedauer: ${calc.inputs.haltedauerMonate} Monate\nVerkaufspreis: ${calc.inputs.verkaufspreis} €`,
     };
   }
   return {
