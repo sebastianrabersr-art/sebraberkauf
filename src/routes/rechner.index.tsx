@@ -168,6 +168,7 @@ function AppRechnerHub() {
           <TabsTrigger value="rendite" className="gap-1.5 text-[13px]"><TrendingUp className="size-3.5" />Rendite</TabsTrigger>
           <TabsTrigger value="breakeven" className="gap-1.5 text-[13px]"><Calculator className="size-3.5" />Break-even-Miete</TabsTrigger>
           <TabsTrigger value="leistbar" className="gap-1.5 text-[13px]"><PiggyBank className="size-3.5" />Leistbarkeit</TabsTrigger>
+          <TabsTrigger value="fixflip" className="gap-1.5 text-[13px]"><Hammer className="size-3.5" />Fix & Flip</TabsTrigger>
         </TabsList>
 
         <TabsContent value="nebenkosten" className="mt-5"><NebenkostenCalc sel={sel} /></TabsContent>
@@ -176,6 +177,7 @@ function AppRechnerHub() {
         <TabsContent value="rendite" className="mt-5"><RenditeCalc sel={sel} a={a} /></TabsContent>
         <TabsContent value="breakeven" className="mt-5"><BreakEvenCalc sel={sel} a={a} /></TabsContent>
         <TabsContent value="leistbar" className="mt-5"><LeistbarkeitCalc a={a} /></TabsContent>
+        <TabsContent value="fixflip" className="mt-5"><FixFlipCalc /></TabsContent>
       </Tabs>
     </AppShell>
   );
