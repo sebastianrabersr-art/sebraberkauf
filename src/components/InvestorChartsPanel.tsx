@@ -210,29 +210,35 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
           />
         }
       >
-        <ResponsiveContainer>
-          <LineChart data={loan}>
-            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-            <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={loanScale.domain} ticks={loanScale.ticks} />
-            <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine
-              y={0}
-              stroke="#2D6A4F"
-              strokeDasharray="4 4"
-              label={{ value: "Abbezahlt", position: "insideTopRight", fontSize: 11, fill: "#2D6A4F" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="restschuld"
-              name="Restschuld"
-              stroke={COLORS.debt}
-              strokeWidth={2.5}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {loan.length > 0 ? (
+          <ResponsiveContainer>
+            <LineChart data={loan}>
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+              <XAxis dataKey="jahr" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={fmtCompactEUR} domain={loanScale.domain} ticks={loanScale.ticks} />
+              <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <ReferenceLine
+                y={0}
+                stroke="#2D6A4F"
+                strokeDasharray="4 4"
+                label={{ value: "Abbezahlt", position: "insideTopRight", fontSize: 11, fill: "#2D6A4F" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="restschuld"
+                name="Restschuld"
+                stroke={COLORS.debt}
+                strokeWidth={2.5}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-[13px] text-[#A8A29E]">
+            Bitte Eigenkapital und Zinssatz eintragen, um die Darlehenskurve zu berechnen.
+          </div>
+        )}
       </ChartCard>
 
       <ChartCard
