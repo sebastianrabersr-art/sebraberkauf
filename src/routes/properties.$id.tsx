@@ -101,7 +101,11 @@ function Detail() {
   };
   const onDuplicate = () => {
     const newId = duplicateProperty(p.id);
-    if (newId) { toast.success("Dupliziert."); navigate({ to: "/properties/$id", params: { id: newId } }); }
+    if (newId) {
+      suppressLeaveWarnRef.current = true;
+      toast.success("Dupliziert.");
+      navigate({ to: "/properties/$id", params: { id: newId } });
+    }
   };
 
   // Leave-warning: fire toast on unmount if required fields are missing
