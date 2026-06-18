@@ -323,5 +323,3 @@ function Pipeline() {
   );
 }
 
-// silence unused warnings
-void Phone; void Mail;
