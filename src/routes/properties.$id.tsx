@@ -707,13 +707,6 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
         </div>
       </AccordionCard>
 
-      <AccordionCard title="Finanzierungsszenarien-Vergleich">
-        <FinancePanel p={p} />
-      </AccordionCard>
-
-      <AccordionCard title="Abschreibung / AfA · Anschlussfinanzierung">
-        <AdvancedInvestmentPanel p={p} />
-      </AccordionCard>
 
       {/* Rechner-Links */}
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-4">
