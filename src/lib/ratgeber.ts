@@ -639,7 +639,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
     title: "Instandhaltungsrücklage berechnen: Wie viel Geld solltest du wirklich zurücklegen?",
     seoTitle: "Instandhaltungsrücklage Immobilien: Richtwerte & Berechnung",
     description: "Wie hoch sollte die Instandhaltungsrücklage bei Immobilien sein? Erfahre, warum Rücklagen so wichtig sind und welche Fehler viele Anleger machen.",
-    category: "Kosten",
+    category: "Rendite & Cashflow",
     tags: ["Instandhaltung", "Rücklagen", "Kosten"],
     publishedAt: "2026-06-18",
     readingMinutes: 6,
