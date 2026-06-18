@@ -15,6 +15,7 @@ export const Route = createFileRoute("/onboarding")({
 
 const GOALS = [
   { id: "vermieten", label: "Vermieten (Investment)" },
+  { id: "fixflip", label: "Fix & Flip (Kaufen, Renovieren, Verkaufen)" },
   { id: "eigen", label: "Selbst bewohnen" },
   { id: "mix", label: "Beides – noch offen" },
 ];
