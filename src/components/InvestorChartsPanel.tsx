@@ -83,7 +83,8 @@ function ChartCard({
   );
 }
 
-type RangeKey = "5J" | "10J" | "20J" | "30J" | "Alle";
+
+
 
 export function InvestorChartsPanel({ p }: { p: Property }) {
   const a = useActiveAssumptions();
