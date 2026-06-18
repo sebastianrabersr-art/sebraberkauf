@@ -498,7 +498,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
           <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
-          <F label="Nettomiete mtl. €" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+
 
         </div>
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] grid md:grid-cols-2 gap-3">
