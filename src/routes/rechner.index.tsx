@@ -525,3 +525,86 @@ function LeistbarkeitCalc({ a }: { a: ReturnType<typeof useActiveAssumptions> })
     </CalcShell>
   );
 }
+
+/* ───────── 7. Fix & Flip ───────── */
+
+function FixFlipCalc() {
+  const [kaufpreis, setKaufpreis] = useState(250000);
+  const [nebenkosten, setNebenkosten] = useState(25000);
+  const [renovierung, setRenovierung] = useState(40000);
+  const [sonstigeKosten, setSonstigeKosten] = useState(5000);
+  const [eigenkapital, setEigenkapital] = useState(80000);
+  const [zinssatz, setZinssatz] = useState(4.5);
+  const [haltedauerMonate, setHaltedauerMonate] = useState(12);
+  const [mieteinnahmen, setMieteinnahmen] = useState(0);
+  const [betriebskosten, setBetriebskosten] = useState(0);
+  const [verkaufspreis, setVerkaufspreis] = useState(380000);
+  const [maklerVerkaufPct, setMaklerVerkaufPct] = useState(3.6);
+  const [immoEstSteuer, setImmoEstSteuer] = useState(30);
+
+  const gesamtinvestition = kaufpreis + nebenkosten + renovierung + sonstigeKosten;
+  const fremdkapital = Math.max(0, gesamtinvestition - eigenkapital);
+  const zinsenGesamt = fremdkapital * (zinssatz / 100) * (haltedauerMonate / 12);
+  const mieteinnahmenGesamt = mieteinnahmen * haltedauerMonate;
+  const betriebskostenGesamt = betriebskosten * haltedauerMonate;
+  const nettomieteinnahmen = mieteinnahmenGesamt - betriebskostenGesamt;
+  const maklerVerkauf = verkaufspreis * (maklerVerkaufPct / 100);
+  const gewinnVorSteuer = verkaufspreis - gesamtinvestition - zinsenGesamt - maklerVerkauf + nettomieteinnahmen;
+  const steuer = gewinnVorSteuer > 0 ? gewinnVorSteuer * (immoEstSteuer / 100) : 0;
+  const gewinnNachSteuer = gewinnVorSteuer - steuer;
+  const roiPct = eigenkapital > 0 ? gewinnNachSteuer / eigenkapital : 0;
+  const annualisiertePct = haltedauerMonate > 0 ? roiPct * (12 / haltedauerMonate) : 0;
+  const gesamtrendite = gesamtinvestition > 0 ? gewinnNachSteuer / gesamtinvestition : 0;
+  const isPositive = gewinnNachSteuer >= 0;
+
+  return (
+    <CalcShell
+      title="Fix & Flip Rechner"
+      hint="Einkauf → Renovierung → Verkauf. Optional: Mieteinnahmen während der Renovierung berücksichtigen."
+      result={
+        <div className="space-y-4">
+          <Big label="Gewinn nach Steuer" value={fmtEUR(gewinnNachSteuer)} tone={isPositive ? "good" : "bad"} />
+          <div className="border-t pt-3 space-y-0">
+            <Row label="Gesamtinvestition" value={fmtEUR(gesamtinvestition)} />
+            <Row label="Fremdkapital" value={fmtEUR(fremdkapital)} />
+            <Row label="Zinsen gesamt" value={fmtEUR(zinsenGesamt)} />
+            <Row label="Netto-Mieteinnahmen" value={fmtEUR(nettomieteinnahmen)} tone={nettomieteinnahmen > 0 ? "good" : undefined} />
+            <Row label="Makler Verkauf" value={fmtEUR(maklerVerkauf)} />
+            <Row label="Gewinn vor Steuer" value={fmtEUR(gewinnVorSteuer)} tone={gewinnVorSteuer >= 0 ? "good" : "bad"} />
+            <Row label={`Immo-ESt (${immoEstSteuer}%)`} value={fmtEUR(steuer)} />
+          </div>
+          <div className="border-t pt-3 space-y-0">
+            <Row label="ROI auf Eigenkapital" value={fmtPct(roiPct)} tone={roiPct >= 0 ? "good" : "bad"} />
+            <Row label="Annualisierte Rendite" value={fmtPct(annualisiertePct)} tone={annualisiertePct >= 0 ? "good" : "bad"} />
+            <Row label="Gesamtrendite auf Investment" value={fmtPct(gesamtrendite)} tone={gesamtrendite >= 0 ? "good" : "bad"} />
+          </div>
+          {!isPositive && (
+            <div className="rounded-[8px] p-3 text-[12px]" style={{ background: "#FEE2E2", color: "#991B1B" }}>
+              Dieses Projekt ist aktuell nicht rentabel. Erhöhe den Verkaufspreis oder reduziere die Kosten.
+            </div>
+          )}
+        </div>
+      }
+    >
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-2">Einkauf & Kosten</div>
+      <NumField label="Kaufpreis" value={kaufpreis} onChange={setKaufpreis} suffix="€" />
+      <NumField label="Kaufnebenkosten" value={nebenkosten} onChange={setNebenkosten} suffix="€" />
+      <NumField label="Renovierungskosten" value={renovierung} onChange={setRenovierung} suffix="€" />
+      <NumField label="Sonstige Kosten" value={sonstigeKosten} onChange={setSonstigeKosten} suffix="€" />
+
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Finanzierung</div>
+      <NumField label="Eigenkapital" value={eigenkapital} onChange={setEigenkapital} suffix="€" />
+      <NumField label="Zinssatz p.a." value={zinssatz} onChange={setZinssatz} suffix="%" step={0.1} />
+      <NumField label="Haltedauer" value={haltedauerMonate} onChange={setHaltedauerMonate} suffix="Monate" />
+
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Vermietung während Renovierung (optional)</div>
+      <NumField label="Mieteinnahmen mtl." value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/M" />
+      <NumField label="Betriebskosten mtl." value={betriebskosten} onChange={setBetriebskosten} suffix="€/M" />
+
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Verkauf</div>
+      <NumField label="Ziel-Verkaufspreis" value={verkaufspreis} onChange={setVerkaufspreis} suffix="€" />
+      <NumField label="Maklerprovision Verkauf" value={maklerVerkaufPct} onChange={setMaklerVerkaufPct} suffix="%" step={0.1} />
+      <NumField label="Immo-ESt / Spekulationssteuer" value={immoEstSteuer} onChange={setImmoEstSteuer} suffix="%" step={1} />
+    </CalcShell>
+  );
+}
