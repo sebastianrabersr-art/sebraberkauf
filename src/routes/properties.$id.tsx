@@ -52,6 +52,11 @@ function Detail() {
   const p = properties.find((x) => x.id === id);
   if (!p) throw notFound();
 
+  useEffect(() => {
+    if (p?.title) document.title = `${p.title} – kaufma`;
+    return () => { document.title = "kaufma"; };
+  }, [p?.title]);
+
   const c = calcProperty(p, assumptions);
   const dq = calcDataQuality(p);
   const project = projects.find((x) => x.id === p.projectId);
