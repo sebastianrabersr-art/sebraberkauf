@@ -69,6 +69,12 @@ const CARDS = [
     benefit: "Welchen Kaufpreis kannst du dir bei deiner Wunsch-Monatsrate leisten?",
     icon: PiggyBank,
   },
+  {
+    slug: "fixflip",
+    title: "Fix & Flip Rechner",
+    benefit: "Einkauf, Renovierung, Verkauf – was bleibt nach Steuern übrig? Mit optionaler Vermietung während der Umbauphase.",
+    icon: Hammer,
+  },
 ] as const;
 
 function PublicRechnerHub() {
