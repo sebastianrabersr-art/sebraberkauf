@@ -180,27 +180,46 @@ function UebersichtTab({ p }: { p: Property }) {
   }, [wert, restschuld, mtlRate, wertSteigPct, tilgungAnteilPct, years, kauf]);
 
   const assumptions = (
-    <div className="flex flex-wrap items-center gap-3">
-      <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
-        Wertsteigerung % p.a.
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+          Wertsteigerung % p.a.
+          <input
+            type="number"
+            step={0.1}
+            value={wertSteigPct}
+            onChange={(e) => setWertSteigPct(Number(e.target.value) || 0)}
+            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+          Tilgungsanteil %
+          <input
+            type="number"
+            step={1}
+            value={tilgungAnteilPct}
+            onChange={(e) => setTilgungAnteilPct(Number(e.target.value) || 0)}
+            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </label>
+      </div>
+      <div className="w-full sm:w-80">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[11px] text-[#78716C]">Zeitraum: <strong>{years} Jahre</strong></span>
+        </div>
         <input
-          type="number"
-          step={0.1}
-          value={wertSteigPct}
-          onChange={(e) => setWertSteigPct(Number(e.target.value) || 0)}
-          className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        />
-      </label>
-      <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
-        Tilgungsanteil %
-        <input
-          type="number"
+          type="range"
+          min={5}
+          max={30}
           step={1}
-          value={tilgungAnteilPct}
-          onChange={(e) => setTilgungAnteilPct(Number(e.target.value) || 0)}
-          className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          value={years}
+          onChange={(e) => setYears(Number(e.target.value))}
+          className="w-full accent-[#2D6A4F]"
         />
-      </label>
+        <div className="flex justify-between text-[10px] text-[#A8A29E]">
+          <span>5J</span><span>15J</span><span>30J</span>
+        </div>
+      </div>
     </div>
   );
 
@@ -228,9 +247,6 @@ function UebersichtTab({ p }: { p: Property }) {
 
       <ChartCard
         title="Wertentwicklung (Prognose)"
-        ranges={["5J", "10J", "20J", "30J"]}
-        range={range}
-        onRangeChange={setRange}
         assumptions={assumptions}
         footer={footer}
         height={280}
