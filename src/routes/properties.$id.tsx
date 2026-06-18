@@ -774,6 +774,94 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
   );
 }
 
+function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> }) {
+  const { updateProperty } = useStore();
+  const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
+
+  const steuersatz = p.persSteuersatz ?? 0.35;
+  const afaSatz = p.afaSatz ?? 0.015;
+  const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
+
+  const kaufpreis = p.kaufpreis ?? 0;
+  const gebaeudewert = kaufpreis * gebaeudewertPct;
+  const afaJahr = gebaeudewert * afaSatz;
+  const afaMtl = afaJahr / 12;
+
+  const miete = p.nettomieteMtl ?? 0;
+  const kosten = (p.betriebskostenMtl ?? 0) + c.ruecklageMtl + (c.kreditRateMtl * 0.6);
+  const gewinnVorAfa = (miete - kosten) * 12;
+  const gewinnNachAfa = gewinnVorAfa - afaJahr;
+  const steuerBetrag = Math.max(0, gewinnNachAfa * steuersatz);
+  const cashflowNachSteuer = c.cashflowJahr - steuerBetrag;
+
+  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
+
+  return (
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-3">
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">Persönlicher Steuersatz %</div>
+          <input
+            type="number"
+            value={(steuersatz * 100).toFixed(0)}
+            onChange={(e) => u({ persSteuersatz: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <input
+            type="number"
+            step="0.1"
+            value={(afaSatz * 100).toFixed(1)}
+            onChange={(e) => u({ afaSatz: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <div className="text-[11px] text-[#78716C] mb-1">Gebäudewert % vom Kaufpreis</div>
+          <input
+            type="number"
+            value={(gebaeudewertPct * 100).toFixed(0)}
+            onChange={(e) => u({ gebaeudewertPct: Number(e.target.value) / 100 })}
+            className={inputCls}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-[10px] border border-[#EAE6DF] overflow-hidden">
+        <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">Berechnung</div>
+        {[
+          { label: "Gebäudewert", value: fmtEUR(gebaeudewert), sub: `${(gebaeudewertPct * 100).toFixed(0)}% von ${fmtEUR(kaufpreis)}` },
+          { label: "AfA pro Jahr", value: fmtEUR(afaJahr), sub: `${(afaSatz * 100).toFixed(1)}% von ${fmtEUR(gebaeudewert)}` },
+          { label: "AfA pro Monat", value: fmtEUR(afaMtl), sub: "steuerliche Abschreibung" },
+          { label: "Gewinn vor AfA", value: fmtEUR(gewinnVorAfa), sub: "Mieteinnahmen − Kosten" },
+          { label: "Gewinn nach AfA", value: fmtEUR(gewinnNachAfa), sub: "steuerlich relevanter Gewinn" },
+          { label: `Steuer (${(steuersatz * 100).toFixed(0)}%)`, value: fmtEUR(steuerBetrag), sub: "geschätzte Steuerlast" },
+        ].map((row) => (
+          <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-[#EAE6DF] first:border-0">
+            <div>
+              <div className="text-[13px] text-[#78716C]">{row.label}</div>
+              <div className="text-[11px] text-[#A8A29E]">{row.sub}</div>
+            </div>
+            <div className="text-[13px] font-medium text-[#1C1917] tabular-nums">{row.value}</div>
+          </div>
+        ))}
+        <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[#EAE6DF] bg-[#E8F5EE]">
+          <span className="text-[13px] font-semibold text-[#2D6A4F]">Cashflow nach Steuer (p.a.)</span>
+          <span className="text-[16px] font-bold tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", color: cashflowNachSteuer >= 0 ? "#2D6A4F" : "#DC2626" }}>
+            {fmtEUR(cashflowNachSteuer)}
+          </span>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-[#A8A29E]">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
+    </div>
+  );
+}
+
+
+
 function AnalyseStat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
