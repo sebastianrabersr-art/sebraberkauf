@@ -35,6 +35,17 @@ export type PendingCalc =
       createdAt: string;
       inputs: { ek: number; zins: number; laufzeit: number; rate: number; nkPct: number };
       result: { maxKp: number; kredit: number; nk: number; gesamt: number };
+    }
+  | {
+      type: "fixflip";
+      createdAt: string;
+      inputs: {
+        kaufpreis: number; nebenkosten: number; renovierung: number; sonstigeKosten: number;
+        eigenkapital: number; zinssatz: number; haltedauerMonate: number;
+        mieteinnahmen: number; betriebskosten: number;
+        verkaufspreis: number; maklerVerkaufPct: number; immoEstSteuer: number;
+      };
+      result: { gewinnNachSteuer: number; roiPct: number; annualisiertePct: number };
     };
 
 const KEY = "pending_calc_v1";
