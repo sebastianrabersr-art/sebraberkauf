@@ -143,7 +143,8 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
 
   // Build loan data for full term using simple annuity math
   const fullLoanData = useMemo(() => {
-    const loanAmount = im.loanNeed.requiredLoan;
+    const loanAmount = im.loanNeed?.requiredLoan ?? 0;
+    if (loanAmount <= 0) return [];
     const annualRate = activeFin?.zinssatz ?? 0.038;
     const termYears = activeFin?.laufzeitJahre ?? 30;
     const monthlyRate = annualRate / 12;
