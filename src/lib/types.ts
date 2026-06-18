@@ -284,6 +284,7 @@ export interface Property {
   contactChannel?: ContactChannel;
   viewingDate?: string;
   offerAmount?: number | null;
+  offerDate?: string;
   negotiationStatus?: string;
   decisionReason?: string;
   requestedDocs?: string[];
