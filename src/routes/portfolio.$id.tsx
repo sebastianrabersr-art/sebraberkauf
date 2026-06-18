@@ -17,7 +17,7 @@ import {
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
-import { ChartCard, CHART_STYLE, type ChartRange } from "@/components/ChartCard";
+import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
 import {
   LineChart,
   Line,
