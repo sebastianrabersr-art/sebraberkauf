@@ -271,6 +271,77 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
     ],
     legalDisclaimer: true,
   },
+  {
+    slug: "immobilien-rendite-berechnen",
+    title: "Immobilien Rendite berechnen: Formel, Beispiele und typische Fehler",
+    seoTitle: "Immobilien Rendite berechnen: Formel, Beispiele & Rechner",
+    description: "Immobilien Rendite berechnen leicht gemacht. Erfahre, welche Formeln wichtig sind, welche Rendite als gut gilt und wie du mit dem Rendite-Rechner von kaufma Immobilien schneller vergleichen kannst.",
+    category: "Rendite & Cashflow",
+    tags: ["Rendite", "Bruttorendite", "Nettorendite", "Kennzahlen", "Cashflow"],
+    publishedAt: "2026-06-18",
+    readingMinutes: 7,
+    intro: "Wer eine Immobilie als Kapitalanlage kaufen möchte, stellt sich früher oder später eine entscheidende Frage: Lohnt sich dieses Investment überhaupt? Genau hier kommt die Rendite ins Spiel. Sie gehört zu den wichtigsten Kennzahlen bei der Analyse von Immobilien und hilft dabei, verschiedene Objekte objektiv miteinander zu vergleichen.",
+    sections: [
+      {
+        id: "was-ist-rendite",
+        heading: "Was bedeutet Rendite bei Immobilien?",
+        body: "Die Rendite beschreibt das Verhältnis zwischen den erzielten Einnahmen und dem eingesetzten Kapital. Vereinfacht beantwortet sie die Frage: Wie viel Prozent meines eingesetzten Geldes erhalte ich jedes Jahr zurück? Je höher die Rendite, desto effizienter arbeitet das Kapital. Die Rendite eignet sich besonders für den Vergleich von Eigentumswohnungen, Mehrfamilienhäusern, Anlegerwohnungen und Gewerbeimmobilien.",
+      },
+      {
+        id: "bruttorendite",
+        heading: "Bruttorendite berechnen",
+        body: "Die Bruttorendite ist die einfachste Form der Renditeberechnung. Formel: Bruttorendite = Jahresnettokaltmiete ÷ Kaufpreis × 100. Beispiel: Kaufpreis 300.000 €, monatliche Kaltmiete 1.250 €, jährliche Mieteinnahmen 15.000 € → Bruttorendite 5 %. Die Immobilie erwirtschaftet somit eine jährliche Bruttorendite von 5 %.",
+      },
+      {
+        id: "fehler-bruttorendite",
+        heading: "Warum die Bruttorendite allein nicht ausreicht",
+        body: "Viele Einsteiger machen den Fehler, ausschließlich die Bruttorendite zu betrachten. Dabei werden wichtige Kosten ignoriert: Grunderwerbsteuer, Notarkosten, Maklergebühren, Rücklagen, Verwaltungskosten, Leerstand und Reparaturen. Dadurch erscheint eine Immobilie häufig attraktiver, als sie tatsächlich ist.",
+      },
+      {
+        id: "nettorendite",
+        heading: "Nettorendite berechnen",
+        body: "Die Nettorendite liefert ein deutlich realistischeres Bild. Hier werden sämtliche Kaufnebenkosten und laufenden Ausgaben berücksichtigt: Kaufpreis, Grunderwerbsteuer, Maklerprovision, Notarkosten, Grundbuchkosten, nicht umlagefähige Betriebskosten und Instandhaltungsrücklagen. Die Nettorendite liegt deshalb fast immer unter der Bruttorendite.",
+      },
+      {
+        id: "gute-rendite",
+        heading: "Welche Rendite ist gut?",
+        body: "Eine pauschale Antwort gibt es nicht. Als grobe Orientierung gelten: unter 3 % niedrig, 3–4 % durchschnittlich, 4–6 % attraktiv, über 6 % sehr attraktiv. Die tatsächliche Qualität einer Immobilie hängt jedoch immer vom Standort, der Finanzierung und dem Risiko ab.",
+      },
+      {
+        id: "fehler",
+        heading: "Die häufigsten Fehler bei der Renditeberechnung",
+        body: "Kaufnebenkosten vergessen: Viele Anleger rechnen nur mit dem Kaufpreis und ignorieren die Nebenkosten – dadurch wird die Rendite überschätzt. Leerstand nicht berücksichtigen: Nicht jede Wohnung ist dauerhaft vermietet. Rücklagen unterschätzen: Langfristig entstehen Kosten für Heizung, Dach, Fenster, Fassade und Renovierungen.",
+      },
+      {
+        id: "rendite-und-cashflow",
+        heading: "Rendite und Cashflow gehören zusammen",
+        body: "Eine hohe Rendite bedeutet nicht automatisch, dass eine Immobilie monatlich Geld erwirtschaftet. Durch hohe Finanzierungskosten kann trotz guter Rendite ein negativer Cashflow entstehen. Deshalb sollten Investoren immer beide Kennzahlen betrachten: Rendite und Cashflow.",
+      },
+    ],
+    faq: [
+      {
+        q: "Was ist eine gute Rendite bei Immobilien?",
+        a: "Viele Investoren betrachten Werte zwischen 4 und 6 Prozent als attraktiv. Die tatsächliche Qualität hängt aber immer von Standort, Risiko und Finanzierung ab.",
+      },
+      {
+        q: "Ist die Bruttorendite ausreichend für eine Investitionsentscheidung?",
+        a: "Nein. Für eine fundierte Entscheidung sollte immer die Nettorendite betrachtet werden, da sie Nebenkosten und laufende Ausgaben berücksichtigt.",
+      },
+      {
+        q: "Welche Kosten müssen bei der Renditeberechnung berücksichtigt werden?",
+        a: "Neben dem Kaufpreis spielen Grunderwerbsteuer, Maklerkosten, Notarkosten, Rücklagen, Leerstand und Verwaltungskosten eine wichtige Rolle.",
+      },
+      {
+        q: "Kann eine Immobilie eine hohe Rendite und trotzdem einen negativen Cashflow haben?",
+        a: "Ja. Hohe Finanzierungskosten können dazu führen, dass monatlich Geld zugeschossen werden muss, obwohl die Rendite auf dem Papier attraktiv aussieht.",
+      },
+      {
+        q: "Warum sollte man Immobilien vergleichen?",
+        a: "Erst der Vergleich verschiedener Objekte ermöglicht eine objektive Investitionsentscheidung und zeigt, welches Objekt das beste Verhältnis von Rendite zu Risiko bietet.",
+      },
+    ],
+    legalDisclaimer: true,
+  },
 ];
 
 export function getArticleBySlug(slug: string): RatgeberArticle | undefined {
