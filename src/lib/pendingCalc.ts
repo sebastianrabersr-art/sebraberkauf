@@ -116,6 +116,14 @@ export function calcToPropertyDraft(calc: PendingCalc): {
       notizen: `Aus Break-even-Rechner übernommen.\nBenötigte Miete: ${Math.round(calc.result.required)} €/M\nAktuelle Miete: ${calc.inputs.aktMiete} €/M\nWohnfläche: ${calc.inputs.wfl} m²`,
     };
   }
+  if (calc.type === "fixflip") {
+    return {
+      title: "Kalkulation Fix & Flip",
+      kaufpreis: calc.inputs.kaufpreis || null,
+      nettomieteMtl: calc.inputs.mieteinnahmen || null,
+      notizen: `Aus Fix & Flip Rechner übernommen.\nGewinn nach Steuer: ${Math.round(calc.result.gewinnNachSteuer)} €\nROI: ${(calc.result.roiPct * 100).toFixed(1)} %\nHaltedauer: ${calc.inputs.haltedauerMonate} Monate\nVerkaufspreis: ${calc.inputs.verkaufspreis} €`,
+    };
+  }
   return {
     title: "Kalkulation Leistbarkeit",
     kaufpreis: calc.result.maxKp || null,
