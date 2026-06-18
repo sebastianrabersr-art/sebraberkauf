@@ -596,3 +596,7 @@ export interface FinanceScenario {
   manualSchedule?: ManualPayment[];
   notizen?: string;
 }
+
+
+export type InvestmentGoal = "vermieten" | "eigen" | "mix" | "fixflip";
+
