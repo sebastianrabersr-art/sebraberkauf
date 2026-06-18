@@ -120,22 +120,62 @@ export function planLabel(p?: Plan | null) {
 }
 
 export interface PlanCapabilities {
-  properties: number | null; // null = unlimited
-  projects: number | null;
-  compareLimit: number; // 0 = no access, 4 = plus, 10 = premium
+  properties: number | null;    // null = unlimited
+  projects: number | null;      // null = unlimited
+  compareLimit: number;         // 0 = none, 4 = plus, 10 = premium
   portfolio: boolean;
+  pdfExport: boolean;
+  kaufangebot: boolean;
+  fixflip: boolean;
+  excelImport: boolean;         // true for all plans
+  crm: boolean;
+  pipeline: boolean;
 }
 
 export function planLimits(plan: Plan | undefined | null): PlanCapabilities {
-  if (plan === "plus")    return { properties: 5,    projects: 1,    compareLimit: 4,  portfolio: false };
-  if (plan === "premium") return { properties: null, projects: null, compareLimit: 10, portfolio: true  };
-  return                         { properties: 1,    projects: 1,    compareLimit: 0,  portfolio: false };
+  if (plan === "plus") return {
+    properties: 5,
+    projects: 1,
+    compareLimit: 4,
+    portfolio: false,
+    pdfExport: true,
+    kaufangebot: false,
+    fixflip: false,
+    excelImport: true,
+    crm: true,
+    pipeline: true,
+  };
+  if (plan === "premium") return {
+    properties: null,
+    projects: null,
+    compareLimit: 10,
+    portfolio: true,
+    pdfExport: true,
+    kaufangebot: true,
+    fixflip: true,
+    excelImport: true,
+    crm: true,
+    pipeline: true,
+  };
+  // free
+  return {
+    properties: 1,
+    projects: 1,
+    compareLimit: 0,
+    portfolio: false,
+    pdfExport: false,
+    kaufangebot: false,
+    fixflip: false,
+    excelImport: true,
+    crm: true,
+    pipeline: true,
+  };
 }
 
 export const PLAN_PRICING = {
-  free: { monthly: 0, yearly: 0 },
-  plus: { monthly: 4.99, yearly: 54.99 },
-  premium: { monthly: 19.99, yearly: 199.99 },
+  free:    { monthly: 0,     yearly: 0      },
+  plus:    { monthly: 9.99,  yearly: 99.99  },
+  premium: { monthly: 29.99, yearly: 299.99 },
 } as const;
 
 /**
