@@ -1188,7 +1188,7 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
               <tr style={{ borderTop: "1px solid #EAE6DF", background: status === "Offen" ? "#FFFBEB" : undefined }}>
                 <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(offer)}</td>
                 <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Ich</td>
-                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{today}</td>
+                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{p.offerDate || today}</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={status}
