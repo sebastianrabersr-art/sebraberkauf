@@ -26,7 +26,7 @@ function AgbPage() {
         <strong>[PLZ ORT EINTRAGEN]</strong><br />
         Österreich
       </p>
-      <p>E-Mail: office@kaufma.eu<br />Support: support@kaufma.eu</p>
+      <p>E-Mail: hallo@kaufma.eu<br />Support: hallo@kaufma.eu</p>
 
       <h2>2. Gegenstand der Plattform</h2>
       <p>Kaufma ist eine Softwareplattform zur strukturierten Analyse, Berechnung und Verwaltung von Immobilien-Kaufkandidaten.</p>
@@ -166,7 +166,7 @@ function AgbPage() {
 
       <h2>21. Kontakt</h2>
       <p>Bei Fragen zu diesen Nutzungsbedingungen wenden Sie sich bitte an:</p>
-      <p>office@kaufma.eu<br />support@kaufma.eu</p>
+      <p>hallo@kaufma.eu</p>
     </LegalLayout>
   );
 }
