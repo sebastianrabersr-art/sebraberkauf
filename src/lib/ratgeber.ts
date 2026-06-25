@@ -343,6 +343,146 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       },
     ],
     legalDisclaimer: true,
+    fullContent: `## Warum die Rendite bei Immobilien so wichtig ist
+
+Wer eine Immobilie als Kapitalanlage kaufen möchte, stellt sich früher oder später eine entscheidende Frage:
+
+**Lohnt sich dieses Investment überhaupt?**
+
+Genau hier kommt die Rendite ins Spiel. Sie gehört zu den wichtigsten Kennzahlen bei der Analyse von Immobilien und hilft dabei, verschiedene Objekte objektiv miteinander zu vergleichen.
+
+Viele Anleger konzentrieren sich ausschließlich auf Lage, Kaufpreis oder Bauchgefühl. Doch diese Faktoren reichen nicht aus. Erst die Rendite zeigt, wie profitabel eine Immobilie tatsächlich sein kann.
+
+Eine Wohnung mit einem günstigen Kaufpreis muss nicht automatisch ein gutes Investment sein. Umgekehrt kann eine teurere Immobilie aufgrund höherer Mieteinnahmen deutlich attraktiver sein.
+
+## Was bedeutet Rendite bei Immobilien?
+
+Die Rendite beschreibt das Verhältnis zwischen den erzielten Einnahmen und dem eingesetzten Kapital.
+
+Vereinfacht beantwortet sie die Frage: Wie viel Prozent meines eingesetzten Geldes erhalte ich jedes Jahr zurück?
+
+Je höher die Rendite, desto effizienter arbeitet das Kapital.
+
+Die Rendite eignet sich besonders für:
+
+- Eigentumswohnungen
+- Mehrfamilienhäuser
+- Anlegerwohnungen
+- Gewerbeimmobilien
+- den Vergleich verschiedener Immobilien
+
+## Bruttorendite berechnen
+
+Die Bruttorendite ist die einfachste Form der Renditeberechnung.
+
+### Formel
+
+Bruttorendite = Jahresnettokaltmiete ÷ Kaufpreis × 100
+
+### Beispiel
+
+Kaufpreis: 300.000 €
+
+Monatliche Kaltmiete: 1.250 €
+
+Jährliche Mieteinnahmen: 15.000 €
+
+Bruttorendite: 5 %
+
+Die Immobilie erwirtschaftet somit eine jährliche Bruttorendite von 5 %.
+
+## Warum die Bruttorendite allein nicht ausreicht
+
+Viele Einsteiger machen den Fehler, ausschließlich die Bruttorendite zu betrachten.
+
+Dabei werden wichtige Kosten ignoriert:
+
+- Grunderwerbsteuer
+- Notarkosten
+- Maklergebühren
+- Rücklagen
+- Verwaltungskosten
+- Leerstand
+- Reparaturen
+
+Dadurch erscheint eine Immobilie häufig attraktiver, als sie tatsächlich ist.
+
+## Nettorendite berechnen
+
+Die Nettorendite liefert ein deutlich realistischeres Bild. Hier werden sämtliche Kaufnebenkosten und laufenden Ausgaben berücksichtigt.
+
+Dazu zählen:
+
+- Kaufpreis
+- Grunderwerbsteuer
+- Maklerprovision
+- Notarkosten
+- Grundbuchkosten
+- nicht umlagefähige Betriebskosten
+- Instandhaltungsrücklagen
+
+Die Nettorendite liegt deshalb fast immer unter der Bruttorendite.
+
+## Welche Rendite ist gut?
+
+Eine pauschale Antwort gibt es nicht. Als grobe Orientierung gelten jedoch folgende Werte:
+
+- unter 3 % → niedrig
+- 3–4 % → durchschnittlich
+- 4–6 % → attraktiv
+- über 6 % → sehr attraktiv
+
+Die tatsächliche Qualität einer Immobilie hängt jedoch immer vom Standort, der Finanzierung und dem Risiko ab.
+
+## Die häufigsten Fehler bei der Renditeberechnung
+
+### Kaufnebenkosten vergessen
+
+Viele Anleger rechnen nur mit dem Kaufpreis und ignorieren die Nebenkosten. Dadurch wird die Rendite überschätzt.
+
+### Leerstand nicht berücksichtigen
+
+Nicht jede Wohnung ist dauerhaft vermietet. Leerstand kann die tatsächliche Rendite deutlich reduzieren.
+
+### Rücklagen unterschätzen
+
+Langfristig entstehen Kosten für:
+
+- Heizung
+- Dach
+- Fenster
+- Fassade
+- Renovierungen
+
+Wer diese Ausgaben ignoriert, erhält unrealistisch hohe Ergebnisse.
+
+## Rendite und Cashflow gehören zusammen
+
+Eine hohe Rendite bedeutet nicht automatisch, dass eine Immobilie monatlich Geld erwirtschaftet.
+
+Durch hohe Finanzierungskosten kann trotz guter Rendite ein negativer Cashflow entstehen.
+
+Deshalb sollten Investoren immer beide Kennzahlen betrachten:
+
+- Rendite
+- Cashflow
+
+## Rendite automatisch berechnen
+
+Natürlich lassen sich sämtliche Berechnungen auch in Excel durchführen. Doch gerade bei mehreren Immobilien wird das schnell unübersichtlich.
+
+Mit dem Rendite-Rechner von kaufma kannst du verschiedene Immobilien innerhalb weniger Sekunden analysieren und miteinander vergleichen.
+
+Dabei werden unter anderem berücksichtigt:
+
+- Kaufpreis
+- Nebenkosten
+- Finanzierung
+- Mieteinnahmen
+- Cashflow
+- Rendite
+
+Dadurch erhältst du ein wesentlich realistischeres Bild der Wirtschaftlichkeit.`,
   },
   {
     slug: "cashflow-immobilie-berechnen",
