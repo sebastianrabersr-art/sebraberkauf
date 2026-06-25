@@ -32,25 +32,35 @@ function Onboarding() {
 
   const totalSteps = 4;
 
-  const finish = async () => {
-    if (!user) return;
+const finish = async () => {
+    if (!user) {
+      window.location.href = "/dashboard";
+      return;
+    }
     setBusy(true);
-    await supabase.from("user_settings").upsert({
-      user_id: user.id,
-      goal,
-      location_focus: location,
-      default_equity: Number(equity) || null,
-      default_zinssatz: Number(zinssatz) || null,
-    } as any);
-    await supabase.from("profiles").update({
-      onboarding_completed: true,
-      first_name: vorname.trim() || null,
-      last_name: nachname.trim() || null,
-    } as any).eq("id", user.id);
-    await refresh();
-    setBusy(false);
+    try {
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        goal,
+        location_focus: location,
+        default_equity: Number(equity) || null,
+        default_zinssatz: Number(zinssatz) || null,
+      } as any);
+      await supabase.from("profiles").update({
+        onboarding_completed: true,
+        first_name: vorname.trim() || null,
+        last_name: nachname.trim() || null,
+      } as any).eq("id", user.id);
+      // Wait for refresh to complete before navigating
+      await refresh();
+      // Small delay to ensure auth context has updated
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } catch (e) {
+      console.error("Onboarding save error:", e);
+    } finally {
+      setBusy(false);
+    }
     toast.success("Alles bereit – viel Erfolg!");
-    window.location.href = "/dashboard";
   };
 
   const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-[11px] text-[14px] text-[#1C1917] outline-none focus:border-[#2D6A4F] transition-colors";
