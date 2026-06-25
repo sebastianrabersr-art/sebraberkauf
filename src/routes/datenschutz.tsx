@@ -26,7 +26,7 @@ function DatenschutzPage() {
         <strong>[PLZ ORT EINTRAGEN]</strong><br />
         Österreich
       </p>
-      <p>E-Mail: office@kaufma.eu<br />Support: support@kaufma.eu</p>
+      <p>E-Mail: hallo@kaufma.eu<br />Support: hallo@kaufma.eu</p>
 
       <h2>2. Allgemeines zur Datenverarbeitung</h2>
       <p>Wir verarbeiten personenbezogene Daten ausschließlich im Rahmen der gesetzlichen Bestimmungen, insbesondere der Datenschutz-Grundverordnung (DSGVO), des österreichischen Datenschutzgesetzes und des Telekommunikationsgesetzes.</p>
@@ -164,7 +164,7 @@ function DatenschutzPage() {
 
       <h2>18. Kontakt für Datenschutzanfragen</h2>
       <p>Für Datenschutzanfragen kontaktieren Sie uns bitte unter:</p>
-      <p>office@kaufma.eu</p>
+      <p>hallo@kaufma.eu</p>
 
       <h2>19. Änderung dieser Datenschutzerklärung</h2>
       <p>Wir können diese Datenschutzerklärung anpassen, wenn sich die Website, die Plattform, eingesetzte Dienstleister oder rechtliche Anforderungen ändern. Die jeweils aktuelle Version ist auf unserer Website abrufbar.</p>

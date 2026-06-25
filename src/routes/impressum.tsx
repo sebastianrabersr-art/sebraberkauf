@@ -26,8 +26,8 @@ function ImpressumPage() {
         Österreich
       </p>
       <p>
-        E-Mail: office@kaufma.eu<br />
-        Support: support@kaufma.eu<br />
+        E-Mail: hallo@kaufma.eu<br />
+        Support: hallo@kaufma.eu<br />
         Website: https://www.kaufma.eu
       </p>
 
@@ -64,7 +64,7 @@ function ImpressumPage() {
       <p>
         <strong>[NAME EINTRAGEN]</strong><br />
         [ADRESSE EINTRAGEN, falls abweichend]<br />
-        E-Mail: office@kaufma.eu
+        E-Mail: hallo@kaufma.eu
       </p>
 
       <h2>Haftungsausschluss für Inhalte</h2>
