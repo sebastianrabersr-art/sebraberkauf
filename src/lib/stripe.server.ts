@@ -1,10 +1,9 @@
-// Server-side Stripe helper. Routes all calls through the Lovable connector
-// gateway — never instantiate the Stripe SDK directly.
+// Server-side Stripe helper. Calls the Stripe REST API directly.
 // Do NOT import this from client code; it is server-only.
 
 export type StripeEnv = "sandbox" | "live";
 
-const GATEWAY = "https://connector-gateway.lovable.dev/stripe";
+const GATEWAY = "https://api.stripe.com";
 
 function getEnv(name: string): string {
   const v = process.env[name];
