@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWelcomeEmail } from "@/lib/welcome-email.functions";
 
 export const Route = createFileRoute("/auth-callback")({
   component: Callback,
@@ -18,6 +19,9 @@ function Callback() {
       try {
         if (hasSession && localStorage.getItem("pending_calc_v1")) target = "/from-calc";
       } catch {}
+      if (hasSession) {
+        sendWelcomeEmail().catch((e) => console.warn("welcome email failed", e));
+      }
       window.location.replace(hasSession ? target : "/login");
     };
 

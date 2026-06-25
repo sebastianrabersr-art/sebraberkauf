@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { track } from "@/lib/analytics";
+import { sendWelcomeEmail } from "@/lib/welcome-email.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Registrieren – kauf ma" }] }),
@@ -44,6 +45,7 @@ function Signup() {
     setBusy(false);
     if (error) return toast.error(error.message);
     track("signup_completed", { source: "email" });
+    try { await sendWelcomeEmail(); } catch (e) { console.warn("welcome email failed", e); }
     toast.success("Account erstellt! Du kannst jetzt loslegen.");
     window.location.href = nextAfterAuth();
   };
