@@ -2,103 +2,92 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LegalLayout } from "@/components/marketing/LegalLayout";
 
 export const Route = createFileRoute("/impressum")({
-  head: () => ({
-    meta: [
-      { title: "Impressum – kauf ma" },
-      { name: "description", content: "Impressum und Anbieterkennzeichnung gemäß E-Commerce-Gesetz, Unternehmensgesetzbuch und Mediengesetz." },
-      { name: "robots", content: "index,follow" },
-    ],
-  }),
-  component: ImpressumPage,
+  head: () => ({ meta: [{ title: "Impressum – kaufma" }] }),
+  component: Impressum,
 });
 
-function ImpressumPage() {
+function Impressum() {
   return (
     <LegalLayout title="Impressum">
-      <p>Angaben gemäß E-Commerce-Gesetz, Unternehmensgesetzbuch und Mediengesetz.</p>
+      <h2>Angaben gemäß § 5 ECG und § 25 MedienG</h2>
 
-      <h2>Medieninhaber und Betreiber der Website</h2>
+      <h3>Unternehmensbezeichnung</h3>
+      <p>ayoka GmbH</p>
+
+      <h3>Anschrift</h3>
       <p>
-        [VOLLSTÄNDIGER NAME / FIRMA EINTRAGEN]<br />
-        [RECHTSFORM EINTRAGEN, z. B. Einzelunternehmen / GmbH]<br />
-        [ADRESSE EINTRAGEN]<br />
-        [PLZ ORT EINTRAGEN]<br />
+        Börsegasse 7<br />
+        1010 Wien<br />
         Österreich
       </p>
+
+      <h3>Kontakt</h3>
       <p>
-        E-Mail: hallo@kaufma.eu<br />
-        Support: hallo@kaufma.eu<br />
-        Website: https://www.kaufma.eu
+        E-Mail: <a href="mailto:hallo@kaufma.eu">hallo@kaufma.eu</a>
       </p>
 
-      <h2>Unternehmensdaten</h2>
+      <h3>Unternehmensgegenstand</h3>
+      <p>Handel mit Waren aller Art; Betrieb einer Immobilienanalyse-Plattform (kaufma.eu)</p>
+
+      <h3>Firmenbuch</h3>
       <p>
-        Firmenbuchnummer: [FIRMENBUCHNUMMER EINTRAGEN, falls vorhanden]<br />
-        Firmenbuchgericht: [FIRMENBUCHGERICHT EINTRAGEN, falls vorhanden]<br />
-        UID-Nummer: [UID-NUMMER EINTRAGEN, falls vorhanden]<br />
-        Gewerbe: [GEWERBE / TÄTIGKEIT EINTRAGEN]<br />
-        Mitglied der Wirtschaftskammer: [BUNDESLAND / FACHGRUPPE EINTRAGEN]
-      </p>
-      <p>
-        Falls kein Firmenbucheintrag besteht:<br />
-        GISA-Zahl: [GISA-ZAHL EINTRAGEN, falls vorhanden]
+        Firmenbuchnummer: FN 514214y<br />
+        Firmenbuchgericht: Handelsgericht Wien
       </p>
 
-      <h2>Unternehmensgegenstand</h2>
+      <h3>UID-Nummer</h3>
+      <p>ATU74502834</p>
+
+      <h3>Kammermitgliedschaft</h3>
       <p>
-        Betrieb einer Softwareplattform zur Analyse, Berechnung und Verwaltung von Immobilien-Kaufkandidaten.
-        Die Plattform unterstützt Nutzerinnen und Nutzer bei der strukturierten Berechnung von Kaufkosten,
-        Finanzierung, Miete, Rendite, Cashflow und weiteren immobilienbezogenen Kennzahlen.
+        Mitglied der Wirtschaftskammer Wien<br />
+        Fachgruppe: Handel mit Waren aller Art
       </p>
 
-      <h2>Aufsichtsbehörde</h2>
-      <p>[ZUSTÄNDIGE BEHÖRDE EINTRAGEN, z. B. Magistratisches Bezirksamt / Bezirkshauptmannschaft]</p>
-
-      <h2>Anwendbare gewerbe- oder berufsrechtliche Vorschriften</h2>
+      <h3>Anwendbare Rechtsvorschriften</h3>
       <p>
-        Gewerbeordnung: www.ris.bka.gv.at<br />
-        Weitere anwendbare Vorschriften: [FALLS RELEVANT EINTRAGEN]
+        Es gelten die einschlägigen österreichischen Gewerbeordnungsvorschriften.<br />
+        Zugang über: <a href="https://www.ris.bka.gv.at" target="_blank" rel="noopener noreferrer">www.ris.bka.gv.at</a>
       </p>
 
-      <h2>Verantwortlich für den Inhalt</h2>
+      <h3>Aufsichtsbehörde</h3>
+      <p>Magistrat der Stadt Wien – Magistratisches Bezirksamt</p>
+
+      <h3>Gerichtsstand</h3>
+      <p>Für alle Streitigkeiten aus oder im Zusammenhang mit dieser Website ist das sachlich zuständige Gericht in Wien örtlich zuständig, sofern gesetzlich zulässig.</p>
+
+      <h2>Haftungsausschluss</h2>
+
+      <h3>Inhalt des Onlineangebotes</h3>
       <p>
-        <strong>[NAME EINTRAGEN]</strong><br />
-        [ADRESSE EINTRAGEN, falls abweichend]<br />
-        E-Mail: hallo@kaufma.eu
+        Die Inhalte auf kaufma.eu dienen ausschließlich der allgemeinen Information und stellen keine Rechts-, Steuer- oder Anlageberatung dar. Trotz sorgfältiger inhaltlicher Kontrolle übernimmt die ayoka GmbH keine Haftung für die Richtigkeit, Vollständigkeit und Aktualität der bereitgestellten Informationen.
       </p>
 
-      <h2>Haftungsausschluss für Inhalte</h2>
+      <h3>Berechnungen und Analysen</h3>
       <p>
-        Die Inhalte dieser Website und der Plattform wurden mit größtmöglicher Sorgfalt erstellt. Dennoch
-        übernehmen wir keine Gewähr für die Richtigkeit, Vollständigkeit und Aktualität der bereitgestellten
-        Informationen, Berechnungen und Einschätzungen.
-      </p>
-      <p>
-        Die Plattform bietet strukturierte Berechnungen, Datenaufbereitung und KI-basierte Orientierung. Sie
-        ersetzt keine Rechts-, Steuer-, Finanzierungs-, Immobilien- oder Anlageberatung. Vor einer
-        Kaufentscheidung sollten Nutzerinnen und Nutzer professionelle Beratung einholen.
+        Sämtliche Berechnungen, Renditeangaben und Cashflow-Analysen auf dieser Plattform sind Schätzungen auf Basis der eingegebenen Daten und ersetzen keine professionelle Beratung. Eine Haftung für Entscheidungen, die auf Basis dieser Berechnungen getroffen werden, ist ausgeschlossen.
       </p>
 
-      <h2>Haftung für externe Links</h2>
+      <h3>Externe Links</h3>
       <p>
-        Diese Website kann Links zu externen Websites enthalten. Auf deren Inhalte haben wir keinen Einfluss.
-        Für die Inhalte externer Seiten sind ausschließlich deren Betreiber verantwortlich.
+        Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
       </p>
 
-      <h2>Urheberrecht</h2>
+      <h2>Online-Streitbeilegung</h2>
       <p>
-        Die auf dieser Website veröffentlichten Inhalte, Texte, Designs, Berechnungslogiken, Grafiken und
-        sonstigen Elemente sind urheberrechtlich geschützt, soweit sie nicht ausdrücklich als fremde Inhalte
-        gekennzeichnet sind. Eine Verwendung, Vervielfältigung oder Weitergabe ist nur mit vorheriger
-        Zustimmung erlaubt.
+        Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
+        <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">
+          https://ec.europa.eu/consumers/odr
+        </a>
+        .<br />
+        Unsere E-Mail-Adresse lautet: <a href="mailto:hallo@kaufma.eu">hallo@kaufma.eu</a>
+      </p>
+      <p>
+        Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
       </p>
 
-      <h2>Hinweis zur Nutzung der Plattform</h2>
-      <p>
-        Die Plattform dient der privaten und geschäftlichen Unterstützung bei der strukturierten Analyse von
-        Immobilien. Die Ergebnisse beruhen auf den vom Nutzer eingegebenen oder importierten Daten. Die
-        Verantwortung für die Prüfung der Richtigkeit, Vollständigkeit und rechtlichen Zulässigkeit der
-        verwendeten Daten liegt beim Nutzer.
+      <p style={{ marginTop: "2rem", color: "#78716C", fontSize: "0.875rem" }}>
+        Stand: Juni 2026
       </p>
     </LegalLayout>
   );
