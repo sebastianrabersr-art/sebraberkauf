@@ -5,7 +5,7 @@ import { Logo } from "@/components/Logo";
 import type { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { planLabel, useAuth } from "@/lib/auth";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+
 
 const NAV_PRIMARY: { to: string; label: string; icon: React.ComponentType<any> }[] = [
   { to: "/dashboard", label: "Dashboard", icon: ChartPieSlice },
