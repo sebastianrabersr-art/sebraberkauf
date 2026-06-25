@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </div>
         </div>
-        <PaymentTestModeBanner />
+        
         <div className="p-6 md:p-10 max-w-[1400px] mx-auto">{children}</div>
       </main>
     </div>
