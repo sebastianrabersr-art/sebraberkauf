@@ -1,10 +1,9 @@
-// Server-side Stripe helper. Routes all calls through the Lovable connector
-// gateway — never instantiate the Stripe SDK directly.
+// Server-side Stripe helper. Calls the Stripe REST API directly.
 // Do NOT import this from client code; it is server-only.
 
 export type StripeEnv = "sandbox" | "live";
 
-const GATEWAY = "https://connector-gateway.lovable.dev/stripe";
+const GATEWAY = "https://api.stripe.com";
 
 function getEnv(name: string): string {
   const v = process.env[name];
@@ -43,11 +42,9 @@ function flatten(
 
 async function call(env: StripeEnv, method: string, path: string, params?: any): Promise<any> {
   const apiKey = env === "sandbox" ? getEnv("STRIPE_SANDBOX_API_KEY") : getEnv("STRIPE_LIVE_API_KEY");
-  const lovableKey = getEnv("LOVABLE_API_KEY");
   let url = `${GATEWAY}${path}`;
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${lovableKey}`,
-    "X-Connection-Api-Key": apiKey,
+    Authorization: `Bearer ${apiKey}`,
   };
   let body: string | undefined;
   const flat = params ? flatten(params) : null;
