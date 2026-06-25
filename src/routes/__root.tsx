@@ -168,7 +168,7 @@ function GatedOutlet() {
     }
     return null;
   }
-  if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
+  if (!loading && profile && !profile.onboarding_completed && pathname !== "/onboarding") {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
