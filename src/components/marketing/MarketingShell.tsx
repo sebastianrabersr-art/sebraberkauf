@@ -47,6 +47,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <a href="/widerruf" className="hover:text-foreground">Widerruf</a>
             <a href="/kontakt" className="hover:text-foreground">Kontakt</a>
           </nav>
+          <a href="mailto:hallo@kaufma.eu" className="w-full md:w-auto md:text-right hover:text-foreground">hallo@kaufma.eu</a>
           <span className="w-full md:w-auto md:text-right">Hinweis: kauf ma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
         </div>
       </footer>
