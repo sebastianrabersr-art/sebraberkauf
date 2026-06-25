@@ -168,7 +168,9 @@ function GatedOutlet() {
     }
     return null;
   }
-  if (!loading && profile && !profile.onboarding_completed && pathname !== "/onboarding") {
+  // Check onboarding — use localStorage as fallback in case DB update is slow
+  const onboardingDone = profile?.onboarding_completed || (typeof window !== "undefined" && localStorage.getItem("onboarding_done") === "true");
+  if (!loading && profile && !onboardingDone && pathname !== "/onboarding") {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
