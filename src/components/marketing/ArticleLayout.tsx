@@ -26,7 +26,7 @@ export function ArticleLayout({ article, origin = "" }: { article: RatgeberArtic
 
       <p className="text-base leading-relaxed mb-8">{article.intro}</p>
 
-      {article.sections.length > 1 && (
+      {article.sections.length > 1 && !article.fullContent && (
         <aside className="rounded-lg border bg-muted/30 p-5 mb-10">
           <div className="text-sm font-semibold mb-3">Inhaltsverzeichnis</div>
           <ol className="space-y-1.5 text-sm list-decimal list-inside">
@@ -42,14 +42,60 @@ export function ArticleLayout({ article, origin = "" }: { article: RatgeberArtic
         </aside>
       )}
 
-      <div className="space-y-10">
-        {article.sections.map((s) => (
-          <section key={s.id} id={s.id} className="scroll-mt-24">
-            <h2 className="text-2xl font-semibold mb-3">{s.heading}</h2>
-            <p className="leading-relaxed text-foreground/90">{s.body}</p>
-          </section>
-        ))}
-      </div>
+      {article.fullContent && (
+        <aside className="rounded-lg border bg-muted/30 p-5 mb-10">
+          <div className="text-sm font-semibold mb-3">Inhaltsverzeichnis</div>
+          <ol className="space-y-1.5 text-sm list-decimal list-inside">
+            {article.fullContent.split('\n').filter((l) => l.startsWith('## ')).map((h, i) => {
+              const text = h.replace('## ', '');
+              const id = text.toLowerCase().replace(/[^a-z0-9äöü]/g, '-').replace(/-+/g, '-');
+              return <li key={i}><a href={`#${id}`} className="text-primary hover:underline">{text}</a></li>;
+            })}
+            {article.faq && article.faq.length > 0 && (
+              <li><a href="#faq" className="text-primary hover:underline">Häufige Fragen</a></li>
+            )}
+          </ol>
+        </aside>
+      )}
+
+      {article.fullContent ? (
+        <div className="prose prose-neutral max-w-none">
+          {article.fullContent.split('\n\n').map((block, i) => {
+            const trimmed = block.trim();
+            if (!trimmed) return null;
+
+            if (trimmed.startsWith('## ')) {
+              const id = trimmed.replace('## ', '').toLowerCase().replace(/[^a-z0-9äöü]/g, '-').replace(/-+/g, '-');
+              return <h2 key={i} id={id} className="text-2xl font-semibold mt-10 mb-3 scroll-mt-24">{trimmed.replace('## ', '')}</h2>;
+            }
+            if (trimmed.startsWith('### ')) {
+              return <h3 key={i} className="text-xl font-medium mt-6 mb-2">{trimmed.replace('### ', '')}</h3>;
+            }
+            if (trimmed.startsWith('- ')) {
+              const items = trimmed.split('\n').filter((l) => l.trim().startsWith('- '));
+              return (
+                <ul key={i} className="list-disc list-inside space-y-1 my-3 text-foreground/90">
+                  {items.map((item, j) => <li key={j}>{item.replace(/^- /, '')}</li>)}
+                </ul>
+              );
+            }
+            if (trimmed.startsWith('**') && trimmed.endsWith('**') && !trimmed.slice(2, -2).includes('**')) {
+              return <p key={i} className="font-semibold my-2">{trimmed.slice(2, -2)}</p>;
+            }
+            return <p key={i} className="leading-relaxed text-foreground/90 my-3">{trimmed}</p>;
+          })}
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {article.sections.map((s) => (
+            <section key={s.id} id={s.id} className="scroll-mt-24">
+              <h2 className="text-2xl font-semibold mb-3">{s.heading}</h2>
+              <p className="leading-relaxed text-foreground/90">{s.body}</p>
+            </section>
+          ))}
+        </div>
+      )}
+
 
       {/* CTA */}
       <div className="mt-12 rounded-xl border-2 border-primary/20 bg-primary/5 p-6">
