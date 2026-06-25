@@ -9,9 +9,24 @@ export const PRICE_TO_PLAN: Record<PriceId, { plan: PlanId; interval: "month" | 
   premium_yearly: { plan: "premium", interval: "year" },
 };
 
+// Raw Stripe Price IDs (live) — no lookup_key set on these
+const RAW_PRICE_MAP: Record<string, { plan: PlanId; interval: "month" | "year" }> = {
+  "price_1TjkUHLIFLGcw1KpQENTNcPz": { plan: "plus",    interval: "month" },
+  "price_1TjkVWLIFLGcw1KpWfejnxYj": { plan: "plus",    interval: "year"  },
+  "price_1TjkZXLIFLGcw1KpXV0NiXb3": { plan: "premium", interval: "month" },
+  "price_1TjkYzLIFLGcw1Kpwt98P8jD": { plan: "premium", interval: "year"  },
+};
+
 export function planFromPriceId(priceId: string | null | undefined): { plan: PlanId; interval: "month" | "year" | null } {
-  if (priceId && priceId in PRICE_TO_PLAN) {
+  if (!priceId) return { plan: "free", interval: null };
+  // Check lookup key mapping first
+  if (priceId in PRICE_TO_PLAN) {
     const m = PRICE_TO_PLAN[priceId as PriceId];
+    return { plan: m.plan, interval: m.interval };
+  }
+  // Check raw live price ID mapping
+  if (priceId in RAW_PRICE_MAP) {
+    const m = RAW_PRICE_MAP[priceId];
     return { plan: m.plan, interval: m.interval };
   }
   return { plan: "free", interval: null };
