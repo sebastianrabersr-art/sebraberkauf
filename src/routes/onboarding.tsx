@@ -33,6 +33,9 @@ function Onboarding() {
   const totalSteps = 4;
 
 const finish = async () => {
+    // Set localStorage immediately as fallback
+    localStorage.setItem("onboarding_done", "true");
+
     if (!user) {
       window.location.href = "/dashboard";
       return;
@@ -51,10 +54,8 @@ const finish = async () => {
         first_name: vorname.trim() || null,
         last_name: nachname.trim() || null,
       } as any).eq("id", user.id);
-      // Wait for refresh to complete before navigating
       await refresh();
-      // Small delay to ensure auth context has updated
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 200));
     } catch (e) {
       console.error("Onboarding save error:", e);
     } finally {
@@ -123,7 +124,7 @@ const finish = async () => {
               >
                 Jetzt einrichten <ChevronRight className="size-4" />
               </button>
-              <button onClick={() => { finish(); }} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#78716C] w-full">
+              <button onClick={async () => { await finish(); window.location.href = "/dashboard"; }} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#78716C] w-full">
                 Überspringen – direkt zur App →
               </button>
             </div>
