@@ -44,7 +44,9 @@ export type RatgeberArticle = {
   sections: ArticleSection[];
   faq?: ArticleFaq[];
   legalDisclaimer?: boolean;
+  fullContent?: string; // Full article text in markdown-like format
 };
+
 
 export const RATGEBER_ARTICLES: RatgeberArticle[] = [
   {
