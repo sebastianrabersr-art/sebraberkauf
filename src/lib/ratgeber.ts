@@ -351,7 +351,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Denn am Ende zählt nicht die Zahl im Exposé, sondern die reale Wirtschaftlichkeit.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist wichtiger – Bruttorendite oder Nettorendite?
       
@@ -700,7 +700,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Dadurch erhältst du ein wesentlich realistischeres Bild der Wirtschaftlichkeit.
       
-      ### FAQ
+      ## FAQ
       
       ### Was ist eine gute Rendite bei Immobilien?
       
@@ -722,7 +722,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Erst der Vergleich verschiedener Objekte ermöglicht eine objektive Investitionsentscheidung.
       
-      ### Fazit
+      ## Fazit
       
       Die Rendite gehört zu den wichtigsten Kennzahlen bei Immobilieninvestitionen. Sie sollte jedoch niemals isoliert betrachtet werden.
       
@@ -1078,7 +1078,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Genau deshalb lohnt es sich, verschiedene Szenarien sorgfältig zu analysieren.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist ein guter Cashflow bei Immobilien?
       
@@ -1100,7 +1100,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Weil er zeigt, ob eine Immobilie tatsächlich Geld erwirtschaftet und nicht nur auf dem Papier attraktiv aussieht.
       
-      ### Fazit
+      ## Fazit
       
       Der Cashflow gehört zu den wichtigsten Kennzahlen bei der Bewertung einer Immobilie.
       
@@ -1418,7 +1418,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Deshalb lohnt es sich, Immobilien nicht nur nach Bauchgefühl zu beurteilen.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist ein guter Kaufpreisfaktor?
       
@@ -1444,7 +1444,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Neben dem Kaufpreisfaktor sind insbesondere Rendite, Cashflow und Kaufnebenkosten wichtig.
       
-      ### Fazit
+      ## Fazit
       
       Der Kaufpreisfaktor gehört zu den wichtigsten Kennzahlen bei der Immobilienbewertung.
       
@@ -1773,7 +1773,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Wer diese Denkweise verinnerlicht, trifft langfristig bessere Entscheidungen.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Welche Kennzahl ist bei Immobilien am wichtigsten?
       
@@ -2078,7 +2078,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Dadurch entsteht ein vollständigeres Bild des Investments.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist eine gute Mietrendite?
       
@@ -2464,7 +2464,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       - Risiko
       - Sicherheit
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist eine gute Eigenkapitalrendite?
       
@@ -2784,7 +2784,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Erst das Zusammenspiel dieser Kennzahlen ermöglicht eine fundierte Entscheidung.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Wie hoch sind die Kaufnebenkosten in Österreich?
       
@@ -6581,7 +6581,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Langfristig gewinnen häufig diejenigen, die auch schwierige Phasen überstehen.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist eine 100-%-Finanzierung?
       
@@ -6946,7 +6946,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Langfristig gewinnen häufig diejenigen, die auch schwierige Zeiten überstehen.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist eine 110-%-Finanzierung?
       
@@ -7306,7 +7306,7 @@ export const RATGEBER_ARTICLES: RatgeberArticle[] = [
       
       Und genau diese Denkweise führt häufig zu besseren Entscheidungen.
       
-      ### Häufig gestellte Fragen
+      ## Häufig gestellte Fragen
       
       ### Was ist eine Zinsbindung?
       
