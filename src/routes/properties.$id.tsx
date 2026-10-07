@@ -18,7 +18,9 @@ import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PR
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { resolvePurchaseCostRules } from "@/lib/purchaseCostRules";
 import { Warning as AlertTriangle, ArrowLeft, Buildings as Building2, Calendar, CalendarPlus, CaretDown as ChevronDown, CaretRight as ChevronRight, Copy, DownloadSimple as Download, ArrowSquareOut as ExternalLink, Globe, Lock, Envelope as Mail, MapPin, DotsThree as MoreHorizontal, PencilSimple as Pencil, Phone, Trash as Trash2, User, MagicWand as Wand2, X, Check, ExclamationMark } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
+import { Fragment, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
+import { REQUIRED_BORDER, REQUIRED_FIELDS, REQUIRED_FINANCE_EMPTY_ID, flashRequiredField, missingRequiredFields, requiredFieldDomId, type RequiredFieldKey } from "@/lib/requiredFields";
+import { RequiredFieldHint } from "@/components/RequiredFieldHint";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
@@ -154,6 +156,26 @@ function Detail() {
     }
   };
 
+  // Pflichtfelder-Banner: Sprung zum Eingabefeld (Tab wechseln, Sektion öffnen, fokussieren, kurz hervorheben)
+  const missingReq = missingRequiredFields(p);
+  const goToRequiredField = (key: RequiredFieldKey) => {
+    const target: { tab: TabKey; section: string } =
+      key === "eigenkapital" || key === "zinssatz" ? { tab: "finanzierung", section: "sec-finanzierung" }
+      : key === "miete" ? { tab: "uebersicht", section: "sec-miete" }
+      : { tab: "uebersicht", section: "sec-objektdaten" };
+    setTab(target.tab);
+    setTimeout(() => {
+      const section = document.getElementById(target.section) as HTMLDetailsElement | null;
+      if (section?.tagName === "DETAILS") section.open = true;
+      const field = document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
+      if (!field) return;
+      field.scrollIntoView({ behavior: "smooth", block: "center" });
+      const input = field.querySelector<HTMLElement>("input, select, button") ?? field;
+      input.focus({ preventScroll: true });
+      flashRequiredField(input);
+    }, 80);
+  };
+
   // Negative margins to break out of AppShell padding (p-6 md:p-10)
   const breakout = "-mx-6 md:-mx-10";
 
@@ -195,6 +217,8 @@ function Detail() {
           </button>
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
         </div>
+
+        {missingReq.length > 0 && <RequiredFieldsBanner missing={missingReq} onGo={goToRequiredField} />}
 
 
         {/* ============ TAB NAV ============ */}
@@ -317,6 +341,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   setDqBannerDismissed: (v: boolean) => void;
   navTo: (target: TabKey, sectionId?: string) => void;
 }) {
+  const missingReq = missingRequiredFields(p);
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
   if (c.cashflowMtl < 0) alerts.push({ text: "Cashflow negativ", tone: "red" });
@@ -418,8 +443,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
               </Sel>
             </F>
-            <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
+            <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
+            <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
             <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
@@ -603,9 +628,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       </Section>
 
       {/* === SECTION E: Miete & Betriebskosten === */}
-      <Section title="Miete & Betriebskosten">
+      <Section id="sec-miete" title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
-          <F label="Erwartete Miete €/Mt" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
               <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />
@@ -1671,8 +1696,20 @@ function VerificationChecklist({ p, dq, u }: {
 }
 
 
-function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
-  return <label className="block"><div className="text-[11px] text-ink-2 mb-1">{label}</div>{children}{hint}</label>;
+function F({ label, children, hint, id, required }: {
+  label: string; children: React.ReactNode; hint?: React.ReactNode;
+  /** Sprungziel für den Pflichtfelder-Banner. */
+  id?: string;
+  /** Fehlendes Pflichtfeld: "Pflichtfeld"-Hinweis unter dem Eingabefeld. */
+  required?: boolean;
+}) {
+  return (
+    <label id={id} className="block scroll-mt-24">
+      <div className="text-[11px] text-ink-2 mb-1">{label}</div>
+      {children}
+      {required ? <RequiredFieldHint /> : hint}
+    </label>
+  );
 }
 function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
   if (dq.score === 100) return null;
@@ -1721,6 +1758,35 @@ function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof 
   );
 }
 
+/** Hinweis unter dem Titel, solange eine der fünf Kernangaben fehlt. Verschwindet von selbst. */
+function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
+  const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key));
+  return (
+    <div
+      role="status"
+      className="mt-3 flex items-start gap-2.5"
+      style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 10, padding: "12px 16px" }}
+    >
+      <AlertTriangle weight="fill" className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} aria-hidden />
+      <p className="text-[13px] leading-snug" style={{ color: "#9A3412" }}>
+        Für eine vollständige Analyse fehlen noch:{" "}
+        {fields.map((f, i) => (
+          <Fragment key={f.key}>
+            {i > 0 && ", "}
+            <button
+              type="button"
+              onClick={() => onGo(f.key)}
+              className="font-semibold underline decoration-[#FDBA74] underline-offset-2 hover:decoration-[#D97706] focus-visible:outline-2 focus-visible:outline-[#D97706] rounded-sm"
+            >
+              {f.label}
+            </button>
+          </Fragment>
+        ))}
+      </p>
+    </div>
+  );
+}
+
 function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
   return (
     <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
@@ -1757,7 +1823,7 @@ function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: 
     />
   );
 }
-function N({ value, on, edit }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean }) {
+function N({ value, on, edit, missing }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean; missing?: boolean }) {
   const [local, setLocal] = useState<string>(value == null ? "" : String(value));
   const originalRef = useRef<string>(value == null ? "" : String(value));
   useEffect(() => { const s = value == null ? "" : String(value); setLocal(s); originalRef.current = s; }, [value]);
@@ -1781,6 +1847,8 @@ function N({ value, on, edit }: { value: number | null | undefined; on: (v: numb
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
       className={inputCls}
+      style={missing ? { border: REQUIRED_BORDER } : undefined}
+      aria-invalid={missing || undefined}
     />
   );
 }
