@@ -5,7 +5,7 @@ import type { AfaLand, AfaMethode, ObjektartDetail, Property } from "@/lib/types
 import { calcAfa, calcFollowUpFinance, calcLongTermProjection, calcProperty, fmtEUR, fmtPct, getActiveFinance } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
-import { CHART_STYLE } from "@/components/ChartCard";
+import { CHART_COLORS, CHART_MARGIN, ChartTooltip, GRID_PROPS, LEGEND_PROPS, LINE_PROPS, X_AXIS_TIME, yAxisProps } from "@/components/charts/chartKit";
 
 const OBJEKTARTEN: ObjektartDetail[] = ["Wohnung", "Haus", "Grundstück", "Zinshaus", "Sonstiges"];
 
@@ -69,15 +69,15 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
           <>
             <div className="h-72 w-full mt-4">
               <ResponsiveContainer>
-                <ComposedChart data={projection}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                  <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={CHART_STYLE.tooltipContent} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="cashflow" fill={CHART_STYLE.colors.soft} name="Cashflow p.a." />
-                  <Line type="monotone" dataKey="immoWert" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} name="Immobilienwert" />
-                  <Line type="monotone" dataKey="restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} name="Restschuld" />
+                <ComposedChart data={projection} margin={CHART_MARGIN}>
+                  <CartesianGrid {...GRID_PROPS} />
+                  <XAxis dataKey="year" {...X_AXIS_TIME} />
+                  <YAxis {...yAxisProps()} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "#FAFAF8" }} />
+                  <Legend {...LEGEND_PROPS} />
+                  <Bar dataKey="cashflow" fill={CHART_COLORS.cashflowPre} name="Cashflow p.a." radius={[3, 3, 0, 0]} />
+                  <Line {...LINE_PROPS} dataKey="immoWert" stroke={CHART_COLORS.value} name="Immobilienwert" />
+                  <Line {...LINE_PROPS} dataKey="restschuld" stroke={CHART_COLORS.debt} name="Restschuld" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -182,15 +182,15 @@ function FollowUpChart({ phase1Years, ratePhase1, ratePhase2, restlaufzeit2, res
   return (
     <div className="h-64 w-full mt-4">
       <ResponsiveContainer>
-        <ComposedChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-          <XAxis dataKey="year" tick={{ fontSize: 11 }} label={{ value: "Jahr", position: "insideBottom", offset: -2, fontSize: 11 }} />
-          <YAxis yAxisId="l" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-          <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v)}`} />
-          <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={CHART_STYLE.tooltipContent} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Line yAxisId="l" type="monotone" dataKey="restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} name="Restschuld" />
-          <Line yAxisId="r" type="stepAfter" dataKey="rate" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} name="Rate mtl." />
+        <ComposedChart data={data} margin={CHART_MARGIN}>
+          <CartesianGrid {...GRID_PROPS} />
+          <XAxis dataKey="year" {...X_AXIS_TIME} />
+          <YAxis yAxisId="l" {...yAxisProps("€")} />
+          <YAxis yAxisId="r" {...yAxisProps("€ / Monat", "right")} />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#EAE6DF" }} />
+          <Legend {...LEGEND_PROPS} />
+          <Line yAxisId="l" {...LINE_PROPS} dataKey="restschuld" stroke={CHART_COLORS.debt} name="Restschuld" />
+          <Line yAxisId="r" {...LINE_PROPS} type="stepAfter" dataKey="rate" stroke={CHART_COLORS.value} name="Rate mtl." />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
