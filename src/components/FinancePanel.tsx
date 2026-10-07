@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Plus, Trash2, Check, Star, Copy, Lightbulb, TrendingDown, TrendingUp } from "lucide-react";
+import { Plus, Trash as Trash2, Check, Star, Copy, Lightbulb, TrendDown as TrendingDown, TrendUp as TrendingUp } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
 import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
+import { CHART_STYLE } from "@/components/ChartCard";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
   "Anfrage": "bg-muted text-muted-foreground border-muted-foreground/30",
@@ -187,13 +188,13 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                 <Tooltip
                   formatter={(v: any) => fmtEUR(Number(v))}
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  contentStyle={CHART_STYLE.tooltipContent}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="left" dataKey="interest" stackId="a" fill="hsl(var(--destructive))" name="Zinsen" />
-                <Bar yAxisId="left" dataKey="principal" stackId="a" fill="hsl(var(--primary))" name="Tilgung" />
-                <Bar yAxisId="left" dataKey="extraPayment" stackId="a" fill="hsl(var(--success, 142 70% 45%))" name="Sondertilgung" />
-                <Line yAxisId="right" type="monotone" dataKey="balanceEnd" stroke="hsl(var(--foreground))" strokeWidth={2} dot={false} name="Restschuld" />
+                <Bar yAxisId="left" dataKey="interest" stackId="a" fill={CHART_STYLE.colors.negative} name="Zinsen" />
+                <Bar yAxisId="left" dataKey="principal" stackId="a" fill={CHART_STYLE.colors.positive} name="Tilgung" />
+                <Bar yAxisId="left" dataKey="extraPayment" stackId="a" fill={CHART_STYLE.colors.soft} name="Sondertilgung" />
+                <Line yAxisId="right" type="monotone" dataKey="balanceEnd" stroke={CHART_STYLE.colors.secondary} strokeWidth={2} dot={false} name="Restschuld" />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -301,7 +302,7 @@ const TONE_CELL: Record<"good" | "bad" | "neutral", string> = {
   neutral: "bg-warning/10 text-warning-foreground",
 };
 
-const PALETTE = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))", "hsl(var(--warning))", "#8b5cf6", "#06b6d4"];
+const PALETTE = CHART_STYLE.series;
 
 function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios: FinanceScenario[]; activeId?: string }) {
   const assumptions = useActiveAssumptions();
@@ -409,7 +410,7 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="year" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ ...CHART_STYLE.tooltipContent, fontSize: 11 }} />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
                 {balanceData.lines.map((l) => (
                   <Line key={l.name} type="monotone" dataKey={l.name} stroke={l.color} strokeWidth={l.name === rows.find((r) => r.scn.id === activeId)?.scn.name ? 3 : 1.5} dot={false} />
@@ -493,14 +494,14 @@ function MiniBarChart({
   yLabel?: string;
   higherBetter?: boolean;
 }) {
-  // Zentrales Farbschema (oklch direkt → in light + dark sichtbar):
-  //   rate     = blau (Finanzierung)
-  //   interest = amber (Warnung/Kosten)
-  //   cashflow = grün/rot je nach Vorzeichen
-  const COLOR_RATE = "oklch(0.62 0.16 250)";
-  const COLOR_INTEREST = "oklch(0.74 0.14 75)";
-  const COLOR_POS = "oklch(0.62 0.14 155)";
-  const COLOR_NEG = "oklch(0.58 0.20 25)";
+  // Markenpalette aus CHART_STYLE:
+  //   rate     = Tinte (Finanzierung, neutral)
+  //   interest = Amber (Kosten)
+  //   cashflow = Grün/Rot je nach Vorzeichen
+  const COLOR_RATE = CHART_STYLE.colors.secondary;
+  const COLOR_INTEREST = CHART_STYLE.colors.caution;
+  const COLOR_POS = CHART_STYLE.colors.positive;
+  const COLOR_NEG = CHART_STYLE.colors.negative;
   const colorFor = (v: number) =>
     kind === "rate"
       ? COLOR_RATE

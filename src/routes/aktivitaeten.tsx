@@ -4,7 +4,7 @@ import { useStore, makeActivity, useActiveProject, VIEWING_CHECKLIST } from "@/l
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/aktivitaeten")({
-  head: () => ({ meta: [{ title: "Aktivitäten – Immo Invest CRM" }] }),
+  head: () => ({ meta: [{ title: "Aktivitäten – kaufma CRM" }] }),
   component: AktivitaetenPage,
 });
 
@@ -32,7 +32,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
     <button
       onClick={onClick}
       className="px-4 py-2 text-[13px] font-medium -mb-px border-b-2"
-      style={{ borderColor: active ? "#2D6A4F" : "transparent", color: active ? "#1C1917" : "#78716C" }}
+      style={{ borderColor: active ? "#2D6A4F" : "transparent", color: active ? "#1C1917" : "var(--ink-2)" }}
     >
       {children}
     </button>
@@ -52,19 +52,19 @@ function FollowupsView() {
     <div className="rounded-xl border border-[#EAE6DF] bg-white overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-[#FAFAF8] text-left">
-          <tr>{["Fällig", "Aktion", "Immobilie", "Projekt", "Verkäufer", "Priorität", ""].map((h) => <th key={h} className="py-2 px-3 text-xs uppercase text-[#A8A29E]">{h}</th>)}</tr>
+          <tr>{["Fällig", "Aktion", "Immobilie", "Projekt", "Verkäufer", "Priorität", ""].map((h) => <th key={h} className="py-2 px-3 text-xs uppercase text-ink-3">{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map(({ p, dueIn, project }) => (
             <tr key={p.id} className="border-t border-[#EAE6DF] hover:bg-[#FAFAF8] cursor-pointer" onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })}>
               <td className="py-2 px-3">
                 <div>{p.nextActionDate}</div>
-                <div className={`text-xs ${dueIn < 0 ? "text-[#DC2626]" : dueIn <= 2 ? "text-[#D97706]" : "text-[#78716C]"}`}>
+                <div className={`text-xs ${dueIn < 0 ? "text-[#DC2626]" : dueIn <= 2 ? "text-[#D97706]" : "text-ink-2"}`}>
                   {dueIn < 0 ? `überfällig ${-dueIn}d` : dueIn === 0 ? "heute" : `in ${dueIn} Tagen`}
                 </div>
               </td>
               <td className="py-2 px-3">{p.nextAction || "—"}</td>
-              <td className="py-2 px-3 font-medium">{p.title || "—"}<div className="text-xs text-[#78716C]">{p.bezirk}</div></td>
+              <td className="py-2 px-3 font-medium">{p.title || "—"}<div className="text-xs text-ink-2">{p.bezirk}</div></td>
               <td className="py-2 px-3 text-xs">{project?.name ?? "—"}</td>
               <td className="py-2 px-3 text-xs">{p.sellerName || p.sellerCompany || "—"}</td>
               <td className="py-2 px-3 text-xs">{p.priority ?? "—"}</td>
@@ -76,7 +76,7 @@ function FollowupsView() {
               </td>
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={7} className="py-10 text-center text-[#A8A29E]">Keine offenen Follow-ups.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={7} className="py-10 text-center text-ink-3">Keine offenen Follow-ups.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -105,7 +105,7 @@ function ViewingView() {
         </select>
         {selected && (
           <>
-            <span className="text-sm text-[#78716C]">{done} / {VIEWING_CHECKLIST.length} erledigt</span>
+            <span className="text-sm text-ink-2">{done} / {VIEWING_CHECKLIST.length} erledigt</span>
             <Link to="/properties/$id" params={{ id: selected }} className="text-sm text-[#2D6A4F] hover:underline">Zur Immobilie →</Link>
           </>
         )}
@@ -114,7 +114,7 @@ function ViewingView() {
         <div className="space-y-4">
           {Object.entries(groups).map(([group, items]) => (
             <div key={group} className="rounded-xl border border-[#EAE6DF] bg-white p-4">
-              <div className="text-xs uppercase tracking-wider text-[#A8A29E] mb-2">{group}</div>
+              <div className="text-xs uppercase tracking-wider text-ink-3 mb-2">{group}</div>
               <div className="space-y-2">
                 {items.map((c) => {
                   const v = cur[c.key] ?? { done: false, note: "" };

@@ -4,7 +4,7 @@ import { extractFromPdf, type PdfExtracted } from "@/lib/extract.functions";
 import { useStore } from "@/lib/store";
 import type { PropertyDocument, Property } from "@/lib/types";
 import { toast } from "sonner";
-import { ExternalLink, FileText, Loader2, Trash2, Upload } from "lucide-react";
+import { ArrowSquareOut as ExternalLink, FileText, CircleNotch as Loader2, Trash as Trash2, UploadSimple as Upload } from "@phosphor-icons/react";
 
 const MAX_PDF_BYTES = 8 * 1024 * 1024;
 

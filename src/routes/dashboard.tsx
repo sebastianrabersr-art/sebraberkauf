@@ -5,7 +5,7 @@ import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct } from "@/lib/
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
-import { ChevronRight, Plus } from "lucide-react";
+import { CaretRight as ChevronRight, Plus } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useAuth } from "@/lib/auth";
@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard – Immo Invest" },
+      { title: "Dashboard – kaufma" },
       { name: "description", content: "Übersicht deiner analysierten Kaufkandidaten." },
     ],
   }),
@@ -31,14 +31,14 @@ function greeting() {
 function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
     <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-4 py-3.5">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
       <div
         className={`mt-1.5 text-[28px] leading-none tabular-nums ${accent ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}
         style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800 }}
       >
         {value}
       </div>
-      {sub && <div className="mt-1.5 text-[11px] text-[#78716C] truncate">{sub}</div>}
+      {sub && <div className="mt-1.5 text-[11px] text-ink-2 truncate">{sub}</div>}
     </div>
   );
 }
@@ -67,7 +67,7 @@ function CandidateRow({ r, onClick }: { r: any; onClick: () => void }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "—"}</div>
-        <div className="text-[11px] text-[#A8A29E] truncate">
+        <div className="text-[11px] text-ink-3 truncate">
           {[r.p.bezirk, r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : null, r.p.quelle].filter(Boolean).join(" · ") || "—"}
         </div>
       </div>
@@ -80,7 +80,7 @@ function CandidateRow({ r, onClick }: { r: any; onClick: () => void }) {
       >
         {fmtEUR(cf)}
       </div>
-      <ChevronRight className="size-4 text-[#A8A29E] group-hover:text-[#2D6A4F] shrink-0" />
+      <ChevronRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] shrink-0" />
     </button>
   );
 }
@@ -96,7 +96,7 @@ function Dashboard() {
     return (
       <AppShell>
         <div className="min-h-[60vh] grid place-items-center text-center p-8">
-          <div className="text-sm text-[#78716C]">Lade dein Projekt…</div>
+          <div className="text-sm text-ink-2">Lade dein Projekt…</div>
         </div>
       </AppShell>
     );
@@ -136,13 +136,10 @@ function Dashboard() {
     <AppShell>
       {/* Personalisierte Begrüßung */}
       <div className="flex flex-col gap-1">
-        <h1
-          className="text-[24px] leading-tight text-[#1C1917]"
-          style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, letterSpacing: "-0.03em" }}
-        >
+        <h1 className="heading-page-sm">
           {greeting()}, {username}.
         </h1>
-        <p className="text-[13px] text-[#A8A29E]">
+        <p className="text-[13px] text-ink-3">
           {total} {total === 1 ? "Objekt" : "Objekte"} in Prüfung · {kritisch} kritische {kritisch === 1 ? "Objekt" : "Objekte"}
         </p>
       </div>
@@ -162,7 +159,7 @@ function Dashboard() {
 
       {/* Top-Kandidaten – eine einheitliche Liste */}
       <div className="mt-6">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-3">Top-Kandidaten</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-3">Top-Kandidaten</div>
         <div className="flex flex-col gap-2">
           {topVisible.map((r) => (
             <CandidateRow key={r.p.id} r={r} onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })} />
@@ -177,7 +174,7 @@ function Dashboard() {
           )}
           <Link
             to="/analyze"
-            className="flex items-center justify-center gap-2 rounded-[10px] border border-dashed border-[1.5px] border-[#D8D3C8] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#A8A29E] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-[10px] border border-dashed border-[1.5px] border-[#D8D3C8] bg-[#F5F3EE] px-4 py-3 text-[13px] text-ink-3 hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40 transition-colors"
           >
             <Plus className="size-4" /> Neue Immobilie analysieren
           </Link>
@@ -212,7 +209,7 @@ function Dashboard() {
               <TabsTrigger
                 key={t.v}
                 value={t.v}
-                className="rounded-none border-0 bg-transparent px-0 py-3 text-[13px] text-[#78716C] data-[state=active]:text-[#1C1917] data-[state=active]:shadow-none relative data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[#2D6A4F]"
+                className="rounded-none border-0 bg-transparent px-0 py-3 text-[13px] text-ink-2 data-[state=active]:text-[#1C1917] data-[state=active]:shadow-none relative data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[#2D6A4F]"
               >
                 {t.l}
               </TabsTrigger>
@@ -222,7 +219,7 @@ function Dashboard() {
           <TabsContent value="kandidaten" className="mt-6">
             <div className="flex flex-col gap-2">
               {topRanked.length === 0 && (
-                <div className="text-sm text-[#78716C] py-6 text-center">Noch keine Objekte.</div>
+                <div className="text-sm text-ink-2 py-6 text-center">Noch keine Objekte.</div>
               )}
               {topRanked.map((r) => (
                 <CandidateRow key={r.p.id} r={r} onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })} />
@@ -234,14 +231,14 @@ function Dashboard() {
             <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[13px] font-semibold text-[#1C1917]">Unvollständige Daten</h3>
-                <span className="text-[11px] text-[#A8A29E]">{incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}</span>
+                <span className="text-[11px] text-ink-3">{incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}</span>
               </div>
               {incomplete.length === 0 ? (
-                <div className="text-sm text-[#78716C] py-4 text-center">Alles vollständig.</div>
+                <div className="text-sm text-ink-2 py-4 text-center">Alles vollständig.</div>
               ) : (
                 <div className="overflow-x-auto -mx-2">
                   <table className="w-full text-sm">
-                    <thead className="text-left text-xs text-[#A8A29E]">
+                    <thead className="text-left text-xs text-ink-3">
                       <tr>
                         <th className="px-2 py-2 font-medium">Objekt</th>
                         <th className="px-2 py-2 font-medium">Bezirk</th>
@@ -254,9 +251,9 @@ function Dashboard() {
                       {incomplete.map((r) => (
                         <tr key={r.p.id} className="border-t border-[#EAE6DF] hover:bg-[#FAFAF8] cursor-pointer" onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })}>
                           <td className="px-2 py-2.5 font-medium text-[#1C1917]">{r.p.title || "—"}</td>
-                          <td className="px-2 py-2.5 text-[#78716C]">{r.p.bezirk || "—"}</td>
+                          <td className="px-2 py-2.5 text-ink-2">{r.p.bezirk || "—"}</td>
                           <td className="px-2 py-2.5"><AmpelBadge ampel={r.dq.ampel}>{r.dq.score}%</AmpelBadge></td>
-                          <td className="px-2 py-2.5 text-xs text-[#78716C] hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
+                          <td className="px-2 py-2.5 text-xs text-ink-2 hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
                           <td className="px-2 py-2.5 text-right text-[#2D6A4F]">→</td>
                         </tr>
                       ))}
@@ -271,16 +268,16 @@ function Dashboard() {
             <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
               <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Anstehende Follow-ups</h3>
               {followups.length === 0 ? (
-                <div className="text-sm text-[#78716C] py-4 text-center">Keine offenen Follow-ups.</div>
+                <div className="text-sm text-ink-2 py-4 text-center">Keine offenen Follow-ups.</div>
               ) : (
                 <div className="space-y-2">
                   {followups.map((p) => (
                     <Link key={p.id} to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[#EAE6DF] hover:bg-[#FAFAF8]">
                       <div className="min-w-0">
                         <div className="text-sm font-medium text-[#1C1917] truncate">{p.title || "—"}</div>
-                        <div className="text-xs text-[#78716C] truncate">{p.nextAction}</div>
+                        <div className="text-xs text-ink-2 truncate">{p.nextAction}</div>
                       </div>
-                      <div className="text-xs text-[#78716C] whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "—"}</div>
+                      <div className="text-xs text-ink-2 whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "—"}</div>
                     </Link>
                   ))}
                 </div>

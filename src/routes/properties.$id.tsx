@@ -17,7 +17,7 @@ import { PurchaseCostsDetails } from "@/components/PurchaseCostsDetails";
 import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PROPERTY_TYPES, migrateLegacyStatus, userRatingAvg, type Bewertung, type Mietrecht, type ProzessStatus, type Property, type PropertyStatus, type PropertyType, type UserRating } from "@/lib/types";
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { resolvePurchaseCostRules } from "@/lib/purchaseCostRules";
-import { AlertTriangle, ArrowLeft, Building2, Calendar, CalendarPlus, ChevronDown, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Mail, MapPin, MoreHorizontal, Pencil, Phone, Trash2, User, Wand2, X } from "lucide-react";
+import { Warning as AlertTriangle, ArrowLeft, Buildings as Building2, Calendar, CalendarPlus, CaretDown as ChevronDown, CaretRight as ChevronRight, Copy, DownloadSimple as Download, ArrowSquareOut as ExternalLink, Globe, Lock, Envelope as Mail, MapPin, DotsThree as MoreHorizontal, PencilSimple as Pencil, Phone, Trash as Trash2, User, MagicWand as Wand2, X, Check, ExclamationMark } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
@@ -26,7 +26,7 @@ import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 export const Route = createFileRoute("/properties/$id")({
-  head: () => ({ meta: [{ title: `Objekt – Immo Invest` }] }),
+  head: () => ({ meta: [{ title: `Objekt – kaufma` }] }),
   component: Detail,
   notFoundComponent: () => (<AppShell><div className="p-8">Objekt nicht gefunden.</div></AppShell>),
 });
@@ -172,7 +172,7 @@ function Detail() {
         >
           {p.title || "Objekt ohne Titel"}
         </h1>
-        <div className="mt-1.5 text-[12px] text-[#A8A29E]">
+        <div className="mt-1.5 text-[12px] text-ink-3">
           {[p.bezirk, p.platform, project?.name, `hinzugefügt ${new Date(p.createdAt).toLocaleDateString("de-AT")}`].filter(Boolean).join(" · ")}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -180,17 +180,17 @@ function Detail() {
             DQ {dq.score}% · {dq.level}
           </span>
           {linkValid && (
-            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1">
+            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1">
               <ExternalLink className="size-3.5" /> Inserat öffnen
             </a>
           )}
           <button
             onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
-            className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#2D6A4F] px-2 py-1"
+            className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1"
           >
             {canExport ? <Download className="size-3.5" /> : <Lock className="size-3.5" />} Exportieren
           </button>
-          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#DC2626] px-2 py-1">
+          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#DC2626] px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
           </button>
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
@@ -205,7 +205,7 @@ function Detail() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`relative pb-3 text-[13px] whitespace-nowrap transition-colors ${active ? "text-[#1C1917] font-medium" : "text-[#78716C] hover:text-[#1C1917]"}`}
+                className={`relative pb-3 text-[13px] whitespace-nowrap transition-colors ${active ? "text-[#1C1917] font-medium" : "text-ink-2 hover:text-[#1C1917]"}`}
               >
                 {t.label}
                 {active && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#2D6A4F]" />}
@@ -256,7 +256,7 @@ function Detail() {
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
                 </div>
-                <p className="text-[11px] text-[#A8A29E] border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
+                <p className="text-[11px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
               </Section>
             </>
           )}
@@ -276,19 +276,19 @@ function Detail() {
           className="hidden lg:block bg-[#FAFAF8] border-l border-[#EAE6DF] px-4 py-5 overflow-y-auto"
           style={{ width: 240, flex: "0 0 240px", position: "sticky", top: 0, height: "100vh" }}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-1.5">Datenqualität</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Datenqualität</div>
           <div className="text-[44px] leading-none text-[#1C1917]" style={{ ...bricolage, fontWeight: 800 }}>{dq.score}%</div>
-          <div className="text-[12px] text-[#78716C]">{dq.level}</div>
+          <div className="text-[12px] text-ink-2">{dq.level}</div>
           <div className="h-[5px] rounded-[3px] bg-[#EAE6DF] overflow-hidden my-2">
             <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
           </div>
-          <div className="text-[12px] text-[#78716C]">{dq.filled} von {dq.total} Pflichtfeldern</div>
+          <div className="text-[12px] text-ink-2">{dq.filled} von {dq.total} Pflichtfeldern</div>
 
           {mietrecht.risiko !== "niedrig" && (
             <div className="mt-5 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
               <div className="text-[10px] uppercase tracking-wider font-semibold text-[#92400E]">Mietrecht-Risiko</div>
               <div className="text-[13px] font-semibold text-[#1C1917] mt-0.5">{mietrecht.kategorie}</div>
-              <div className="text-[11px] text-[#78716C] mt-0.5">Risiko: {mietrecht.risiko}</div>
+              <div className="text-[11px] text-ink-2 mt-0.5">Risiko: {mietrecht.risiko}</div>
             </div>
           )}
         </aside>
@@ -374,7 +374,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <button
               type="button"
               onClick={() => setAlertsExpanded(true)}
-              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+              className="text-[12px] text-ink-2 hover:text-[#1C1917] underline-offset-2 hover:underline"
             >
               + {hiddenAlertsCount} weitere
             </button>
@@ -383,7 +383,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <button
               type="button"
               onClick={() => setAlertsExpanded(false)}
-              className="text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+              className="text-[12px] text-ink-2 hover:text-[#1C1917] underline-offset-2 hover:underline"
             >
               weniger
             </button>
@@ -534,12 +534,12 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           ].filter((item) => item.value > 0);
           return (
             <div className="mt-4 pt-3 border-t border-[#EAE6DF] space-y-2">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Kaufkostenaufschlüsselung</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Kaufkostenaufschlüsselung</div>
               {rows.map((item) => (
                 <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-[#F5F3EE] last:border-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] text-[#78716C]">{item.label}</span>
-                    {item.pct && <span className="text-[11px] text-[#A8A29E] bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
+                    <span className="text-[13px] text-ink-2">{item.label}</span>
+                    {item.pct && <span className="text-[11px] text-ink-3 bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
                   </div>
                   <span
                     className="text-[13px] font-medium text-[#1C1917] tabular-nums"
@@ -620,7 +620,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] rounded-lg bg-[#E8F5EE] px-3 py-2.5">
           <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Break-even Miete</div>
           <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.breakEvenMiete)} / Monat</div>
-          <div className="text-[11px] text-[#78716C] mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
+          <div className="text-[11px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
         </div>
       </Section>
 
@@ -643,7 +643,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                   borderRadius: 20,
                   fontWeight: active ? 600 : 500,
                   background: active ? "#2D6A4F" : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "#78716C",
+                  color: active ? "#FFFFFF" : "var(--ink-2)",
                   border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
                 }}
               >
@@ -659,7 +659,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         <div className="flex items-center gap-2 flex-wrap">
           <AmpelBadge ampel={ampelColor}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
         </div>
-        <p className="text-[13px] text-[#78716C] mt-2">{mietrecht.erklaerung}</p>
+        <p className="text-[13px] text-ink-2 mt-2">{mietrecht.erklaerung}</p>
         <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-[#2D6A4F] hover:underline">Details im Mietrecht-Tab →</button>
       </Section>
 
@@ -717,7 +717,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
             <span className="font-semibold">= Cashflow / Monat<GlossaryTooltip termId="cashflow" /></span>
             <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{fmtEUR(c.cashflowMtl)}</span>
           </div>
-          <div className="flex justify-between text-[#78716C]">
+          <div className="flex justify-between text-ink-2">
             <span>Cashflow p.a. (×12)</span>
             <span className="tabular-nums">{fmtEUR(c.cashflowJahr)}</span>
           </div>
@@ -800,7 +800,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
     <div className="space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <div>
-          <div className="text-[11px] text-[#78716C] mb-1">Persönlicher Steuersatz %</div>
+          <div className="text-[11px] text-ink-2 mb-1">Persönlicher Steuersatz %</div>
           <input
             type="number"
             value={(steuersatz * 100).toFixed(0)}
@@ -809,7 +809,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-[#78716C] mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <div className="text-[11px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
           <input
             type="number"
             step="0.1"
@@ -819,7 +819,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-[#78716C] mb-1">Gebäudewert % vom Kaufpreis</div>
+          <div className="text-[11px] text-ink-2 mb-1">Gebäudewert % vom Kaufpreis</div>
           <input
             type="number"
             value={(gebaeudewertPct * 100).toFixed(0)}
@@ -830,7 +830,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
       </div>
 
       <div className="rounded-[10px] border border-[#EAE6DF] overflow-hidden">
-        <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">Berechnung</div>
+        <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-ink-3">Berechnung</div>
         {[
           { label: "Gebäudewert", value: fmtEUR(gebaeudewert), sub: `${(gebaeudewertPct * 100).toFixed(0)}% von ${fmtEUR(kaufpreis)}` },
           { label: "AfA pro Jahr", value: fmtEUR(afaJahr), sub: `${(afaSatz * 100).toFixed(1)}% von ${fmtEUR(gebaeudewert)}` },
@@ -841,8 +841,8 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
         ].map((row) => (
           <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-[#EAE6DF] first:border-0">
             <div>
-              <div className="text-[13px] text-[#78716C]">{row.label}</div>
-              <div className="text-[11px] text-[#A8A29E]">{row.sub}</div>
+              <div className="text-[13px] text-ink-2">{row.label}</div>
+              <div className="text-[11px] text-ink-3">{row.sub}</div>
             </div>
             <div className="text-[13px] font-medium text-[#1C1917] tabular-nums">{row.value}</div>
           </div>
@@ -855,7 +855,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
         </div>
       </div>
 
-      <p className="text-[11px] text-[#A8A29E]">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
+      <p className="text-[11px] text-ink-3">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
     </div>
   );
 }
@@ -866,7 +866,7 @@ function AnalyseStat({ label, value, tone }: { label: string; value: string; ton
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
     <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
-      <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="mt-1 text-[22px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
     </div>
   );
@@ -875,7 +875,7 @@ function CfLine({ label, value, sign }: { label: string; value: number; sign?: "
   const positive = value >= 0;
   return (
     <div className="flex justify-between">
-      <span className="text-[#78716C]">{label}</span>
+      <span className="text-ink-2">{label}</span>
       <span className={`tabular-nums ${positive ? "text-[#1C1917]" : "text-[#DC2626]"}`}>{sign === "+" && positive ? "+" : ""}{fmtEUR(value)}</span>
     </div>
   );
@@ -885,7 +885,7 @@ function RendLine({ label, formula, value, termId }: { label: string; formula: s
     <div className="flex items-baseline justify-between gap-3">
       <div>
         <div className="text-[#1C1917]">{label}{termId && <GlossaryTooltip termId={termId} />}</div>
-        <div className="text-[11px] text-[#A8A29E]">{formula}</div>
+        <div className="text-[11px] text-ink-3">{formula}</div>
       </div>
       <span className="tabular-nums font-medium text-[#1C1917]">{value}</span>
     </div>
@@ -895,9 +895,9 @@ function MiniBox({ label, value, sub, tone }: { label: string; value: string; su
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
     <div className="rounded-lg border border-[#EAE6DF] bg-[#FAFAF8] px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-semibold">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold">{label}</div>
       <div className="mt-0.5 text-[15px] tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
-      {sub && <div className="text-[11px] text-[#78716C] mt-0.5">{sub}</div>}
+      {sub && <div className="text-[11px] text-ink-2 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -916,7 +916,7 @@ function BesichtigungTab({ p, viewings, setViewing }: {
         <div className="grid md:grid-cols-2 gap-4">
           {Object.entries(groups).map(([group, items]) => (
             <div key={group}>
-              <div className="text-xs uppercase tracking-wide text-[#A8A29E] mb-2">{group}</div>
+              <div className="text-xs uppercase tracking-wide text-ink-3 mb-2">{group}</div>
               <div className="space-y-2">
                 {items.map((item) => {
                   const v = cur[item.key] ?? { done: false, note: "" };
@@ -973,7 +973,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
     <>
       {/* SECTION A — STATUS */}
       <div style={card}>
-        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#A8A29E", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
         <div className="flex flex-wrap gap-2 mb-1">
           {ALL_PROZESS_STATUSES.map((s) => {
             const active = prozess === s;
@@ -986,7 +986,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
                   fontSize: 13, fontWeight: 500, padding: "8px 16px",
                   border: active ? "1.5px solid #1C1917" : "1.5px solid #EAE6DF",
                   background: active ? "#1C1917" : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "#78716C",
+                  color: active ? "#FFFFFF" : "var(--ink-2)",
                 }}
               >
                 {s}
@@ -998,7 +998,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 
         <div style={{ height: 1, background: "#EAE6DF", margin: "12px 0" }} />
 
-        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#A8A29E", letterSpacing: "0.05em", textTransform: "uppercase" }}>Bewertung</div>
+        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Bewertung</div>
         <div className="flex flex-wrap gap-2">
           {ALL_BEWERTUNGEN.map((b) => {
             const active = bewertung === b;
@@ -1011,7 +1011,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
                   fontSize: 12, fontWeight: 500, padding: "6px 12px",
                   border: active ? `1.5px solid ${bewertungActiveBg[b]}` : "1.5px solid #EAE6DF",
                   background: active ? bewertungActiveBg[b] : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "#78716C",
+                  color: active ? "#FFFFFF" : "var(--ink-2)",
                 }}
               >
                 {b}
@@ -1045,11 +1045,11 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
       <details className="group" style={card}>
         <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
           <h3 className="text-[14px] font-semibold text-[#1C1917]">Beschreibung & Notizen</h3>
-          <ChevronDown className="size-4 text-[#A8A29E] transition-transform group-open:rotate-180" />
+          <ChevronDown className="size-4 text-ink-3 transition-transform group-open:rotate-180" />
         </summary>
         <div className="mt-3 space-y-3">
           <div>
-            <div className="text-[11px] text-[#78716C] mb-1">Beschreibung (aus Inserat)</div>
+            <div className="text-[11px] text-ink-2 mb-1">Beschreibung (aus Inserat)</div>
             <textarea
               value={p.beschreibung ?? ""}
               onChange={(e) => u({ beschreibung: e.target.value })}
@@ -1058,7 +1058,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
             />
           </div>
           <div>
-            <div className="text-[11px] text-[#78716C] mb-1">Eigene Notizen</div>
+            <div className="text-[11px] text-ink-2 mb-1">Eigene Notizen</div>
             <textarea
               value={p.notizen}
               onChange={(e) => u({ notizen: e.target.value })}
@@ -1073,7 +1073,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
       <details className="group" style={card}>
         <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
           <h3 className="text-[14px] font-semibold text-[#1C1917]">Checkliste & Fragen</h3>
-          <ChevronDown className="size-4 text-[#A8A29E] transition-transform group-open:rotate-180" />
+          <ChevronDown className="size-4 text-ink-3 transition-transform group-open:rotate-180" />
         </summary>
         <div className="mt-3">
           <OpenQuestionsPanel p={p} />
@@ -1118,8 +1118,8 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
         className="w-full flex flex-col items-center justify-center gap-1.5 transition-colors hover:bg-[#F5F3EE]"
         style={{ border: "1.5px dashed #D4CFC8", background: "#FAFAF8", borderRadius: 10, padding: 16 }}
       >
-        <CalendarPlus className="size-6" style={{ color: "#A8A29E" }} />
-        <span className="text-[13px]" style={{ color: "#A8A29E" }}>Nächste Aktion planen</span>
+        <CalendarPlus className="size-6" style={{ color: "var(--ink-3)" }} />
+        <span className="text-[13px]" style={{ color: "var(--ink-3)" }}>Nächste Aktion planen</span>
       </button>
     );
   }
@@ -1136,7 +1136,7 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.nextAction || "Nächste Aktion"}</div>
-            <div className="text-[11px] text-[#78716C]">
+            <div className="text-[11px] text-ink-2">
               {p.nextActionDate && <>Fällig: {p.nextActionDate}</>}
               {p.nextActionDate && p.priority && " · "}
               {p.priority && <>Priorität: {p.priority}</>}
@@ -1177,7 +1177,7 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
                     fontSize: 12, fontWeight: 500, padding: "6px 12px",
                     border: active ? "1.5px solid #1C1917" : "1.5px solid #EAE6DF",
                     background: active ? "#1C1917" : "#F5F3EE",
-                    color: active ? "#FFFFFF" : "#78716C",
+                    color: active ? "#FFFFFF" : "var(--ink-2)",
                   }}
                 >
                   {x}
@@ -1185,7 +1185,7 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
               );
             })}
             <div className="flex-1" />
-            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 text-[#78716C] hover:underline">Abbrechen</button>
+            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 text-ink-2 hover:underline">Abbrechen</button>
             <button onClick={save} className="text-[13px] rounded-lg px-4 py-2 font-medium" style={{ background: "#2D6A4F", color: "#FFFFFF" }}>Speichern</button>
           </div>
         </div>
@@ -1207,9 +1207,9 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
   return (
     <div className="flex items-center gap-3 py-2">
       <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
-        <Icon className="size-[14px] text-[#78716C]" />
+        <Icon className="size-[14px] text-ink-2" />
       </div>
-      <div className="text-[11px] text-[#A8A29E] w-20 shrink-0">{label}</div>
+      <div className="text-[11px] text-ink-3 w-20 shrink-0">{label}</div>
       {editing ? (
         <input
           type={type}
@@ -1222,7 +1222,7 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
         />
       ) : (
         <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-[#2D6A4F]">
-          {value || <span className="text-[#A8A29E]">—</span>}
+          {value || <span className="text-ink-3">—</span>}
         </button>
       )}
     </div>
@@ -1235,7 +1235,7 @@ function ContactList({ p, u }: { p: Property; u: (patch: Partial<Property>) => v
 
   if (empty && !expand) {
     return (
-      <button onClick={() => setExpand(true)} className="w-full flex items-center justify-center gap-2 py-3 text-[13px] text-[#A8A29E] hover:text-[#1C1917]">
+      <button onClick={() => setExpand(true)} className="w-full flex items-center justify-center gap-2 py-3 text-[13px] text-ink-3 hover:text-[#1C1917]">
         <Pencil className="size-3.5" /> Noch kein Kontakt eingetragen
       </button>
     );
@@ -1243,12 +1243,12 @@ function ContactList({ p, u }: { p: Property; u: (patch: Partial<Property>) => v
 
   return (
     <div>
-      <div className="text-[11px] font-semibold text-[#A8A29E] uppercase tracking-wider mb-2">Kontakt</div>
+      <div className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider mb-2">Kontakt</div>
       <div className="flex items-center gap-3 py-2">
         <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
-          <User className="size-[14px] text-[#78716C]" />
+          <User className="size-[14px] text-ink-2" />
         </div>
-        <div className="text-[11px] text-[#A8A29E] w-20 shrink-0">Typ</div>
+        <div className="text-[11px] text-ink-3 w-20 shrink-0">Typ</div>
         <select value={p.sellerType ?? "unklar"} onChange={(e) => u({ sellerType: e.target.value as Property["sellerType"] })} className={CRM_INPUT + " flex-1"}>
           {(["Privat", "Makler", "Bauträger", "Bank", "Sonstige", "unklar"] as const).map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -1303,30 +1303,30 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
           <thead>
             <tr style={{ background: "#FAFAF8" }}>
               {["Preis", "Von", "Datum", "Status"].map((h) => (
-                <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">{h}</th>
+                <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-ink-3">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <tr style={{ borderTop: "1px solid #EAE6DF" }}>
               <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(p.kaufpreis ?? 0)}</td>
-              <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Inserat</td>
-              <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{p.inseratsdatum || "—"}</td>
+              <td className="px-3 py-2.5 text-[12px] text-ink-2">Inserat</td>
+              <td className="px-3 py-2.5 text-[12px] text-ink-3">{p.inseratsdatum || "—"}</td>
               <td className="px-3 py-2.5">
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#F5F3EE", color: "#78716C" }}>Original</span>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#F5F3EE", color: "var(--ink-2)" }}>Original</span>
               </td>
             </tr>
             {offer != null && offer > 0 && (
               <tr style={{ borderTop: "1px solid #EAE6DF", background: status === "Offen" ? "#FFFBEB" : undefined }}>
                 <td className="px-3 py-2.5" style={{ ...bricolage, fontWeight: 700, fontSize: 15, color: "#1C1917" }}>{fmtEUR(offer)}</td>
-                <td className="px-3 py-2.5 text-[12px] text-[#78716C]">Ich</td>
-                <td className="px-3 py-2.5 text-[12px] text-[#A8A29E]">{p.offerDate || today}</td>
+                <td className="px-3 py-2.5 text-[12px] text-ink-2">Ich</td>
+                <td className="px-3 py-2.5 text-[12px] text-ink-3">{p.offerDate || today}</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={status}
                     onChange={(e) => u({ negotiationStatus: e.target.value })}
                     className="rounded-full px-2 py-0.5 text-[10px] font-semibold border-0 outline-none"
-                    style={{ background: statusStyles[status]?.bg ?? "#F5F3EE", color: statusStyles[status]?.color ?? "#78716C" }}
+                    style={{ background: statusStyles[status]?.bg ?? "#F5F3EE", color: statusStyles[status]?.color ?? "var(--ink-2)" }}
                   >
                     {["Offen", "Abgelehnt", "Angenommen"].map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -1348,12 +1348,12 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
             autoFocus
           />
           <button onClick={save} className="text-[13px] rounded-lg px-4 py-2 font-medium" style={{ background: "#2D6A4F", color: "#FFFFFF" }}>Speichern</button>
-          <button onClick={() => setAdding(false)} className="text-[12px] px-3 py-2 text-[#78716C]">Abbrechen</button>
+          <button onClick={() => setAdding(false)} className="text-[12px] px-3 py-2 text-ink-2">Abbrechen</button>
         </div>
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="mt-3 w-full text-[13px] text-[#78716C] hover:text-[#1C1917] py-2.5"
+          className="mt-3 w-full text-[13px] text-ink-2 hover:text-[#1C1917] py-2.5"
           style={{ border: "1.5px dashed #D4CFC8", borderRadius: 8, background: "transparent" }}
         >
           + Angebot hinzufügen
@@ -1362,7 +1362,7 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
 
       {cPreview && previewPrice > 0 && (
         <div className="mt-4 rounded-[10px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
-          <div className="text-[11px] text-[#78716C] mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
+          <div className="text-[11px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
           <div className="grid grid-cols-3 gap-2">
             <PreviewStat label="Rendite" value={fmtPct(cPreview.bruttorendite)} />
             <PreviewStat label="Cashflow/Mo" value={fmtEUR(cPreview.cashflowMtl)} tone={cPreview.cashflowMtl >= 0 ? "good" : "bad"} />
@@ -1378,7 +1378,7 @@ function PreviewStat({ label, value, tone }: { label: string; value: string; ton
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
     <div className="rounded-lg p-2.5" style={{ background: "#FFFFFF" }}>
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-ink-3">{label}</div>
       <div className="mt-0.5 text-[14px] font-semibold" style={{ color, ...bricolage }}>{value}</div>
     </div>
   );
@@ -1397,8 +1397,8 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
 
   const dotColor: Record<string, string> = {
     "Telefonat": "#2D6A4F",
-    "E-Mail": "#1A4FD6",
-    "Besichtigung": "#6D28D9",
+    "E-Mail": "#1C1917",
+    "Besichtigung": "#8FBFA5",
     "Angebot abgegeben": "#D97706",
     "Import": "#D4CFC8",
   };
@@ -1420,7 +1420,7 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
       <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Aktivitäten</h3>
 
       {items.length === 0 ? (
-        <div className="text-center py-6 text-[13px] text-[#A8A29E]">Noch keine Aktivitäten</div>
+        <div className="text-center py-6 text-[13px] text-ink-3">Noch keine Aktivitäten</div>
       ) : (
         <ol className="relative pl-5" style={{ borderLeft: "1.5px solid #EAE6DF" }}>
           {items.map((a) => {
@@ -1436,10 +1436,10 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
                 >
                   <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
                   <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
-                  <span className="text-[11px] text-[#A8A29E] ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                  <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
                 </button>
                 {open && a.description && (
-                  <div className="mt-1.5 text-[12px] text-[#78716C] whitespace-pre-wrap">{a.description}</div>
+                  <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
                 {open && (
                   <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[11px] text-[#DC2626] hover:underline ml-2">
@@ -1479,7 +1479,7 @@ function Sel({ children, className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return (
     <div className="relative">
       <select {...props} className={selectCls + (className ? " " + className : "")}>{children}</select>
-      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-ink-3 pointer-events-none" />
     </div>
   );
 }
@@ -1511,7 +1511,7 @@ function OverviewStat({ label, value, sub, tone, editable }: {
 
   return (
     <div className="group rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
-      <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       {editable && editing ? (
         <input
           autoFocus
@@ -1533,12 +1533,12 @@ function OverviewStat({ label, value, sub, tone, editable }: {
           className="mt-1 flex items-center gap-1.5 text-left w-full"
         >
           <span className="text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</span>
-          <Pencil className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#A8A29E" }} />
+          <Pencil className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--ink-3)" }} />
         </button>
       ) : (
         <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
       )}
-      {sub && <div className="text-[11px] text-[#A8A29E] mt-0.5">{sub}</div>}
+      {sub && <div className="text-[11px] text-ink-3 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -1548,7 +1548,7 @@ function AccordionCard({ title, children, defaultOpen = false, id }: { title: st
     <details id={id} open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <span className="text-[13px] font-medium text-[#1C1917]">{title}</span>
-        <ChevronRight className="size-4 text-[#A8A29E] transition-transform group-open:rotate-90" />
+        <ChevronRight className="size-4 text-ink-3 transition-transform group-open:rotate-90" />
       </summary>
       <div className="bg-[#FAFAF8] px-4 py-3 border-t border-[#EAE6DF]">{children}</div>
     </details>
@@ -1561,7 +1561,7 @@ function Section({ title, children, actions, defaultOpen = false, id }: { title:
     <details id={id} open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-2 min-w-0">
-          <ChevronRight className="size-4 text-[#A8A29E] shrink-0 transition-transform group-open:rotate-90" />
+          <ChevronRight className="size-4 text-ink-3 shrink-0 transition-transform group-open:rotate-90" />
           <h3 className="text-[14px] font-semibold text-[#1C1917] truncate">{title}</h3>
         </div>
         {actions && <div onClick={(e) => e.preventDefault()}>{actions}</div>}
@@ -1595,7 +1595,7 @@ function VerificationChecklist({ p, dq, u }: {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] underline-offset-2 hover:underline"
+        className="inline-flex items-center gap-1.5 text-[12px] text-ink-2 hover:text-[#1C1917] underline-offset-2 hover:underline"
       >
         Daten prüfen <ChevronDown className="size-3.5" /> ({dq.filled}/{dq.total})
       </button>
@@ -1607,7 +1607,7 @@ function VerificationChecklist({ p, dq, u }: {
       <div className="flex items-center justify-between mb-3">
         <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
 
-        <div className="text-[11px] text-[#78716C]">{dq.filled}/{dq.total} ausgefüllt</div>
+        <div className="text-[11px] text-ink-2">{dq.filled}/{dq.total} ausgefüllt</div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3 mb-4">
@@ -1632,7 +1632,7 @@ function VerificationChecklist({ p, dq, u }: {
                     color: allOk ? "#FFFFFF" : "#92400E",
                   }}
                 >
-                  {allOk ? "✓" : "!"}
+                  {allOk ? <Check weight="bold" size={10} aria-hidden /> : <ExclamationMark weight="bold" size={10} aria-hidden />}
                 </span>
                 <div className="text-[12px] font-semibold text-[#1C1917]">{group.label}</div>
               </div>
@@ -1649,7 +1649,8 @@ function VerificationChecklist({ p, dq, u }: {
                         padding: "2px 8px",
                       }}
                     >
-                      {ok ? "✓" : "!"} {f.label}
+                      {ok ? <Check weight="bold" size={10} aria-hidden /> : <ExclamationMark weight="bold" size={10} aria-hidden />}
+                      <span className="sr-only">{ok ? "Vorhanden:" : "Fehlt:"}</span> {f.label}
                     </span>
                   );
                 })}
@@ -1685,7 +1686,7 @@ function VerificationChecklist({ p, dq, u }: {
 
 
 function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
-  return <label className="block"><div className="text-[11px] text-[#78716C] mb-1">{label}</div>{children}{hint}</label>;
+  return <label className="block"><div className="text-[11px] text-ink-2 mb-1">{label}</div>{children}{hint}</label>;
 }
 function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
   if (dq.score === 100) return null;
@@ -1816,9 +1817,9 @@ function DataCheckBanner({ propertyId, dqScore, onCheck }: { propertyId: string;
         <button onClick={onCheck} className="text-[13px] font-medium hover:underline" style={{ color: "#92400E" }}>Jetzt prüfen →</button>
         <button
           onClick={() => { try { sessionStorage.setItem(key, "1"); } catch {} setDismissed(true); }}
-          className="text-[13px] hover:underline"
+          className="inline-flex items-center gap-1 text-[13px] hover:underline"
           style={{ color: "#92400E" }}
-        >Ignorieren ✕</button>
+        >Ignorieren <X size={12} weight="bold" aria-hidden /></button>
       </div>
     </div>
   );
@@ -1872,7 +1873,7 @@ function SetupWalkthrough({ propertyId, navTo, p, dq }: {
               readOnly
               className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F]"
             />
-            <span className={`text-[13px] ${s.checked ? "text-[#2D6A4F] line-through" : "text-[#78716C]"}`}>
+            <span className={`text-[13px] ${s.checked ? "text-[#2D6A4F] line-through" : "text-ink-2"}`}>
               {s.label}
             </span>
           </li>
@@ -1881,7 +1882,7 @@ function SetupWalkthrough({ propertyId, navTo, p, dq }: {
       <div className="flex justify-end mt-3">
         <button
           onClick={() => { try { localStorage.setItem(seenKey, "1"); } catch {} setDismissed(true); }}
-          className="text-[12px] text-[#A8A29E] hover:text-[#78716C]"
+          className="text-[12px] text-ink-3 hover:text-ink-2"
         >Walkthrough ausblenden</button>
       </div>
     </div>
@@ -1914,9 +1915,9 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
         <span className="text-[13px] font-semibold text-[#1C1917]">Meine Bewertung</span>
         <span className="flex items-center gap-2">
           {avg != null && !open && (
-            <span className="text-[12px] text-[#78716C]">⭐ {avg.toFixed(1)}</span>
+            <span className="text-[12px] text-ink-2">⭐ {avg.toFixed(1)}</span>
           )}
-          <ChevronRight className={`size-4 text-[#A8A29E] transition-transform ${open ? "rotate-90" : ""}`} />
+          <ChevronRight className={`size-4 text-ink-3 transition-transform ${open ? "rotate-90" : ""}`} />
         </span>
       </button>
       {open && (
@@ -1942,7 +1943,7 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
             );
           })}
           <div className="flex items-center justify-end gap-2 border-t border-[#EAE6DF] pt-2">
-            <span className="text-[12px] text-[#78716C]">Ø</span>
+            <span className="text-[12px] text-ink-2">Ø</span>
             <span className="text-[14px]" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
               {avg != null ? avg.toFixed(1) : "—"} / 10
             </span>
@@ -1969,7 +1970,7 @@ function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDu
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2 py-1"
+        className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#1C1917] px-2 py-1"
         aria-label="Weitere Aktionen"
       >
         <MoreHorizontal className="size-4" />
@@ -1984,7 +1985,7 @@ function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDu
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
             >
-              <MapPin className="size-3.5 text-[#78716C]" /> In Karte öffnen
+              <MapPin className="size-3.5 text-ink-2" /> In Karte öffnen
             </a>
           )}
           <button
@@ -1992,7 +1993,7 @@ function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDu
             onClick={() => { setOpen(false); onDuplicate(); }}
             className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8] text-left"
           >
-            <Copy className="size-3.5 text-[#78716C]" /> Duplizieren
+            <Copy className="size-3.5 text-ink-2" /> Duplizieren
           </button>
         </div>
       )}

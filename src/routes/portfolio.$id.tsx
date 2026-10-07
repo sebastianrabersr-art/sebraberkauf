@@ -16,7 +16,7 @@ import {
 } from "@/lib/types";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
-import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
 import {
   LineChart,
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/portfolio/$id")({
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 const inputCls =
   "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-const labelCls = "text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium mb-1 block";
+const labelCls = "text-[11px] uppercase tracking-wider text-ink-3 font-medium mb-1 block";
 
 type TabKey = "uebersicht" | "finanzen" | "dokumente" | "verwaltung";
 
@@ -67,7 +67,7 @@ function PortfolioDetail() {
     return (
       <AppShell>
         <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
-          <div className="text-[14px] text-[#78716C]">Objekt nicht gefunden.</div>
+          <div className="text-[14px] text-ink-2">Objekt nicht gefunden.</div>
           <Link to="/portfolio" className="text-[13px] text-[#2D6A4F] hover:underline">← Zum Portfolio</Link>
         </div>
       </AppShell>
@@ -83,7 +83,7 @@ function PortfolioDetail() {
       <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
         <button
           onClick={() => navigate({ to: "/portfolio" })}
-          className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] mb-3"
+          className="inline-flex items-center gap-1.5 text-[12px] text-ink-2 hover:text-[#1C1917] mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Zurück zum Portfolio
         </button>
@@ -91,7 +91,7 @@ function PortfolioDetail() {
           <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>
             {p.title || "—"}
           </h1>
-          <p className="text-[13px] text-[#78716C] mt-1">
+          <p className="text-[13px] text-ink-2 mt-1">
             {[p.adresse, p.bezirk, p.city, p.land].filter(Boolean).join(", ") || "—"}
             {pi.kaufdatum && ` · gekauft ${pi.kaufdatum}`}
           </p>
@@ -112,7 +112,7 @@ function PortfolioDetail() {
                 onClick={() => setTab(k)}
                 className="px-4 py-2 text-[13px] font-medium transition-colors -mb-px"
                 style={{
-                  color: active ? "#1C1917" : "#78716C",
+                  color: active ? "#1C1917" : "var(--ink-2)",
                   borderBottom: active ? "2px solid #2D6A4F" : "2px solid transparent",
                 }}
               >
@@ -182,7 +182,7 @@ function UebersichtTab({ p }: { p: Property }) {
   const assumptions = (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
           Wertsteigerung % p.a.
           <input
             type="number"
@@ -192,7 +192,7 @@ function UebersichtTab({ p }: { p: Property }) {
             className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </label>
-        <label className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
           Tilgungsanteil %
           <input
             type="number"
@@ -205,7 +205,7 @@ function UebersichtTab({ p }: { p: Property }) {
       </div>
       <div className="w-full sm:w-80">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] text-[#78716C]">Zeitraum: <strong>{years} Jahre</strong></span>
+          <span className="text-[11px] text-ink-2">Zeitraum: <strong>{years} Jahre</strong></span>
         </div>
         <input
           type="range"
@@ -216,7 +216,7 @@ function UebersichtTab({ p }: { p: Property }) {
           onChange={(e) => setYears(Number(e.target.value))}
           className="w-full accent-[#2D6A4F]"
         />
-        <div className="flex justify-between text-[10px] text-[#A8A29E]">
+        <div className="flex justify-between text-[10px] text-ink-3">
           <span>5J</span><span>15J</span><span>30J</span>
         </div>
       </div>
@@ -288,14 +288,14 @@ function UebersichtTab({ p }: { p: Property }) {
           <Mini label="Kosten" value={fmtEUR(mtlKosten)} />
         </div>
         <div className="border-t border-[#EAE6DF] pt-3">
-          <div className="text-[11px] text-[#A8A29E] uppercase tracking-wider">Cashflow mtl.</div>
+          <div className="text-[11px] text-ink-3 uppercase tracking-wider">Cashflow mtl.</div>
           <div
             className="tabular-nums"
             style={{ ...bricolage, fontWeight: 800, fontSize: 32, color: mtlCash >= 0 ? "#2D6A4F" : "#DC2626" }}
           >
             {fmtEUR(mtlCash)}
           </div>
-          <div className="text-[12px] text-[#78716C] mt-1">Jährlich: {fmtEUR(mtlCash * 12)}</div>
+          <div className="text-[12px] text-ink-2 mt-1">Jährlich: {fmtEUR(mtlCash * 12)}</div>
         </div>
       </Card>
     </div>
@@ -383,7 +383,7 @@ function FinanzenTab({
         >
           {fmtEUR(cashflow)}
         </div>
-        <div className="text-[12px] text-[#78716C] mt-1">
+        <div className="text-[12px] text-ink-2 mt-1">
           {fmtEUR(mtlMiete)} − {fmtEUR(mtlRate)} − {fmtEUR(mtlKostenSum)} · jährlich {fmtEUR(cashflow * 12)}
         </div>
       </Card>
@@ -496,17 +496,17 @@ function DokumenteTab({
     <div className="space-y-4">
       <Card title="Dokumente">
         <div className="space-y-2">
-          {documents.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Dokumente erfasst.</div>}
+          {documents.length === 0 && <div className="text-[12px] text-ink-3">Keine Dokumente erfasst.</div>}
           {documents.map((d) => (
             <div key={d.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
-              <FileText className="w-4 h-4 text-[#A8A29E] shrink-0" />
+              <FileText className="w-4 h-4 text-ink-3 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#1C1917] truncate">{d.name}</div>
-                <div className="text-[11px] text-[#A8A29E]">
+                <div className="text-[11px] text-ink-3">
                   {d.typ}{d.datum ? ` · ${d.datum}` : ""}{d.notiz ? ` · ${d.notiz}` : ""}
                 </div>
               </div>
-              <button onClick={() => removeDocument(d.id)} className="text-[#A8A29E] hover:text-[#DC2626]">
+              <button onClick={() => removeDocument(d.id)} className="text-ink-3 hover:text-[#DC2626]">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -540,7 +540,7 @@ function DokumenteTab({
           />
           <button
             onClick={addDocument}
-            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235940]"
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235740]"
             aria-label="Dokument hinzufügen"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -550,14 +550,14 @@ function DokumenteTab({
 
       <Card title="Offene Reparaturen">
         <div className="space-y-2">
-          {repairs.length === 0 && <div className="text-[12px] text-[#A8A29E]">Keine Reparaturen erfasst.</div>}
+          {repairs.length === 0 && <div className="text-[12px] text-ink-3">Keine Reparaturen erfasst.</div>}
           {repairs.map((r) => {
             const st = REPAIR_STATUS_STYLE[r.status];
             return (
               <div key={r.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.title}</div>
-                  <div className="text-[11px] text-[#A8A29E]">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
+                  <div className="text-[11px] text-ink-3">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
                 </div>
                 <select
                   value={r.status}
@@ -569,7 +569,7 @@ function DokumenteTab({
                   <option>In Arbeit</option>
                   <option>Erledigt</option>
                 </select>
-                <button onClick={() => removeRepair(r.id)} className="text-[#A8A29E] hover:text-[#DC2626]">
+                <button onClick={() => removeRepair(r.id)} className="text-ink-3 hover:text-[#DC2626]">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -592,7 +592,7 @@ function DokumenteTab({
           />
           <button
             onClick={addRepair}
-            className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-3 text-[12px] font-medium hover:bg-[#235940]"
+            className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-3 text-[12px] font-medium hover:bg-[#235740]"
           >
             <Plus className="w-3.5 h-3.5" /> Reparatur
           </button>
@@ -601,19 +601,19 @@ function DokumenteTab({
 
       <Card title="Rechnungen & Belege">
         <div className="space-y-2 mb-3">
-          {payments.length === 0 && <div className="text-[12px] text-[#A8A29E]">Noch keine Zahlungen erfasst.</div>}
+          {payments.length === 0 && <div className="text-[12px] text-ink-3">Noch keine Zahlungen erfasst.</div>}
           {payments.map((pay) => {
             const isInc = pay.direction === "Einnahme";
             return (
               <div key={pay.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{pay.description || pay.category}</div>
-                  <div className="text-[11px] text-[#A8A29E]">{pay.date} · {pay.category}</div>
+                  <div className="text-[11px] text-ink-3">{pay.date} · {pay.category}</div>
                 </div>
                 <div className="text-[13px] tabular-nums font-semibold" style={{ color: isInc ? "#2D6A4F" : "#DC2626" }}>
                   {isInc ? "+" : "−"}{fmtEUR(pay.amount)}
                 </div>
-                <button onClick={() => deletePayment(pay.id)} className="text-[#A8A29E] hover:text-[#DC2626]">
+                <button onClick={() => deletePayment(pay.id)} className="text-ink-3 hover:text-[#DC2626]">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -666,7 +666,7 @@ function DokumenteTab({
           />
           <button
             onClick={submitPayment}
-            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235940]"
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235740]"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
@@ -778,7 +778,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="rounded-[12px] bg-white border border-[#EAE6DF] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="tabular-nums mt-1" style={{ ...bricolage, fontWeight: 700, fontSize: 22, color: color ?? "#1C1917" }}>
         {value}
       </div>
@@ -789,7 +789,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
 function Mini({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="tabular-nums" style={{ ...bricolage, fontWeight: 700, fontSize: 16, color: color ?? "#1C1917" }}>
         {value}
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { CircleNotch as Loader2, ShieldCheck, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession } from "@/utils/payments.functions";
 import { Button } from "@/components/ui/button";

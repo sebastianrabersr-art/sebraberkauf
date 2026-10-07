@@ -1,128 +1,153 @@
+import { Fragment, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { RatgeberArticle } from "@/lib/ratgeber";
-import { Calculator, ArrowRight } from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react";
 
-export function ArticleLayout({ article, origin = "" }: { article: RatgeberArticle; origin?: string }) {
+/**
+ * Inline-Markdown für Artikeltexte: **fett** und *kursiv*.
+ * Alles andere bleibt Klartext – die Inhalte kommen aus Google Docs, nicht von Nutzern.
+ */
+function renderInline(text: string): ReactNode {
+  const parts: ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*|\*(\S(?:[^*\n]*\S)?)\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      m[1] !== undefined ? (
+        <strong key={m.index} className="font-semibold text-[#1C1917]">{m[1]}</strong>
+      ) : (
+        <em key={m.index}>{m[2]}</em>
+      ),
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.map((p, i) => <Fragment key={i}>{p}</Fragment>);
+}
+
+const slugId = (text: string) => text.toLowerCase().replace(/[^a-z0-9äöü]/g, "-").replace(/-+/g, "-");
+
+/** Blöcke des Volltexts; Zeilen werden getrimmt, damit auch eingerückte Altinhalte funktionieren. */
+function contentBlocks(full: string) {
+  return full
+    .split(/\n\s*\n/)
+    .map((b) => b.split("\n").map((l) => l.trim()).join("\n").trim())
+    .filter(Boolean);
+}
+
+const h2Cls = "font-display text-[24px] font-extrabold text-[#1C1917] mt-12 mb-3 scroll-mt-24";
+const bodyCls = "text-[16px] leading-[1.7] text-[#1C1917]/90 my-4";
+
+export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: string }) {
+  const blocks = article.fullContent ? contentBlocks(article.fullContent) : [];
+  const tocHeadings = blocks.filter((b) => b.startsWith("## ")).map((b) => b.slice(3));
+  const toc = article.fullContent
+    ? tocHeadings.map((t) => ({ id: slugId(t), label: t }))
+    : article.sections.length > 1
+      ? article.sections.map((s) => ({ id: s.id, label: s.heading }))
+      : [];
+
   return (
     <article className="max-w-3xl mx-auto px-6 py-12">
-      <nav className="text-sm text-muted-foreground mb-6 flex gap-2 flex-wrap" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-foreground">Start</Link>
-        <span>/</span>
-        <Link to="/ratgeber" className="hover:text-foreground">Ratgeber</Link>
-        <span>/</span>
-        <span className="text-foreground">{article.category}</span>
+      <nav className="text-[13px] text-ink-2 mb-8 flex gap-2 flex-wrap" aria-label="Breadcrumb">
+        <Link to="/" className="hover:text-[#1C1917]">Start</Link>
+        <span aria-hidden>/</span>
+        <Link to="/ratgeber" className="hover:text-[#1C1917]">Ratgeber</Link>
+        <span aria-hidden>/</span>
+        <span className="text-[#1C1917]">{article.category}</span>
       </nav>
 
-      <header className="mb-8">
-        <div className="text-xs uppercase tracking-wide text-primary font-medium mb-3">
-          {article.category}
-        </div>
-        <h1 className="text-4xl font-bold leading-tight">{article.title}</h1>
-        <p className="text-muted-foreground mt-4 text-lg">{article.description}</p>
-        <div className="text-xs text-muted-foreground mt-4">
-          {new Date(article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })} · {article.readingMinutes} min Lesezeit
+      <header className="mb-10">
+        <h1 className="font-display text-[34px] md:text-[42px] font-extrabold leading-[1.08] text-[#1C1917] text-balance">
+          {article.title}
+        </h1>
+        <p className="text-ink-2 mt-4 text-[18px] leading-relaxed">{article.description}</p>
+        <div className="text-[13px] text-ink-3 mt-5">
+          <span className="text-[#2D6A4F] font-medium">{article.category}</span>
+          {" · "}
+          {new Date(article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })}
+          {" · "}
+          {article.readingMinutes} min Lesezeit
         </div>
       </header>
 
-      <p className="text-base leading-relaxed mb-8">{article.intro}</p>
+      <p className="text-[18px] leading-[1.65] text-[#1C1917] mb-10">{renderInline(article.intro)}</p>
 
-      {article.sections.length > 1 && !article.fullContent && (
-        <aside className="rounded-lg border bg-muted/30 p-5 mb-10">
-          <div className="text-sm font-semibold mb-3">Inhaltsverzeichnis</div>
-          <ol className="space-y-1.5 text-sm list-decimal list-inside">
-            {article.sections.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} className="text-primary hover:underline">{s.heading}</a>
+      {toc.length > 0 && (
+        <aside className="border-y border-[#EAE6DF] py-5 mb-10">
+          <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Inhalt</div>
+          <ol className="space-y-1.5 text-[14px] list-decimal list-inside marker:text-ink-3">
+            {toc.map((t, i) => (
+              <li key={`${i}-${t.id}`}>
+                <a href={`#${t.id}`} className="text-[#2D6A4F] underline-offset-4 hover:underline">{t.label}</a>
               </li>
             ))}
             {article.faq && article.faq.length > 0 && (
-              <li><a href="#faq" className="text-primary hover:underline">Häufige Fragen</a></li>
-            )}
-          </ol>
-        </aside>
-      )}
-
-      {article.fullContent && (
-        <aside className="rounded-lg border bg-muted/30 p-5 mb-10">
-          <div className="text-sm font-semibold mb-3">Inhaltsverzeichnis</div>
-          <ol className="space-y-1.5 text-sm list-decimal list-inside">
-            {article.fullContent.split('\n').filter((l) => l.startsWith('## ')).map((h, i) => {
-              const text = h.replace('## ', '');
-              const id = text.toLowerCase().replace(/[^a-z0-9äöü]/g, '-').replace(/-+/g, '-');
-              return <li key={i}><a href={`#${id}`} className="text-primary hover:underline">{text}</a></li>;
-            })}
-            {article.faq && article.faq.length > 0 && (
-              <li><a href="#faq" className="text-primary hover:underline">Häufige Fragen</a></li>
+              <li><a href="#faq" className="text-[#2D6A4F] underline-offset-4 hover:underline">Häufige Fragen</a></li>
             )}
           </ol>
         </aside>
       )}
 
       {article.fullContent ? (
-        <div className="prose prose-neutral max-w-none">
-          {article.fullContent.split('\n\n').map((block, i) => {
-            const trimmed = block.trim();
-            if (!trimmed) return null;
-
-            if (trimmed.startsWith('## ')) {
-              const id = trimmed.replace('## ', '').toLowerCase().replace(/[^a-z0-9äöü]/g, '-').replace(/-+/g, '-');
-              return <h2 key={i} id={id} className="text-2xl font-semibold mt-10 mb-3 scroll-mt-24">{trimmed.replace('## ', '')}</h2>;
+        <div>
+          {blocks.map((block, i) => {
+            if (block.startsWith("## ")) {
+              const text = block.slice(3);
+              return <h2 key={i} id={slugId(text)} className={h2Cls}>{text}</h2>;
             }
-            if (trimmed.startsWith('### ')) {
-              return <h3 key={i} className="text-xl font-medium mt-6 mb-2">{trimmed.replace('### ', '')}</h3>;
+            if (block.startsWith("### ")) {
+              return <h3 key={i} className="text-[18px] font-semibold text-[#1C1917] mt-8 mb-2">{block.slice(4)}</h3>;
             }
-            if (trimmed.startsWith('- ')) {
-              const items = trimmed.split('\n').filter((l) => l.trim().startsWith('- '));
+            if (block.startsWith("- ")) {
+              const items = block.split("\n").filter((l) => l.startsWith("- "));
               return (
-                <ul key={i} className="list-disc list-inside space-y-1 my-3 text-foreground/90">
-                  {items.map((item, j) => <li key={j}>{item.replace(/^- /, '')}</li>)}
+                <ul key={i} className="list-disc pl-5 space-y-1.5 my-4 text-[16px] leading-[1.6] text-[#1C1917]/90 marker:text-[#2D6A4F]">
+                  {items.map((item, j) => <li key={j}>{renderInline(item.slice(2))}</li>)}
                 </ul>
               );
             }
-            if (trimmed.startsWith('**') && trimmed.endsWith('**') && !trimmed.slice(2, -2).includes('**')) {
-              return <p key={i} className="font-semibold my-2">{trimmed.slice(2, -2)}</p>;
+            if (block.startsWith("**") && block.endsWith("**") && !block.slice(2, -2).includes("**")) {
+              return <p key={i} className="font-semibold text-[#1C1917] my-3">{block.slice(2, -2)}</p>;
             }
-            return <p key={i} className="leading-relaxed text-foreground/90 my-3">{trimmed}</p>;
+            return <p key={i} className={bodyCls}>{renderInline(block.replace(/\n/g, " "))}</p>;
           })}
         </div>
       ) : (
         <div className="space-y-10">
           {article.sections.map((s) => (
             <section key={s.id} id={s.id} className="scroll-mt-24">
-              <h2 className="text-2xl font-semibold mb-3">{s.heading}</h2>
-              <p className="leading-relaxed text-foreground/90">{s.body}</p>
+              <h2 className={h2Cls.replace("mt-12", "mt-0")}>{s.heading}</h2>
+              <p className={bodyCls}>{renderInline(s.body)}</p>
             </section>
           ))}
         </div>
       )}
 
-
       {/* CTA */}
-      <div className="mt-12 rounded-xl border-2 border-primary/20 bg-primary/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className="size-12 rounded-lg bg-primary text-primary-foreground grid place-items-center shrink-0">
-            <Calculator className="size-6" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">Immobilie gefunden?</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Link einfügen und kostenlos analysieren – Rendite, Cashflow und Mietrechts-Risiko in Sekunden.
-            </p>
-            <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90">
-              Kostenlos starten <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
+      <div className="mt-14 rounded-[12px] bg-[#1C1917] text-white p-7">
+        <h3 className="font-display text-[22px] font-extrabold">Immobilie gefunden?</h3>
+        <p className="text-[15px] text-white/75 mt-2 max-w-[52ch]">
+          Füg den Link zum Inserat ein und sieh dir Rendite, Cashflow und das Mietrechts-Risiko an – bevor du einen Besichtigungstermin ausmachst.
+        </p>
+        <Link
+          to="/signup"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
+        >
+          Kostenlos ausprobieren <ArrowRight className="size-4" />
+        </Link>
       </div>
 
       {article.faq && article.faq.length > 0 && (
-        <section id="faq" className="mt-12 scroll-mt-24">
-          <h2 className="text-2xl font-semibold mb-4">Häufige Fragen</h2>
-          <div className="space-y-4">
+        <section id="faq" className="mt-14 scroll-mt-24">
+          <h2 className={h2Cls.replace("mt-12", "mt-0")}>Häufige Fragen</h2>
+          <div className="divide-y divide-[#EAE6DF] border-y border-[#EAE6DF]">
             {article.faq.map((f, i) => (
-              <div key={i} className="rounded-lg border p-4">
-                <div className="font-medium">{f.q}</div>
-                <p className="text-sm text-muted-foreground mt-1.5">{f.a}</p>
+              <div key={i} className="py-4">
+                <div className="font-semibold text-[#1C1917]">{f.q}</div>
+                <p className="text-[15px] text-ink-2 mt-1.5 leading-relaxed">{renderInline(f.a)}</p>
               </div>
             ))}
           </div>
@@ -130,23 +155,23 @@ export function ArticleLayout({ article, origin = "" }: { article: RatgeberArtic
       )}
 
       {/* Internal linking */}
-      <section className="mt-12 grid sm:grid-cols-3 gap-3">
-        <Link to="/rechner" className="rounded-lg border p-4 hover:border-primary transition">
-          <div className="text-sm font-medium">Rechner öffnen</div>
-          <div className="text-xs text-muted-foreground mt-1">Rendite & Cashflow live berechnen</div>
+      <section className="mt-14 grid sm:grid-cols-3 gap-3">
+        <Link to="/rechner" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+          <div className="text-[14px] font-semibold text-[#1C1917]">Rechner öffnen</div>
+          <div className="text-[13px] text-ink-2 mt-1">Rendite & Cashflow selbst durchrechnen</div>
         </Link>
-        <Link to="/pricing" className="rounded-lg border p-4 hover:border-primary transition">
-          <div className="text-sm font-medium">Preise ansehen</div>
-          <div className="text-xs text-muted-foreground mt-1">Gratis, Plus, Premium</div>
+        <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+          <div className="text-[14px] font-semibold text-[#1C1917]">Preise ansehen</div>
+          <div className="text-[13px] text-ink-2 mt-1">Kostenlos, Plus, Premium</div>
         </Link>
-        <Link to="/signup" className="rounded-lg border p-4 hover:border-primary transition">
-          <div className="text-sm font-medium">Konto anlegen</div>
-          <div className="text-xs text-muted-foreground mt-1">In 30 Sekunden starten</div>
+        <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+          <div className="text-[14px] font-semibold text-[#1C1917]">Konto anlegen</div>
+          <div className="text-[13px] text-ink-2 mt-1">Eine Immobilie gratis analysieren</div>
         </Link>
       </section>
 
       {article.legalDisclaimer && (
-        <p className="mt-12 text-xs text-muted-foreground border-t pt-6">
+        <p className="mt-12 text-[13px] text-ink-3 border-t border-[#EAE6DF] pt-6">
           Hinweis: Dieser Artikel dient der allgemeinen Information und ersetzt keine Rechts-, Steuer- oder Finanzberatung. Für deinen konkreten Fall solltest du fachkundigen Rat einholen.
         </p>
       )}

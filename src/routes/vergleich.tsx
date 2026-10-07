@@ -7,7 +7,7 @@ import {
   calcDataQuality, calcProperty, calcScore, fmtEUR, fmtNum, fmtPct, getActiveFinance,
 } from "@/lib/calc";
 import { ALL_STATUSES, type Property } from "@/lib/types";
-import { ChevronDown, Plus, CheckCircle2, Download, Lock } from "lucide-react";
+import { CaretDown as ChevronDown, Plus, CheckCircle as CheckCircle2, DownloadSimple as Download, Lock, Scales, TrendUp, TrendDown, Coins, Tag } from "@phosphor-icons/react";
 import { planLimits, useAuth, usePlan } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
@@ -50,10 +50,10 @@ function ComparePage() {
 function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
-      <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>
+      <h1 className="heading-page-sm">
         Analyse
       </h1>
-      <p className="mt-1 text-[13px] text-[#78716C]">
+      <p className="mt-1 text-[13px] text-ink-2">
         {compareLimit > 0
           ? `Bis zu ${compareLimit} Immobilien analysieren und die beste Wahl treffen`
           : "2–4 Immobilien analysieren und die beste Wahl treffen"}
@@ -69,7 +69,7 @@ const inputCls =
 const SelectWrap = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={"relative " + (className ?? "")}>
     {children}
-    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-[#A8A29E] pointer-events-none" />
+    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-ink-3 pointer-events-none" />
   </div>
 );
 
@@ -161,7 +161,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
             </select>
           </SelectWrap>
           <label className="flex items-center gap-2 h-9 rounded-lg bg-white border border-[#EAE6DF] px-3 text-[13px] text-[#1C1917]">
-            <span className="text-[#78716C]">Mindest-Score</span>
+            <span className="text-ink-2">Mindest-Score</span>
             <input type="range" min={0} max={100} value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-24" />
             <span className="tabular-nums w-6 text-right">{minScore}</span>
           </label>
@@ -170,27 +170,28 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
 
       {/* Goal selector */}
       <div className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-[#A8A29E] mb-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-3 mb-2">
           Was ist dein Ziel?
         </div>
         <div className="flex flex-wrap gap-2">
           {([
-            { key: "score",    label: "Ausgewogen",          emoji: "⚖️" },
-            { key: "rendite",  label: "Höchste Rendite",     emoji: "📈" },
-            { key: "cashflow", label: "Positiver Cashflow",  emoji: "💶" },
-            { key: "preis",    label: "Günstigster Einstieg", emoji: "🏷️" },
-            { key: "rate",     label: "Geringe Belastung",   emoji: "📉" },
+            { key: "score",    label: "Ausgewogen",          Icon: Scales },
+            { key: "rendite",  label: "Höchste Rendite",     Icon: TrendUp },
+            { key: "cashflow", label: "Positiver Cashflow",  Icon: Coins },
+            { key: "preis",    label: "Günstigster Einstieg", Icon: Tag },
+            { key: "rate",     label: "Geringe Belastung",   Icon: TrendDown },
           ] as const).map((g) => (
             <button
               key={g.key}
               onClick={() => setGoal(g.key)}
-              className={`px-4 py-2 rounded-[20px] text-[13px] font-medium border-[1.5px] transition-all ${
+              aria-pressed={goal === g.key}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[20px] text-[13px] font-medium border-[1.5px] transition-colors ${
                 goal === g.key
                   ? "bg-[#1C1917] text-white border-[#1C1917]"
-                  : "bg-[#F5F3EE] text-[#78716C] border-[#EAE6DF] hover:border-[#1C1917] hover:text-[#1C1917]"
+                  : "bg-[#F5F3EE] text-ink-2 border-[#EAE6DF] hover:border-[#1C1917] hover:text-[#1C1917]"
               }`}
             >
-              {g.emoji} {g.label}
+              <g.Icon size={16} aria-hidden /> {g.label}
             </button>
           ))}
         </div>
@@ -199,7 +200,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
       {/* Property selection — horizontal scroll */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
-          <div className="text-[12px] text-[#78716C]">
+          <div className="text-[12px] text-ink-2">
             Auswahl: <span className="text-[#1C1917] font-medium">{selected.length} / {compareLimit}</span>
             {selected.length > 0 && (
               <span className="ml-2">· <span className="text-[#1C1917] font-medium">{items.filter((p) => p.dataVerified === true).length}</span> geprüft</span>
@@ -220,7 +221,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 else setStarted(true);
               }}
               disabled={selected.length < 2}
-              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Analyse starten
             </button>
@@ -228,7 +229,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-[13px] text-[#A8A29E] py-6 text-center border border-dashed border-[#EAE6DF] rounded-[10px] bg-white">
+          <div className="text-[13px] text-ink-3 py-6 text-center border border-dashed border-[#EAE6DF] rounded-[10px] bg-white">
             Keine Immobilien passen zum Filter.
           </div>
         ) : (
@@ -256,10 +257,10 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[12px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                      <div className="text-[11px] text-[#A8A29E] truncate mt-0.5">
+                      <div className="text-[11px] text-ink-3 truncate mt-0.5">
                         {[p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
                       </div>
-                      <div className="text-[11px] text-[#A8A29E] truncate mt-1 tabular-nums">
+                      <div className="text-[11px] text-ink-3 truncate mt-1 tabular-nums">
                         {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
                       </div>
                       <div
@@ -284,7 +285,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 </button>
               );
             })}
-            <div className="shrink-0 min-w-[160px] rounded-[10px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] text-[#A8A29E] px-3 py-3">
+            <div className="shrink-0 min-w-[160px] rounded-[10px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] text-ink-3 px-3 py-3">
               <span className="inline-flex items-center gap-1"><Plus className="size-3.5" /> Immobilie hinzufügen</span>
             </div>
           </div>
@@ -306,7 +307,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               <li key={p.id}>{p.title || "—"}</li>
             ))}
           </ul>
-          <p className="text-[12px] text-[#78716C]">
+          <p className="text-[12px] text-ink-2">
             Ungenaue Daten können zu falschen Ergebnissen führen.
           </p>
           <DialogFooter className="gap-2">
@@ -325,7 +326,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 setShowUnverifiedDialog(false);
                 if (first) navigate({ to: "/properties/$id", params: { id: first.id } });
               }}
-              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41]"
+              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740]"
             >
               Daten prüfen
             </button>
@@ -467,7 +468,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
               <div className="font-display font-bold text-[16px] text-[#1C1917] truncate mt-0.5">
                 {winner.p.title || "—"}
               </div>
-              <div className="text-[12px] text-[#78716C] mt-0.5">{cfg.sub}</div>
+              <div className="text-[12px] text-ink-2 mt-0.5">{cfg.sub}</div>
             </div>
           </div>
           <div className="font-display font-extrabold text-[22px] text-[#2D6A4F] tabular-nums shrink-0">
@@ -487,7 +488,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
               className="rounded-lg bg-white border border-[#EAE6DF] flex items-center gap-2"
               style={{ padding: "8px 12px" }}
             >
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">{c.label}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-ink-3">{c.label}</div>
               <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{c.name}</div>
               <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{c.val}</div>
             </div>
@@ -503,13 +504,13 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-[#FAFAF8] border-b border-[#EAE6DF]">
-                <th className="text-left font-normal text-[10px] uppercase tracking-wide text-[#A8A29E] px-[14px] py-3 min-w-[160px]">
+                <th className="text-left font-normal text-[10px] uppercase tracking-wide text-ink-3 px-[14px] py-3 min-w-[160px]">
                   Kennzahl
                 </th>
                 {computed.map((x) => (
                   <th key={x.p.id} className="text-right px-[14px] py-3 min-w-[140px] align-top">
                     <div className="font-display font-bold text-[13px] text-[#1C1917]">{x.p.title || "—"}</div>
-                    <div className="font-normal text-[11px] text-[#A8A29E] tabular-nums mt-0.5">
+                    <div className="font-normal text-[11px] text-ink-3 tabular-nums mt-0.5">
                       {x.p.kaufpreis != null ? fmtEUR(x.p.kaufpreis) : "—"}
                     </div>
                   </th>
@@ -520,7 +521,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
             {sections.map((sec) => (
               <React.Fragment key={sec.title}>
                 <tr className="bg-[#FAFAF8]">
-                  <td colSpan={cols + 1} className="px-[14px] py-2 text-[10px] font-semibold uppercase tracking-wide text-[#A8A29E]">
+                  <td colSpan={cols + 1} className="px-[14px] py-2 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
                     {sec.title}
                   </td>
                 </tr>
@@ -528,14 +529,14 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
                   const tones = toneRow(r.values, r.dir);
                   return (
                     <tr key={r.key} className="border-b border-[#F5F3EE] last:border-b-0">
-                      <td className="px-[14px] py-[10px] text-[12px] text-[#78716C]">{r.label}</td>
+                      <td className="px-[14px] py-[10px] text-[12px] text-ink-2">{r.label}</td>
                       {r.values.map((v, i) => {
                         const txt = r.textValues?.[i];
                         const display = txt ?? r.fmt(v);
                         const missing = txt == null && (v == null || !isFinite(v as number));
                         const tone = tones[i];
                         const cls = missing
-                          ? "text-[#A8A29E] font-normal"
+                          ? "text-ink-3 font-normal"
                           : tone === "best"
                             ? "text-[#2D6A4F] font-bold"
                             : tone === "worst"

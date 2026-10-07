@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import { fmtEUR, summarizePayments } from "@/lib/calc";
-import { Building2, Plus } from "lucide-react";
+import { Buildings as Building2, Plus } from "@phosphor-icons/react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 
@@ -33,8 +33,8 @@ function Portfolio() {
       <AppShell>
         <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
           <div className="mb-5">
-            <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>Portfolio</h1>
-            <p className="text-[13px] text-[#78716C] mt-1">Bestand: bereits gekaufte Immobilien.</p>
+            <h1 className="heading-page-sm">Portfolio</h1>
+            <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien.</p>
           </div>
           <FeatureLocked
             title="Portfolio ist in Premium enthalten"
@@ -49,7 +49,7 @@ function Portfolio() {
   const addBtn = (
     <button
       onClick={() => navigate({ to: "/portfolio/new" })}
-      className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] text-white px-3 py-2 text-[13px] font-medium hover:bg-[#235940]"
+      className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] text-white px-3 py-2 text-[13px] font-medium hover:bg-[#235740]"
     >
       <Plus className="w-4 h-4" /> Gekaufte Immobilie hinzufügen
     </button>
@@ -60,14 +60,14 @@ function Portfolio() {
       <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>Portfolio</h1>
-            <p className="text-[13px] text-[#78716C] mt-1">Bestand: bereits gekaufte Immobilien — Cashflow nach dem Kauf nachverfolgen.</p>
+            <h1 className="heading-page-sm">Portfolio</h1>
+            <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien — Cashflow nach dem Kauf nachverfolgen.</p>
           </div>
           {addBtn}
         </div>
 
         {rows.length === 0 ? (
-          <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-10 text-center text-[#78716C]">
+          <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-10 text-center text-ink-2">
             <Building2 className="w-8 h-8 mx-auto mb-3 opacity-50" />
             <div className="font-medium text-[#1C1917]">Noch keine gekauften Immobilien.</div>
             <div className="text-[13px] mt-1">Klicke oben auf „Gekaufte Immobilie hinzufügen", um eine bereits gekaufte Immobilie zu erfassen.</div>
@@ -95,10 +95,10 @@ function Portfolio() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <div className="text-[16px] text-[#1C1917] truncate" style={{ ...bricolage, fontWeight: 700 }}>{p.title || "—"}</div>
-                      <div className="text-[12px] text-[#A8A29E] mt-0.5 truncate">
+                      <div className="text-[12px] text-ink-3 mt-0.5 truncate">
                         {[p.adresse, p.bezirk, p.city, p.land].filter(Boolean).join(", ") || "—"}
                       </div>
-                      {pi.kaufdatum && <div className="text-[11px] text-[#A8A29E] mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
+                      {pi.kaufdatum && <div className="text-[11px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
                     </div>
                     <span className="text-[11px] rounded-[6px] px-2 py-0.5 shrink-0" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
                   </div>
@@ -125,7 +125,7 @@ function Portfolio() {
 function Stat({ label, value, color, small }: { label: string; value: string; color?: string; small?: boolean }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div
         className={`tabular-nums ${small ? "text-[14px]" : "text-[16px]"}`}
         style={{ ...bricolage, fontWeight: 700, color: color ?? "#1C1917" }}

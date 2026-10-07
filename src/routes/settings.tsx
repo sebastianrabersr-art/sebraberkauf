@@ -4,17 +4,29 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { planLabel, planLimits, PLAN_PRICING, PRICE_IDS, useAuth } from "@/lib/auth";
 import { redeemPromoCode } from "@/lib/api/redeem-promo.functions";
+import { deleteOwnAccount } from "@/lib/api/delete-account.functions";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { GlossarList } from "@/components/GlossarList";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
+import { AssumptionsPanel } from "@/components/settings/AssumptionsPanel";
+
+type SettingsTab = "profil" | "annahmen";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Einstellungen – kauf ma" }] }),
+  head: () => ({ meta: [{ title: "Einstellungen – kaufma" }] }),
+  // "profil" ist der Default und taucht deshalb nicht in der URL auf.
+  validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } =>
+    search.tab === "annahmen" ? { tab: "annahmen" } : {},
   component: SettingsPage,
 });
+
+const TABS: { id: SettingsTab; label: string }[] = [
+  { id: "profil", label: "Profil & Konto" },
+  { id: "annahmen", label: "Annahmen" },
+];
 
 type PriceKey = "plus_monthly" | "plus_yearly" | "premium_monthly" | "premium_yearly";
 
@@ -35,14 +47,14 @@ const sectionTitleStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontFamily: "Inter, sans-serif",
   fontSize: 11,
-  color: "#78716C",
+  color: "var(--ink-2)",
   display: "block",
   marginBottom: 6,
 };
 const descStyle: React.CSSProperties = {
   fontFamily: "Inter, sans-serif",
   fontSize: 11,
-  color: "#A8A29E",
+  color: "var(--ink-3)",
   marginTop: 4,
 };
 const inpCls =
@@ -76,7 +88,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 function PlanBadge({ plan }: { plan: string }) {
   const styles: Record<string, { bg: string; fg: string; label: string }> = {
     free: { bg: "#F5F3EE", fg: "#78716C", label: "Kostenlos" },
-    plus: { bg: "#E8F0FE", fg: "#1A4FD6", label: "Plus" },
+    plus: { bg: "#FEF3C7", fg: "#92400E", label: "Plus" },
     premium: { bg: "#E8F5EE", fg: "#2D6A4F", label: "Premium" },
   };
   const s = styles[plan] ?? styles.free;
@@ -119,6 +131,9 @@ function Chip({ children }: { children: React.ReactNode }) {
 
 function SettingsPage() {
   const navigate = useNavigate();
+  const tab: SettingsTab = Route.useSearch().tab ?? "profil";
+  const setTab = (t: SettingsTab) =>
+    navigate({ to: "/settings", search: t === "profil" ? {} : { tab: t }, replace: true });
   const { user, profile, subscription, refresh, signOut } = useAuth();
   const [name, setName] = useState(profile?.name ?? "");
   const [firstName, setFirstName] = useState<string>((profile as any)?.first_name ?? "");
@@ -210,13 +225,17 @@ function SettingsPage() {
     if (!user) return;
     setDeleting(true);
     try {
-      // Best-effort delete of profile row; full auth user deletion requires server function.
-      await supabase.from("profiles").delete().eq("id", user.id);
+      // Löscht den Auth-User serverseitig; alle Nutzerdaten hängen per CASCADE daran.
+      const res = await deleteOwnAccount();
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       await supabase.auth.signOut();
-      toast.success("Konto gelöscht");
+      toast.success("Dein Konto und alle gespeicherten Daten sind gelöscht.");
       window.location.href = "/";
-    } catch (e: any) {
-      toast.error(e?.message ?? "Löschen fehlgeschlagen");
+    } catch {
+      toast.error("Dein Konto konnte gerade nicht gelöscht werden. Bitte versuch es später noch einmal.");
     } finally {
       setDeleting(false);
     }
@@ -231,9 +250,70 @@ function SettingsPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Einstellungen" description="Profil, Standardwerte und Abo" />
+      <PageHeader title="Einstellungen" description="Profil, Abo und Annahmen" />
 
+      <div role="tablist" className="mb-6 flex gap-1 border-b border-[#EAE6DF]">
+        {TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(t.id)}
+              className="-mb-px px-4 py-2.5 text-[13px] transition-colors border-b-2"
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: active ? 600 : 500,
+                color: active ? "#2D6A4F" : "var(--ink-2)",
+                borderColor: active ? "#2D6A4F" : "transparent",
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "profil" && (
       <div className="space-y-4" style={{ maxWidth: 680 }}>
+        {/* Profil */}
+        <section className={cardCls} style={cardStyle}>
+          <h2 style={sectionTitleStyle}>Profil</h2>
+          <div className="grid sm:grid-cols-2 gap-3 mt-4">
+            <div>
+              <label style={labelStyle}>Vorname</label>
+              <input className={inpCls} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Nachname</label>
+              <input className={inpCls} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Anzeigename</label>
+              <input className={inpCls} value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>E-Mail</label>
+              <input className={inpCls} value={profile?.email ?? ""} disabled style={{ opacity: 0.6 }} />
+            </div>
+            <div className="sm:col-span-2">
+              <label style={labelStyle}>Adresse</label>
+              <input className={inpCls} value={address} onChange={(e) => setAddress(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-4">
+            <div>
+              <div style={{ fontFamily: "Inter", fontSize: 13, fontWeight: 500, color: "#1C1917" }}>Marketing-E-Mails</div>
+              <div style={descStyle}>Tipps, Updates und neue Features</div>
+            </div>
+            <Toggle checked={marketing} onChange={setMarketing} />
+          </div>
+          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveProfile}>
+            {busy && <Loader2 className="size-3.5 animate-spin" />}Speichern
+          </button>
+        </section>
+
         {/* Abo */}
         <section className={cardCls} style={cardStyle}>
           <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -242,7 +322,7 @@ function SettingsPage() {
               <div className="mt-2 flex items-center gap-2">
                 <PlanBadge plan={currentPlan} />
                 {subscription?.subscription_status && subscription.subscription_status !== "active" && currentPlan !== "free" && (
-                  <span style={{ fontFamily: "Inter", fontSize: 11, color: "#78716C" }}>
+                  <span style={{ fontFamily: "Inter", fontSize: 11, color: "var(--ink-2)" }}>
                     ({subscription.subscription_status})
                   </span>
                 )}
@@ -300,7 +380,7 @@ function SettingsPage() {
                         <div style={{ fontFamily: "Inter", fontSize: 13, fontWeight: 600, color: "#1C1917" }}>
                           {id === "plus" ? "Plus" : "Premium"}
                         </div>
-                        <div style={{ fontFamily: "Inter", fontSize: 11, color: "#78716C", marginTop: 2 }}>
+                        <div style={{ fontFamily: "Inter", fontSize: 11, color: "var(--ink-2)", marginTop: 2 }}>
                           {price.toString().replace(".", ",")} € / {period}
                         </div>
                         <button className={btnPrimaryCls + " mt-3 w-full"} onClick={() => upgrade(id)}>
@@ -315,64 +395,6 @@ function SettingsPage() {
         </section>
 
         <PromoCodeCard />
-
-        {/* Profil */}
-        <section className={cardCls} style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Profil</h2>
-          <div className="grid sm:grid-cols-2 gap-3 mt-4">
-            <div>
-              <label style={labelStyle}>Vorname</label>
-              <input className={inpCls} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            </div>
-            <div>
-              <label style={labelStyle}>Nachname</label>
-              <input className={inpCls} value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
-            <div>
-              <label style={labelStyle}>Anzeigename</label>
-              <input className={inpCls} value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div>
-              <label style={labelStyle}>E-Mail</label>
-              <input className={inpCls} value={profile?.email ?? ""} disabled style={{ opacity: 0.6 }} />
-            </div>
-            <div className="sm:col-span-2">
-              <label style={labelStyle}>Adresse</label>
-              <input className={inpCls} value={address} onChange={(e) => setAddress(e.target.value)} />
-            </div>
-          </div>
-          <div className="flex items-center justify-between mt-4">
-            <div>
-              <div style={{ fontFamily: "Inter", fontSize: 13, fontWeight: 500, color: "#1C1917" }}>Marketing-E-Mails</div>
-              <div style={descStyle}>Tipps, Updates und neue Features</div>
-            </div>
-            <Toggle checked={marketing} onChange={setMarketing} />
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveProfile}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Speichern
-          </button>
-        </section>
-
-        {/* Standardwerte */}
-        <section className={cardCls} style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Standardwerte für neue Immobilien</h2>
-          <p style={{ ...descStyle, marginTop: 4 }}>Werden bei neuen Objekten vorausgefüllt.</p>
-          <div className="grid sm:grid-cols-2 gap-3 mt-4">
-            <NumField label="Eigenkapital" suffix="€" desc="Standard-Eigenkapital" v={settings?.default_equity} onChange={(v) => setS("default_equity", v)} />
-            <NumField label="Zinssatz" suffix="%" desc="Aktueller Marktzins" v={settings?.default_interest_rate} onChange={(v) => setS("default_interest_rate", v)} />
-            <NumField label="Laufzeit" suffix="Jahre" desc="Kreditlaufzeit" v={settings?.default_loan_term} onChange={(v) => setS("default_loan_term", v)} />
-            <NumField label="Maklerprovision" suffix="%" desc="Kauf-Provision" v={settings?.default_commission_percent} onChange={(v) => setS("default_commission_percent", v)} />
-            <NumField label="USt" suffix="%" desc="Umsatzsteuer" v={settings?.default_vat_rate} onChange={(v) => setS("default_vat_rate", v)} />
-            <NumField label="Grunderwerbsteuer" suffix="%" desc="Standard 3,5 %" v={settings?.default_grunderwerbsteuer} onChange={(v) => setS("default_grunderwerbsteuer", v)} />
-            <NumField label="Grundbuch" suffix="%" desc="Eintragungsgebühr" v={settings?.default_grundbuchkosten} onChange={(v) => setS("default_grundbuchkosten", v)} />
-            <NumField label="Vertragskosten" suffix="%" desc="Notar & Anwalt" v={settings?.default_vertragskosten} onChange={(v) => setS("default_vertragskosten", v)} />
-            <NumField label="Leerstandspuffer" suffix="%" desc="Mietausfallsrisiko" v={settings?.default_vacancy_buffer} onChange={(v) => setS("default_vacancy_buffer", v)} />
-            <NumField label="Instandhaltung" suffix="€/m²/J" desc="Reserve pro Jahr" v={settings?.default_repair_reserve} onChange={(v) => setS("default_repair_reserve", v)} />
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Standardwerte speichern
-          </button>
-        </section>
 
         {/* Benachrichtigungen */}
         <section className={cardCls} style={cardStyle}>
@@ -429,11 +451,39 @@ function SettingsPage() {
           </div>
           {deleteConfirm && (
             <p style={{ ...descStyle, color: "#DC2626", marginTop: 10 }}>
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              Damit löschst du dein Konto samt allen Immobilien, Projekten und Notizen endgültig. Das lässt sich nicht rückgängig machen.
             </p>
           )}
         </section>
       </div>
+      )}
+
+      {tab === "annahmen" && (
+      <div className="space-y-8">
+        <AssumptionsPanel />
+
+        {/* Standardwerte */}
+        <section className={cardCls} style={{ ...cardStyle, maxWidth: 680 }}>
+          <h2 style={sectionTitleStyle}>Standardwerte für neue Immobilien</h2>
+          <p style={{ ...descStyle, marginTop: 4 }}>Werden bei neuen Objekten vorausgefüllt.</p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-4">
+            <NumField label="Eigenkapital" suffix="€" desc="Standard-Eigenkapital" v={settings?.default_equity} onChange={(v) => setS("default_equity", v)} />
+            <NumField label="Zinssatz" suffix="%" desc="Aktueller Marktzins" v={settings?.default_interest_rate} onChange={(v) => setS("default_interest_rate", v)} />
+            <NumField label="Laufzeit" suffix="Jahre" desc="Kreditlaufzeit" v={settings?.default_loan_term} onChange={(v) => setS("default_loan_term", v)} />
+            <NumField label="Maklerprovision" suffix="%" desc="Kauf-Provision" v={settings?.default_commission_percent} onChange={(v) => setS("default_commission_percent", v)} />
+            <NumField label="USt" suffix="%" desc="Umsatzsteuer" v={settings?.default_vat_rate} onChange={(v) => setS("default_vat_rate", v)} />
+            <NumField label="Grunderwerbsteuer" suffix="%" desc="Standard 3,5 %" v={settings?.default_grunderwerbsteuer} onChange={(v) => setS("default_grunderwerbsteuer", v)} />
+            <NumField label="Grundbuch" suffix="%" desc="Eintragungsgebühr" v={settings?.default_grundbuchkosten} onChange={(v) => setS("default_grundbuchkosten", v)} />
+            <NumField label="Vertragskosten" suffix="%" desc="Notar & Anwalt" v={settings?.default_vertragskosten} onChange={(v) => setS("default_vertragskosten", v)} />
+            <NumField label="Leerstandspuffer" suffix="%" desc="Mietausfallsrisiko" v={settings?.default_vacancy_buffer} onChange={(v) => setS("default_vacancy_buffer", v)} />
+            <NumField label="Instandhaltung" suffix="€/m²/J" desc="Reserve pro Jahr" v={settings?.default_repair_reserve} onChange={(v) => setS("default_repair_reserve", v)} />
+          </div>
+          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
+            {busy && <Loader2 className="size-3.5 animate-spin" />}Standardwerte speichern
+          </button>
+        </section>
+      </div>
+      )}
       {checkoutDialog}
     </AppShell>
   );

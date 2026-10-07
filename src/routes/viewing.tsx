@@ -4,7 +4,7 @@ import { useActiveProject, useStore, VIEWING_CHECKLIST } from "@/lib/store";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/viewing")({
-  head: () => ({ meta: [{ title: "Besichtigungs-Checkliste – Immo Invest" }] }),
+  head: () => ({ meta: [{ title: "Besichtigungs-Checkliste – kaufma" }] }),
   component: ViewingPage,
 });
 

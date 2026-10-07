@@ -23,8 +23,8 @@ export const Route = createFileRoute("/ratgeber/$slug")({
           description: a.description,
           datePublished: a.publishedAt,
           dateModified: a.updatedAt ?? a.publishedAt,
-          author: { "@type": "Organization", name: "kauf ma" },
-          publisher: { "@type": "Organization", name: "kauf ma" },
+          author: { "@type": "Organization", name: "kaufma" },
+          publisher: { "@type": "Organization", name: "kaufma" },
           articleSection: a.category,
           keywords: a.tags?.join(", "),
         }),
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/ratgeber/$slug")({
   notFoundComponent: () => (
     <MarketingShell>
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-3xl font-bold">Artikel nicht gefunden</h1>
+        <h1 className="heading-page-sm">Artikel nicht gefunden</h1>
         <p className="text-muted-foreground mt-3">Dieser Ratgeber-Artikel existiert nicht (mehr).</p>
         <a href="/ratgeber" className="inline-block mt-6 text-primary underline">Zur Ratgeber-Übersicht</a>
       </div>
@@ -71,7 +71,7 @@ export const Route = createFileRoute("/ratgeber/$slug")({
   errorComponent: ({ error }) => (
     <MarketingShell>
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-2xl font-semibold">Fehler beim Laden</h1>
+        <h1 className="heading-page-sm">Fehler beim Laden</h1>
         <p className="text-muted-foreground mt-2 text-sm">{error.message}</p>
       </div>
     </MarketingShell>

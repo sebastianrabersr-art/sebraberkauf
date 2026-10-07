@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Envelope as Mail, CircleNotch as Loader2, CheckCircle as CheckCircle2 } from "@phosphor-icons/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,14 +68,15 @@ function EmailLeadDialog({
 }) {
   const submit = useServerFn(submitCalcLead);
   const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(true);
+  // DSGVO: Einwilligung muss aktiv erteilt werden – nie vorausgefüllt.
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    if (!consent) { toast.error("Bitte Zustimmung erteilen."); return; }
+    if (!consent) { toast.error("Bitte bestätige kurz die Einwilligung – ohne sie dürfen wir dir nichts schicken."); return; }
     setBusy(true);
     try {
       await submit({ data: { email: email.trim(), consent, calc_type: snapshot.type, calc_payload: snapshot } });
@@ -89,7 +90,7 @@ function EmailLeadDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setDone(false); setEmail(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setDone(false); setEmail(""); setConsent(false); } }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Berechnung per E-Mail senden</DialogTitle>
@@ -118,7 +119,7 @@ function EmailLeadDialog({
             </div>
             <label className="flex items-start gap-2 text-xs text-muted-foreground">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-              <span>Ich bin einverstanden, dass mir kauf ma die Berechnung sowie passende Tipps per E-Mail zusendet. Ich kann jederzeit widerrufen.</span>
+              <span>Ich bin einverstanden, dass mir kaufma die Berechnung sowie passende Tipps per E-Mail zusendet. Ich kann jederzeit widerrufen.</span>
             </label>
             <Button type="submit" disabled={busy} className="w-full">
               {busy ? <><Loader2 className="size-4 animate-spin mr-1.5" /> Senden…</> : "Berechnung senden"}

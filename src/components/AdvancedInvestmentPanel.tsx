@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { HelpCircle } from "lucide-react";
+import { Question as HelpCircle, Warning } from "@phosphor-icons/react";
 import type { AfaLand, AfaMethode, ObjektartDetail, Property } from "@/lib/types";
 import { calcAfa, calcFollowUpFinance, calcLongTermProjection, calcProperty, fmtEUR, fmtPct, getActiveFinance } from "@/lib/calc";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
+import { CHART_STYLE } from "@/components/ChartCard";
 
 const OBJEKTARTEN: ObjektartDetail[] = ["Wohnung", "Haus", "Grundstück", "Zinshaus", "Sonstiges"];
 
@@ -72,11 +73,11 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                  <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                  <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={CHART_STYLE.tooltipContent} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="cashflow" fill="hsl(var(--primary))" name="Cashflow p.a." />
-                  <Line type="monotone" dataKey="immoWert" stroke="hsl(var(--success))" strokeWidth={2} dot={false} name="Immobilienwert" />
-                  <Line type="monotone" dataKey="restschuld" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} name="Restschuld" />
+                  <Bar dataKey="cashflow" fill={CHART_STYLE.colors.soft} name="Cashflow p.a." />
+                  <Line type="monotone" dataKey="immoWert" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} name="Immobilienwert" />
+                  <Line type="monotone" dataKey="restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} name="Restschuld" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -186,10 +187,10 @@ function FollowUpChart({ phase1Years, ratePhase1, ratePhase2, restlaufzeit2, res
           <XAxis dataKey="year" tick={{ fontSize: 11 }} label={{ value: "Jahr", position: "insideBottom", offset: -2, fontSize: 11 }} />
           <YAxis yAxisId="l" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
           <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v)}`} />
-          <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+          <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={CHART_STYLE.tooltipContent} />
           <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Line yAxisId="l" type="monotone" dataKey="restschuld" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} name="Restschuld" />
-          <Line yAxisId="r" type="stepAfter" dataKey="rate" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Rate mtl." />
+          <Line yAxisId="l" type="monotone" dataKey="restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} name="Restschuld" />
+          <Line yAxisId="r" type="stepAfter" dataKey="rate" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} name="Rate mtl." />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -224,7 +225,7 @@ const bricolage = { fontFamily: '"Bricolage Grotesque", system-ui, sans-serif', 
 function InfoTip({ text }: { text: string }) {
   return (
     <span className="relative inline-flex group align-middle ml-1">
-      <HelpCircle className="size-[14px] text-[#A8A29E] cursor-help" />
+      <HelpCircle className="size-[14px] text-ink-3 cursor-help" />
       <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-10 hidden group-hover:block w-56 rounded-md border border-[#EAE6DF] bg-white px-2.5 py-1.5 text-[12px] leading-snug text-[#1C1917] shadow-sm" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
         {text}
       </span>
@@ -235,7 +236,7 @@ function InfoTip({ text }: { text: string }) {
 function ResultCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="rounded-[8px] border border-[#EAE6DF] bg-[#FAFAF8] px-[14px] py-[12px]">
-      <div className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-medium">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="mt-1 text-[18px] tabular-nums" style={{ ...bricolage, fontWeight: 700, color: accent ? "#2D6A4F" : "#1C1917" }}>{value}</div>
     </div>
   );
@@ -259,10 +260,10 @@ function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) 
             <ResultCard label="AfA-Satz" value={`${afa.satzPct.toFixed(1).replace(".", ",")} % p.a.`} />
             <ResultCard label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} accent />
           </div>
-          <p className="text-[12px] text-[#78716C] mt-3 leading-relaxed">
+          <p className="text-[12px] text-ink-2 mt-3 leading-relaxed">
             Die Abschreibung (AfA) senkt dein zu versteuerndes Einkommen. Bei vermieteten Wohnungen in Österreich beträgt der Satz 1,5% des Gebäudewerts pro Jahr. Der Gebäudewert wird mit 80% des Kaufpreises angesetzt (Standard AT).
           </p>
-          <button onClick={() => setExpert(true)} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+          <button onClick={() => setExpert(true)} className="mt-3 text-[12px] text-ink-3 hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
             Experteneinstellungen anzeigen ›
           </button>
         </>
@@ -304,9 +305,11 @@ function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) 
             <ResultCard label="AfA-Satz" value={`${afa.satzPct.toFixed(2).replace(".", ",")} %`} />
             <ResultCard label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} accent />
           </div>
-          <p className="text-[11px] text-[#78716C] mt-2">{afa.hinweis}</p>
-          <p className="text-[11px] text-[#D97706] font-medium mt-1">⚠ Keine Steuerberatung. Nur vereinfachte Modellrechnung.</p>
-          <button onClick={() => setExpert(false)} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+          <p className="text-[11px] text-ink-2 mt-2">{afa.hinweis}</p>
+          <p className="inline-flex items-center gap-1 text-[11px] text-[#92400E] font-medium mt-1">
+            <Warning size={12} aria-hidden /> Keine Steuerberatung. Nur vereinfachte Modellrechnung.
+          </p>
+          <button onClick={() => setExpert(false)} className="mt-3 text-[12px] text-ink-3 hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
             ‹ Einfache Ansicht
           </button>
         </>

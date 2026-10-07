@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
 import { exportPropertyPdf, type PropertyExportOptions } from "@/lib/pdfExport";
 
@@ -47,7 +47,7 @@ export function ExportPdfDialog({
       >
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-[16px] font-semibold text-[#1C1917]">PDF exportieren</h2>
-          <button onClick={onClose} className="text-[#A8A29E] hover:text-[#1C1917]">
+          <button onClick={onClose} className="text-ink-3 hover:text-[#1C1917]">
             <X className="size-5" />
           </button>
         </div>
@@ -75,7 +75,7 @@ export function ExportPdfDialog({
           </button>
           <button
             onClick={onDownload}
-            className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#245A41]"
+            className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740]"
           >
             PDF herunterladen
           </button>

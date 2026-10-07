@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
+import { authErrorMessage } from "@/lib/auth-errors";
+import { Buildings as Building2 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Passwort zurücksetzen – kauf ma" }] }),
+  head: () => ({ meta: [{ title: "Passwort zurücksetzen – kaufma" }] }),
   component: Reset,
 });
 
@@ -31,7 +32,7 @@ function Reset() {
       redirectTo: window.location.origin + "/reset-password",
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(authErrorMessage(error, "Die E-Mail konnte nicht verschickt werden. Bitte versuch es noch einmal."));
     toast.success("Wir haben dir eine E-Mail mit einem Link geschickt.");
   };
 
@@ -40,7 +41,7 @@ function Reset() {
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(authErrorMessage(error, "Das Passwort konnte nicht geändert werden. Bitte versuch es noch einmal."));
     toast.success("Passwort aktualisiert.");
     window.location.href = "/dashboard";
   };
@@ -50,11 +51,11 @@ function Reset() {
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
         <a href="/" className="flex items-center gap-2 font-semibold mb-6">
           <div className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center"><Building2 className="size-4" /></div>
-          kauf ma
+          kaufma
         </a>
         {isRecovery ? (
           <>
-            <h1 className="text-2xl font-semibold">Neues Passwort</h1>
+            <h1 className="heading-page-sm">Neues Passwort</h1>
             <form onSubmit={updatePassword} className="space-y-3 mt-5">
               <div>
                 <Label htmlFor="pw">Neues Passwort</Label>
@@ -65,7 +66,7 @@ function Reset() {
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-semibold">Passwort vergessen?</h1>
+            <h1 className="heading-page-sm">Passwort vergessen?</h1>
             <p className="text-muted-foreground text-sm mt-1">Wir senden dir einen Link.</p>
             <form onSubmit={requestReset} className="space-y-3 mt-5">
               <div>

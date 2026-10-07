@@ -46,6 +46,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-ink: var(--foreground);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, sans-serif;
 }
@@ -64,7 +67,11 @@
   --secondary: #FAFAF8;
   --secondary-foreground: #1C1917;
   --muted: #FAFAF8;
-  --muted-foreground: #78716C;
+  /* Textstufen – beide ≥ 4.5:1 auf #F5F3EE und Weiß (WCAG AA):
+     ink-2 = Sekundärtext (5.9:1), ink-3 = Metadaten/Labels (4.6:1). */
+  --ink-2: #625C56;
+  --ink-3: #736C67;
+  --muted-foreground: var(--ink-2);
   --accent: #E8F5EE;
   --accent-foreground: #2D6A4F;
   --destructive: #DC2626;
@@ -84,7 +91,7 @@
   --chart-4: #78716C;
   --chart-5: #DC2626;
   --sidebar: #F5F3EE;
-  --sidebar-foreground: #78716C;
+  --sidebar-foreground: var(--ink-2);
   --sidebar-primary: #2D6A4F;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #E8F5EE;
@@ -104,7 +111,9 @@
   --secondary: #2A2724;
   --secondary-foreground: #F5F3EE;
   --muted: #2A2724;
-  --muted-foreground: #A8A29E;
+  --ink-2: #C9C3BC;
+  --ink-3: #A8A29E;
+  --muted-foreground: var(--ink-2);
   --accent: #1F3A2C;
   --accent-foreground: #E8F5EE;
   --destructive: #DC2626;
@@ -139,6 +148,13 @@
   h2 { font-size: 22px; font-weight: 700; line-height: 1.2; }
   h3 { font-size: 16px; font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; }
 
+  /* Browser-Oberflächen aus der Palette statt Systemstandard */
+  ::selection { background-color: #CFE5D8; color: var(--foreground); }
+  input, textarea { caret-color: var(--primary); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  a { text-underline-offset: 3px; }
+  .tabular-nums, table { font-variant-numeric: tabular-nums; }
+
   /* Cards: no shadows, soft border */
   .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
     box-shadow: none !important;
@@ -147,6 +163,12 @@
 
 @layer utilities {
   .font-display { font-family: var(--font-display); letter-spacing: -0.03em; }
+  /* Überschriften-Stufen – eine Stimme für Marketing und App */
+  .heading-page { font-family: var(--font-display); font-weight: 800; font-size: 36px; line-height: 1.08; letter-spacing: -0.03em; color: var(--foreground); text-wrap: balance; }
+  @media (min-width: 768px) { .heading-page { font-size: 44px; } }
+  .heading-page-sm { font-family: var(--font-display); font-weight: 800; font-size: 28px; line-height: 1.12; letter-spacing: -0.03em; color: var(--foreground); text-wrap: balance; }
+  .heading-section { font-family: var(--font-display); font-weight: 800; font-size: 28px; line-height: 1.15; letter-spacing: -0.03em; color: var(--foreground); text-wrap: balance; }
+  @media (min-width: 768px) { .heading-section { font-size: 32px; } }
   .text-positive { color: #16A34A; }
   .text-negative { color: #DC2626; }
   .text-warning { color: #D97706; }

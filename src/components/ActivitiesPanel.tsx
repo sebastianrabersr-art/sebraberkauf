@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ACTIVITY_TYPES, type ActivityType } from "@/lib/types";
 import { makeActivity, useStore } from "@/lib/store";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash as Trash2 } from "@phosphor-icons/react";
 
 export function ActivitiesPanel({ propertyId }: { propertyId: string }) {
   const { activities, addActivity, updateActivity, deleteActivity } = useStore();

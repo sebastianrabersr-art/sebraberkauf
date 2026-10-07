@@ -6,13 +6,13 @@ import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, ChevronDown, Coins, Hammer, Home, PiggyBank, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import { Calculator, CaretDown as ChevronDown, Coins, Hammer, House as Home, PiggyBank, TrendUp as TrendingUp, Wallet, ArrowRight } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
 
 export const Route = createFileRoute("/rechner/")({
   head: () => ({
     meta: [
-      { title: "Immobilienrechner – kostenlos online berechnen | kauf ma" },
+      { title: "Immobilienrechner – kostenlos online berechnen | kaufma" },
       { name: "description", content: "Kaufnebenkosten, Rendite und Cashflow für Immobilien einfach online berechnen. Kostenlos, ohne Anmeldung." },
       { property: "og:title", content: "Immobilienrechner – kostenlos online berechnen" },
       { property: "og:description", content: "Kaufnebenkosten, Rendite und Cashflow für Immobilien einfach online berechnen." },
@@ -81,8 +81,8 @@ function PublicRechnerHub() {
   return (
     <MarketingShell>
       <section className="max-w-6xl mx-auto px-6 py-16 bg-[#F5F3EE]">
-        <h1 className="font-display text-[28px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>Rechner</h1>
-        <p className="text-[13px] text-[#78716C] mt-1.5 max-w-2xl">
+        <h1 className="heading-page-sm">Rechner</h1>
+        <p className="text-[13px] text-ink-2 mt-1.5 max-w-2xl">
           Die wichtigsten Rechner für deinen Immobilienkauf – kostenlos, ohne Anmeldung. Schnelle Antworten auf konkrete Fragen.
         </p>
 
@@ -91,7 +91,7 @@ function PublicRechnerHub() {
             <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-[#2D6A4F]">
               <c.icon className="size-9 text-[#2D6A4F]" strokeWidth={1.5} />
               <h2 className="mt-4 text-[14px] font-semibold text-[#1C1917]">{c.title}</h2>
-              <p className="text-[13px] text-[#78716C] mt-1.5 flex-1">{c.benefit}</p>
+              <p className="text-[13px] text-ink-2 mt-1.5 flex-1">{c.benefit}</p>
               <Link
                 to="/rechner/$slug"
                 params={{ slug: c.slug }}
@@ -105,10 +105,10 @@ function PublicRechnerHub() {
 
         <div className="mt-10 rounded-[12px] border border-[#EAE6DF] bg-white p-6 text-center">
           <div className="font-display text-[18px] font-bold text-[#1C1917]">Immobilie vollständig analysieren</div>
-          <p className="text-[13px] text-[#78716C] mt-2 max-w-xl mx-auto">
+          <p className="text-[13px] text-ink-2 mt-2 max-w-xl mx-auto">
             Statt einzelner Rechner: Inserat-Link einfügen und automatisch Rendite, Cashflow, Mietrecht-Risiko & Ampel-Bewertung erhalten.
           </p>
-          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-5 py-2.5 text-[13px] font-medium hover:bg-[#245A41]">
+          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-5 py-2.5 text-[13px] font-medium hover:bg-[#235740]">
             Kostenlos starten <ArrowRight className="size-4" />
           </Link>
         </div>
@@ -136,8 +136,8 @@ function AppRechnerHub() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="font-display text-[28px] font-extrabold text-[#1C1917] leading-tight" style={{ letterSpacing: "-0.03em" }}>Rechner</h1>
-        <p className="mt-1 text-[13px] text-[#78716C]">
+        <h1 className="heading-page-sm">Rechner</h1>
+        <p className="mt-1 text-[13px] text-ink-2">
           Schnelle Antworten auf einzelne Fragen – ohne gleich eine ganze Immobilie analysieren zu müssen.
         </p>
       </div>
@@ -154,9 +154,9 @@ function AppRechnerHub() {
               <option key={p.id} value={p.id}>{p.title || "Ohne Titel"}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-[#A8A29E] pointer-events-none" />
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-ink-3 pointer-events-none" />
         </div>
-        {sel && <div className="text-[12px] text-[#78716C]">Werte aus „{sel.title}" übernommen.</div>}
+        {sel && <div className="text-[12px] text-ink-2">Werte aus „{sel.title}" übernommen.</div>}
       </div>
 
 
@@ -189,16 +189,16 @@ function CalcShell({ title, hint, result, children }: { title: string; hint?: st
   return (
     <div className="grid lg:grid-cols-5 gap-5 items-start">
       <div className="lg:col-span-3 space-y-3">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">Deine Angaben</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Deine Angaben</div>
         <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
           <div className="font-display text-[16px] font-bold tracking-tight text-[#1C1917]">{title}</div>
-          {hint && <p className="text-[12px] text-[#78716C] mt-1">{hint}</p>}
+          {hint && <p className="text-[12px] text-ink-2 mt-1">{hint}</p>}
           <div className="mt-4 space-y-3">{children}</div>
         </div>
       </div>
       <div className="lg:col-span-2 lg:sticky lg:top-6">
         <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-3">Ergebnis</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-3">Ergebnis</div>
           {result}
         </div>
       </div>
@@ -212,7 +212,7 @@ const numInpCls =
 function NumField({ label, value, onChange, suffix, step }: { label: string; value: number; onChange: (n: number) => void; suffix?: string; step?: number }) {
   return (
     <label className="block">
-      <div className="text-[11px] text-[#78716C] mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
+      <div className="text-[11px] text-ink-2 mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
       <input
         type="number"
         step={step}
@@ -228,7 +228,7 @@ function Big({ label, value, tone }: { label: string; value: string; tone?: "goo
   const c = tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#2D6A4F]";
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E]">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
       <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${c}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
     </div>
   );
@@ -237,7 +237,7 @@ function Big({ label, value, tone }: { label: string; value: string; tone?: "goo
 function Row({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
   return (
     <div className="flex items-baseline justify-between border-b border-[#F5F3EE] last:border-0 py-2">
-      <span className="text-[13px] text-[#78716C]">{label}</span>
+      <span className="text-[13px] text-ink-2">{label}</span>
       <span className={`font-medium text-[13px] tabular-nums ${tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#1C1917]"}`}>{value}</span>
     </div>
   );
@@ -586,22 +586,22 @@ function FixFlipCalc() {
         </div>
       }
     >
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-2">Einkauf & Kosten</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-2">Einkauf & Kosten</div>
       <NumField label="Kaufpreis" value={kaufpreis} onChange={setKaufpreis} suffix="€" />
       <NumField label="Kaufnebenkosten" value={nebenkosten} onChange={setNebenkosten} suffix="€" />
       <NumField label="Renovierungskosten" value={renovierung} onChange={setRenovierung} suffix="€" />
       <NumField label="Sonstige Kosten" value={sonstigeKosten} onChange={setSonstigeKosten} suffix="€" />
 
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Finanzierung</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-3">Finanzierung</div>
       <NumField label="Eigenkapital" value={eigenkapital} onChange={setEigenkapital} suffix="€" />
       <NumField label="Zinssatz p.a." value={zinssatz} onChange={setZinssatz} suffix="%" step={0.1} />
       <NumField label="Haltedauer" value={haltedauerMonate} onChange={setHaltedauerMonate} suffix="Monate" />
 
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Vermietung während Renovierung (optional)</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-3">Vermietung während Renovierung (optional)</div>
       <NumField label="Mieteinnahmen mtl." value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/M" />
       <NumField label="Betriebskosten mtl." value={betriebskosten} onChange={setBetriebskosten} suffix="€/M" />
 
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mt-3">Verkauf</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-3">Verkauf</div>
       <NumField label="Ziel-Verkaufspreis" value={verkaufspreis} onChange={setVerkaufspreis} suffix="€" />
       <NumField label="Maklerprovision Verkauf" value={maklerVerkaufPct} onChange={setMaklerVerkaufPct} suffix="%" step={0.1} />
       <NumField label="Immo-ESt / Spekulationssteuer" value={immoEstSteuer} onChange={setImmoEstSteuer} suffix="%" step={1} />

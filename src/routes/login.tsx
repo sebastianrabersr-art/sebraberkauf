@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Login – kauf ma" }] }),
+  head: () => ({ meta: [{ title: "Login – kaufma" }] }),
   component: Login,
   validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string) || "/dashboard" }),
 });
@@ -54,7 +55,7 @@ function Login() {
         password,
       });
       if (error) {
-        toast.error(error.message || "Anmeldung fehlgeschlagen.");
+        toast.error(authErrorMessage(error, "Die Anmeldung hat nicht geklappt. Bitte versuch es noch einmal."));
         setBusy(false);
         return;
       }
@@ -73,7 +74,7 @@ function Login() {
       toast.success("Willkommen zurück!");
       go(redirect || "/dashboard");
     } catch (err: any) {
-      toast.error(err?.message || "Unerwarteter Fehler beim Login.");
+      toast.error(authErrorMessage(err, "Die Anmeldung hat nicht geklappt. Bitte versuch es noch einmal."));
       setBusy(false);
     }
   };
@@ -86,7 +87,7 @@ function Login() {
         redirect_uri: window.location.origin + "/auth-callback?redirect=" + encodeURIComponent(redirect || "/dashboard"),
       });
       if (res.error) {
-        toast.error(res.error.message || "Google-Login fehlgeschlagen.");
+        toast.error(authErrorMessage(res.error, "Die Anmeldung mit Google hat nicht geklappt."));
         setGoogleBusy(false);
         return;
       }
@@ -94,7 +95,7 @@ function Login() {
       // Tokens already set
       go(redirect || "/dashboard");
     } catch (err: any) {
-      toast.error(err?.message || "Google-Login fehlgeschlagen.");
+      toast.error(authErrorMessage(err, "Die Anmeldung mit Google hat nicht geklappt."));
       setGoogleBusy(false);
     }
   };
@@ -105,7 +106,7 @@ function Login() {
         <a href="/" className="flex items-center mb-6">
           <Logo size={32} textSize={16} />
         </a>
-        <h1 className="text-2xl font-semibold">Willkommen zurück</h1>
+        <h1 className="heading-page-sm">Willkommen zurück</h1>
         <p className="text-muted-foreground text-sm mt-1">Melde dich an, um fortzufahren.</p>
 
         <Button type="button" variant="outline" className="w-full mt-6" onClick={handleGoogle} disabled={googleBusy || busy}>

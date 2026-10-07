@@ -25,7 +25,7 @@ type CalcMeta = {
 
 const META: Record<CalcSlug, CalcMeta> = {
   kaufnebenkosten: {
-    title: "Kaufnebenkosten-Rechner Österreich & Deutschland | kauf ma",
+    title: "Kaufnebenkosten-Rechner Österreich & Deutschland | kaufma",
     description: "Berechne Grunderwerbsteuer, Notar, Makler und Grundbuch beim Immobilienkauf. Für Österreich und Deutschland, kostenlos online.",
     category: "Kaufnebenkosten",
     h1: "Kaufnebenkosten-Rechner für Immobilien",
@@ -37,7 +37,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   rendite: {
-    title: "Rendite-Rechner für Immobilien: Brutto, Netto & EK-Rendite | kauf ma",
+    title: "Rendite-Rechner für Immobilien: Brutto, Netto & EK-Rendite | kaufma",
     description: "Berechne Bruttorendite, Nettorendite und Eigenkapitalrendite deiner Anlageimmobilie. Kostenlos, ohne Anmeldung.",
     category: "Rendite",
     h1: "Renditerechner für Immobilien",
@@ -49,7 +49,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   cashflow: {
-    title: "Cashflow-Rechner für Immobilien online | kauf ma",
+    title: "Cashflow-Rechner für Immobilien online | kaufma",
     description: "Berechne monatlichen und jährlichen Cashflow deiner Vermietung – inklusive Kreditrate, Betriebskosten, Rücklage und Leerstand.",
     category: "Cashflow",
     h1: "Cashflow-Rechner für Immobilien",
@@ -61,7 +61,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   finanzierung: {
-    title: "Finanzierungsrechner für Immobilien | kauf ma",
+    title: "Finanzierungsrechner für Immobilien | kaufma",
     description: "Berechne monatliche Kreditrate, Restschuld und Gesamtzinskosten für deine Immobilienfinanzierung. Kostenlos online.",
     category: "Finanzierung",
     h1: "Finanzierungsrechner für Immobilien",
@@ -73,7 +73,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   breakeven: {
-    title: "Break-even-Miete-Rechner | kauf ma",
+    title: "Break-even-Miete-Rechner | kaufma",
     description: "Berechne die Mindestmiete, ab der deine Immobilie monatlich nicht negativ läuft. Kostenlos online.",
     category: "Break-even-Miete",
     h1: "Break-even-Miete-Rechner",
@@ -85,7 +85,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   leistbarkeit: {
-    title: "Leistbarkeitsrechner für Immobilien | kauf ma",
+    title: "Leistbarkeitsrechner für Immobilien | kaufma",
     description: "Berechne den maximalen Kaufpreis, den du dir bei deiner Wunsch-Monatsrate leisten kannst. Kostenlos online.",
     category: "Leistbarkeit",
     h1: "Leistbarkeitsrechner für Immobilien",
@@ -97,7 +97,7 @@ const META: Record<CalcSlug, CalcMeta> = {
     ],
   },
   fixflip: {
-    title: "Fix & Flip Rechner – Gewinn nach Steuer berechnen | kauf ma",
+    title: "Fix & Flip Rechner – Gewinn nach Steuer berechnen | kaufma",
     description: "Berechne Gewinn, ROI und Rendite deines Fix & Flip Projekts. Inkl. Renovierung, Finanzierungszinsen, Verkauf und Immo-ESt.",
     category: "Fix & Flip",
     h1: "Fix & Flip Rechner",
@@ -146,7 +146,7 @@ export const Route = createFileRoute("/rechner/$slug")({
   notFoundComponent: () => (
     <MarketingShell>
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-3xl font-bold">Rechner nicht gefunden</h1>
+        <h1 className="heading-page-sm">Rechner nicht gefunden</h1>
         <a href="/rechner" className="inline-block mt-6 text-primary underline">Zur Rechner-Übersicht</a>
       </div>
     </MarketingShell>

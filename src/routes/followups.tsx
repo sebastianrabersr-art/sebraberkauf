@@ -4,7 +4,7 @@ import { useStore, makeActivity } from "@/lib/store";
 import { useState } from "react";
 
 export const Route = createFileRoute("/followups")({
-  head: () => ({ meta: [{ title: "Follow-ups – Immo Invest CRM" }] }),
+  head: () => ({ meta: [{ title: "Follow-ups – kaufma CRM" }] }),
   component: FollowupsPage,
 });
 

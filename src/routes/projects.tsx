@@ -3,14 +3,14 @@ import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import type { Project, ProjectStatus } from "@/lib/types";
 import { fmtEUR } from "@/lib/calc";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/projects")({
-  head: () => ({ meta: [{ title: "Projekte – Immo Invest" }] }),
+  head: () => ({ meta: [{ title: "Projekte – kaufma" }] }),
   component: ProjectsPage,
 });
 

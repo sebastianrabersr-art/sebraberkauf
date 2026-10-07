@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, XCircle, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle as CheckCircle2, CircleNotch as Loader2, XCircle, ArrowRight, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { useAuth, planLabel } from "@/lib/auth";
 import { track } from "@/lib/analytics";
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/checkout/return")({
   validateSearch: (search: Record<string, unknown>): { session_id?: string } => ({
     session_id: typeof search.session_id === "string" ? search.session_id : undefined,
   }),
-  head: () => ({ meta: [{ title: "Zahlung abgeschlossen – kauf ma" }] }),
+  head: () => ({ meta: [{ title: "Zahlung abgeschlossen – kaufma" }] }),
   component: CheckoutReturn,
 });
 
@@ -41,7 +41,7 @@ function CheckoutReturn() {
         <div className="size-14 rounded-full bg-muted text-muted-foreground grid place-items-center mx-auto">
           <XCircle className="size-7" />
         </div>
-        <h1 className="text-2xl font-bold mt-4">Checkout abgebrochen</h1>
+        <h1 className="heading-page-sm mt-4">Checkout abgebrochen</h1>
         <p className="text-muted-foreground text-sm mt-2">
           Keine Sorge — es wurde nichts abgebucht. Du kannst deinen Plan jederzeit neu auswählen.
         </p>
@@ -67,9 +67,9 @@ function CheckoutReturn() {
         <div className="size-14 rounded-full bg-primary/15 text-primary grid place-items-center mx-auto">
           <CheckCircle2 className="size-7" />
         </div>
-        <h1 className="text-2xl font-bold mt-4">Zahlung erfolgreich 🎉</h1>
+        <h1 className="heading-page-sm mt-4">Zahlung erfolgreich</h1>
         <p className="text-muted-foreground text-sm mt-2">
-          Willkommen im <strong>{planLabel(subscription?.plan)}</strong>-Plan. Alle Features sind sofort verfügbar.
+          Danke! Du bist jetzt im <strong>{planLabel(subscription?.plan)}</strong>-Plan – alle Funktionen sind ab sofort freigeschaltet. Die Rechnung kommt per E-Mail.
         </p>
         <div className="mt-5 rounded-xl border bg-card p-4 text-left">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -92,7 +92,7 @@ function CheckoutReturn() {
         <div className="size-14 rounded-full bg-muted text-muted-foreground grid place-items-center mx-auto">
           <Loader2 className="size-7" />
         </div>
-        <h1 className="text-2xl font-bold mt-4">Zahlung wird noch verarbeitet</h1>
+        <h1 className="heading-page-sm mt-4">Zahlung wird noch verarbeitet</h1>
         <p className="text-muted-foreground text-sm mt-2">
           Das dauert manchmal einen Moment. Lade die Seite gleich neu — dein Plan wird automatisch aktualisiert.
         </p>
@@ -109,7 +109,7 @@ function CheckoutReturn() {
       <div className="size-14 rounded-full bg-primary/10 text-primary grid place-items-center mx-auto">
         <Loader2 className="size-7 animate-spin" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">Zahlung wird verarbeitet…</h1>
+      <h1 className="heading-page-sm mt-4">Zahlung wird verarbeitet…</h1>
       <p className="text-muted-foreground text-sm mt-2">
         Wir bestätigen deine Zahlung. Das dauert nur ein paar Sekunden.
       </p>

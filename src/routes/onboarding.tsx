@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Home, TrendingUp, Hammer, HelpCircle, MapPin, Wallet, Zap } from "lucide-react";
+import { CheckCircle as CheckCircle2, CaretRight as ChevronRight, House as Home, TrendUp as TrendingUp, Hammer, Question as HelpCircle, MapPin, Wallet, Lightning as Zap } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [{ title: "Willkommen bei kaufma" }] }),
@@ -81,8 +81,8 @@ const finish = async () => {
         {step > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[12px] text-[#A8A29E]">Schritt {step} von {totalSteps}</span>
-              <button onClick={() => step > 1 ? setStep(s => s - 1) : setStep(0)} className="text-[12px] text-[#78716C] hover:text-[#1C1917]">← Zurück</button>
+              <span className="text-[12px] text-ink-3">Schritt {step} von {totalSteps}</span>
+              <button onClick={() => step > 1 ? setStep(s => s - 1) : setStep(0)} className="text-[12px] text-ink-2 hover:text-[#1C1917]">← Zurück</button>
             </div>
             <div className="h-[3px] bg-[#EAE6DF] rounded-full overflow-hidden">
               <div className="h-full bg-[#2D6A4F] rounded-full transition-all duration-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
@@ -102,7 +102,7 @@ const finish = async () => {
               <h1 style={{ ...bricolage, fontWeight: 800, fontSize: 26, color: "#1C1917", letterSpacing: "-0.03em" }}>
                 Willkommen bei kaufma.
               </h1>
-              <p className="text-[14px] text-[#78716C] mt-3 leading-relaxed">
+              <p className="text-[14px] text-ink-2 mt-3 leading-relaxed">
                 In wenigen Schritten richtest du dein Konto ein.<br />Dann analysierst du deine erste Immobilie.
               </p>
               <div className="mt-6 space-y-2.5 text-left">
@@ -113,7 +113,7 @@ const finish = async () => {
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2.5">
                     <CheckCircle2 className="size-4 shrink-0" style={{ color: "#2D6A4F" }} />
-                    <span className="text-[13px] text-[#78716C]">{item}</span>
+                    <span className="text-[13px] text-ink-2">{item}</span>
                   </div>
                 ))}
               </div>
@@ -124,7 +124,7 @@ const finish = async () => {
               >
                 Jetzt einrichten <ChevronRight className="size-4" />
               </button>
-              <button onClick={async () => { await finish(); window.location.href = "/dashboard"; }} className="mt-3 text-[12px] text-[#A8A29E] hover:text-[#78716C] w-full">
+              <button onClick={async () => { await finish(); window.location.href = "/dashboard"; }} className="mt-3 text-[12px] text-ink-3 hover:text-ink-2 w-full">
                 Überspringen – direkt zur App →
               </button>
             </div>
@@ -136,19 +136,19 @@ const finish = async () => {
               <h2 style={{ ...bricolage, fontWeight: 800, fontSize: 22, color: "#1C1917", letterSpacing: "-0.02em" }}>
                 Wie heißt du?
               </h2>
-              <p className="text-[13px] text-[#78716C] mt-1 mb-5">Wird für Kaufangebote und Dokumente verwendet.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Wird für Kaufangebote und Dokumente verwendet.</p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div>
-                  <div className="text-[11px] text-[#78716C] mb-1.5">Vorname</div>
+                  <div className="text-[11px] text-ink-2 mb-1.5">Vorname</div>
                   <input value={vorname} onChange={e => setVorname(e.target.value)} placeholder="Max" className={inputCls} autoFocus />
                 </div>
                 <div>
-                  <div className="text-[11px] text-[#78716C] mb-1.5">Nachname</div>
+                  <div className="text-[11px] text-ink-2 mb-1.5">Nachname</div>
                   <input value={nachname} onChange={e => setNachname(e.target.value)} placeholder="Mustermann" className={inputCls} />
                 </div>
               </div>
 
-              <div className="text-[11px] text-[#78716C] mb-3 mt-2 font-medium uppercase tracking-wider">Was ist dein Ziel?</div>
+              <div className="text-[11px] text-ink-2 mb-3 mt-2 font-medium uppercase tracking-wider">Was ist dein Ziel?</div>
               <div className="space-y-2">
                 {GOALS.map((g) => {
                   const active = goal === g.id;
@@ -164,11 +164,11 @@ const finish = async () => {
                     >
                       <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
                         style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
-                        <g.icon className="size-4" style={{ color: active ? "white" : "#78716C" }} />
+                        <g.icon className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
                       </div>
                       <div>
                         <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{g.label}</div>
-                        <div className="text-[11px]" style={{ color: "#A8A29E" }}>{g.sub}</div>
+                        <div className="text-[11px]" style={{ color: "var(--ink-3)" }}>{g.sub}</div>
                       </div>
                       {active && <CheckCircle2 className="size-4 ml-auto shrink-0" style={{ color: "#2D6A4F" }} />}
                     </button>
@@ -192,27 +192,27 @@ const finish = async () => {
               <h2 style={{ ...bricolage, fontWeight: 800, fontSize: 22, color: "#1C1917", letterSpacing: "-0.02em" }}>
                 Deine Finanzdaten
               </h2>
-              <p className="text-[13px] text-[#78716C] mt-1 mb-5">Diese Werte werden als Standard für alle Berechnungen verwendet. Jederzeit änderbar.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Diese Werte werden als Standard für alle Berechnungen verwendet. Jederzeit änderbar.</p>
 
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <MapPin className="size-3.5" style={{ color: "#A8A29E" }} />
-                    <span className="text-[11px] text-[#78716C]">Stadt / Region</span>
+                    <MapPin className="size-3.5" style={{ color: "var(--ink-3)" }} />
+                    <span className="text-[11px] text-ink-2">Stadt / Region</span>
                   </div>
                   <input value={location} onChange={e => setLocation(e.target.value)} placeholder="z.B. Wien, Graz, München…" className={inputCls} autoFocus />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Wallet className="size-3.5" style={{ color: "#A8A29E" }} />
-                    <span className="text-[11px] text-[#78716C]">Verfügbares Eigenkapital (€)</span>
+                    <Wallet className="size-3.5" style={{ color: "var(--ink-3)" }} />
+                    <span className="text-[11px] text-ink-2">Verfügbares Eigenkapital (€)</span>
                   </div>
                   <input type="number" value={equity} onChange={e => setEquity(e.target.value)} placeholder="80000" className={inputCls} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <TrendingUp className="size-3.5" style={{ color: "#A8A29E" }} />
-                    <span className="text-[11px] text-[#78716C]">Aktueller Zinssatz % (Kredit)</span>
+                    <TrendingUp className="size-3.5" style={{ color: "var(--ink-3)" }} />
+                    <span className="text-[11px] text-ink-2">Aktueller Zinssatz % (Kredit)</span>
                   </div>
                   <input type="number" step="0.1" value={zinssatz} onChange={e => setZinssatz(e.target.value)} placeholder="3.8" className={inputCls} />
                 </div>
@@ -234,7 +234,7 @@ const finish = async () => {
               <h2 style={{ ...bricolage, fontWeight: 800, fontSize: 22, color: "#1C1917", letterSpacing: "-0.02em" }}>
                 Alles bereit.
               </h2>
-              <p className="text-[13px] text-[#78716C] mt-1 mb-6">Wie möchtest du starten?</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-6">Wie möchtest du starten?</p>
 
               <div className="space-y-3">
                 <button
@@ -249,7 +249,7 @@ const finish = async () => {
                   </div>
                   <div>
                     <div className="text-[14px] font-semibold text-[#1C1917]">Erste Immobilie analysieren</div>
-                    <div className="text-[12px] text-[#78716C]">Link einfügen oder manuell erfassen</div>
+                    <div className="text-[12px] text-ink-2">Link einfügen oder manuell erfassen</div>
                   </div>
                   <ChevronRight className="size-4 ml-auto shrink-0 text-[#2D6A4F]" />
                 </button>
@@ -262,25 +262,25 @@ const finish = async () => {
                   className="w-full flex items-center gap-4 rounded-[12px] border-[1.5px] border-[#EAE6DF] bg-white px-5 py-4 text-left hover:bg-[#FAFAF8] transition-colors"
                 >
                   <div className="w-10 h-10 rounded-[10px] bg-[#F5F3EE] flex items-center justify-center shrink-0">
-                    <Home className="size-5" style={{ color: "#78716C" }} />
+                    <Home className="size-5" style={{ color: "var(--ink-2)" }} />
                   </div>
                   <div>
                     <div className="text-[14px] font-semibold text-[#1C1917]">Dashboard erkunden</div>
-                    <div className="text-[12px] text-[#78716C]">Erst einen Überblick verschaffen</div>
+                    <div className="text-[12px] text-ink-2">Erst einen Überblick verschaffen</div>
                   </div>
-                  <ChevronRight className="size-4 ml-auto shrink-0 text-[#A8A29E]" />
+                  <ChevronRight className="size-4 ml-auto shrink-0 text-ink-3" />
                 </button>
               </div>
 
               {busy && (
-                <div className="mt-4 text-center text-[13px] text-[#78716C]">Speichern…</div>
+                <div className="mt-4 text-center text-[13px] text-ink-2">Speichern…</div>
               )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-[11px] text-[#A8A29E]">
+        <div className="mt-6 text-center text-[11px] text-ink-3">
           kaufma.eu · Keine Anlage- oder Rechtsberatung
         </div>
       </div>

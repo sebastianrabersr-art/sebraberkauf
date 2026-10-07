@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { Lock } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { PLAN_PRICING } from "@/lib/auth";
 
@@ -18,7 +18,7 @@ export function FeatureLocked({
       <div className="size-12 rounded-full bg-primary/10 text-primary grid place-items-center mx-auto">
         <Lock className="size-5" />
       </div>
-      <h2 className="mt-4 text-xl font-semibold">{title}</h2>
+      <h2 className="heading-section mt-4">{title}</h2>
       <p className="text-sm text-muted-foreground mt-2">{description}</p>
       <div className="mt-5 rounded-lg border bg-muted/40 p-4 text-sm">
         <div className="font-medium">{name}</div>

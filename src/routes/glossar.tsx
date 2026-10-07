@@ -5,7 +5,7 @@ import { GlossarList } from "@/components/GlossarList";
 export const Route = createFileRoute("/glossar")({
   head: () => ({
     meta: [
-      { title: "Glossar – Immobilien-Fachbegriffe einfach erklärt | kauf ma" },
+      { title: "Glossar – Immobilien-Fachbegriffe einfach erklärt | kaufma" },
       { name: "description", content: "Alle Fachbegriffe rund um Rendite, Cashflow, Finanzierung, Mietrecht und Immobilien-Analyse einfach erklärt." },
       { property: "og:title", content: "Glossar – Immobilien-Fachbegriffe einfach erklärt" },
       { property: "og:description", content: "Rendite, DSCR, AfA, HWB und Co. – verständlich erklärt." },
@@ -22,7 +22,7 @@ function GlossarPage() {
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: 32, color: "#1C1917", margin: 0 }}>
             Glossar
           </h1>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#78716C", marginTop: 6 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "var(--ink-2)", marginTop: 6 }}>
             Alle Fachbegriffe einfach erklärt
           </p>
         </header>

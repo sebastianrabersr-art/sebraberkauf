@@ -8,35 +8,28 @@ import { detectPlatform } from "@/lib/extract.functions";
 import { analyzePropertyUrl, type AnalyzeResult } from "@/lib/analyze.functions";
 import { isValidUrl } from "@/lib/calc";
 import { track } from "@/lib/analytics";
-import {
-  ArrowRight,
-  Calculator,
-  Coins,
-  FileText,
-  Home,
-  Link2,
-  Loader2,
-  Sparkles,
-  ShieldCheck,
-  TrendingUp,
-  Wallet,
-  AlertTriangle,
-  GitCompareArrows,
-  Upload,
-} from "lucide-react";
+import { ArrowRight, Calculator, Coins, FileText, House as Home, LinkSimple as Link2, CircleNotch as Loader2, ShieldCheck, TrendUp as TrendingUp, Wallet, Warning as AlertTriangle, GitDiff as GitCompareArrows, UploadSimple as Upload } from "@phosphor-icons/react";
 
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "kauf ma – Immobilien-Investments in Sekunden bewerten" },
+      { title: "kaufma – Immobilien-Investments in Sekunden bewerten" },
       { name: "description", content: "Importiere Inserate oder PDFs, berechne Rendite, Cashflow und Mietrecht-Risiko. Für private Käufer, Anleger und Familien." },
-      { property: "og:title", content: "kauf ma – Immobilien-Investments in Sekunden bewerten" },
+      { property: "og:title", content: "kaufma – Immobilien-Investments in Sekunden bewerten" },
       { property: "og:description", content: "Bewerte Wohnungen blitzschnell: Rendite, Cashflow, Maklerkosten und Mietrecht-Risiko." },
     ],
   }),
   component: Landing,
 });
+
+const TESTIMONIALS: { name: string; age: number; quote: string }[] = [
+  { name: "Katharina", age: 31, quote: "Ich hab früher stundenlang Excel-Tabellen gebastelt. Mit kaufma sehe ich Rendite und Cashflow in Sekunden – und kann Immobilien direkt vergleichen." },
+  { name: "Yannik", age: 26, quote: "Ich hab mir eine Wohnung in Wien angeschaut und wusste nicht ob der Preis gerechtfertigt ist. kaufma hat mir in zwei Minuten gezeigt dass der Kaufpreisfaktor bei 32 liegt – zu teuer für die Lage." },
+  { name: "Wolfgang", age: 60, quote: "Ich investiere seit Jahren in Immobilien. Was mich überzeugt hat: die Kaufkostenaufschlüsselung ist transparenter als bei jedem anderen Tool das ich kenne." },
+  { name: "Markus", age: 34, quote: "Der Fix & Flip Rechner ist genau was ich gesucht habe. Kaufpreis, Renovierung, Verkauf – alles auf einen Blick mit Steuerberechnung." },
+  { name: "Lisa", age: 54, quote: "Endlich kann ich meinem Mann zeigen warum eine Wohnung in Graz besser ist als eine in Wien. Die Vergleichsfunktion macht das Argument für mich." },
+];
 
 function Feature({ icon: Icon, title, children }: any) {
   return (
@@ -207,7 +200,7 @@ function LinkAnalyzer() {
           disabled={loading}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
           {loading ? "Immobilie wird analysiert…" : "Kostenlos analysieren"}
         </button>
       </form>
@@ -305,7 +298,7 @@ function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
           {/* Header */}
           <div className="max-w-2xl mx-auto text-center mb-14">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h2 className="heading-section">
               Immobilienanalyse in 3 einfachen Schritten
             </h2>
             <p className="text-muted-foreground mt-3 leading-relaxed">
@@ -370,7 +363,7 @@ function Landing() {
 
       {/* ===== REST UNCHANGED ===== */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-16 border-t">
-        <h2 className="text-3xl font-semibold text-center">Alles in einem Tool</h2>
+        <h2 className="heading-section text-center">Alles in einem Tool</h2>
         <p className="text-muted-foreground text-center mt-2">Von der ersten Inserat-Idee bis zum Notartermin.</p>
         <div className="grid md:grid-cols-3 gap-5 mt-10">
           <Feature icon={Link2} title="Link- & PDF-Import">Inserate von willhaben oder ImmoScout per URL erfassen, Exposés als PDF hochladen.</Feature>
@@ -384,8 +377,8 @@ function Landing() {
 
       {/* ===== RECHNER SECTION ===== */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="font-display text-[28px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>Kostenlose Rechner</h2>
-        <p className="text-[13px] text-[#78716C] mt-1.5">Schnelle Antworten ohne Anmeldung.</p>
+        <h2 className="heading-section">Kostenlose Rechner</h2>
+        <p className="text-[13px] text-ink-2 mt-1.5">Schnelle Antworten ohne Anmeldung.</p>
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
@@ -396,7 +389,7 @@ function Landing() {
             <Coins className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
             <div className="flex-1 min-w-0">
               <div className="text-[14px] font-semibold text-[#1C1917]">Kaufnebenkosten-Rechner</div>
-              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Steuern, Notar, Makler, Grundbuch</div>
+              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Steuern, Notar, Makler, Grundbuch</div>
             </div>
             <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
           </Link>
@@ -409,7 +402,7 @@ function Landing() {
             <Home className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
             <div className="flex-1 min-w-0">
               <div className="text-[14px] font-semibold text-[#1C1917]">Cashflow-Rechner</div>
-              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Was bleibt monatlich übrig</div>
+              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Was bleibt monatlich übrig</div>
             </div>
             <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
           </Link>
@@ -422,7 +415,7 @@ function Landing() {
             <TrendingUp className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
             <div className="flex-1 min-w-0">
               <div className="text-[14px] font-semibold text-[#1C1917]">Rendite-Rechner</div>
-              <div className="text-[13px] text-[#78716C] mt-0.5 truncate">Brutto, Netto, Eigenkapital</div>
+              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Brutto, Netto, Eigenkapital</div>
             </div>
             <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
           </Link>
@@ -435,19 +428,40 @@ function Landing() {
         </div>
       </section>
 
+      {/* ===== TESTIMONIALS ===== */}
+      <section className="bg-white border-t border-[#EAE6DF]">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <h2 className="heading-section text-center">
+            Das sagen unsere Nutzer
+          </h2>
+          <div className="mt-10 grid md:grid-cols-3 gap-5">
+            {TESTIMONIALS.map((t) => (
+              <figure key={t.name} className="bg-white border border-[#EAE6DF] rounded-[12px] p-6">
+                <blockquote className="text-[14px] italic leading-[1.6] text-ink-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                  „{t.quote}“
+                </blockquote>
+                <figcaption className="mt-4 text-[13px] font-semibold text-[#1C1917]" style={{ fontFamily: "Inter, sans-serif" }}>
+                  {t.name}, {t.age}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-6xl mx-auto px-6 py-16 border-t">
-        <h2 className="text-3xl font-semibold text-center">Einfache Preise</h2>
+        <h2 className="heading-section text-center">Einfache Preise</h2>
         <p className="text-muted-foreground text-center mt-2">Starte gratis, upgrade wenn du mehr brauchst.</p>
         <div className="mt-10"><PricingTable /></div>
       </section>
 
       <section className="max-w-3xl mx-auto px-6 py-16 border-t">
-        <h2 className="text-3xl font-semibold text-center">Häufige Fragen</h2>
+        <h2 className="heading-section text-center">Häufige Fragen</h2>
         <div className="mt-8"><FaqList /></div>
       </section>
 
       <section className="max-w-4xl mx-auto px-6 py-20 text-center border-t">
-        <h2 className="text-3xl font-semibold">Bereit, die erste Immobilie zu bewerten?</h2>
+        <h2 className="heading-section">Bereit, die erste Immobilie zu bewerten?</h2>
         <p className="text-muted-foreground mt-2">Kostenlos starten – Upgrade nur, wenn du es wirklich brauchst.</p>
         <a href="/signup" className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-6 py-3 font-medium">
           Kostenlos starten <ArrowRight className="size-4" />

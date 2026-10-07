@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { CaretRight as ChevronRight } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
 import { calcLongTermProjection, calcProperty, fmtEUR } from "@/lib/calc";
 import { useActiveAssumptions } from "@/lib/store";
@@ -56,7 +56,7 @@ export function ProjectionTable({ p }: { p: Property }) {
             className="pb-2 text-[13px] cursor-pointer"
             style={{
               ...inter,
-              color: view === k ? "#1C1917" : "#78716C",
+              color: view === k ? "#1C1917" : "var(--ink-2)",
               borderBottom: view === k ? "2px solid #2D6A4F" : "2px solid transparent",
               marginBottom: -1,
             }}
@@ -77,7 +77,7 @@ export function ProjectionTable({ p }: { p: Property }) {
                 <th
                   key={h}
                   className="px-[14px] py-[10px] text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ color: "#A8A29E", textAlign: i === 0 ? "left" : "right" }}
+                  style={{ color: "var(--ink-3)", textAlign: i === 0 ? "left" : "right" }}
                 >
                   {h}
                 </th>
@@ -115,7 +115,7 @@ export function ProjectionTable({ p }: { p: Property }) {
               : rows.flatMap((r, i) =>
                   monthsFor(i).map((m, mi) => (
                     <tr key={`${r.year}-${mi}`} className="border-b border-[#F5F3EE]">
-                      <td className="px-[14px] py-[8px] text-[12px]" style={{ color: "#A8A29E" }}>
+                      <td className="px-[14px] py-[8px] text-[12px]" style={{ color: "var(--ink-3)" }}>
                         Jahr {r.year} · {m.label}
                       </td>
                       <td className="px-[14px] py-[8px] text-[12px] text-right tabular-nums">{fmtEUR(m.miete)}</td>
@@ -188,7 +188,7 @@ function YearRow({
           <span className="inline-flex items-center gap-1.5">
             <ChevronRight
               className="size-[14px] transition-transform group-hover:text-[#2D6A4F]"
-              style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", color: isOpen ? "#2D6A4F" : "#A8A29E" }}
+              style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", color: isOpen ? "#2D6A4F" : "var(--ink-3)" }}
             />
             Jahr {year}
           </span>
@@ -212,7 +212,7 @@ function YearRow({
       {isOpen &&
         months.map((m, idx) => (
           <tr key={idx} style={{ background: "#FAFAF8" }} className="border-b border-[#F5F3EE]">
-            <td className="text-[12px]" style={{ paddingLeft: 28, paddingRight: 14, paddingTop: 6, paddingBottom: 6, color: "#A8A29E" }}>
+            <td className="text-[12px]" style={{ paddingLeft: 28, paddingRight: 14, paddingTop: 6, paddingBottom: 6, color: "var(--ink-3)" }}>
               {m.label}
             </td>
             <td className="px-[14px] py-[6px] text-[12px] text-right tabular-nums">{fmtEUR(m.miete)}</td>

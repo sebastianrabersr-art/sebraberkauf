@@ -5,10 +5,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
 import { migrateLegacyStatus, userRatingAvg, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
-import { MoreHorizontal, Calendar, GripVertical, Plus, CheckCircle2, XCircle, X, Search } from "lucide-react";
+import { DotsThree as MoreHorizontal, Calendar, DotsSixVertical as GripVertical, Plus, CheckCircle as CheckCircle2, XCircle, X, MagnifyingGlass as Search } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/pipeline")({
-  head: () => ({ meta: [{ title: "Pipeline – Immo Invest CRM" }] }),
+  head: () => ({ meta: [{ title: "Pipeline – kaufma CRM" }] }),
   component: Pipeline,
 });
 
@@ -118,11 +118,11 @@ function Pipeline() {
           : <XCircle className="w-4 h-4 text-[#DC2626]" />}
         <div className="text-[13px] font-semibold text-[#1C1917]">{label}</div>
       </div>
-      <div className="text-[11px] text-[#A8A29E] mt-1">
+      <div className="text-[11px] text-ink-3 mt-1">
         {col === "Gekauft" ? "Wandert ins Portfolio" : "Archiviert"}
       </div>
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[11px] text-[#78716C]">
+        <span className="text-[11px] text-ink-2">
           {(col === "Gekauft" ? boughtCount : rejectedCount)} Objekte
         </span>
         {col === "Gekauft" && (
@@ -142,8 +142,8 @@ function Pipeline() {
       <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h1 className="text-[28px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}>Pipeline</h1>
-            <p className="text-[13px] text-[#78716C] mt-1">Verfolge deine Immobilien durch den Kaufprozess</p>
+            <h1 className="heading-page-sm">Pipeline</h1>
+            <p className="text-[13px] text-ink-2 mt-1">Verfolge deine Immobilien durch den Kaufprozess</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -156,7 +156,7 @@ function Pipeline() {
 
         {/* Bewertung filter */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
-          <span className="text-[12px] text-[#78716C] mr-1">Bewertung:</span>
+          <span className="text-[12px] text-ink-2 mr-1">Bewertung:</span>
           {BEWERTUNG_FILTERS.map((b) => {
             const active = filter === b;
             const count = b === "Alle" ? inProj.length : inProj.filter((p) => getBewertung(p) === b).length;
@@ -167,7 +167,7 @@ function Pipeline() {
                 className="rounded-[20px] px-3 py-[5px] text-[12px] transition-colors"
                 style={{
                   background: active ? "#2D6A4F" : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "#78716C",
+                  color: active ? "#FFFFFF" : "var(--ink-2)",
                   border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
                   fontWeight: active ? 600 : 500,
                 }}
@@ -208,8 +208,8 @@ function Pipeline() {
                 <div className="space-y-2">
                   {items.length === 0 && (
                     <div className="rounded-[8px] border-[1.5px] border-dashed border-[#D4CFC8] bg-transparent p-4 text-center">
-                      <div className="text-[12px] text-[#A8A29E]">Keine Objekte</div>
-                      <div className="text-[11px] text-[#A8A29E] mt-1">Ziehe Objekte hierher</div>
+                      <div className="text-[12px] text-ink-3">Keine Objekte</div>
+                      <div className="text-[11px] text-ink-3 mt-1">Ziehe Objekte hierher</div>
                     </div>
                   )}
                   {items.map((p) => {
@@ -242,7 +242,7 @@ function Pipeline() {
                           <button
                             data-stop
                             onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === p.id ? null : p.id); }}
-                            className="opacity-0 group-hover:opacity-100 text-[#A8A29E] hover:text-[#1C1917]"
+                            className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-[#1C1917]"
                           >
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
@@ -260,7 +260,7 @@ function Pipeline() {
                           </div>
                         )}
                         <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 mt-1">{p.title || "—"}</div>
-                        <div className="text-[11px] text-[#A8A29E] mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
+                        <div className="text-[11px] text-ink-3 mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-[11px] px-1.5 py-0.5 rounded-[6px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
                         </div>
@@ -281,8 +281,8 @@ function Pipeline() {
 
         {/* Exit lanes */}
         <div className="flex gap-3 mt-2">
-          {exitLane("Gekauft", "Gekauft ✓", dragOverCol === "Gekauft")}
-          {exitLane("Abgelehnt", "Abgelehnt ✗", dragOverCol === "Abgelehnt")}
+          {exitLane("Gekauft", "Gekauft", dragOverCol === "Gekauft")}
+          {exitLane("Abgelehnt", "Abgelehnt", dragOverCol === "Abgelehnt")}
         </div>
 
         {/* Add modal */}
@@ -291,10 +291,10 @@ function Pipeline() {
             <div onClick={(e) => e.stopPropagation()} className="rounded-[16px] bg-white border border-[#EAE6DF] w-full max-w-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-[15px] font-semibold text-[#1C1917]" style={bricolage}>Aus Kaufkandidaten hinzufügen</div>
-                <button onClick={() => setShowAddModal(false)} className="text-[#A8A29E] hover:text-[#1C1917]"><X className="w-4 h-4" /></button>
+                <button onClick={() => setShowAddModal(false)} className="text-ink-3 hover:text-[#1C1917]"><X className="w-4 h-4" /></button>
               </div>
               <div className="relative mb-4">
-                <Search className="w-4 h-4 text-[#A8A29E] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   value={addSearch}
                   onChange={(e) => setAddSearch(e.target.value)}
@@ -304,7 +304,7 @@ function Pipeline() {
               </div>
               <div className="space-y-1 max-h-[50vh] overflow-y-auto">
                 {candidates.length === 0 && (
-                  <div className="text-[12px] text-[#A8A29E] p-6 text-center">Keine Kandidaten gefunden.</div>
+                  <div className="text-[12px] text-ink-3 p-6 text-center">Keine Kandidaten gefunden.</div>
                 )}
                 {candidates.map((p) => {
                   const avg = userRatingAvg(p.userRating ?? {});
@@ -314,12 +314,12 @@ function Pipeline() {
                     <div key={p.id} className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-[#FAFAF8]">
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                        <div className="text-[11px] text-[#A8A29E]">{p.bezirk || "—"}</div>
+                        <div className="text-[11px] text-ink-3">{p.bezirk || "—"}</div>
                       </div>
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
                       <button
                         onClick={() => addToPipeline(p.id)}
-                        className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235940]"
+                        className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235740]"
                       >
                         Hinzufügen
                       </button>

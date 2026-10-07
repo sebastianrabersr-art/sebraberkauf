@@ -14,7 +14,7 @@ function AnalyzePage() {
         <h1 style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: 800, fontSize: 28, letterSpacing: "-0.03em", marginBottom: 4 }}>
           Immobilie hinzufügen
         </h1>
-        <p className="text-[13px] text-[#78716C] mb-6">Link einfügen, Text kopieren, Excel-Vorlage nutzen oder manuell erfassen.</p>
+        <p className="text-[13px] text-ink-2 mb-6">Link einfügen, Text kopieren, Excel-Vorlage nutzen oder manuell erfassen.</p>
         <ImportTabsCard />
       </div>
     </AppShell>

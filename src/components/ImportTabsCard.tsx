@@ -6,7 +6,7 @@ import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.fu
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { AlertTriangle, CheckCircle2, Home, Hammer } from "lucide-react";
+import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer } from "@phosphor-icons/react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
 
@@ -322,7 +322,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 background: isActive ? "#1C1917" : "#fff",
-                color: isActive ? "#fff" : "#78716C",
+                color: isActive ? "#fff" : "var(--ink-2)",
                 border: `1.5px solid ${isActive ? "#1C1917" : "#EAE6DF"}`,
                 borderRadius: 8, padding: "8px 14px",
                 fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 500,
@@ -357,14 +357,14 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 {loading ? "Lädt…" : "Analysieren"}
               </button>
             </div>
-            <p className="text-[11px] text-[#A8A29E] mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
+            <p className="text-[11px] text-ink-3 mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
             {(platform || country) && (
               <div className="mt-2 flex gap-1">
-                {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-[#78716C]">{platform}</span>}
-                {country && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-[#78716C]">{country}</span>}
+                {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-ink-2">{platform}</span>}
+                {country && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-ink-2">{country}</span>}
               </div>
             )}
-            {loading && <div className="mt-3 text-center text-[12px] text-[#A8A29E]">{loadingTexts[loadingPhase]}</div>}
+            {loading && <div className="mt-3 text-center text-[12px] text-ink-3">{loadingTexts[loadingPhase]}</div>}
           </div>
         )}
 
@@ -384,7 +384,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
               style={{ width: "100%", minHeight: 200, border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "9px 12px", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit" }}
             />
             <div className="mt-3">
-              <label className="block text-[11px] text-[#A8A29E] mb-1">Link zur Immobilie (optional)</label>
+              <label className="block text-[11px] text-ink-3 mb-1">Link zur Immobilie (optional)</label>
               <input type="url" value={textUrl} placeholder="https://..." onChange={(e) => setTextUrl(e.target.value)}
                 style={{ width: "100%", border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "7px 12px", fontSize: 12, outline: "none" }} />
             </div>
@@ -392,7 +392,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
               style={{ marginTop: 12, background: "#2D6A4F", color: "white", border: "none", borderRadius: 8, padding: "9px 18px", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
               {loading ? "Analysiert…" : "Text analysieren"}
             </button>
-            {loading && <div className="mt-3 text-center text-[12px] text-[#A8A29E]">{loadingTexts[loadingPhase]}</div>}
+            {loading && <div className="mt-3 text-center text-[12px] text-ink-3">{loadingTexts[loadingPhase]}</div>}
           </div>
         )}
 
@@ -401,7 +401,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
             <p className="text-[13px] text-[#1C1917] font-medium mb-3">Excel-Vorlage verwenden</p>
             <div style={{ background: "#F5F3EE", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
               <div className="text-[13px] text-[#1C1917] font-medium mb-2">So geht's:</div>
-              <ol style={{ fontSize: 13, color: "#78716C", lineHeight: 1.8, paddingLeft: 16 }}>
+              <ol style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.8, paddingLeft: 16 }}>
                 <li>Vorlage herunterladen</li>
                 <li>Daten eintragen (Pflichtfelder sind grün markiert)</li>
                 <li>Ausgefüllte Zeilen markieren (ohne Header-Zeile) → Strg+C</li>
@@ -414,16 +414,16 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
             >
               <DownloadSimple weight="duotone" size={16} /> Vorlage herunterladen
             </button>
-            <p className="text-[11px] text-[#A8A29E] mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
+            <p className="text-[11px] text-ink-3 mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
         )}
 
         {activeTab === "manuell" && (
           <div>
-            <p className="text-[13px] text-[#78716C] mb-4">Immobilie ohne Link manuell erfassen. Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.</p>
+            <p className="text-[13px] text-ink-2 mb-4">Immobilie ohne Link manuell erfassen. Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.</p>
 
             <div className="mb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Investmentstrategie</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Investmentstrategie</div>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {([
                   { key: "buy_and_hold" as const, label: "Buy & Hold", sub: "Kaufen & vermieten" },
@@ -441,18 +441,18 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                       <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
                         style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
                         {s.key === "buy_and_hold"
-                          ? <Home className="size-4" style={{ color: active ? "white" : "#78716C" }} />
-                          : <Hammer className="size-4" style={{ color: active ? "white" : "#78716C" }} />}
+                          ? <Home className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
+                          : <Hammer className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />}
                       </div>
                       <div>
                         <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{s.label}</div>
-                        <div className="text-[11px] text-[#A8A29E]">{s.sub}</div>
+                        <div className="text-[11px] text-ink-3">{s.sub}</div>
                       </div>
                     </button>
                   );
                 })}
               </div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Objektart</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Objektart</div>
               <div className="flex flex-wrap gap-2">
                 {([
                   { key: "apartment" as const, label: "Wohnung" },
@@ -470,7 +470,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                       style={{
                         borderColor: active ? "#1C1917" : "#EAE6DF",
                         background: active ? "#1C1917" : "#F5F3EE",
-                        color: active ? "white" : "#78716C",
+                        color: active ? "white" : "var(--ink-2)",
                       }}
                     >
                       {t.label}
@@ -499,9 +499,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 <div className="font-semibold text-[#1C1917]">
                   {result.partial ? "Import unvollständig" : "Import erfolgreich"}
                 </div>
-                <div className="mt-1 text-[#78716C]">Datenqualität: <strong className="text-[#1C1917]">{result.quality.score}%</strong> ({result.quality.filled}/{result.quality.total} Pflichtfelder)</div>
+                <div className="mt-1 text-ink-2">Datenqualität: <strong className="text-[#1C1917]">{result.quality.score}%</strong> ({result.quality.filled}/{result.quality.total} Pflichtfelder)</div>
                 {result.quality.missing.length > 0 && (
-                  <div className="mt-1 text-[12px] text-[#78716C]">Fehlend: {result.quality.missing.join(", ")}</div>
+                  <div className="mt-1 text-[12px] text-ink-2">Fehlend: {result.quality.missing.join(", ")}</div>
                 )}
                 <div className="mt-3">
                   <button onClick={() => navigate({ to: "/properties/$id", params: { id: result.property.id } })}
