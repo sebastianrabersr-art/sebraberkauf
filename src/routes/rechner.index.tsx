@@ -10,6 +10,12 @@ import { Calculator, CaretDown as ChevronDown, Coins, Hammer, House as Home, Pig
 import type { Property } from "@/lib/types";
 import { BigResult as Big, ResultRow as Row, NumInput } from "@/components/marketing/PublicCalcLayout";
 import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
+import { CalcPdfButton } from "@/components/pdf/CalcPdf";
+import { pdfEur, pdfNum, pdfPct, pdfPctPoints, toneOf } from "@/components/pdf/PdfKit";
+
+// Einheiten für die PDF-Eingabetabellen (Werte wie im Rechner eingegeben).
+const perMonth = (n: number) => `${pdfEur(n)} / Monat`;
+const years = (n: number) => `${pdfNum(n)} Jahre`;
 
 export const Route = createFileRoute("/rechner/")({
   head: () => ({
@@ -249,6 +255,32 @@ function NebenkostenCalc({ sel }: { sel?: Property }) {
             <div className="text-xs text-primary font-medium">Gesamtkosten beim Kauf</div>
             <div className="text-2xl font-semibold tabular-nums">{fmtEUR(gesamt)}</div>
           </div>
+          <CalcPdfButton data={() => ({
+            title: "Kaufnebenkosten-Rechner",
+            metrics: [
+              { label: "Nebenkosten gesamt", value: pdfEur(total) },
+              { label: "Gesamtbedarf", value: pdfEur(gesamt) },
+              { label: "Anteil am Kaufpreis", value: pdfPct(kp > 0 ? total / kp : null, 1) },
+            ],
+            inputs: [
+              { label: "Kaufpreis", value: pdfEur(kp) },
+              { label: "Land", value: land === "DE" ? "Deutschland" : "Österreich" },
+              { label: "Maklerprovision (netto)", value: pdfPctPoints(maklerPct) },
+              { label: "Grunderwerbsteuer", value: pdfPctPoints(grestPct) },
+              { label: "Grundbucheintragung", value: pdfPctPoints(gbPct) },
+              { label: "Vertrag / Notar", value: pdfPctPoints(vertragPct) },
+              { label: "Sonstige Kosten", value: pdfEur(sonst) },
+            ],
+            results: [
+              { label: "Maklerprovision (brutto)", value: pdfEur(makler) },
+              { label: "Grunderwerbsteuer", value: pdfEur(grest) },
+              { label: "Grundbucheintragung", value: pdfEur(gb) },
+              { label: "Vertrag / Notar", value: pdfEur(vertrag) },
+              { label: "Sonstiges", value: pdfEur(sonst) },
+              { label: "Nebenkosten gesamt", value: pdfEur(total), strong: true },
+              { label: "Gesamtkosten beim Kauf", value: pdfEur(gesamt), strong: true },
+            ],
+          })} />
         </div>
       }
     >
@@ -307,6 +339,28 @@ function FinanceCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
             <Row label="Zinskosten gesamt" value={fmtEUR(zinsenTotal)} />
             <Row label="Restschuld nach 10 Jahren" value={fmtEUR(restschuld10)} />
           </div>
+          <CalcPdfButton data={() => ({
+            title: "Finanzierungsrechner",
+            metrics: [
+              { label: "Monatliche Rate", value: pdfEur(rate) },
+              { label: "Zinskosten gesamt", value: pdfEur(zinsenTotal) },
+              { label: "Laufzeit", value: years(laufzeit) },
+            ],
+            inputs: [
+              { label: "Kaufpreis + Nebenkosten", value: pdfEur(kp) },
+              { label: "Eigenkapital", value: pdfEur(ek) },
+              { label: "Zinssatz p.a.", value: pdfPctPoints(zins) },
+              { label: "Laufzeit", value: years(laufzeit) },
+            ],
+            results: [
+              { label: "Monatliche Rate", value: pdfEur(rate), strong: true },
+              { label: "Kreditbetrag", value: pdfEur(kredit) },
+              { label: "Zinssatz", value: pdfPctPoints(zins) },
+              { label: "Laufzeit", value: years(laufzeit) },
+              { label: "Zinskosten gesamt", value: pdfEur(zinsenTotal) },
+              { label: "Restschuld nach 10 Jahren", value: pdfEur(restschuld10) },
+            ],
+          })} />
         </div>
       }
     >
@@ -346,6 +400,29 @@ function CashflowCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActi
             <Row label="− Rücklage" value={fmtEUR(ruecklage)} />
             <Row label="− Leerstandspuffer" value={fmtEUR(leerstandEUR)} />
           </div>
+          <CalcPdfButton data={() => ({
+            title: "Miet- & Cashflow-Rechner",
+            metrics: [
+              { label: "Cashflow pro Monat", value: pdfEur(cf), tone: toneOf(cf) },
+              { label: "Mieteinnahmen", value: perMonth(miete) },
+              { label: "Kreditrate", value: perMonth(rate) },
+            ],
+            inputs: [
+              { label: "Erwartete Nettomiete", value: perMonth(miete) },
+              { label: "Kreditrate", value: perMonth(rate) },
+              { label: "Betriebskosten (nicht umlegbar)", value: perMonth(bk) },
+              { label: "Rücklage", value: perMonth(ruecklage) },
+              { label: "Leerstandspuffer", value: pdfPctPoints(leerstand) },
+            ],
+            results: [
+              { label: "Mieteinnahmen", value: pdfEur(miete), tone: "pos" },
+              { label: "− Kreditrate", value: pdfEur(rate) },
+              { label: "− Betriebskosten (nicht umlegbar)", value: pdfEur(bk) },
+              { label: "− Rücklage", value: pdfEur(ruecklage) },
+              { label: "− Leerstandspuffer", value: pdfEur(leerstandEUR) },
+              { label: "= Cashflow pro Monat", value: pdfEur(cf), tone: toneOf(cf), strong: true },
+            ],
+          })} />
         </div>
       }
     >
@@ -391,6 +468,29 @@ function RenditeCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
           <p className="text-xs text-muted-foreground border-t pt-3">
             Brutto = Jahresmiete / Kaufpreis. Netto = (Jahresmiete − Kosten) / Gesamtinvestition. EK-Rendite bezieht den Ertrag auf dein eingesetztes Eigenkapital.
           </p>
+          <CalcPdfButton data={() => ({
+            title: "Rendite-Rechner",
+            metrics: [
+              { label: "Bruttorendite", value: pdfPct(brutto) },
+              { label: "Nettorendite", value: pdfPct(netto), tone: toneOf(netto) },
+              { label: "Eigenkapitalrendite", value: pdfPct(ekRendite), tone: toneOf(ekRendite) },
+            ],
+            inputs: [
+              { label: "Kaufpreis", value: pdfEur(kp) },
+              { label: "Nebenkosten", value: pdfEur(nk) },
+              { label: "Eigenkapital", value: pdfEur(ek) },
+              { label: "Nettomiete", value: perMonth(miete) },
+              { label: "Betriebskosten", value: perMonth(bk) },
+              { label: "Rücklage", value: perMonth(ruecklage) },
+            ],
+            results: [
+              { label: "Bruttorendite", sub: "Jahresmiete ÷ Kaufpreis", value: pdfPct(brutto), strong: true },
+              { label: "Nettorendite", sub: "(Jahresmiete − Kosten) ÷ Gesamtinvestition", value: pdfPct(netto), tone: toneOf(netto) },
+              { label: "Eigenkapitalrendite", sub: "Ertrag ÷ eingesetztes Eigenkapital", value: pdfPct(ekRendite), tone: toneOf(ekRendite) },
+              { label: "Jahresnettomiete", value: pdfEur(jahresmiete) },
+              { label: "Gesamtinvestition", value: pdfEur(gesamtkosten) },
+            ],
+          })} />
         </div>
       }
     >
@@ -438,6 +538,28 @@ function BreakEvenCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useAct
               Über 30 €/m² ist in den meisten Lagen unrealistisch. Überlege Kaufpreisreduktion oder mehr Eigenkapital.
             </div>
           )}
+          <CalcPdfButton data={() => ({
+            title: "Break-even-Miete-Rechner",
+            metrics: [
+              { label: "Benötigte Miete", value: pdfEur(required) },
+              { label: "Pro m²", value: `${pdfNum(perM2, 2)} €/m²` },
+              { label: "Differenz zur aktuellen Miete", value: pdfEur(diff), tone: diff > 0 ? "neg" : "pos" },
+            ],
+            inputs: [
+              { label: "Kreditrate", value: perMonth(rate) },
+              { label: "Betriebskosten", value: perMonth(bk) },
+              { label: "Rücklage", value: perMonth(ruecklage) },
+              { label: "Leerstandspuffer", value: pdfPctPoints(leerstand) },
+              { label: "Wohnfläche", value: `${pdfNum(wfl, 1)} m²` },
+              { label: "Aktuelle Miete", value: perMonth(aktMiete) },
+            ],
+            results: [
+              { label: "Benötigte Miete", sub: "deckt Rate, Kosten und Leerstandspuffer", value: perMonth(required), strong: true },
+              { label: "Benötigte Miete pro m²", value: `${pdfNum(perM2, 2)} €/m²` },
+              { label: "Aktuelle Miete", value: perMonth(aktMiete) },
+              { label: "Differenz", sub: "benötigte − aktuelle Miete", value: pdfEur(diff), tone: diff > 0 ? "neg" : "pos" },
+            ],
+          })} />
         </div>
       }
     >
@@ -483,6 +605,28 @@ function LeistbarkeitCalc({ a }: { a: ReturnType<typeof useActiveAssumptions> })
           <p className="text-xs text-muted-foreground border-t pt-3">
             Annahme: Du bringst dein Eigenkapital ein und finanzierst den Rest mit der gewählten Monatsrate über die Laufzeit.
           </p>
+          <CalcPdfButton data={() => ({
+            title: "Leistbarkeitsrechner",
+            metrics: [
+              { label: "Maximaler Kaufpreis", value: pdfEur(maxKp) },
+              { label: "Monatsrate", value: perMonth(rate) },
+              { label: "Eigenkapital", value: pdfEur(ek) },
+            ],
+            inputs: [
+              { label: "Eigenkapital", value: pdfEur(ek) },
+              { label: "Wunsch-Monatsrate", value: perMonth(rate) },
+              { label: "Zinssatz p.a.", value: pdfPctPoints(zins) },
+              { label: "Laufzeit", value: years(laufzeit) },
+              { label: "Nebenkosten", value: pdfPctPoints(nkPct) },
+            ],
+            results: [
+              { label: "Maximaler Kaufpreis", value: pdfEur(maxKp), strong: true },
+              { label: "Eigenkapital", value: pdfEur(ek) },
+              { label: "Kreditbetrag", value: pdfEur(kredit) },
+              { label: "Kaufnebenkosten", value: pdfEur(nk) },
+              { label: "Gesamtkosten", value: pdfEur(gesamt) },
+            ],
+          })} />
         </div>
       }
     >
@@ -552,6 +696,41 @@ function FixFlipCalc() {
               Dieses Projekt ist aktuell nicht rentabel. Erhöhe den Verkaufspreis oder reduziere die Kosten.
             </div>
           )}
+          <CalcPdfButton data={() => ({
+            title: "Fix & Flip Rechner",
+            metrics: [
+              { label: "Gewinn nach Steuer", value: pdfEur(gewinnNachSteuer), tone: toneOf(gewinnNachSteuer) },
+              { label: "ROI auf Eigenkapital", value: pdfPct(roiPct), tone: toneOf(roiPct) },
+              { label: "Annualisierte Rendite", value: pdfPct(annualisiertePct), tone: toneOf(annualisiertePct) },
+            ],
+            inputs: [
+              { label: "Kaufpreis", value: pdfEur(kaufpreis) },
+              { label: "Kaufnebenkosten", value: pdfEur(nebenkosten) },
+              { label: "Renovierungskosten", value: pdfEur(renovierung) },
+              { label: "Sonstige Kosten", value: pdfEur(sonstigeKosten) },
+              { label: "Eigenkapital", value: pdfEur(eigenkapital) },
+              { label: "Zinssatz p.a.", value: pdfPctPoints(zinssatz) },
+              { label: "Haltedauer", value: `${pdfNum(haltedauerMonate)} Monate` },
+              { label: "Mieteinnahmen mtl.", value: perMonth(mieteinnahmen) },
+              { label: "Betriebskosten mtl.", value: perMonth(betriebskosten) },
+              { label: "Ziel-Verkaufspreis", value: pdfEur(verkaufspreis) },
+              { label: "Maklerprovision Verkauf", value: pdfPctPoints(maklerVerkaufPct) },
+              { label: "Immo-ESt / Spekulationssteuer", value: pdfPctPoints(immoEstSteuer) },
+            ],
+            results: [
+              { label: "Gesamtinvestition", value: pdfEur(gesamtinvestition) },
+              { label: "Fremdkapital", value: pdfEur(fremdkapital) },
+              { label: "Zinsen gesamt", value: pdfEur(zinsenGesamt) },
+              { label: "Netto-Mieteinnahmen", value: pdfEur(nettomieteinnahmen), tone: nettomieteinnahmen > 0 ? "pos" : undefined },
+              { label: "Makler Verkauf", value: pdfEur(maklerVerkauf) },
+              { label: "Gewinn vor Steuer", value: pdfEur(gewinnVorSteuer), tone: toneOf(gewinnVorSteuer) },
+              { label: `Immo-ESt (${pdfNum(immoEstSteuer)} %)`, value: pdfEur(steuer) },
+              { label: "Gewinn nach Steuer", value: pdfEur(gewinnNachSteuer), tone: toneOf(gewinnNachSteuer), strong: true },
+              { label: "ROI auf Eigenkapital", value: pdfPct(roiPct), tone: toneOf(roiPct) },
+              { label: "Annualisierte Rendite", value: pdfPct(annualisiertePct), tone: toneOf(annualisiertePct) },
+              { label: "Gesamtrendite auf Investment", value: pdfPct(gesamtrendite), tone: toneOf(gesamtrendite) },
+            ],
+          })} />
         </div>
       }
     >

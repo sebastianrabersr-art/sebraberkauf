@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcTaxEstimate, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
@@ -778,21 +778,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
   const { updateProperty } = useStore();
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
-  const steuersatz = p.persSteuersatz ?? 0.35;
-  const afaSatz = p.afaSatz ?? 0.015;
-  const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
-
-  const kaufpreis = p.kaufpreis ?? 0;
-  const gebaeudewert = kaufpreis * gebaeudewertPct;
-  const afaJahr = gebaeudewert * afaSatz;
-  const afaMtl = afaJahr / 12;
-
-  const miete = p.nettomieteMtl ?? 0;
-  const kosten = (p.betriebskostenMtl ?? 0) + c.ruecklageMtl + (c.kreditRateMtl * 0.6);
-  const gewinnVorAfa = (miete - kosten) * 12;
-  const gewinnNachAfa = gewinnVorAfa - afaJahr;
-  const steuerBetrag = Math.max(0, gewinnNachAfa * steuersatz);
-  const cashflowNachSteuer = c.cashflowJahr - steuerBetrag;
+  const { steuersatz, afaSatz, gebaeudewertPct, kaufpreis, gebaeudewert, afaJahr, afaMtl, gewinnVorAfa, gewinnNachAfa, steuerBetrag, cashflowNachSteuer } = calcTaxEstimate(p, c);
 
   const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
 

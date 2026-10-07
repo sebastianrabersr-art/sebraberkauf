@@ -99,6 +99,8 @@ export interface Calc {
   dealSummaryShort: string;
   /** Investor-Langzeitmodell (Asset/Cash/Loan-Entwicklung, Charts, Szenarien). */
   investorModel?: InvestorModel;
+  /** Itemisierte Kaufnebenkosten (ohne Makler), wie sie in kaufNebenkosten eingehen. */
+  nebenkostenBreakdown?: PurchaseCostBreakdown;
 }
 
 
@@ -212,6 +214,7 @@ function calcPurchaseCosts(p: Property, a: Assumptions) {
     maklerProvisionBrutto,
     maklerProvisionUst,
     maklerProvisionUstPct,
+    breakdown,
   };
 }
 
@@ -657,6 +660,7 @@ export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCas
     dealScore: deal.dealScore,
     dealRating: deal.dealRating,
     dealSummaryShort: deal.dealSummaryShort,
+    nebenkostenBreakdown: purchase.breakdown,
     investorModel: calcInvestorModel(pn, a, {
       kaufpreis: effectiveKaufpreis,
       gesamtkosten: purchase.gesamtkosten,
@@ -1106,6 +1110,45 @@ export function calcAfa(p: Property): AfaResult {
     ? "DE: Lineare AfA Wohngebäude i.d.R. 2 % p.a. (bzw. 2,5 % bei Bauantrag vor 1925, 3 % bei Fertigstellung ab 01.01.2023). Keine Steuerberatung."
     : "AT: Lineare AfA für vermietete Wohngebäude i.d.R. 1,5 % p.a. Sonderregeln bei Sanierung/Denkmalschutz möglich. Keine Steuerberatung.";
   return { basis, grundAnteilPct: grundPct, gebaeudeAnteilPct: gebPct, gebaeudewert, satzPct, jahresAfa, methode, hinweis };
+}
+
+export interface TaxEstimate {
+  steuersatz: number;
+  afaSatz: number;
+  gebaeudewertPct: number;
+  kaufpreis: number;
+  gebaeudewert: number;
+  afaJahr: number;
+  afaMtl: number;
+  gewinnVorAfa: number;
+  /** Steuerlich relevanter Gewinn (steuerpflichtige Einkünfte). */
+  gewinnNachAfa: number;
+  steuerBetrag: number;
+  cashflowNachSteuer: number;
+}
+
+/**
+ * Vereinfachte Steuer-Schätzung aus dem Analysen-Tab ("Steuer & AfA").
+ * Unverändert aus TaxPanel übernommen, damit App und PDF-Export dieselben Zahlen zeigen.
+ */
+export function calcTaxEstimate(p: Property, c: Calc): TaxEstimate {
+  const steuersatz = p.persSteuersatz ?? 0.35;
+  const afaSatz = p.afaSatz ?? 0.015;
+  const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
+
+  const kaufpreis = p.kaufpreis ?? 0;
+  const gebaeudewert = kaufpreis * gebaeudewertPct;
+  const afaJahr = gebaeudewert * afaSatz;
+  const afaMtl = afaJahr / 12;
+
+  const miete = p.nettomieteMtl ?? 0;
+  const kosten = (p.betriebskostenMtl ?? 0) + c.ruecklageMtl + (c.kreditRateMtl * 0.6);
+  const gewinnVorAfa = (miete - kosten) * 12;
+  const gewinnNachAfa = gewinnVorAfa - afaJahr;
+  const steuerBetrag = Math.max(0, gewinnNachAfa * steuersatz);
+  const cashflowNachSteuer = c.cashflowJahr - steuerBetrag;
+
+  return { steuersatz, afaSatz, gebaeudewertPct, kaufpreis, gebaeudewert, afaJahr, afaMtl, gewinnVorAfa, gewinnNachAfa, steuerBetrag, cashflowNachSteuer };
 }
 
 export interface ProjectionYear {
