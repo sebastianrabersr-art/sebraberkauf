@@ -112,7 +112,7 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
       <a
         href="/signup"
         onClick={handleCtaClick}
-        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold text-sm hover:bg-primary/90 transition-colors"
       >
         Account erstellen und vollständige Analyse sehen
         <ArrowRight className="size-4" />
@@ -182,7 +182,7 @@ function LinkAnalyzer() {
 
   return (
     <div>
-      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-2xl border bg-card p-2 shadow-lg shadow-primary/5">
+      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-2xl border bg-card p-2">
         <div className="flex-1 flex items-center gap-2 px-3">
           <Link2 className="size-4 text-muted-foreground shrink-0" />
           <input
@@ -352,7 +352,7 @@ function Landing() {
           <div className="mt-14 text-center">
             <a
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm hover:bg-primary/90 transition-colors"
             >
               Kostenlos starten <ArrowRight className="size-4" />
             </a>

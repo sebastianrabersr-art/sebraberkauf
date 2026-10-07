@@ -2,11 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Logo } from "@/components/Logo";
+import { AuthLayout, GoogleButton, OrDivider, authInputCls, authLabelCls, authPrimaryCls } from "@/components/AuthLayout";
 import { authErrorMessage } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/login")({
@@ -101,40 +98,39 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-muted/30">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-        <a href="/" className="flex items-center mb-6">
-          <Logo size={32} textSize={16} />
-        </a>
-        <h1 className="heading-page-sm">Willkommen zurück</h1>
-        <p className="text-muted-foreground text-sm mt-1">Melde dich an, um fortzufahren.</p>
+    <AuthLayout
+      title="Willkommen zurück"
+      subtitle="Melde dich an, um mit deinen Kaufkandidaten weiterzumachen."
+      footer={
+        <>
+          Noch kein Konto?{" "}
+          <button type="button" onClick={() => navigate({ to: "/signup" })} className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+            Registrieren
+          </button>
+        </>
+      }
+    >
+      <GoogleButton onClick={handleGoogle} disabled={googleBusy || busy}>
+        {googleBusy ? "Weiterleiten…" : "Mit Google fortfahren"}
+      </GoogleButton>
+      <OrDivider />
 
-        <Button type="button" variant="outline" className="w-full mt-6" onClick={handleGoogle} disabled={googleBusy || busy}>
-          {googleBusy ? "Weiterleiten…" : "Mit Google fortfahren"}
-        </Button>
-        <div className="flex items-center gap-3 my-5 text-xs text-muted-foreground">
-          <div className="h-px bg-border flex-1" /> oder <div className="h-px bg-border flex-1" />
+      <form onSubmit={handleEmail} className="space-y-4">
+        <div>
+          <label htmlFor="email" className={authLabelCls}>E-Mail</label>
+          <input id="email" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy} className={authInputCls} />
         </div>
-
-        <form onSubmit={handleEmail} className="space-y-3">
-          <div>
-            <Label htmlFor="email">E-Mail</Label>
-            <Input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy} />
+        <div>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="pw" className={authLabelCls}>Passwort</label>
+            <button type="button" onClick={() => navigate({ to: "/reset-password" })} className="text-[13px] text-ink-2 hover:text-[#1C1917] underline-offset-4 hover:underline">
+              Passwort vergessen?
+            </button>
           </div>
-          <div>
-            <Label htmlFor="pw">Passwort</Label>
-            <Input id="pw" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} />
-          </div>
-          <Button type="submit" className="w-full" disabled={busy || googleBusy}>{busy ? "Anmelden…" : "Anmelden"}</Button>
-        </form>
-
-        <div className="text-sm text-center mt-5 text-muted-foreground">
-          Noch kein Account? <button type="button" onClick={() => navigate({ to: "/signup" })} className="text-primary underline">Registrieren</button>
+          <input id="pw" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} className={authInputCls} />
         </div>
-        <div className="text-xs text-center mt-2">
-          <button type="button" onClick={() => navigate({ to: "/reset-password" })} className="text-muted-foreground hover:text-foreground underline">Passwort vergessen?</button>
-        </div>
-      </div>
-    </div>
+        <button type="submit" className={authPrimaryCls} disabled={busy || googleBusy}>{busy ? "Anmelden…" : "Anmelden"}</button>
+      </form>
+    </AuthLayout>
   );
 }

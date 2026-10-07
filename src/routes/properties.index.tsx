@@ -8,9 +8,14 @@ import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { CaretDown as ChevronDown, DownloadSimple as Download, ArrowSquareOut as ExternalLink, MapPin, Plus, Trash as Trash2, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/properties/")({
-  head: () => ({ meta: [{ title: "Immobilien-Datenbank – kaufma" }] }),
+  head: () => ({ meta: [{ title: "Kaufkandidaten – kaufma" }] }),
   component: PropertiesList,
 });
 
@@ -87,6 +92,13 @@ function PropertiesList() {
   const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [scopeAll, setScopeAll] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  const filtersActive =
+    statusFilter !== "all" || mietrechtFilter !== "all" || !!bezirkFilter || !!search || minScore > 0 || minDQ > 0;
+  const resetFilters = () => {
+    setStatusFilter("all"); setMietrechtFilter("all"); setBezirkFilter(""); setSearch(""); setMinScore(0); setMinDQ(0);
+  };
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? "—";
 
@@ -178,6 +190,7 @@ function PropertiesList() {
         <div className="flex flex-wrap items-center gap-2">
           <input
             placeholder="Suche…"
+            aria-label="Kandidaten durchsuchen"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={`${inputClass} flex-1 min-w-[160px]`}
@@ -195,21 +208,22 @@ function PropertiesList() {
               {["Neubau / freie Miete","Teilanwendung MRG","Altbau / Richtwert möglich","unklar – rechtlich prüfen","nicht geeignet"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </SelectWrap>
-          <input placeholder="Bezirk…" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-28`} />
+          <input placeholder="Bezirk…" aria-label="Nach Bezirk filtern" value={bezirkFilter} onChange={(e) => setBezirkFilter(e.target.value)} className={`${inputClass} w-28`} />
           <SelectWrap className="max-w-[160px] w-full sm:w-auto">
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={`${selectClass} w-full max-w-[160px]`}>
               {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </SelectWrap>
-          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1`}>
-            Ø≥<input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-10 bg-transparent outline-none" />
+          <label className={`${inputClass} text-[12px] text-ink-2 inline-flex items-center gap-1`} title="Nur Objekte ab diesem Score (0–100) anzeigen">
+            Score ab<input type="number" min={0} max={100} value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} className="w-10 bg-transparent outline-none text-[#1C1917] tabular-nums" />
           </label>
-          <label className={`${inputClass} text-[12px] inline-flex items-center gap-1`}>
-            DQ%≥<input type="number" value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-10 bg-transparent outline-none" />
+          <label className={`${inputClass} text-[12px] text-ink-2 inline-flex items-center gap-1`} title="Nur Objekte, deren Angaben mindestens zu diesem Anteil vollständig sind">
+            Daten ab<input type="number" min={0} max={100} value={minDQ} onChange={(e) => setMinDQ(Number(e.target.value))} className="w-9 bg-transparent outline-none text-[#1C1917] tabular-nums" />%
           </label>
           <button
             onClick={() => exportCSV(rows)}
             title="CSV exportieren"
+            aria-label="Als CSV exportieren"
             className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-ink-2 hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40"
           >
             <Download className="size-4" />
@@ -235,6 +249,7 @@ function PropertiesList() {
               onClick={() => setSort(DEFAULT_SORT)}
               className="hover:text-[#1C1917]"
               title="Sortierung zurücksetzen"
+              aria-label="Sortierung zurücksetzen"
             >
               <X className="size-3" />
             </button>
@@ -242,8 +257,48 @@ function PropertiesList() {
         </div>
       )}
 
+      {rows.length === 0 ? (
+        <EmptyState filtersActive={filtersActive} onReset={resetFilters} onAdd={() => setShowImport(true)} />
+      ) : (
+      <>
+      {/* Handy: Karten statt 21 Spalten */}
+      <ul className="md:hidden space-y-2">
+        {rows.map(({ p, c, dq }) => {
+          const m = inferMietrecht(p);
+          return (
+            <li key={p.id}>
+              <Link
+                to="/properties/$id"
+                params={{ id: p.id }}
+                className="block rounded-[12px] border border-[#EAE6DF] bg-white px-4 py-3 active:bg-[#FAFAF8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-[#1C1917] line-clamp-2">{p.title || "Ohne Titel"}</div>
+                    <div className="text-[12px] text-ink-2 truncate mt-0.5">
+                      {[p.bezirk, p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : null, p.status].filter(Boolean).join(" · ")}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="font-display font-bold text-[15px] tabular-nums text-[#1C1917]">{p.kaufpreis ? fmtEUR(p.kaufpreis) : "—"}</div>
+                    <div className={`text-[12px] tabular-nums ${c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-[#2D6A4F]" : "text-ink-3"}`}>
+                      {c.cashflowMtl === 0 ? "—" : `${fmtEUR(c.cashflowMtl)}/Monat`}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {c.bruttorendite ? <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-ink-2 tabular-nums">{fmtPct(c.bruttorendite)} brutto</span> : null}
+                  <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>Mietrecht {m.risiko}</AmpelBadge>
+                  <AmpelBadge ampel={dq.ampel}>Daten {dq.score}%</AmpelBadge>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
       {/* Tabelle */}
-      <div className="rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
+      <div className="hidden md:block rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-[13px] border-collapse">
             <thead>
@@ -253,7 +308,7 @@ function PropertiesList() {
                   ["Status","Aktueller CRM-Status","left"],
                   ["Prio","Priorität für deine Pipeline","left"],
                   ["Titel","Inserats-Titel","left"],
-                  ["Bezirk","Wiener Bezirk / Region","left"],
+                  ["Bezirk","Bezirk / Region","left"],
                   ["Kaufpreis","Kaufpreis brutto","right"],
                   ["m²","Wohnfläche","right"],
                   ["€/m²","Preis pro m²","right"],
@@ -265,7 +320,7 @@ function PropertiesList() {
                   ["Brutto","Bruttorendite","right"],
                   ["Cashflow","Monatlicher Cashflow","right"],
                   ["Mietrecht","Mietrechtliches Risiko (automatisch eingeschätzt)","left"],
-                  ["DQ","Datenqualität – Anteil ausgefüllter Pflichtfelder","left"],
+                  ["Daten","Datenqualität – Anteil ausgefüllter Pflichtfelder","left"],
                   ["Nächste Aktion","","left"],
                   ["Verkäufer","","left"],
                   ["Links","","left"],
@@ -335,7 +390,7 @@ function PropertiesList() {
                     </td>
                     <td className={COL_NUMERIC} style={bricolage}>{c.bruttorendite ? fmtPct(c.bruttorendite) : <span className="text-ink-3">—</span>}</td>
                     <td className={`${COL_NUMERIC}`} style={bricolage}>
-                      <span className={c.cashflowMtl < 0 ? "text-[#DC2626]" : c.cashflowMtl > 0 ? "text-[#16A34A]" : "text-ink-3"}>
+                      <span className={c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-[#2D6A4F]" : "text-ink-3"}>
                         {c.cashflowMtl === 0 ? "—" : fmtEUR(c.cashflowMtl)}
                       </span>
                     </td>
@@ -371,8 +426,10 @@ function PropertiesList() {
                     </td>
                     <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
                       <button
-                        onClick={() => { if (confirm("Wirklich löschen?")) { deleteProperty(p.id); toast.success("Gelöscht."); } }}
-                        className="text-ink-3 hover:text-[#DC2626]"
+                        onClick={() => setToDelete({ id: p.id, title: p.title || "Ohne Titel" })}
+                        aria-label={`„${p.title || "Ohne Titel"}“ löschen`}
+                        title="Löschen"
+                        className="inline-flex size-8 items-center justify-center rounded-[6px] text-ink-3 hover:text-[#B91C1C] hover:bg-[#FEE2E2]/50"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -380,13 +437,67 @@ function PropertiesList() {
                   </tr>
                 );
               })}
-              {rows.length === 0 && (
-                <tr><td colSpan={21} className="py-12 text-center text-[13px] text-ink-2">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+      </>
+      )}
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>„{toDelete?.title}“ löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Immobilie wird mit allen Notizen, Besichtigungen, Dokumenten und Zahlungen endgültig entfernt. Das lässt sich nicht rückgängig machen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Behalten</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#B91C1C] text-white hover:bg-[#991B1B]"
+              onClick={() => {
+                if (!toDelete) return;
+                deleteProperty(toDelete.id);
+                toast.success(`„${toDelete.title}“ wurde gelöscht.`);
+                setToDelete(null);
+              }}
+            >
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
+  );
+}
+
+function EmptyState({ filtersActive, onReset, onAdd }: { filtersActive: boolean; onReset: () => void; onAdd: () => void }) {
+  if (filtersActive) {
+    return (
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-6 py-12 text-center">
+        <div className="text-[15px] font-semibold text-[#1C1917]">Keine Treffer für diese Filter</div>
+        <p className="text-[13px] text-ink-2 mt-1">Lockere die Filter oder setz sie zurück, um alle Kandidaten zu sehen.</p>
+        <button type="button" onClick={onReset} className="mt-4 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-2 text-[13px] font-medium text-[#1C1917] hover:border-[#1C1917]">
+          Filter zurücksetzen
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-6 py-12 text-center">
+      <div className="font-display text-[20px] font-extrabold text-[#1C1917]">Noch keine Kaufkandidaten</div>
+      <p className="text-[14px] text-ink-2 mt-1.5 max-w-md mx-auto">
+        Füg den Link zu einem Inserat ein – kaufma liest die Daten aus und rechnet Rendite, Cashflow und Mietrecht-Risiko für dich.
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        <button type="button" onClick={onAdd} className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#235740]">
+          <Plus className="size-4" aria-hidden /> Immobilie hinzufügen
+        </button>
+        <Link to="/properties/new" className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-2.5 text-[13px] font-medium text-[#1C1917] hover:border-[#1C1917]">
+          Daten selbst eingeben
+        </Link>
+      </div>
+    </div>
   );
 }

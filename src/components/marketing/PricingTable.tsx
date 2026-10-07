@@ -82,7 +82,8 @@ function priceFor(id: "free" | PaidPlan, cycle: Cycle) {
   return { amount: eur(p.monthly), period: "pro Monat" };
 }
 
-export function PricingTable() {
+/** tierHeading: "h2" auf eigenen Preisseiten (direkt unter dem h1), "h3" in einem Abschnitt mit eigener h2. */
+export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?: "h2" | "h3" } = {}) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
   const { user, subscription } = useAuth();
   const navigate = useNavigate();
@@ -138,14 +139,14 @@ export function PricingTable() {
               key={t.id}
               className={`rounded-[12px] border bg-white p-6 flex flex-col ${t.highlight ? "border-[#2D6A4F] ring-1 ring-[#2D6A4F]" : "border-[#EAE6DF]"}`}
             >
-              <h3 className="flex items-center gap-2 font-display text-[20px] font-extrabold text-[#1C1917]">
+              <TierHeading className="flex items-center gap-2 font-display text-[20px] font-extrabold text-[#1C1917]">
                 {t.name}
                 {t.highlight && (
                   <span className="font-sans text-[11px] font-semibold tracking-normal rounded-full bg-[#E8F5EE] text-[#2D6A4F] px-2 py-0.5">
                     Empfohlen
                   </span>
                 )}
-              </h3>
+              </TierHeading>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="font-display text-[30px] font-extrabold tabular-nums text-[#1C1917]">{price.amount}</span>
                 <span className="text-[13px] text-ink-2">{price.period}</span>

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AppShell } from "@/components/layout/AppShell";
@@ -247,6 +247,8 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                   key={p.id}
                   onClick={() => toggle(p.id)}
                   disabled={disabled}
+                  aria-pressed={on}
+                  title={disabled ? `In deinem Plan kannst du bis zu ${compareLimit} Immobilien vergleichen.` : undefined}
                   className={`shrink-0 min-w-[160px] max-w-[200px] text-left rounded-[10px] bg-white px-3.5 py-3 transition ${
                     on
                       ? "border-2 border-[#2D6A4F]"
@@ -264,8 +266,8 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                         {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
                       </div>
                       <div
-                        className="text-[10px] tabular-nums mt-0.5"
-                        style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#DC2626" }}
+                        className="text-[11px] tabular-nums mt-0.5"
+                        style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#B91C1C" }}
                       >
                         {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
                       </div>
@@ -285,9 +287,12 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 </button>
               );
             })}
-            <div className="shrink-0 min-w-[160px] rounded-[10px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] text-ink-3 px-3 py-3">
-              <span className="inline-flex items-center gap-1"><Plus className="size-3.5" /> Immobilie hinzufügen</span>
-            </div>
+            <Link
+              to="/analyze"
+              className="shrink-0 min-w-[160px] rounded-[10px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] font-medium text-ink-2 px-3 py-3 hover:border-[#2D6A4F] hover:text-[#2D6A4F] transition-colors"
+            >
+              <span className="inline-flex items-center gap-1"><Plus className="size-3.5" aria-hidden /> Immobilie hinzufügen</span>
+            </Link>
           </div>
         )}
       </div>

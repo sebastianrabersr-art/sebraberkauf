@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
+import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { ArrowDown, ShieldCheck } from "@phosphor-icons/react";
@@ -72,7 +72,7 @@ export function PublicCalcLayout({
         {explanation && (
           <section className="mt-10">
             <h2 className="font-display text-[20px] font-bold mb-3 text-[#1C1917]">So wird gerechnet</h2>
-            <div className="prose prose-sm max-w-none text-[#1C1917]/90 leading-relaxed">{explanation}</div>
+            <div className="max-w-[70ch] text-[14px] text-[#1C1917]/90 leading-relaxed [&_p]:my-2 [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_li]:my-1 [&_strong]:text-[#1C1917]">{explanation}</div>
           </section>
         )}
 
@@ -119,30 +119,73 @@ export function PublicCalcLayout({
 const inputCls =
   "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
+/** "300.000", "3,5", "1.250,50" → Zahl; leer → 0; Unlesbares → null (Eingabe wird ignoriert). */
+export function parseDeNumber(raw: string): number | null {
+  const s = raw.replace(/\s|€|%/g, "");
+  if (s === "" || s === "-") return 0;
+  const normalized = s.includes(",")
+    ? s.replace(/\./g, "").replace(",", ".")
+    : /^-?\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "") : s;
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
+// de-DE statt de-AT: de-AT gruppiert mit schmalem Leerzeichen ("300 000"), gewohnt ist "300.000".
+const fmtDe = (n: number) => (Number.isFinite(n) ? n.toLocaleString("de-DE", { maximumFractionDigits: 2 }) : "");
+
+/**
+ * Zahlenfeld im deutschen Format: Tausenderpunkte und Dezimalkomma, Einheit im Feld.
+ * Beim Bearbeiten steht die rohe Zahl da (leicht zu überschreiben), danach wieder formatiert.
+ */
 export function NumInput({
   label,
   value,
   onChange,
   suffix,
-  step,
 }: {
   label: string;
   value: number;
   onChange: (n: number) => void;
   suffix?: string;
+  /** Nicht mehr genutzt (Textfeld statt Spinner); bleibt für Kompatibilität. */
   step?: number;
 }) {
+  const id = useId();
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? fmtDe(value);
   return (
-    <label className="block">
-      <div className="text-[11px] text-ink-2 mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
-      <input
-        type="number"
-        step={step}
-        value={Number.isFinite(value) ? value : 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={inputCls + " tabular-nums"}
-      />
-    </label>
+    <div>
+      <label htmlFor={id} className="block text-[12px] text-ink-2 mb-1">
+        {label}
+        {suffix && <span className="sr-only"> in {suffix}</span>}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={shown}
+          onFocus={(e) => {
+            setDraft(Number.isFinite(value) ? String(value).replace(".", ",") : "");
+            const el = e.currentTarget;
+            requestAnimationFrame(() => el.select());
+          }}
+          onBlur={() => setDraft(null)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            const n = parseDeNumber(e.target.value);
+            if (n !== null) onChange(n);
+          }}
+          className={inputCls + " tabular-nums" + (suffix ? " pr-16" : "")}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-ink-3" aria-hidden>
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -159,7 +202,7 @@ export function SelectInput<T extends string>({
 }) {
   return (
     <label className="block">
-      <div className="text-[11px] text-ink-2 mb-1">{label}</div>
+      <div className="text-[12px] text-ink-2 mb-1">{label}</div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}

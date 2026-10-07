@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calculator, CaretDown as ChevronDown, Coins, Hammer, House as Home, PiggyBank, TrendUp as TrendingUp, Wallet, ArrowRight } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
-import { BigResult as Big, ResultRow as Row } from "@/components/marketing/PublicCalcLayout";
+import { BigResult as Big, ResultRow as Row, NumInput } from "@/components/marketing/PublicCalcLayout";
 import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
 
 export const Route = createFileRoute("/rechner/")({
@@ -208,23 +208,8 @@ function CalcShell({ title, hint, result, children }: { title: string; hint?: st
   );
 }
 
-const numInpCls =
-  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
-function NumField({ label, value, onChange, suffix, step }: { label: string; value: number; onChange: (n: number) => void; suffix?: string; step?: number }) {
-  return (
-    <label className="block">
-      <div className="text-[11px] text-ink-2 mb-1">{label}{suffix ? ` (${suffix})` : ""}</div>
-      <input
-        type="number"
-        step={step}
-        value={Number.isFinite(value) ? value : 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={numInpCls}
-      />
-    </label>
-  );
-}
+// Gleiches Zahlenfeld wie in den öffentlichen Rechnern (Tausenderpunkte, Einheit im Feld).
+const NumField = NumInput;
 
 
 /* ───────── 1. Kaufnebenkosten ───────── */
