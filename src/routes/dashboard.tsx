@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct } from "@/lib/calc";
@@ -6,10 +7,10 @@ import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
 import { CHART_MARGIN, ChartTooltip, GRID_PROPS, X_AXIS_CATEGORY, fmtAxisNumber, fmtEuro } from "@/components/charts/chartKit";
-import { CaretRight as ChevronRight, ListNumbers, WarningCircle, CalendarCheck } from "@phosphor-icons/react";
+import { CaretRight as ChevronRight, ListNumbers, WarningCircle, CalendarCheck, GridFour, Rows, ArrowDown } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
-import { useAuth } from "@/lib/auth";
+import type { Property } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -21,25 +22,26 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-// Begrüßung passend zur Tageszeit
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 11) return "Guten Morgen";
-  if (h < 18) return "Guten Tag";
-  return "Guten Abend";
-}
+type Row = {
+  p: Property;
+  c: ReturnType<typeof calcProperty>;
+  s: ReturnType<typeof calcScore>;
+  dq: ReturnType<typeof calcDataQuality>;
+};
 
-function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
-  return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-4 py-3.5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
-      <div className={`mt-1.5 font-display text-[28px] font-extrabold leading-none tabular-nums ${accent ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}>
-        {value}
-      </div>
-      {sub && <div className="mt-1.5 text-[12px] text-ink-2 truncate">{sub}</div>}
-    </div>
-  );
+/* ───────── Kleine Bausteine ───────── */
+
+/** Ampel → Badge-Farben. Grau = keine Bewertung möglich (Kaufpreis oder Miete fehlt), nicht "schlecht". */
+function decisionBadge(ampel: Row["s"]["ampel"]) {
+  if (ampel === "green") return "bg-[#E8F5EE] text-[#2D6A4F]";
+  if (ampel === "yellow") return "bg-[#FEF3C7] text-[#92400E]";
+  if (ampel === "gray") return "bg-[#F5F3EE] text-[#78716C]";
+  return "bg-[#FEE2E2] text-[#991B1B]";
 }
+const decisionLabel = (r: Row) => (r.s.ampel === "gray" ? "Ohne Bewertung" : r.s.entscheidung);
+const scoreColor = (score: number) => (score >= 65 ? "#2D6A4F" : "var(--ink-2)");
+const cashColor = (cf: number) => (cf >= 0 ? "#2D6A4F" : "#B91C1C");
+const addressOf = (p: Row["p"]) => [p.adresse, p.bezirk].map((s) => (s ?? "").trim()).filter(Boolean).join(", ");
 
 /** Erster Start: kein leeres Gerüst aus Nullen, sondern erklären, was nach der ersten Analyse hier steht. */
 function FirstRunHint() {
@@ -49,7 +51,7 @@ function FirstRunHint() {
     { icon: CalendarCheck, title: "Deine nächsten Schritte", text: "Besichtigungen und Follow-ups, die du bei den Objekten einträgst." },
   ];
   return (
-    <section className="mt-8" aria-labelledby="first-run-title">
+    <section className="mt-10" aria-labelledby="first-run-title">
       <h2 id="first-run-title" className="text-[13px] font-semibold text-[#1C1917] font-sans tracking-normal">
         Nach deiner ersten Analyse siehst du hier:
       </h2>
@@ -74,50 +76,137 @@ function FirstRunHint() {
   );
 }
 
-function CandidateRow({ r, onClick }: { r: any; onClick: () => void }) {
-  const score = r.s.total as number;
-  const scoreColor = score >= 65 ? "#2D6A4F" : "var(--ink-2)";
-  const cf = r.c.cashflowMtl as number;
-  const cfColor = cf >= 0 ? "#2D6A4F" : "#B91C1C";
-  const badgeClass =
-    r.s.ampel === "green"
-      ? "bg-[#E8F5EE] text-[#2D6A4F]"
-      : r.s.ampel === "yellow"
-      ? "bg-[#FEF3C7] text-[#92400E]"
-      : "bg-[#FEE2E2] text-[#991B1B]";
+/* ───────── Kaufkandidaten: Raster / Liste ───────── */
+
+type ViewMode = "grid" | "list";
+const VIEW_KEY = "kaufma_dashboard_view";
+
+/** Ansicht merken (pro Browser). Startwert "grid", gespeicherter Wert erst nach dem Laden – sonst Hydration-Konflikt. */
+function useDashboardView(): [ViewMode, (v: ViewMode) => void] {
+  const [view, setView] = useState<ViewMode>("grid");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_KEY);
+      if (saved === "grid" || saved === "list") setView(saved);
+    } catch { /* privater Modus o. Ä. */ }
+  }, []);
+  const update = (v: ViewMode) => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignorieren */ }
+  };
+  return [view, update];
+}
+
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  const btn = (mode: ViewMode, label: string, Icon: typeof GridFour) => {
+    const active = view === mode;
+    return (
+      <button
+        type="button"
+        onClick={() => onChange(mode)}
+        aria-pressed={active}
+        aria-label={label}
+        title={label}
+        className="grid place-items-center size-8 rounded-[8px] transition-colors hover:bg-[#F5F3EE] focus-visible:outline-2 focus-visible:outline-[#2D6A4F]"
+        style={{ color: active ? "#2D6A4F" : "#A8A29E" }}
+      >
+        <Icon size={18} weight={active ? "fill" : "regular"} aria-hidden />
+      </button>
+    );
+  };
+  return (
+    <div className="flex items-center" role="group" aria-label="Ansicht">
+      {btn("grid", "Rasteransicht", GridFour)}
+      {btn("list", "Listenansicht", Rows)}
+    </div>
+  );
+}
+
+function CandidateCard({ r, onOpen }: { r: Row; onOpen: () => void }) {
+  const score = r.s.total;
+  const cf = r.c.cashflowMtl;
+  const address = addressOf(r.p);
   return (
     <button
-      onClick={onClick}
-      className="group w-full flex items-center gap-4 rounded-[10px] border border-[#EAE6DF] bg-white px-4 py-3 hover:bg-[#FAFAF8] transition-colors text-left"
+      type="button"
+      onClick={onOpen}
+      className="group flex flex-col text-left rounded-[10px] border border-[#EAE6DF] bg-white p-4 transition-colors hover:border-[#2D6A4F] focus-visible:outline-2 focus-visible:outline-[#2D6A4F]"
     >
-      <div className="w-10 font-display font-extrabold tabular-nums text-[18px] leading-none shrink-0" style={{ color: scoreColor }}>
-        {score}
-        <span className="sr-only"> von 100 Punkten</span>
+      <div className="flex items-start justify-between gap-3">
+        <span className="font-display font-extrabold tabular-nums text-[24px] leading-none" style={{ color: scoreColor(score) }}>
+          {score}
+          <span className="font-sans font-normal text-[12px] text-ink-3"> / 100</span>
+        </span>
+        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${decisionBadge(r.s.ampel)}`}>{decisionLabel(r)}</span>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "—"}</div>
-        <div className="text-[11px] text-ink-3 truncate">
-          {[r.p.bezirk, r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : null, r.p.quelle].filter(Boolean).join(" · ") || "—"}
+      <div className="mt-3 text-[14px] font-semibold leading-snug text-[#1C1917] line-clamp-2">{r.p.title || "Ohne Titel"}</div>
+      <div className="mt-0.5 text-[12px] text-ink-3 truncate">{address || "Adresse fehlt"}</div>
+      <dl className="mt-auto pt-4 grid grid-cols-3 gap-2">
+        <div>
+          <dt className="text-[11px] text-ink-3">Kaufpreis</dt>
+          <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</dd>
         </div>
-      </div>
-      <span className={`hidden sm:inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${badgeClass}`}>
-        {r.s.entscheidung}
-      </span>
-      <div className="hidden md:block w-28 text-right font-display font-bold tabular-nums text-[14px]" style={{ color: cfColor }}>
-        {fmtEUR(cf)}
-        <span className="block font-sans font-normal text-[11px] text-ink-3">pro Monat</span>
-      </div>
-      <ChevronRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] shrink-0" />
+        <div>
+          <dt className="text-[11px] text-ink-3">Rendite</dt>
+          <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{fmtPct(r.c.bruttorendite)}</dd>
+        </div>
+        <div>
+          <dt className="text-[11px] text-ink-3">Cashflow</dt>
+          <dd className="text-[13px] font-semibold tabular-nums" style={{ color: cashColor(cf) }}>{fmtEUR(cf)}</dd>
+        </div>
+      </dl>
     </button>
   );
 }
+
+/** Kompakte Zeile: ab sm alle Kennzahlen in einer Zeile, darunter als zweite Textzeile – nie horizontal scrollen. */
+function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
+  const score = r.s.total;
+  const cf = r.c.cashflowMtl;
+  const address = addressOf(r.p);
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="group w-full grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] items-center gap-x-3 px-4 py-3 text-left transition-colors hover:bg-[#FAFAF8] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#2D6A4F]"
+      >
+        <span className="font-display font-extrabold tabular-nums text-[18px] leading-none" style={{ color: scoreColor(score) }}>
+          {score}
+          <span className="sr-only"> von 100 Punkten</span>
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "Ohne Titel"}</span>
+          <span className="block text-[11px] text-ink-3 truncate">{address || "Adresse fehlt"}</span>
+          {/* Mobil: Kennzahlen als zweite Zeile */}
+          <span className="sm:hidden mt-1 flex flex-wrap gap-x-2 text-[12px] tabular-nums text-ink-2">
+            <span>{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</span>
+            <span aria-hidden>·</span>
+            <span>{fmtPct(r.c.bruttorendite)}</span>
+            <span aria-hidden>·</span>
+            <span style={{ color: cashColor(cf) }}>{fmtEUR(cf)}/M</span>
+          </span>
+        </span>
+        <span className="hidden sm:block text-right text-[13px] tabular-nums text-[#1C1917]">{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</span>
+        <span className="hidden sm:block text-right text-[13px] tabular-nums text-[#1C1917]">{fmtPct(r.c.bruttorendite)}</span>
+        <span className="hidden sm:block text-right text-[13px] font-semibold tabular-nums" style={{ color: cashColor(cf) }}>{fmtEUR(cf)}</span>
+        <ChevronRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] justify-self-end" aria-hidden />
+      </button>
+    </li>
+  );
+}
+
+/* ───────── Seite ───────── */
+
+const MAX_CANDIDATES = 6;
 
 function Dashboard() {
   const navigate = useNavigate();
   const project = useActiveProject();
   const assumptions = useActiveAssumptions();
   const { properties } = useStore();
-  const { profile } = useAuth();
+  const [view, setView] = useDashboardView();
+  const [detailTab, setDetailTab] = useState("risiken");
 
   if (!project) {
     return (
@@ -130,7 +219,7 @@ function Dashboard() {
   }
 
   const inProject = properties.filter((p) => p.projectId === project.id && p.status !== "Gekauft");
-  const rows = inProject.map((p) => {
+  const rows: Row[] = inProject.map((p) => {
     const c = calcProperty(p, assumptions);
     const s = calcScore(p, assumptions, c);
     const dq = calcDataQuality(p);
@@ -138,11 +227,12 @@ function Dashboard() {
   });
   const total = rows.length;
   const kritisch = rows.filter((r) => r.s.ampel === "red" || r.c.cashflowMtl < 0).length;
-  const best = rows.slice().sort((a, b) => b.s.total - a.s.total)[0];
   const bestRendite = rows.slice().sort((a, b) => b.c.bruttorendite - a.c.bruttorendite)[0];
+  const interessant = rows.filter((r) => r.s.ampel === "green").length;
+  const ohneBewertung = rows.filter((r) => r.s.ampel === "gray").length;
 
   const topRanked = rows.slice().sort((a, b) => b.s.total - a.s.total);
-  const topVisible = topRanked.slice(0, 4);
+  const topVisible = topRanked.slice(0, MAX_CANDIDATES);
   const incomplete = rows.filter((r) => r.dq.score < 70);
   const followups = inProject.filter((p) => !!p.nextAction);
 
@@ -157,73 +247,152 @@ function Dashboard() {
     .filter((r) => r.p.kaufpreis && r.c.bruttorendite > 0)
     .map((r) => ({ x: r.p.kaufpreis, y: r.c.bruttorendite * 100, name: r.p.title, ampel: r.s.ampel }));
 
-  // Vorname bevorzugt; ohne Namen kein künstliches "willkommen" als Anrede.
-  const firstName = ((profile as any)?.first_name || profile?.name || "").trim().split(/\s+/)[0];
   const isEmpty = total === 0;
+  const open = (id: string) => navigate({ to: "/properties/$id", params: { id } });
+  const showDetail = (tab: string) => {
+    setDetailTab(tab);
+    document.getElementById("details")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
+  /* ───── Erster Start ───── */
+  if (isEmpty) {
+    return (
+      <AppShell>
+        <h1 className="font-display text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-[-0.02em] text-[#1C1917] text-balance">
+          Prüf dein erstes Inserat.
+        </h1>
+        <p className="mt-2 max-w-[60ch] text-[14px] text-ink-2">
+          Link einfügen – in wenigen Sekunden siehst du Rendite, Cashflow und Mietrecht-Risiko.
+        </p>
+        <div className="mt-6">
+          <ImportTabsCard />
+        </div>
+        <FirstRunHint />
+      </AppShell>
+    );
+  }
+
+  /* ───── Mit Objekten ───── */
   return (
     <AppShell>
-      <div className="flex flex-col gap-1">
-        <h1 className="heading-page-sm">
-          {greeting()}{firstName ? `, ${firstName}` : ""}.
-        </h1>
-        <p className="text-[13px] text-ink-2">
-          {isEmpty
-            ? "Füg den Link zu einem Inserat ein – in wenigen Sekunden siehst du Rendite, Cashflow und Mietrecht-Risiko."
-            : <>
-                {total} {total === 1 ? "Objekt" : "Objekte"} in Prüfung
-                {kritisch > 0 && <> · davon {kritisch} {kritisch === 1 ? "mit Warnsignal" : "mit Warnsignalen"}</>}
-              </>}
-        </p>
-      </div>
-
-      {/* Haupteingabe – Analyse starten */}
-      <div className="mt-6 rounded-[12px] border border-[#EAE6DF] bg-white px-5 py-5 sm:px-6">
-        <h2 className="mb-4 font-display text-[20px] font-extrabold leading-tight text-[#1C1917]">
-          Immobilie gefunden? Sofort prüfen.
-        </h2>
-        <ImportTabsCard />
-      </div>
-
-      {isEmpty ? (
-        <FirstRunHint />
-      ) : (
-      <>
-      {/* Top-Kandidaten */}
-      <section className="mt-8" aria-labelledby="top-title">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 id="top-title" className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 font-sans">Top-Kandidaten</h2>
-          {topRanked.length > topVisible.length && (
-            <Link to="/properties" className="text-[13px] font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
-              Alle {topRanked.length} anzeigen
-            </Link>
-          )}
+      {/* Kopf: die wichtigste Zahl ist die Überschrift selbst */}
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-[26px] sm:text-[34px] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#1C1917] text-balance">
+            {interessant > 0 ? (
+              <>
+                <span className="text-[#2D6A4F] tabular-nums">{interessant}</span> von {total}{" "}
+                {total === 1 ? "Kaufkandidat ist" : "Kaufkandidaten sind"} interessant.
+              </>
+            ) : (
+              <>Noch keiner deiner {total} Kaufkandidaten ist interessant.</>
+            )}
+          </h1>
+          <p className="mt-1.5 text-[13px] text-ink-2">Interessant heißt: Score ab 70 von 100.</p>
         </div>
-        <div className="flex flex-col gap-2">
-          {topVisible.map((r) => (
-            <CandidateRow key={r.p.id} r={r} onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })} />
-          ))}
+        <a
+          href="#neues-inserat"
+          className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#235740]"
+        >
+          Inserat prüfen <ArrowDown className="size-3.5" aria-hidden />
+        </a>
+      </header>
+
+      {/* Nebenkennzahlen: eine ruhige Zeile statt gleich gewichteter Karten */}
+      <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3 text-[13px]">
+        <div>
+          <dt className="text-ink-3">Beste Bruttorendite</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums text-[#1C1917]">
+            {bestRendite ? fmtPct(bestRendite.c.bruttorendite) : "—"}
+            {bestRendite?.p.title && <span className="font-normal text-ink-2"> · {bestRendite.p.title.slice(0, 32)}</span>}
+          </dd>
         </div>
+        <div>
+          <dt className="text-ink-3">Warnsignale</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums" style={{ color: kritisch > 0 ? "#B91C1C" : "#1C1917" }}>
+            {kritisch} {kritisch === 1 ? "Objekt" : "Objekte"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-ink-3">Fehlende Daten</dt>
+          <dd className="mt-0.5">
+            <button type="button" onClick={() => showDetail("risiken")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-[#2D6A4F]">
+              {incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}
+            </button>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-ink-3">Offene Follow-ups</dt>
+          <dd className="mt-0.5">
+            <button type="button" onClick={() => showDetail("followups")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-[#2D6A4F]">
+              {followups.length}
+            </button>
+          </dd>
+        </div>
+        {ohneBewertung > 0 && (
+          <div>
+            <dt className="text-ink-3">Ohne Bewertung</dt>
+            <dd className="mt-0.5 font-semibold tabular-nums text-[#1C1917]">
+              {ohneBewertung} <span className="font-normal text-ink-2">· Kaufpreis oder Miete fehlt</span>
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      {/* Kaufkandidaten */}
+      <section className="mt-10" aria-labelledby="kandidaten-title">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 id="kandidaten-title" className="text-[15px] font-semibold text-[#1C1917] font-sans tracking-normal">
+            Kaufkandidaten <span className="font-normal text-ink-3">nach Score</span>
+          </h2>
+          <div className="flex items-center gap-3">
+            {topRanked.length > topVisible.length && (
+              <Link to="/properties" className="text-[13px] font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+                Alle {topRanked.length}
+              </Link>
+            )}
+            <ViewToggle view={view} onChange={setView} />
+          </div>
+        </div>
+
+        {view === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {topVisible.map((r) => (
+              <CandidateCard key={r.p.id} r={r} onOpen={() => open(r.p.id)} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
+            <div className="hidden sm:grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] gap-x-3 px-4 py-2 border-b border-[#EAE6DF] text-[11px] text-ink-3">
+              <span>Score</span>
+              <span>Objekt</span>
+              <span className="text-right">Kaufpreis</span>
+              <span className="text-right">Rendite</span>
+              <span className="text-right">Cashflow/M</span>
+              <span />
+            </div>
+            <ul className="divide-y divide-[#EAE6DF]">
+              {topVisible.map((r) => (
+                <CandidateListRow key={r.p.id} r={r} onOpen={() => open(r.p.id)} />
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard
-          label="Objekte in Prüfung"
-          value={String(total)}
-          sub={best ? `Beste: ${best.p.title?.slice(0, 32) || "—"}` : "Noch keine Objekte"}
-        />
-        <StatCard
-          label="Beste Rendite"
-          value={bestRendite ? fmtPct(bestRendite.c.bruttorendite) : "—"}
-          sub={bestRendite?.p.title?.slice(0, 40)}
-          accent
-        />
-      </div>
+      {/* Neues Inserat – das Formular trägt seine eigene Karte, kein zweiter Rahmen */}
+      <section id="neues-inserat" className="mt-10 scroll-mt-6" aria-labelledby="neues-inserat-title">
+        <h2 id="neues-inserat-title" className="mb-3 text-[15px] font-semibold text-[#1C1917] font-sans tracking-normal">
+          Neues Inserat prüfen
+        </h2>
+        <ImportTabsCard />
+      </section>
 
-      {/* Detail-Tabs */}
-      <div className="mt-6">
-        <Tabs defaultValue="risiken" className="w-full">
-          <TabsList className="h-auto p-0 bg-transparent border-b border-[#EAE6DF] rounded-none w-full justify-start gap-6 overflow-x-auto">
+      {/* Details */}
+      <section id="details" className="mt-10 scroll-mt-6" aria-label="Details">
+        <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full">
+          {/* overflow-y-hidden: die 1px-Unterstreichung des aktiven Tabs erzeugt sonst eine senkrechte Mini-Scrollleiste */}
+          <TabsList className="h-auto p-0 bg-transparent border-b border-[#EAE6DF] rounded-none w-full justify-start gap-6 overflow-x-auto overflow-y-hidden">
             {[
               { v: "risiken", l: "Fehlende Daten", n: incomplete.length },
               { v: "followups", l: "Follow-ups", n: followups.length },
@@ -240,65 +409,62 @@ function Dashboard() {
             ))}
           </TabsList>
 
-          <TabsContent value="risiken" className="mt-6">
-            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[13px] font-semibold text-[#1C1917]">Unvollständige Daten</h3>
-                <span className="text-[11px] text-ink-3">{incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}</span>
-              </div>
-              {incomplete.length === 0 ? (
-                <div className="text-sm text-ink-2 py-4 text-center">Alles vollständig.</div>
-              ) : (
-                <div className="overflow-x-auto -mx-2">
-                  <table className="w-full text-sm">
-                    <thead className="text-left text-xs text-ink-3">
-                      <tr>
-                        <th className="px-2 py-2 font-medium">Objekt</th>
-                        <th className="px-2 py-2 font-medium">Bezirk</th>
-                        <th className="px-2 py-2 font-medium">DQ</th>
-                        <th className="px-2 py-2 font-medium hidden md:table-cell">Fehlend</th>
-                        <th className="px-2 py-2"></th>
+          <TabsContent value="risiken" className="mt-4">
+            {incomplete.length === 0 ? (
+              <p className="py-2 text-[13px] text-ink-2">
+                Bei allen Objekten sind die wichtigsten Angaben da – die Scores beruhen auf vollständigen Daten.
+              </p>
+            ) : (
+              <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
+                <table className="w-full text-[13px]">
+                  <thead className="text-left text-[11px] text-ink-3">
+                    <tr>
+                      <th className="px-4 py-2 font-normal">Objekt</th>
+                      <th className="px-2 py-2 font-normal hidden sm:table-cell">Bezirk</th>
+                      <th className="px-2 py-2 font-normal">Daten</th>
+                      <th className="px-2 py-2 font-normal hidden md:table-cell">Es fehlen</th>
+                      <th className="px-4 py-2"><span className="sr-only">Öffnen</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {incomplete.map((r) => (
+                      <tr key={r.p.id} className="border-t border-[#EAE6DF] hover:bg-[#FAFAF8] cursor-pointer" onClick={() => open(r.p.id)}>
+                        <td className="px-4 py-2.5 font-medium text-[#1C1917] max-w-[16rem] truncate">{r.p.title || "Ohne Titel"}</td>
+                        <td className="px-2 py-2.5 text-ink-2 hidden sm:table-cell">{r.p.bezirk || "—"}</td>
+                        <td className="px-2 py-2.5"><AmpelBadge ampel={r.dq.ampel}>{r.dq.score}%</AmpelBadge></td>
+                        <td className="px-2 py-2.5 text-[12px] text-ink-2 hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
+                        <td className="px-4 py-2.5 text-right text-[#2D6A4F]"><ChevronRight className="size-4 inline" aria-hidden /></td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {incomplete.map((r) => (
-                        <tr key={r.p.id} className="border-t border-[#EAE6DF] hover:bg-[#FAFAF8] cursor-pointer" onClick={() => navigate({ to: "/properties/$id", params: { id: r.p.id } })}>
-                          <td className="px-2 py-2.5 font-medium text-[#1C1917]">{r.p.title || "—"}</td>
-                          <td className="px-2 py-2.5 text-ink-2">{r.p.bezirk || "—"}</td>
-                          <td className="px-2 py-2.5"><AmpelBadge ampel={r.dq.ampel}>{r.dq.score}%</AmpelBadge></td>
-                          <td className="px-2 py-2.5 text-xs text-ink-2 hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
-                          <td className="px-2 py-2.5 text-right text-[#2D6A4F]"><ChevronRight className="size-4 inline" aria-hidden /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="followups" className="mt-6">
-            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-5">
-              <h3 className="text-[13px] font-semibold text-[#1C1917] mb-3">Anstehende Follow-ups</h3>
-              {followups.length === 0 ? (
-                <div className="text-sm text-ink-2 py-4 text-center">Keine offenen Follow-ups.</div>
-              ) : (
-                <div className="space-y-2">
-                  {followups.map((p) => (
-                    <Link key={p.id} to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[#EAE6DF] hover:bg-[#FAFAF8]">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-[#1C1917] truncate">{p.title || "—"}</div>
-                        <div className="text-xs text-ink-2 truncate">{p.nextAction}</div>
-                      </div>
-                      <div className="text-xs text-ink-2 whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "—"}</div>
+          <TabsContent value="followups" className="mt-4">
+            {followups.length === 0 ? (
+              <p className="py-2 text-[13px] text-ink-2">
+                Keine Follow-ups geplant. Im CRM-Tab einer Immobilie legst du die nächste Aktion fest – Anruf, Besichtigung oder Unterlagen.
+              </p>
+            ) : (
+              <ul className="rounded-[10px] border border-[#EAE6DF] bg-white divide-y divide-[#EAE6DF]">
+                {followups.map((p) => (
+                  <li key={p.id}>
+                    <Link to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#FAFAF8]">
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-medium text-[#1C1917] truncate">{p.title || "Ohne Titel"}</span>
+                        <span className="block text-[12px] text-ink-2 truncate">{p.nextAction}</span>
+                      </span>
+                      <span className="text-[12px] tabular-nums text-ink-2 whitespace-nowrap">{p.nextActionDate ? new Date(p.nextActionDate).toLocaleDateString("de-AT") : "ohne Datum"}</span>
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </TabsContent>
 
-          <TabsContent value="bewertungen" className="mt-6">
+          <TabsContent value="bewertungen" className="mt-4">
             <div className="grid lg:grid-cols-2 gap-4">
               <ChartCard title="Score-Verteilung">
                 <ResponsiveContainer width="100%" height="100%">
@@ -341,9 +507,7 @@ function Dashboard() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-      </>
-      )}
+      </section>
     </AppShell>
   );
 }
