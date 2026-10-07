@@ -9,6 +9,10 @@ import {
 import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { CookieBanner } from "@/components/CookieBanner";
+import { IconContext, type IconProps } from "@phosphor-icons/react";
+
+const ICON_DEFAULTS: IconProps = { weight: "duotone", size: 24 };
 
 import appCss from "../styles.css?url";
 
@@ -17,10 +21,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "kauf ma – Immobilien-Rechner & CRM" },
+      { title: "kaufma – Immobilien-Rechner & CRM" },
       { name: "description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
-      { property: "og:title", content: "kauf ma – Immobilien-Rechner & CRM" },
-      { name: "twitter:title", content: "kauf ma – Immobilien-Rechner & CRM" },
+      { property: "og:title", content: "kaufma – Immobilien-Rechner & CRM" },
+      { name: "twitter:title", content: "kaufma – Immobilien-Rechner & CRM" },
       { property: "og:description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
       { name: "twitter:description", content: "Bewerte Immobilien blitzschnell: Rendite, Cashflow, Mietrecht-Risiko. Importiere Inserate oder PDFs." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/51532ee0-3a7b-4d03-a1c6-62ca00f544f5/id-preview-cfcaa651--0b41fa67-2b89-4ed5-b794-1a44c3f28cfd.lovable.app-1781106350122.png" },
@@ -36,23 +40,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600&display=swap" },
     ],
-    scripts: [
-      { async: true, src: "https://www.googletagmanager.com/gtag/js?id=G-NNNJS5L2K6" },
-      {
-        type: "text/javascript",
-        children: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-NNNJS5L2K6');`,
-      },
-    ],
+    // Google Analytics wird erst nach Einwilligung von <CookieBanner /> geladen.
   }),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: () => (
     <div className="min-h-screen grid place-items-center p-8 text-center">
       <div>
-        <h1 className="text-3xl font-semibold">Nicht gefunden</h1>
+        <h1 className="heading-page-sm">Nicht gefunden</h1>
         <p className="text-muted-foreground mt-2">Diese Seite existiert nicht.</p>
         <a href="/" className="inline-block mt-4 text-primary underline">Zur Startseite</a>
       </div>
@@ -61,7 +56,7 @@ gtag('config', 'G-NNNJS5L2K6');`,
   errorComponent: ({ error }) => (
     <div className="min-h-screen grid place-items-center p-8 text-center">
       <div>
-        <h1 className="text-2xl font-semibold">Ein Fehler ist aufgetreten</h1>
+        <h1 className="heading-page-sm">Ein Fehler ist aufgetreten</h1>
         <p className="text-muted-foreground mt-2 text-sm">{error.message}</p>
       </div>
     </div>
@@ -153,10 +148,15 @@ function RootComponent() {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GatedOutlet />
-        <Toaster position="top-right" richColors />
-      </AuthProvider>
+      {/* Ein Icon-System: Phosphor Duotone. 24px entspricht der früheren lucide-Standardgröße;
+          Tailwind-Größenklassen (size-4 …) überschreiben das wie gehabt. */}
+      <IconContext.Provider value={ICON_DEFAULTS}>
+        <AuthProvider>
+          <GatedOutlet />
+          <Toaster position="top-right" richColors />
+          <CookieBanner />
+        </AuthProvider>
+      </IconContext.Provider>
     </QueryClientProvider>
   );
 }

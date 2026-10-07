@@ -36,7 +36,7 @@ export function GlossarList() {
         <MagnifyingGlass
           weight="duotone"
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           value={q}
@@ -54,7 +54,7 @@ export function GlossarList() {
             <section key={cat}>
               <h3
                 className="mb-3"
-                style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: "#78716C", textTransform: "uppercase", letterSpacing: 0.5 }}
+                style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: 0.5 }}
               >
                 {CATEGORY_LABELS[cat]}
               </h3>
@@ -89,7 +89,7 @@ export function GlossarList() {
                         </span>
                       </header>
                       <p
-                        style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#78716C", lineHeight: 1.6, margin: 0 }}
+                        style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}
                       >
                         {t.long}
                       </p>
@@ -101,7 +101,7 @@ export function GlossarList() {
           );
         })}
         {[...grouped.values()].every((arr) => arr.length === 0) && (
-          <div className="text-center text-sm text-[#78716C] py-10">Keine Begriffe gefunden.</div>
+          <div className="text-center text-sm text-ink-2 py-10">Keine Begriffe gefunden.</div>
         )}
       </div>
     </div>

@@ -34,7 +34,7 @@ export function PurchaseInfoPanel({ p }: { p: Property }) {
           <textarea value={pi.notizenNachKauf ?? ""} onChange={(e) => u({ notizenNachKauf: e.target.value })} rows={3} className="inp" />
         </Field>
       </div>
-      <style>{`.inp { width:100%; border:1px solid hsl(var(--border)); background:hsl(var(--background)); border-radius:6px; padding:6px 10px; font-size:14px; }`}</style>
+      <style>{`.inp { width:100%; border:1px solid var(--border); background:var(--background); border-radius:6px; padding:6px 10px; font-size:14px; }`}</style>
     </div>
   );
 }

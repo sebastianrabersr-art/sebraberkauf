@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Check, Star, RotateCcw } from "lucide-react";
+import { Plus, Trash as Trash2, Check, Star, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import type { OpenQuestion, OpenQuestionCategory, OpenQuestionStatus, Property } from "@/lib/types";
 import { DEFAULT_OPEN_QUESTIONS } from "@/lib/calc";

@@ -5,7 +5,7 @@ import { RATGEBER_ARTICLES, RATGEBER_CATEGORIES } from "@/lib/ratgeber";
 export const Route = createFileRoute("/ratgeber/")({
   head: () => ({
     meta: [
-      { title: "Ratgeber – Immobilienkauf, Rendite & Cashflow | kauf ma" },
+      { title: "Ratgeber – Immobilienkauf, Rendite & Cashflow | kaufma" },
       { name: "description", content: "Verständliche Ratgeber zu Immobilienkauf, Kaufnebenkosten, Finanzierung, Rendite, Cashflow und Mietrecht in Österreich und Deutschland." },
       { property: "og:title", content: "Ratgeber – Immobilienkauf, Rendite & Cashflow" },
       { property: "og:description", content: "Verständliche Ratgeber zu Immobilienkauf, Rendite, Cashflow und Mietrecht." },
@@ -21,7 +21,7 @@ function RatgeberIndex() {
   return (
     <MarketingShell>
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <h1 className="text-4xl font-bold text-center">Ratgeber</h1>
+        <h1 className="heading-page text-center">Ratgeber</h1>
         <p className="text-muted-foreground text-center mt-3 max-w-2xl mx-auto">
           Klare Antworten zu Kaufnebenkosten, Rendite, Cashflow, Finanzierung und Mietrecht – für Käufer in Österreich und Deutschland.
         </p>
@@ -40,7 +40,7 @@ function RatgeberIndex() {
             if (items.length === 0) return null;
             return (
               <div key={cat} id={`cat-${slug(cat)}`} className="scroll-mt-24">
-                <h2 className="text-xl font-semibold mb-4">{cat}</h2>
+                <h2 className="heading-section mb-4">{cat}</h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((a) => (
                     <Link

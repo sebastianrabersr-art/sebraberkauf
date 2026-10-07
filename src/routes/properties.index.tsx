@@ -6,11 +6,11 @@ import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { ChevronDown, Download, ExternalLink, MapPin, Plus, Trash2, X } from "lucide-react";
+import { CaretDown as ChevronDown, DownloadSimple as Download, ArrowSquareOut as ExternalLink, MapPin, Plus, Trash as Trash2, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/properties/")({
-  head: () => ({ meta: [{ title: "Immobilien-Datenbank – Immo Invest" }] }),
+  head: () => ({ meta: [{ title: "Immobilien-Datenbank – kaufma" }] }),
   component: PropertiesList,
 });
 
@@ -34,7 +34,7 @@ const DEFAULT_SORT: SortKey = "score";
 // Hilfsfunktion: leere/0-Werte als em-dash anzeigen
 function num(value: number | null | undefined, fmt: (n: number) => string = fmtEUR) {
   if (value === null || value === undefined || !Number.isFinite(value) || value === 0) {
-    return <span className="text-[#A8A29E]">—</span>;
+    return <span className="text-ink-3">—</span>;
   }
   return <>{fmt(value)}</>;
 }
@@ -67,7 +67,7 @@ const inputClass =
 const SelectWrap = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`relative ${className}`}>
     {children}
-    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-[#A8A29E] pointer-events-none" />
+    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-ink-3 pointer-events-none" />
   </div>
 );
 
@@ -141,13 +141,10 @@ function PropertiesList() {
       {/* Seitenkopf */}
       <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1
-            className="text-[28px] leading-tight text-[#1C1917]"
-            style={{ ...bricolage, fontWeight: 800, letterSpacing: "-0.03em" }}
-          >
+          <h1 className="heading-page-sm">
             Kaufkandidaten
           </h1>
-          <p className="mt-1.5 text-[13px] text-[#78716C]">
+          <p className="mt-1.5 text-[13px] text-ink-2">
             {rows.length} Objekt{rows.length === 1 ? "" : "e"} in Prüfung
             {scopeAll ? " (alle Projekte)" : ` im Projekt „${activeProject.name}"`}. Gekaufte Immobilien findest du im Portfolio.
           </p>
@@ -213,7 +210,7 @@ function PropertiesList() {
           <button
             onClick={() => exportCSV(rows)}
             title="CSV exportieren"
-            className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-[#78716C] hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40"
+            className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-ink-2 hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40"
           >
             <Download className="size-4" />
           </button>
@@ -223,7 +220,7 @@ function PropertiesList() {
         <button
           type="button"
           onClick={() => setScopeAll((v) => !v)}
-          className="text-[12px] text-[#78716C] hover:text-[#2D6A4F] underline-offset-2 hover:underline"
+          className="text-[12px] text-ink-2 hover:text-[#2D6A4F] underline-offset-2 hover:underline"
         >
           {scopeAll ? "Nur aktives Projekt anzeigen" : "Alle Projekte anzeigen"}
         </button>
@@ -277,7 +274,7 @@ function PropertiesList() {
                   <th
                     key={h}
                     title={tip || undefined}
-                    className={`px-4 font-semibold text-[11px] uppercase text-[#A8A29E] whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}
+                    className={`px-4 font-semibold text-[11px] uppercase text-ink-3 whitespace-nowrap ${align === "right" ? "text-right" : "text-left"}`}
                     style={{ letterSpacing: "0.07em", height: 44 }}
                   >
                     <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end w-full" : ""}`}>
@@ -303,13 +300,13 @@ function PropertiesList() {
                           Ø {avg.toFixed(1)}
                         </div>
                       ) : (
-                        <div className="text-[14px] text-[#A8A29E]">—</div>
+                        <div className="text-[14px] text-ink-3">—</div>
                       )}
                     </td>
                     <td className="py-3 px-4 align-middle">
-                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-[#78716C]">{p.status}</span>
+                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-ink-2">{p.status}</span>
                     </td>
-                    <td className="py-3 px-4 align-middle text-[12px] text-[#A8A29E]">{p.priority ?? "—"}</td>
+                    <td className="py-3 px-4 align-middle text-[12px] text-ink-3">{p.priority ?? "—"}</td>
                     <td className="py-3 px-4 align-middle max-w-sm">
                       <div
                         className="text-[14px] text-[#1C1917]"
@@ -317,11 +314,11 @@ function PropertiesList() {
                       >
                         {p.title || "—"}
                       </div>
-                      <div className="text-[11px] text-[#A8A29E] truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                      <div className="text-[11px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
                     </td>
-                    <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>
-                    <td className={COL_NUMERIC} style={bricolage}>{p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>{p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(c.preisProM2)}</td>
                     <td className={COL_NUMERIC} style={bricolage} title="Maklerkosten brutto inkl. USt">{num(c.maklerProvisionBrutto)}</td>
                     <td className={COL_NUMERIC} style={bricolage} title="Kaufnebenkosten gesamt inkl. Makler">{num(c.kaufNebenkosten)}</td>
@@ -334,11 +331,11 @@ function PropertiesList() {
                       <span className={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-[#2D6A4F]" : "text-[#D97706]"}>
                         {num(c.requiredBreakEvenRent)}
                       </span>
-                      <div className="text-[10px] text-[#A8A29E]" style={{ fontFamily: "Inter" }}>{c.requiredBreakEvenRentPerM2 ? `${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²` : "—"}</div>
+                      <div className="text-[10px] text-ink-3" style={{ fontFamily: "Inter" }}>{c.requiredBreakEvenRentPerM2 ? `${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²` : "—"}</div>
                     </td>
-                    <td className={COL_NUMERIC} style={bricolage}>{c.bruttorendite ? fmtPct(c.bruttorendite) : <span className="text-[#A8A29E]">—</span>}</td>
+                    <td className={COL_NUMERIC} style={bricolage}>{c.bruttorendite ? fmtPct(c.bruttorendite) : <span className="text-ink-3">—</span>}</td>
                     <td className={`${COL_NUMERIC}`} style={bricolage}>
-                      <span className={c.cashflowMtl < 0 ? "text-[#DC2626]" : c.cashflowMtl > 0 ? "text-[#16A34A]" : "text-[#A8A29E]"}>
+                      <span className={c.cashflowMtl < 0 ? "text-[#DC2626]" : c.cashflowMtl > 0 ? "text-[#16A34A]" : "text-ink-3"}>
                         {c.cashflowMtl === 0 ? "—" : fmtEUR(c.cashflowMtl)}
                       </span>
                     </td>
@@ -350,13 +347,13 @@ function PropertiesList() {
                       {p.nextAction ? (
                         <>
                           <div className="truncate max-w-[140px]">{p.nextAction}</div>
-                          {p.nextActionDate && <div className="text-[10px] text-[#A8A29E]">{p.nextActionDate}</div>}
+                          {p.nextActionDate && <div className="text-[10px] text-ink-3">{p.nextActionDate}</div>}
                         </>
-                      ) : <span className="text-[#A8A29E]">—</span>}
+                      ) : <span className="text-ink-3">—</span>}
                     </td>
                     <td className="py-3 px-4 align-middle text-[12px] text-[#1C1917]">
-                      <div className="truncate max-w-[140px]">{p.sellerName || p.sellerCompany || <span className="text-[#A8A29E]">—</span>}</div>
-                      {p.sellerType && p.sellerType !== "unklar" && <div className="text-[10px] text-[#A8A29E]">{p.sellerType}</div>}
+                      <div className="truncate max-w-[140px]">{p.sellerName || p.sellerCompany || <span className="text-ink-3">—</span>}</div>
+                      {p.sellerType && p.sellerType !== "unklar" && <div className="text-[10px] text-ink-3">{p.sellerType}</div>}
                     </td>
                     <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
@@ -364,7 +361,7 @@ function PropertiesList() {
                           <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-[#2D6A4F] hover:text-[#235740]">
                             <ExternalLink className="size-3.5" />
                           </a>
-                        ) : <span className="text-[12px] text-[#A8A29E]">—</span>}
+                        ) : <span className="text-[12px] text-ink-3">—</span>}
                         {maps && (
                           <a href={maps} target="_blank" rel="noopener noreferrer" title="Karte öffnen" className="text-[#2D6A4F] hover:text-[#235740]">
                             <MapPin className="size-3.5" />
@@ -375,7 +372,7 @@ function PropertiesList() {
                     <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => { if (confirm("Wirklich löschen?")) { deleteProperty(p.id); toast.success("Gelöscht."); } }}
-                        className="text-[#A8A29E] hover:text-[#DC2626]"
+                        className="text-ink-3 hover:text-[#DC2626]"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -384,7 +381,7 @@ function PropertiesList() {
                 );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={21} className="py-12 text-center text-[13px] text-[#78716C]">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
+                <tr><td colSpan={21} className="py-12 text-center text-[13px] text-ink-2">Keine Immobilien. Füge eine neue über „Link analysieren" oder „Manuell hinzufügen" hinzu.</td></tr>
               )}
             </tbody>
           </table>

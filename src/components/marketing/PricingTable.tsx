@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Minus } from "@phosphor-icons/react";
 import { useState } from "react";
 import { PLAN_PRICING, useAuth } from "@/lib/auth";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
@@ -7,6 +7,11 @@ import { isStripeConfigured } from "@/lib/stripe";
 import { toast } from "sonner";
 
 type Cycle = "monthly" | "yearly";
+type PaidPlan = "plus" | "premium";
+type Feature = { label: string; included: boolean };
+
+const yes = (label: string): Feature => ({ label, included: true });
+const no = (label: string): Feature => ({ label, included: false });
 
 const TIERS = [
   {
@@ -15,14 +20,14 @@ const TIERS = [
     cta: "Kostenlos starten",
     highlight: false,
     features: [
-      "1 Immobilie",
-      "1 Projekt",
-      "Volle Analyse für diese eine Immobilie",
-      "Link-Import",
-      "Finanzierung, Miete & Cashflow, Rendite",
-      "Score",
-      "Keine Vergleichsfunktion",
-      "Kein Portfolio",
+      yes("1 Immobilie"),
+      yes("1 Projekt"),
+      yes("Volle Analyse für diese eine Immobilie"),
+      yes("Link-Import"),
+      yes("Finanzierung, Miete & Cashflow, Rendite"),
+      yes("Score"),
+      no("Vergleichsfunktion"),
+      no("Portfolio"),
     ],
   },
   {
@@ -31,14 +36,14 @@ const TIERS = [
     cta: "Plus starten",
     highlight: true,
     features: [
-      "Bis zu 5 Immobilien",
-      "1 Projekt",
-      "Alle Analysen",
-      "Vergleichsfunktion",
-      "Finanzierungsszenarien",
-      "PDF-Upload",
-      "Pipeline, Follow-ups, Besichtigungen",
-      "Kein Portfolio",
+      yes("Bis zu 5 Immobilien"),
+      yes("1 Projekt"),
+      yes("Alle Analysen"),
+      yes("Vergleichsfunktion"),
+      yes("Finanzierungsszenarien"),
+      yes("PDF-Upload"),
+      yes("Pipeline, Follow-ups, Besichtigungen"),
+      no("Portfolio"),
     ],
   },
   {
@@ -47,21 +52,34 @@ const TIERS = [
     cta: "Premium starten",
     highlight: false,
     features: [
-      "Unbegrenzt Immobilien",
-      "Unbegrenzt Projekte",
-      "Alle Funktionen",
-      "Portfolio & Zahlungs-Tracking",
-      "Export",
-      "Advanced-Berechnungen",
+      yes("Unbegrenzt Immobilien"),
+      yes("Unbegrenzt Projekte"),
+      yes("Alle Funktionen"),
+      yes("Portfolio & Zahlungs-Tracking"),
+      yes("Export"),
+      yes("Advanced-Berechnungen"),
     ],
   },
 ];
 
-function priceFor(id: "free" | "plus" | "premium", cycle: Cycle) {
+const eur = (n: number) =>
+  n.toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+
+/** Ersparnis beim Jahresabo gegenüber 12 Monatszahlungen. */
+function yearlySavings(id: PaidPlan) {
   const p = PLAN_PRICING[id];
+  const saved = p.monthly * 12 - p.yearly;
+  return { saved, freeMonths: Math.round(saved / p.monthly), perMonth: p.yearly / 12 };
+}
+
+// Gleich für Plus und Premium (2 Monate) – für den Umschalter genügt ein Wert.
+const FREE_MONTHS = yearlySavings("plus").freeMonths;
+
+function priceFor(id: "free" | PaidPlan, cycle: Cycle) {
   if (id === "free") return { amount: "0 €", period: "für immer" };
-  if (cycle === "yearly") return { amount: `${p.yearly.toString().replace(".", ",")} €`, period: "pro Jahr" };
-  return { amount: `${p.monthly.toString().replace(".", ",")} €`, period: "pro Monat" };
+  const p = PLAN_PRICING[id];
+  if (cycle === "yearly") return { amount: eur(p.yearly), period: "pro Jahr" };
+  return { amount: eur(p.monthly), period: "pro Monat" };
 }
 
 export function PricingTable() {
@@ -70,7 +88,7 @@ export function PricingTable() {
   const navigate = useNavigate();
   const { openCheckout, checkoutDialog } = useStripeCheckout();
 
-  const handleCta = (id: "free" | "plus" | "premium") => {
+  const handleCta = (id: "free" | PaidPlan) => {
     if (id === "free") {
       navigate({ to: user ? "/dashboard" : "/signup" });
       return;
@@ -90,43 +108,80 @@ export function PricingTable() {
     });
   };
 
+  const cycleBtn = (c: Cycle, label: string) => (
+    <button
+      type="button"
+      onClick={() => setCycle(c)}
+      aria-pressed={cycle === c}
+      className={`px-4 py-1.5 rounded-full text-[13px] border transition-colors ${
+        cycle === c ? "bg-[#1C1917] text-white border-[#1C1917]" : "bg-white text-[#1C1917] border-[#EAE6DF] hover:border-[#1C1917]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div>
-      <div className="flex items-center justify-center gap-3 mb-8">
-        <button
-          onClick={() => setCycle("monthly")}
-          className={`px-4 py-1.5 rounded-full text-sm border ${cycle === "monthly" ? "bg-foreground text-background" : "bg-card"}`}
-        >Monatlich</button>
-        <button
-          onClick={() => setCycle("yearly")}
-          className={`px-4 py-1.5 rounded-full text-sm border ${cycle === "yearly" ? "bg-foreground text-background" : "bg-card"}`}
-        >Jährlich · spare mit jährlicher Zahlung</button>
+      <div className="flex items-center justify-center gap-2 mb-8">
+        {cycleBtn("monthly", "Monatlich")}
+        {cycleBtn("yearly", `Jährlich · ${FREE_MONTHS} Monate gratis`)}
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         {TIERS.map((t) => {
           const price = priceFor(t.id, cycle);
           const isCurrent = user && subscription?.plan === t.id;
+          const savings = t.id !== "free" ? yearlySavings(t.id) : null;
           return (
-            <div key={t.id} className={`rounded-2xl border p-6 bg-card flex flex-col ${t.highlight ? "ring-2 ring-primary shadow-lg" : ""}`}>
-              {t.highlight && <div className="text-xs font-medium uppercase text-primary mb-2">Empfohlen</div>}
-              <h3 className="text-xl font-semibold">{t.name}</h3>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-3xl font-bold">{price.amount}</span>
-                <span className="text-sm text-muted-foreground">{price.period}</span>
+            <div
+              key={t.id}
+              className={`rounded-[12px] border bg-white p-6 flex flex-col ${t.highlight ? "border-[#2D6A4F] ring-1 ring-[#2D6A4F]" : "border-[#EAE6DF]"}`}
+            >
+              <h3 className="flex items-center gap-2 font-display text-[20px] font-extrabold text-[#1C1917]">
+                {t.name}
+                {t.highlight && (
+                  <span className="font-sans text-[11px] font-semibold tracking-normal rounded-full bg-[#E8F5EE] text-[#2D6A4F] px-2 py-0.5">
+                    Empfohlen
+                  </span>
+                )}
+              </h3>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="font-display text-[30px] font-extrabold tabular-nums text-[#1C1917]">{price.amount}</span>
+                <span className="text-[13px] text-ink-2">{price.period}</span>
               </div>
-              {cycle === "yearly" && t.id !== "free" && (
-                <div className="text-xs text-muted-foreground mt-1">Spare mit jährlicher Zahlung.</div>
+              {cycle === "yearly" && savings && (
+                <div className="text-[12px] text-ink-2 mt-1">
+                  {eur(savings.perMonth)} pro Monat · du sparst {eur(savings.saved)}
+                </div>
               )}
-              <ul className="mt-5 space-y-2 text-sm flex-1">
-                {t.features.map((f) => (
-                  <li key={f} className="flex gap-2"><Check className="size-4 text-primary mt-0.5 shrink-0" />{f}</li>
-                ))}
+              <ul className="mt-5 space-y-2 text-[14px] flex-1">
+                {t.features.map((f) =>
+                  f.included ? (
+                    <li key={f.label} className="flex gap-2 text-[#1C1917]">
+                      <Check weight="bold" className="size-4 text-[#2D6A4F] mt-0.5 shrink-0" aria-hidden />
+                      {f.label}
+                    </li>
+                  ) : (
+                    <li key={f.label} className="flex gap-2 text-ink-3">
+                      <Minus weight="bold" className="size-4 mt-0.5 shrink-0" aria-hidden />
+                      <span>
+                        <span className="sr-only">Nicht enthalten: </span>
+                        <span className="line-through decoration-[#D4CFC8]">{f.label}</span>
+                      </span>
+                    </li>
+                  ),
+                )}
               </ul>
               <button
+                type="button"
                 onClick={() => handleCta(t.id)}
                 disabled={!!isCurrent}
-                className={`mt-6 inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-60 ${t.highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                className={`mt-6 inline-flex items-center justify-center rounded-[8px] px-4 py-2.5 text-[14px] font-medium transition-colors disabled:opacity-60 ${
+                  t.highlight
+                    ? "bg-[#2D6A4F] text-white hover:bg-[#235740]"
+                    : "bg-white text-[#1C1917] border-[1.5px] border-[#EAE6DF] hover:border-[#1C1917]"
+                }`}
               >
                 {isCurrent ? "Aktueller Plan" : t.cta}
               </button>

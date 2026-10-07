@@ -19,7 +19,7 @@ const NAV_SECONDARY: { to: string; label: string; icon: React.ComponentType<any>
   { to: "/portfolio", label: "Portfolio", icon: Vault },
   { to: "/projects", label: "Projekte", icon: FolderSimple },
   { to: "/glossar", label: "Glossar", icon: BookOpen },
-  { to: "/assumptions", label: "Einstellungen", icon: GearSix },
+  { to: "/settings", label: "Einstellungen", icon: GearSix },
 ];
 
 const ALL_NAV = [...NAV_PRIMARY, ...NAV_SECONDARY];
@@ -28,7 +28,7 @@ function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
   const { projects, activeProjectId, setActiveProject } = useStore();
   return (
     <div className={cn("flex items-center gap-2", compact ? "" : "w-full")}>
-      {!compact && <span className="text-[10px] uppercase tracking-wider font-semibold text-[#A8A29E]">Aktives Projekt</span>}
+      {!compact && <span className="text-[10px] uppercase tracking-wider font-semibold text-ink-3">Aktives Projekt</span>}
       <select
         value={activeProjectId}
         onChange={(e) => setActiveProject(e.target.value)}
@@ -47,7 +47,7 @@ function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
 function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pathname: string; label?: string }) {
   return (
     <div className="space-y-0.5">
-      {label && <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-[#A8A29E]">{label}</div>}
+      {label && <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-ink-3">{label}</div>}
       {items.map((n) => {
         const active = n.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.to);
         return (
@@ -56,7 +56,7 @@ function NavSection({ items, pathname, label }: { items: typeof NAV_PRIMARY; pat
               "relative flex items-center gap-3 px-3 py-2 text-[13px] transition-colors",
               active
                 ? "text-[#2D6A4F] font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-[#2D6A4F] before:rounded-full"
-                : "text-[#78716C] hover:bg-[#EAE6DF] rounded-lg",
+                : "text-ink-2 hover:bg-[#EAE6DF] rounded-lg",
             )}>
             <n.icon weight="duotone" size={18} color={active ? "#2D6A4F" : "#A8A29E"} className="shrink-0" />
             <span className="truncate">{n.label}</span>
@@ -71,13 +71,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="min-h-screen flex bg-[#F5F3EE]">
-      <aside className="hidden md:flex w-64 flex-col bg-[#F5F3EE] text-[#78716C] border-r border-[#EAE6DF]">
+      <aside className="hidden md:flex w-64 flex-col bg-[#F5F3EE] text-ink-2 border-r border-[#EAE6DF]">
         <div className="px-5 py-5">
           <Logo size={32} textSize={16} />
         </div>
         <div className="px-3 pb-3 space-y-1.5">
           <ProjectSwitcher />
-          <Link to="/projects" className="block text-[11px] text-[#A8A29E] hover:text-[#78716C] px-1">
+          <Link to="/projects" className="block text-[11px] text-ink-3 hover:text-ink-2 px-1">
             Projekte verwalten →
           </Link>
         </div>
@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <AccountBox />
       </aside>
       <main className="flex-1 min-w-0">
-        <div className="md:hidden sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur text-[#78716C] border-b border-[#EAE6DF] px-3 py-2 space-y-2">
+        <div className="md:hidden sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur text-ink-2 border-b border-[#EAE6DF] px-3 py-2 space-y-2">
           <ProjectSwitcher compact />
           <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
             {ALL_NAV.map((n) => {
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     "text-xs whitespace-nowrap px-3 py-1.5 rounded-full border",
                     active
                       ? "bg-[#2D6A4F] text-white border-transparent"
-                      : "bg-white border-[#EAE6DF] text-[#78716C]",
+                      : "bg-white border-[#EAE6DF] text-ink-2",
                   )}>
                   {n.label}
                 </Link>
@@ -118,7 +118,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
   return (
     <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
       <div>
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="heading-page-sm">{title}</h1>
         {description && <p className="text-muted-foreground mt-1.5 text-sm">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
@@ -130,18 +130,18 @@ function AccountBox() {
   const { profile, subscription, signOut } = useAuth();
   return (
     <div className="p-3 border-t border-[#EAE6DF] space-y-1">
-      <Link to="/settings" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
+      <Link to="/settings" search={{}} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
         <div className="size-8 rounded-full bg-[#E8F5EE] text-[#2D6A4F] grid place-items-center">
           <UserCircle weight="duotone" size={18} color="#2D6A4F" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-sm text-[#1C1917]">{profile?.name || profile?.email || "Account"}</div>
-          <div className="text-[10px] text-[#A8A29E] flex items-center gap-1">
+          <div className="text-[10px] text-ink-3 flex items-center gap-1">
             <Sparkle weight="duotone" size={14} color="#A8A29E" /> {planLabel(subscription?.plan)}
           </div>
         </div>
       </Link>
-      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#EAE6DF] text-xs text-[#78716C]">
+      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#EAE6DF] text-xs text-ink-2">
         <SignOut weight="duotone" size={16} color="#78716C" /> Abmelden
       </button>
     </div>

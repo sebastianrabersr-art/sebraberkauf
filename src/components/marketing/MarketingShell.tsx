@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
+import { openCookieSettings } from "@/components/CookieBanner";
 
 export function MarketingShell({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -38,7 +39,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t mt-16">
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground flex flex-wrap gap-6 justify-between">
-          <span>© {new Date().getFullYear()} kauf ma</span>
+          <span>© {new Date().getFullYear()} kaufma</span>
           <nav className="flex flex-wrap gap-x-5 gap-y-2">
             <a href="/glossar" className="hover:text-foreground">Glossar</a>
             <a href="/impressum" className="hover:text-foreground">Impressum</a>
@@ -46,9 +47,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <a href="/agb" className="hover:text-foreground">AGB</a>
             <a href="/widerruf" className="hover:text-foreground">Widerruf</a>
             <a href="/kontakt" className="hover:text-foreground">Kontakt</a>
+            <button type="button" onClick={openCookieSettings} className="hover:text-foreground">Cookie-Einstellungen</button>
           </nav>
           <a href="mailto:hallo@kaufma.eu" className="w-full md:w-auto md:text-right hover:text-foreground">hallo@kaufma.eu</a>
-          <span className="w-full md:w-auto md:text-right">Hinweis: kauf ma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
+          <span className="w-full md:w-auto md:text-right">Hinweis: kaufma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
         </div>
       </footer>
     </div>

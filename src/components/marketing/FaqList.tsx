@@ -1,7 +1,7 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const FAQS = [
-  { q: "Ersetzt die App einen Steuerberater oder Anwalt?", a: "Nein. kauf ma liefert Berechnungen und Orientierung, aber keine Rechts-, Steuer- oder Finanzberatung." },
+  { q: "Ersetzt die App einen Steuerberater oder Anwalt?", a: "Nein. kaufma liefert Berechnungen und Orientierung, aber keine Rechts-, Steuer- oder Finanzberatung." },
   { q: "Ist die Mietrecht-Einschätzung rechtsverbindlich?", a: "Nein. Die Hinweise sind eine erste Orientierung. Für eine verbindliche Einschätzung wende dich an einen Anwalt für Mietrecht." },
   { q: "Kann ich Immobilien aus willhaben oder ImmoScout importieren?", a: "Ja, du kannst Inserate per Link erfassen und Felder automatisch übernehmen lassen." },
   { q: "Kann ich PDFs hochladen?", a: "Ja, Exposés und Makler-PDFs lassen sich pro Immobilie hochladen und auswerten (Plus & Premium)." },

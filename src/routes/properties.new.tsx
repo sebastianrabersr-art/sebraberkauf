@@ -11,7 +11,7 @@ import { track } from "@/lib/analytics";
 import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
 
 export const Route = createFileRoute("/properties/new")({
-  head: () => ({ meta: [{ title: "Neue Immobilie – Immo Invest" }] }),
+  head: () => ({ meta: [{ title: "Neue Immobilie – kaufma" }] }),
   component: NewPropertyPage,
 });
 

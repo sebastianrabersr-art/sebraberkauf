@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkle as Sparkles, Check } from "@phosphor-icons/react";
 import { PLAN_PRICING } from "@/lib/auth";
 import { track } from "@/lib/analytics";
 

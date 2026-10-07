@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
 import { fmtEUR, fmtPct } from "@/lib/calc";
 import type { Calc } from "@/lib/calc";

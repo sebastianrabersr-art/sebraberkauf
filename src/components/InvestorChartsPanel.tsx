@@ -21,7 +21,7 @@ import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 const COLORS = {
   debt: "#DC2626",
   value: "#2D6A4F",
-  equity: "#1A4FD6",
+  equity: "#D97706",
   cashPos: "#2D6A4F",
   cashNeg: "#DC2626",
   cashCum: "#1C1917",
@@ -164,8 +164,8 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
         controls={
           <div className="w-full sm:w-80 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] text-[#78716C]">Zeitraum: <strong>{sliderYears} Jahre</strong></span>
-              <span className="text-[12px] text-[#A8A29E]">
+              <span className="text-[12px] text-ink-2">Zeitraum: <strong>{sliderYears} Jahre</strong></span>
+              <span className="text-[12px] text-ink-3">
                 {paidOffIdx >= 0
                   ? `Abbezahlt in Jahr ${paidOffIdx + 1}`
                   : `Restschuld: ${fmtEUR(loan[loan.length - 1]?.restschuld ?? 0)}`}
@@ -180,7 +180,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
               onChange={(e) => setSliderYears(Number(e.target.value))}
               className="w-full accent-[#2D6A4F]"
             />
-            <div className="flex justify-between text-[10px] text-[#A8A29E]">
+            <div className="flex justify-between text-[10px] text-ink-3">
               <span>5J</span>
               <span>{Math.round(loanTermYears / 2)}J</span>
               <span>{loanTermYears}J</span>
@@ -213,7 +213,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center justify-center text-[13px] text-[#A8A29E]">
+          <div className="h-full flex items-center justify-center text-[13px] text-ink-3">
             Bitte Eigenkapital und Zinssatz eintragen, um die Darlehenskurve zu berechnen.
           </div>
         )}

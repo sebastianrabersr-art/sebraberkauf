@@ -7,11 +7,11 @@ import { calcToPropertyDraft, clearPendingCalc, getPendingCalc, type PendingCalc
 import { detectPlatform } from "@/lib/extract.functions";
 import { fmtEUR } from "@/lib/calc";
 import { toast } from "sonner";
-import { ArrowRight, Calculator, Home } from "lucide-react";
+import { ArrowRight, Calculator, House as Home } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/from-calc")({
-  head: () => ({ meta: [{ title: "Berechnung übernehmen – kauf ma" }] }),
+  head: () => ({ meta: [{ title: "Berechnung übernehmen – kaufma" }] }),
   component: FromCalcPage,
 });
 
@@ -41,7 +41,7 @@ function FromCalcPage() {
     return (
       <AppShell>
         <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-          <h1 className="text-2xl font-semibold">Keine gespeicherte Berechnung gefunden</h1>
+          <h1 className="heading-page-sm">Keine gespeicherte Berechnung gefunden</h1>
           <p className="text-muted-foreground text-sm">Öffne einen Rechner und speichere eine Berechnung, um sie hier zu übernehmen.</p>
           <button onClick={() => navigate({ to: "/rechner" })} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Zu den Rechnern</button>
         </div>
@@ -87,7 +87,7 @@ function FromCalcPage() {
           <div className="size-12 rounded-xl bg-primary/10 text-primary grid place-items-center mb-4">
             <Calculator className="size-6" />
           </div>
-          <h1 className="text-2xl font-semibold">Möchtest du aus dieser Berechnung eine Immobilie erstellen?</h1>
+          <h1 className="heading-page-sm">Möchtest du aus dieser Berechnung eine Immobilie erstellen?</h1>
           <p className="text-muted-foreground text-sm mt-2">
             Deine Eingaben aus dem Rechner können wir direkt als Kaufkandidat anlegen – damit du sie vollständig analysieren kannst.
           </p>

@@ -11,7 +11,7 @@ export function GlossaryTooltip({ termId }: { termId: string }) {
       <Info
         weight="duotone"
         size={14}
-        className="text-[#A8A29E] cursor-help"
+        className="text-ink-3 cursor-help"
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
       />
@@ -27,7 +27,7 @@ export function GlossaryTooltip({ termId }: { termId: string }) {
           borderRadius: "8px",
           padding: "10px 12px",
           fontSize: "12px",
-          color: "#78716C",
+          color: "var(--ink-2)",
           lineHeight: "1.5",
           zIndex: 9999,
           pointerEvents: "none",

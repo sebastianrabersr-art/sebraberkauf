@@ -1,0 +1,70 @@
+import { test, expect, hasCredentials, login, waitForApp, expectNotErrorPage, NO_CREDENTIALS_REASON } from "./fixtures";
+
+test.describe("Öffentliche Navigation", () => {
+  test("Startseite lädt mit Hero und Link-Eingabe", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Kostenlos starten" }).first()).toBeVisible();
+  });
+
+  for (const [label, path] of [
+    ["Demo", "/demo"],
+    ["Rechner", "/rechner"],
+    ["Ratgeber", "/ratgeber"],
+    ["Preise", "/pricing"],
+    ["FAQ", "/faq"],
+  ] as const) {
+    test(`Header-Link „${label}“ öffnet ${path}`, async ({ page }) => {
+      await page.goto("/");
+      await page.locator("header nav").getByRole("link", { name: label, exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`${path}(/|$|\\?|#)`));
+      await expectNotErrorPage(page);
+      await expect(page.getByRole("heading").first()).toBeVisible();
+    });
+  }
+
+  test("unbekannte Seite zeigt die 404-Ansicht", async ({ page, problems }) => {
+    const res = await page.goto("/diese-seite-gibt-es-nicht");
+    await expect(page.getByRole("heading", { name: "Nicht gefunden" })).toBeVisible();
+    expect(res?.status()).toBe(404);
+    problems.http.length = 0; // hier ist der 404 gewollt
+    problems.console.length = 0;
+  });
+});
+
+test.describe("Sidebar (eingeloggt)", () => {
+  test.skip(!hasCredentials, NO_CREDENTIALS_REASON);
+
+  test("alle Sidebar-Links öffnen eine funktionierende Seite", async ({ page }) => {
+    test.setTimeout(120_000);
+    await login(page);
+    await page.goto("/dashboard");
+    await waitForApp(page);
+
+    const sidebar = page.locator("aside nav");
+    await expect(sidebar).toBeVisible();
+    const links = await sidebar.getByRole("link").evaluateAll((els) =>
+      els.map((a) => ({ label: (a.textContent ?? "").trim(), href: a.getAttribute("href") ?? "" })),
+    );
+    expect(links.length, "Sidebar sollte Links enthalten").toBeGreaterThan(5);
+
+    for (const { label, href } of links) {
+      await test.step(`${label} → ${href}`, async () => {
+        await sidebar.getByRole("link", { name: label, exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(href.replace(/[?]/g, "\\?")));
+        await waitForApp(page);
+        await expectNotErrorPage(page);
+        await expect.soft(page.getByRole("heading").first()).toBeVisible();
+      });
+    }
+  });
+
+  test("Name/Avatar unten in der Sidebar öffnet die Einstellungen", async ({ page }) => {
+    await login(page);
+    await page.goto("/dashboard");
+    await waitForApp(page);
+    await page.locator("aside").getByRole("link").filter({ has: page.locator("svg") }).last().click();
+    await expect(page).toHaveURL(/\/settings/);
+    await expectNotErrorPage(page);
+  });
+});

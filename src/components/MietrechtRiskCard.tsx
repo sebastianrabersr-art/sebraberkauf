@@ -2,7 +2,7 @@ import { AmpelBadge } from "@/components/AmpelBadge";
 import { inferMietrecht } from "@/lib/calc";
 import { countryOf, findRegion, sourcesFor } from "@/lib/regions";
 import type { Property } from "@/lib/types";
-import { ExternalLink, Scale } from "lucide-react";
+import { ArrowSquareOut as ExternalLink, Scales as Scale } from "@phosphor-icons/react";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
 interface Props {

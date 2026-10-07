@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Maximize2, X } from "lucide-react";
+import { ArrowsOut as Maximize2, X } from "@phosphor-icons/react";
 
 /**
  * Globale Chart-Stilkonstanten — auf jeden Recharts-Chart anwendbar.
  */
 export const CHART_STYLE = {
   grid: { stroke: "#EAE6DF", strokeDasharray: "3 3" as const },
-  axisTick: { fontSize: 11, fill: "#A8A29E" } as const,
+  axisTick: { fontSize: 11, fill: "#736C67" } as const,
   axisLine: { stroke: "#EAE6DF" } as const,
   tooltipContent: {
     background: "#FFFFFF",
@@ -17,12 +17,18 @@ export const CHART_STYLE = {
   } as React.CSSProperties,
   line: { strokeWidth: 2, dot: false } as const,
   bar: { radius: [4, 4, 0, 0] as [number, number, number, number] },
+  // Recharts schreibt Farben als SVG-Attribute – dort greifen keine CSS-Variablen,
+  // deshalb Hex-Werte aus der Markenpalette.
   colors: {
     positive: "#2D6A4F",
     negative: "#DC2626",
     neutral: "#A8A29E",
-    secondary: "#1A4FD6",
+    secondary: "#1C1917",
+    caution: "#D97706",
+    soft: "#8FBFA5",
   },
+  /** Reihenfolge für Mehrfach-Serien (z. B. Szenarien-Vergleich). */
+  series: ["#2D6A4F", "#1C1917", "#D97706", "#DC2626", "#8FBFA5", "#A8A29E"],
   referenceLine: { strokeDasharray: "4 4", labelStyle: { fontSize: 11, fontFamily: "Inter" } },
 } as const;
 
@@ -75,7 +81,7 @@ export function ChartCard({
       <button
         onClick={() => setExpanded(true)}
         aria-label="Vollbild"
-        className="text-[#A8A29E] hover:text-[#1C1917] transition-colors"
+        className="text-ink-3 hover:text-[#1C1917] transition-colors"
       >
         <Maximize2 className="w-4 h-4" />
       </button>
@@ -95,7 +101,7 @@ export function ChartCard({
                 className="text-[11px] font-medium px-2 py-1 rounded-[6px] transition-colors"
                 style={{
                   background: active ? "#2D6A4F" : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "#78716C",
+                  color: active ? "#FFFFFF" : "var(--ink-2)",
                   border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
                 }}
               >
@@ -115,7 +121,7 @@ export function ChartCard({
         {header}
         {controls}
         <div style={{ height }}>{children}</div>
-        {footer && <div className="mt-2 text-[12px] text-[#78716C]">{footer}</div>}
+        {footer && <div className="mt-2 text-[12px] text-ink-2">{footer}</div>}
       </div>
 
       {expanded && (
@@ -132,7 +138,7 @@ export function ChartCard({
             <button
               onClick={() => setExpanded(false)}
               aria-label="Schließen"
-              className="absolute top-4 right-4 text-[#A8A29E] hover:text-[#1C1917]"
+              className="absolute top-4 right-4 text-ink-3 hover:text-[#1C1917]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,7 +150,7 @@ export function ChartCard({
             </h3>
             {controls}
             <div style={{ height: 500 }}>{children}</div>
-            {footer && <div className="mt-2 text-[13px] text-[#78716C]">{footer}</div>}
+            {footer && <div className="mt-2 text-[13px] text-ink-2">{footer}</div>}
           </div>
         </div>
       )}
