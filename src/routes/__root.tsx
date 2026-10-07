@@ -124,6 +124,10 @@ function matchesPath(pathname: string, prefix: string) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Signal für E2E-Tests: React hat die server-gerenderte Seite übernommen.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
   useEffect(() => {
     const onFocusIn = (e: FocusEvent) => {
       const t = e.target as HTMLInputElement | null;

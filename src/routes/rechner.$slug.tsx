@@ -10,6 +10,7 @@ import {
   type CalcFaqItem,
 } from "@/components/marketing/PublicCalcLayout";
 import { fmtEUR, fmtPct, pmt } from "@/lib/calc";
+import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit" | "fixflip";
@@ -192,6 +193,7 @@ function KaufNebenCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="kaufnebenkosten"
+      summary={{ label: "Kaufnebenkosten gesamt", value: fmtEUR(total) }}
       faq={meta.faq}
       snapshot={{
         type: "kaufnebenkosten",
@@ -211,13 +213,13 @@ function KaufNebenCalculator() {
             ]}
           />
           <label className="block">
-            <div className="text-xs font-medium text-muted-foreground mb-1">Bundesland / Region (optional)</div>
+            <div className="text-[11px] text-ink-2 mb-1">Bundesland / Region (optional)</div>
             <input
               type="text"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
               placeholder={land === "AT" ? "z. B. Wien" : "z. B. Bayern"}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] placeholder:text-ink-3"
             />
           </label>
           <NumInput label="Kaufpreis" value={kp} onChange={setKp} suffix="€" />
@@ -275,6 +277,7 @@ function RenditeCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="rendite"
+      summary={{ label: "Bruttorendite", value: fmtPct(brutto), tone: bruttoRenditeVerdict(brutto)?.tone }}
       faq={meta.faq}
       snapshot={{
         type: "rendite",
@@ -293,7 +296,7 @@ function RenditeCalculator() {
       }
       result={
         <div className="space-y-5">
-          <BigResult label="Bruttorendite" value={fmtPct(brutto)} />
+          <BigResult label="Bruttorendite" value={fmtPct(brutto)} verdict={bruttoRenditeVerdict(brutto)} />
           <div className="border-t pt-3">
             <ResultRow label="Nettorendite" value={fmtPct(netto)} />
             <ResultRow label="Eigenkapitalrendite" value={fmtPct(ekRendite)} />
@@ -342,6 +345,7 @@ function CashflowCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="cashflow"
+      summary={{ label: "Cashflow pro Monat", value: fmtEUR(cf), tone: cashflowVerdict(cf)?.tone }}
       faq={meta.faq}
       snapshot={{
         type: "cashflow",
@@ -361,7 +365,7 @@ function CashflowCalculator() {
       }
       result={
         <div className="space-y-5">
-          <BigResult label="Cashflow pro Monat" value={fmtEUR(cf)} tone={cf >= 0 ? "good" : "bad"} />
+          <BigResult label="Cashflow pro Monat" value={fmtEUR(cf)} verdict={cashflowVerdict(cf)} />
           <div className="text-xs text-muted-foreground">
             {cf >= 0 ? "Die Immobilie läuft monatlich positiv." : "Die Immobilie läuft monatlich negativ – du müsstest zuzahlen."}
           </div>
@@ -419,6 +423,7 @@ function FinanceCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="finanzierung"
+      summary={{ label: "Monatliche Rate", value: fmtEUR(rate) }}
       faq={meta.faq}
       snapshot={{
         type: "finanzierung",
@@ -478,6 +483,7 @@ function BreakEvenCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="breakeven"
+      summary={{ label: "Benötigte Miete", value: fmtEUR(required), tone: breakEvenVerdict(diff, aktMiete)?.tone }}
       faq={meta.faq}
       snapshot={{
         type: "breakeven",
@@ -497,7 +503,7 @@ function BreakEvenCalculator() {
       }
       result={
         <div className="space-y-5">
-          <BigResult label="Benötigte Miete" value={fmtEUR(required)} />
+          <BigResult label="Benötigte Miete" value={fmtEUR(required)} verdict={breakEvenVerdict(diff, aktMiete)} />
           <div className="text-xs text-muted-foreground">≈ {perM2.toFixed(2)} €/m²</div>
           <div className="border-t pt-3">
             <ResultRow label="Aktuelle Miete" value={fmtEUR(aktMiete)} />
@@ -542,6 +548,7 @@ function LeistbarkeitCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="leistbarkeit"
+      summary={{ label: "Maximaler Kaufpreis", value: fmtEUR(maxKp) }}
       faq={meta.faq}
       snapshot={{
         type: "leistbarkeit",
@@ -616,6 +623,7 @@ function FixFlipCalculator() {
       h1={meta.h1}
       intro={meta.intro}
       breadcrumbSlug="fixflip"
+      summary={{ label: "Gewinn nach Steuer", value: fmtEUR(gewinnNachSteuer), tone: flipVerdict(gewinnNachSteuer)?.tone }}
       faq={meta.faq}
       snapshot={{
         type: "fixflip",
@@ -641,7 +649,7 @@ function FixFlipCalculator() {
       }
       result={
         <div className="space-y-5">
-          <BigResult label="Gewinn nach Steuer" value={fmtEUR(gewinnNachSteuer)} tone={isPositive ? "good" : "bad"} />
+          <BigResult label="Gewinn nach Steuer" value={fmtEUR(gewinnNachSteuer)} verdict={flipVerdict(gewinnNachSteuer)} />
           <div className="border-t pt-3">
             <ResultRow label="Gesamtinvestition" value={fmtEUR(gesamtinvestition)} />
             <ResultRow label="Fremdkapital" value={fmtEUR(fremdkapital)} />

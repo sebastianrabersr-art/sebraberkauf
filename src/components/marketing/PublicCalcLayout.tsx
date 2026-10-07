@@ -1,11 +1,15 @@
-import { type ReactNode } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { ShieldCheck } from "@phosphor-icons/react";
+import { ArrowDown, ShieldCheck } from "@phosphor-icons/react";
 import { SaveCalcCTA } from "@/components/marketing/SaveCalcCTA";
 import type { PendingCalc } from "@/lib/pendingCalc";
+import { TONE_TEXT, type Tone, type Verdict } from "@/lib/verdicts";
 
 export type CalcFaqItem = { q: string; a: string };
+
+/** Hauptergebnis für die mobile Ergebnisleiste. */
+export type CalcSummary = { label: string; value: string; tone?: Tone };
 
 export function PublicCalcLayout({
   category,
@@ -17,6 +21,7 @@ export function PublicCalcLayout({
   faq,
   breadcrumbSlug,
   snapshot,
+  summary,
 }: {
   category: string;
   h1: string;
@@ -27,36 +32,40 @@ export function PublicCalcLayout({
   faq?: CalcFaqItem[];
   breadcrumbSlug: string;
   snapshot: PendingCalc;
+  /** Hauptergebnis – wird auf kleinen Bildschirmen als feste Leiste unten gezeigt. */
+  summary: CalcSummary;
 }) {
+  const resultRef = useRef<HTMLDivElement>(null);
   return (
     <MarketingShell>
-      <section className="max-w-6xl mx-auto px-6 py-12 bg-[#F5F3EE]">
+      <section className="max-w-6xl mx-auto px-6 pt-12 pb-28 lg:pb-12 bg-[#F5F3EE]">
         <nav className="text-[12px] text-ink-3 mb-5 flex gap-2 flex-wrap" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-[#1C1917]">Start</Link>
-          <span>/</span>
+          <span aria-hidden>/</span>
           <Link to="/rechner" className="hover:text-[#1C1917]">Rechner</Link>
-          <span>/</span>
+          <span aria-hidden>/</span>
           <span className="text-[#1C1917]">{category}</span>
         </nav>
 
         <header className="mb-8">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">{category}</div>
-          <h1 className="font-display text-[28px] sm:text-[32px] font-extrabold leading-tight text-[#1C1917]" style={{ letterSpacing: "-0.03em" }}>{h1}</h1>
-          <p className="text-[13px] text-ink-2 mt-2 max-w-2xl">{intro}</p>
+          <h1 className="heading-page-sm sm:text-[32px]">{h1}</h1>
+          <p className="text-[14px] text-ink-2 mt-2 max-w-2xl leading-relaxed">{intro}</p>
         </header>
 
         <div className="grid lg:grid-cols-5 gap-5 items-start">
           <div className="lg:col-span-3 space-y-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Deine Angaben</div>
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 font-sans">Deine Angaben</h2>
             <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 space-y-3">{inputs}</div>
           </div>
-          <div className="lg:col-span-2 lg:sticky lg:top-6">
+          <div ref={resultRef} className="lg:col-span-2 lg:sticky lg:top-6 scroll-mt-20">
             <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-3">Ergebnis</div>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-3 font-sans">Ergebnis</h2>
               {result}
             </div>
           </div>
         </div>
+
+        <MobileResultBar summary={summary} targetRef={resultRef} />
 
         <SaveCalcCTA snapshot={snapshot} />
 
@@ -92,7 +101,7 @@ export function PublicCalcLayout({
           </Link>
           <Link to="/signup" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
             <div className="text-[13px] font-medium text-[#1C1917]">Konto anlegen</div>
-            <div className="text-[12px] text-ink-2 mt-1">In 30 Sekunden starten</div>
+            <div className="text-[12px] text-ink-2 mt-1">Eine Immobilie gratis analysieren</div>
           </Link>
         </section>
 
@@ -164,21 +173,84 @@ export function SelectInput<T extends string>({
   );
 }
 
-export function BigResult({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  const c = tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#2D6A4F]";
+/**
+ * Hauptergebnis. Ohne Ton bleibt die Zahl neutral (Tinte) – Farbe gibt es nur,
+ * wenn das Ergebnis eine Wertung trägt, und dann immer mit Text (nie Farbe allein).
+ */
+export function BigResult({ label, value, tone, verdict }: { label: string; value: string; tone?: Tone; verdict?: Verdict }) {
+  const t = tone ?? verdict?.tone ?? "neutral";
   return (
     <div>
       <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
-      <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${c}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
+      <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${TONE_TEXT[t]}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
+      {verdict && <VerdictLine verdict={verdict} />}
     </div>
   );
 }
 
-export function ResultRow({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
+const TONE_DOT: Record<Tone, string> = {
+  good: "bg-[#2D6A4F]",
+  bad: "bg-[#B91C1C]",
+  caution: "bg-[#D97706]",
+  neutral: "bg-[#A8A29E]",
+};
+
+export function VerdictLine({ verdict }: { verdict: Verdict }) {
+  return (
+    <p className="mt-2 flex items-start gap-2 text-[13px] leading-snug text-[#1C1917]">
+      <span className={`mt-[6px] size-[7px] shrink-0 rounded-full ${TONE_DOT[verdict.tone]}`} aria-hidden />
+      <span>{verdict.text}</span>
+    </p>
+  );
+}
+
+export function ResultRow({ label, value, tone }: { label: string; value: string; tone?: Tone }) {
   return (
     <div className="flex items-baseline justify-between border-b border-[#F5F3EE] last:border-0 py-2">
       <span className="text-[13px] text-ink-2">{label}</span>
-      <span className={`font-medium text-[13px] tabular-nums ${tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#1C1917]"}`}>{value}</span>
+      <span className={`font-medium text-[13px] tabular-nums ${TONE_TEXT[tone ?? "neutral"]}`}>{value}</span>
+    </div>
+  );
+}
+
+/**
+ * Unter lg liegt das Ergebnis unter den Eingaben. Die Leiste zeigt das Hauptergebnis
+ * live beim Tippen und verschwindet, sobald das ausführliche Ergebnis im Bild ist.
+ */
+function MobileResultBar({ summary, targetRef }: { summary: CalcSummary; targetRef: RefObject<HTMLDivElement | null> }) {
+  const [resultVisible, setResultVisible] = useState(false);
+
+  useEffect(() => {
+    const el = targetRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setResultVisible(entry.isIntersecting), { threshold: 0.2 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [targetRef]);
+
+  return (
+    <div
+      className={`lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[#EAE6DF] bg-white px-4 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] transition-transform duration-300 ease-out motion-reduce:transition-none ${
+        resultVisible ? "translate-y-full" : "translate-y-0"
+      }`}
+      aria-hidden={resultVisible}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] text-ink-3 truncate">{summary.label}</div>
+          <div className={`font-display text-[22px] font-extrabold tabular-nums leading-tight ${TONE_TEXT[summary.tone ?? "neutral"]}`}>
+            {summary.value}
+          </div>
+        </div>
+        <button
+          type="button"
+          tabIndex={resultVisible ? -1 : 0}
+          onClick={() => targetRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          className="shrink-0 inline-flex items-center gap-1.5 min-h-[44px] rounded-[8px] border-[1.5px] border-[#EAE6DF] px-3.5 text-[13px] font-medium text-[#1C1917] active:border-[#1C1917]"
+        >
+          Details <ArrowDown size={14} weight="bold" aria-hidden />
+        </button>
+      </div>
     </div>
   );
 }

@@ -43,6 +43,46 @@ for (const c of CALCULATORS) {
   });
 }
 
+test("Rendite-Rechner ordnet das Ergebnis in Worten ein", async ({ page }) => {
+  await gotoHydrated(page, "/rechner/rendite");
+  const kaufpreis = page.getByRole("spinbutton", { name: /Kaufpreis/ });
+  const jahresmiete = page.getByRole("spinbutton", { name: /Jahresmiete/ });
+
+  // 2,0 % brutto → „Niedrig“
+  await kaufpreis.fill("500000");
+  await jahresmiete.fill("10000");
+  await expect(page.getByText(/^Niedrig/)).toBeVisible();
+
+  // 5,0 % brutto → „Attraktiv“
+  await jahresmiete.fill("25000");
+  await expect(page.getByText(/^Attraktiv/)).toBeVisible();
+});
+
+test("Cashflow-Rechner: negativer Cashflow wird als Zuzahlung benannt", async ({ page }) => {
+  await gotoHydrated(page, "/rechner/cashflow");
+  await page.getByRole("spinbutton", { name: /Erwartete Monatsmiete/ }).fill("100");
+  await expect(page.getByText(/Du zahlst jeden Monat .* dazu/)).toBeVisible();
+});
+
+test.describe("Rechner auf dem Handy", () => {
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true });
+
+  test("Ergebnisleiste zeigt das Ergebnis live und weicht dem ausführlichen Ergebnis", async ({ page }) => {
+    await gotoHydrated(page, "/rechner/rendite");
+    const bar = page.getByRole("button", { name: /Details/ }).locator("xpath=ancestor::div[contains(@class,'fixed')]");
+    await expect(bar).toBeInViewport();
+    const value = bar.locator("div.font-display");
+
+    await page.getByRole("spinbutton", { name: /Kaufpreis/ }).fill("500000");
+    await page.getByRole("spinbutton", { name: /Jahresmiete/ }).fill("25000");
+    await expect(value).toHaveText(/^5(,0+)?\s?%$/);
+
+    await page.getByRole("button", { name: /Details/ }).tap();
+    await expect(page.getByRole("heading", { name: "Ergebnis" })).toBeInViewport();
+    await expect(bar).not.toBeInViewport();
+  });
+});
+
 test("unbekannter Rechner zeigt „Rechner nicht gefunden“", async ({ page, problems }) => {
   await page.goto("/rechner/gibt-es-nicht");
   await expect(page.getByRole("heading", { name: "Rechner nicht gefunden" })).toBeVisible();

@@ -8,6 +8,8 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calculator, CaretDown as ChevronDown, Coins, Hammer, House as Home, PiggyBank, TrendUp as TrendingUp, Wallet, ArrowRight } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
+import { BigResult as Big, ResultRow as Row } from "@/components/marketing/PublicCalcLayout";
+import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
 
 export const Route = createFileRoute("/rechner/")({
   head: () => ({
@@ -224,24 +226,6 @@ function NumField({ label, value, onChange, suffix, step }: { label: string; val
   );
 }
 
-function Big({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  const c = tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#2D6A4F]";
-  return (
-    <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
-      <div className={`font-display text-[32px] font-extrabold tabular-nums mt-1 leading-tight ${c}`} style={{ letterSpacing: "-0.02em" }}>{value}</div>
-    </div>
-  );
-}
-
-function Row({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  return (
-    <div className="flex items-baseline justify-between border-b border-[#F5F3EE] last:border-0 py-2">
-      <span className="text-[13px] text-ink-2">{label}</span>
-      <span className={`font-medium text-[13px] tabular-nums ${tone === "good" ? "text-[#2D6A4F]" : tone === "bad" ? "text-[#DC2626]" : "text-[#1C1917]"}`}>{value}</span>
-    </div>
-  );
-}
 
 /* ───────── 1. Kaufnebenkosten ───────── */
 
@@ -368,7 +352,7 @@ function CashflowCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActi
       hint="Was bleibt jeden Monat übrig – nach Kreditrate, Betriebskosten, Rücklage und Leerstand."
       result={
         <div className="space-y-5">
-          <Big label="Geldfluss pro Monat" value={fmtEUR(cf)} tone={cf >= 0 ? "good" : "bad"} />
+          <Big label="Geldfluss pro Monat" value={fmtEUR(cf)} verdict={cashflowVerdict(cf)} />
           <div className="text-xs text-muted-foreground">{cf >= 0 ? "Die Immobilie läuft monatlich positiv." : "Die Immobilie läuft monatlich negativ – du müsstest zuzahlen."}</div>
           <div className="border-t pt-3">
             <Row label="Mieteinnahmen" value={fmtEUR(miete)} tone="good" />
@@ -412,7 +396,7 @@ function RenditeCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
       hint="Brutto-, Netto- und Eigenkapitalrendite – jährlich in Prozent."
       result={
         <div className="space-y-5">
-          <Big label="Bruttorendite" value={fmtPct(brutto)} />
+          <Big label="Bruttorendite" value={fmtPct(brutto)} verdict={bruttoRenditeVerdict(brutto)} />
           <div className="border-t pt-3">
             <Row label="Nettorendite" value={fmtPct(netto)} />
             <Row label="Eigenkapitalrendite" value={fmtPct(ekRendite)} />
@@ -458,7 +442,7 @@ function BreakEvenCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useAct
       hint="Welche Miete brauchst du, damit die Immobilie monatlich nicht negativ läuft?"
       result={
         <div className="space-y-5">
-          <Big label="Benötigte Miete" value={fmtEUR(required)} />
+          <Big label="Benötigte Miete" value={fmtEUR(required)} verdict={breakEvenVerdict(diff, aktMiete)} />
           <div className="text-xs text-muted-foreground">≈ {perM2.toFixed(2)} €/m²</div>
           <div className="border-t pt-3">
             <Row label="Aktuelle Miete" value={fmtEUR(aktMiete)} />
@@ -563,7 +547,7 @@ function FixFlipCalc() {
       hint="Einkauf → Renovierung → Verkauf. Optional: Mieteinnahmen während der Renovierung berücksichtigen."
       result={
         <div className="space-y-4">
-          <Big label="Gewinn nach Steuer" value={fmtEUR(gewinnNachSteuer)} tone={isPositive ? "good" : "bad"} />
+          <Big label="Gewinn nach Steuer" value={fmtEUR(gewinnNachSteuer)} verdict={flipVerdict(gewinnNachSteuer)} />
           <div className="border-t pt-3 space-y-0">
             <Row label="Gesamtinvestition" value={fmtEUR(gesamtinvestition)} />
             <Row label="Fremdkapital" value={fmtEUR(fremdkapital)} />
