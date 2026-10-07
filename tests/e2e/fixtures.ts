@@ -74,7 +74,8 @@ export async function login(page: Page) {
  */
 export async function gotoHydrated(page: Page, path: string) {
   const res = await page.goto(path);
-  await page.waitForLoadState("networkidle");
+  // Die App setzt <html data-hydrated="true">, sobald React übernommen hat (__root.tsx).
+  await page.locator("html[data-hydrated='true']").waitFor({ state: "attached", timeout: 30_000 });
   return res;
 }
 

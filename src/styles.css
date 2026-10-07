@@ -156,8 +156,12 @@
   .tabular-nums, table { font-variant-numeric: tabular-nums; }
 
   /* Cards: no shadows, soft border */
-  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+  .shadow, .shadow-sm {
     box-shadow: none !important;
+  }
+  /* Schwebende Ebenen (Dialoge, Menüs, Popover, Toasts) brauchen Tiefe: weicher, versetzter Schatten in Tinte */
+  .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: 0 12px 32px -12px rgb(28 25 23 / 0.22), 0 2px 6px -2px rgb(28 25 23 / 0.08) !important;
   }
 }
 
@@ -176,18 +180,6 @@
   .badge-interesting { background:#E8F5EE; color:#2D6A4F; border-radius:20px; }
   .badge-negotiate { background:#FEF3C7; color:#92400E; border-radius:20px; }
 }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-@keyframes float-delayed {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-float-delayed { animation: float-delayed 5s ease-in-out infinite 1s; }
-.perspective-1000 { perspective: 1000px; }
 
 /* Remove spinner arrows from number inputs globally */
 input[type=number] { -moz-appearance: textfield; }

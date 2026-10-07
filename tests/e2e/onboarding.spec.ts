@@ -11,19 +11,21 @@ test.describe("Onboarding", () => {
 
   test("Schritte vor und zurück (ohne abzuschließen)", async ({ page }) => {
     await page.getByRole("button", { name: /Jetzt einrichten/ }).click();
-    await expect(page.getByText("Schritt 1 von 4")).toBeVisible();
+    await expect(page.getByText("Schritt 1 von 3")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Wie heißt du?" })).toBeVisible();
-    await expect(page.getByPlaceholder("Max")).toBeVisible();
-    await expect(page.getByPlaceholder("Mustermann")).toBeVisible();
+    await expect(page.getByLabel("Vorname")).toBeVisible();
+    await expect(page.getByLabel("Nachname")).toBeVisible();
+    await expect(page.getByRole("radio", { name: /Vermieten/ })).toHaveAttribute("aria-checked", "true");
 
-    await page.getByRole("button", { name: "Weiter", exact: true }).click();
-    await expect(page.getByText("Schritt 2 von 4")).toBeVisible();
-    await expect(page.getByPlaceholder(/Wien, Graz/)).toBeVisible();
+    // Enter schickt den Schritt ab
+    await page.getByLabel("Vorname").press("Enter");
+    await expect(page.getByText("Schritt 2 von 3")).toBeVisible();
+    await expect(page.getByLabel(/Stadt \/ Region/)).toBeVisible();
 
-    await page.getByRole("button", { name: "← Zurück" }).click();
-    await expect(page.getByText("Schritt 1 von 4")).toBeVisible();
+    await page.getByRole("button", { name: "Zurück" }).click();
+    await expect(page.getByText("Schritt 1 von 3")).toBeVisible();
 
-    await page.getByRole("button", { name: "← Zurück" }).click();
+    await page.getByRole("button", { name: "Zurück" }).click();
     await expect(page.getByRole("heading", { name: "Willkommen bei kaufma." })).toBeVisible();
   });
 

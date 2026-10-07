@@ -69,13 +69,17 @@ const btnSecondaryCls =
 const btnDangerCls =
   "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-[#DC2626] px-[18px] py-[9px] text-[13px] text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-60";
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
-      className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
-      style={{ background: checked ? "#2D6A4F" : "#EAE6DF" }}
+      className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors"
+      // Aus-Zustand dunkel genug für 3:1 gegen Weiß (Bedienelement-Kontrast)
+      style={{ background: checked ? "#2D6A4F" : "#8A837D" }}
     >
       <span
         className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
@@ -307,7 +311,7 @@ function SettingsPage() {
               <div style={{ fontFamily: "Inter", fontSize: 13, fontWeight: 500, color: "#1C1917" }}>Marketing-E-Mails</div>
               <div style={descStyle}>Tipps, Updates und neue Features</div>
             </div>
-            <Toggle checked={marketing} onChange={setMarketing} />
+            <Toggle checked={marketing} onChange={setMarketing} label="Marketing-E-Mails" />
           </div>
           <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveProfile}>
             {busy && <Loader2 className="size-3.5 animate-spin" />}Speichern
@@ -412,7 +416,7 @@ function SettingsPage() {
               return (
                 <div key={k} className="flex items-center justify-between">
                   <div style={{ fontFamily: "Inter", fontSize: 13, color: "#1C1917" }}>{label}</div>
-                  <Toggle checked={v} onChange={(checked) => setS("notification_preferences", { ...np, [k]: checked })} />
+                  <Toggle checked={v} onChange={(checked) => setS("notification_preferences", { ...np, [k]: checked })} label={label} />
                 </div>
               );
             })}

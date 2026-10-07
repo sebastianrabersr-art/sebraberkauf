@@ -33,8 +33,8 @@ for (const c of CALCULATORS) {
     const before = (await result.innerText()).trim();
 
     // Erstes Zahlenfeld deutlich verändern → Ergebnis muss sich ändern.
-    const input = page.locator('input[type="number"]').first();
-    const current = Number(await input.inputValue()) || 0;
+    const input = page.locator('input[inputmode="decimal"]').first();
+    const current = Number((await input.inputValue()).replace(/\./g, "").replace(",", ".")) || 0;
     const next = current > 0 ? Math.round(current * 1.5) : 100_000;
     await input.fill(String(next));
     await input.blur();
@@ -42,6 +42,61 @@ for (const c of CALCULATORS) {
     await expect(result).not.toHaveText(/NaN|Infinity|undefined/);
   });
 }
+
+test("Rendite-Rechner ordnet das Ergebnis in Worten ein", async ({ page }) => {
+  await gotoHydrated(page, "/rechner/rendite");
+  const kaufpreis = page.getByRole("textbox", { name: /Kaufpreis/ });
+  const jahresmiete = page.getByRole("textbox", { name: /Jahresmiete/ });
+
+  // 2,0 % brutto → „Niedrig“
+  await kaufpreis.fill("500000");
+  await jahresmiete.fill("10000");
+  await expect(page.getByText(/^Niedrig/)).toBeVisible();
+
+  // 5,0 % brutto → „Attraktiv“
+  await jahresmiete.fill("25000");
+  await expect(page.getByText(/^Attraktiv/)).toBeVisible();
+});
+
+test("Zahlenfelder: Tausenderpunkte, Dezimalkomma, Einheit im Feld", async ({ page }) => {
+  await gotoHydrated(page, "/rechner/kaufnebenkosten");
+  const kp = page.getByRole("textbox", { name: /Kaufpreis/ });
+  await expect(kp).toHaveValue(/^\d{1,3}(\.\d{3})+$/); // z. B. 300.000
+
+  await kp.fill("1.250.000");
+  await kp.blur();
+  await expect(kp).toHaveValue("1.250.000");
+
+  const makler = page.getByRole("textbox", { name: /Maklerprovision/ });
+  await makler.fill("2,5");
+  await makler.blur();
+  await expect(makler).toHaveValue("2,5");
+});
+
+test("Cashflow-Rechner: negativer Cashflow wird als Zuzahlung benannt", async ({ page }) => {
+  await gotoHydrated(page, "/rechner/cashflow");
+  await page.getByRole("textbox", { name: /Erwartete Monatsmiete/ }).fill("100");
+  await expect(page.getByText(/Du zahlst jeden Monat .* dazu/)).toBeVisible();
+});
+
+test.describe("Rechner auf dem Handy", () => {
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true });
+
+  test("Ergebnisleiste zeigt das Ergebnis live und weicht dem ausführlichen Ergebnis", async ({ page }) => {
+    await gotoHydrated(page, "/rechner/rendite");
+    const bar = page.getByRole("button", { name: /Details/ }).locator("xpath=ancestor::div[contains(@class,'fixed')]");
+    await expect(bar).toBeInViewport();
+    const value = bar.locator("div.font-display");
+
+    await page.getByRole("textbox", { name: /Kaufpreis/ }).fill("500000");
+    await page.getByRole("textbox", { name: /Jahresmiete/ }).fill("25000");
+    await expect(value).toHaveText(/^5(,0+)?\s?%$/);
+
+    await page.getByRole("button", { name: /Details/ }).tap();
+    await expect(page.getByRole("heading", { name: "Ergebnis" })).toBeInViewport();
+    await expect(bar).not.toBeInViewport();
+  });
+});
 
 test("unbekannter Rechner zeigt „Rechner nicht gefunden“", async ({ page, problems }) => {
   await page.goto("/rechner/gibt-es-nicht");

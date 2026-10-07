@@ -2,11 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Logo } from "@/components/Logo";
+import { AuthLayout, GoogleButton, OrDivider, authInputCls, authLabelCls, authPrimaryCls } from "@/components/AuthLayout";
 import { track } from "@/lib/analytics";
 import { authErrorMessage } from "@/lib/auth-errors";
 import { sendWelcomeEmail } from "@/lib/welcome-email.functions";
@@ -63,41 +60,40 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-muted/30">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-        <a href="/" className="flex items-center mb-6">
-          <Logo size={32} textSize={16} />
-        </a>
-        <h1 className="heading-page-sm">Kostenlos starten</h1>
-        <p className="text-muted-foreground text-sm mt-1">1 Immobilie gratis. Keine Kreditkarte nötig.</p>
+    <AuthLayout
+      title="Kostenlos starten"
+      subtitle="Eine Immobilie komplett gratis analysieren. Keine Kreditkarte nötig."
+      footer={
+        <>
+          Schon ein Konto?{" "}
+          <a href="/login" className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">Anmelden</a>
+        </>
+      }
+    >
+      <GoogleButton onClick={handleGoogle} disabled={busy}>Mit Google registrieren</GoogleButton>
+      <OrDivider />
 
-        <Button type="button" variant="outline" className="w-full mt-6" onClick={handleGoogle}>
-          Mit Google registrieren
-        </Button>
-        <div className="flex items-center gap-3 my-5 text-xs text-muted-foreground">
-          <div className="h-px bg-border flex-1" /> oder <div className="h-px bg-border flex-1" />
+      <form onSubmit={handleEmail} className="space-y-4">
+        <div>
+          <label htmlFor="name" className={authLabelCls}>Name</label>
+          <input id="name" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className={authInputCls} />
         </div>
-
-        <form onSubmit={handleEmail} className="space-y-3">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="email">E-Mail</Label>
-            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="pw">Passwort</Label>
-            <Input id="pw" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          <Button type="submit" className="w-full" disabled={busy}>{busy ? "Erstellen…" : "Account erstellen"}</Button>
-        </form>
-
-        <div className="text-sm text-center mt-5 text-muted-foreground">
-          Schon ein Account? <a href="/login" className="text-primary underline">Login</a>
+        <div>
+          <label htmlFor="email" className={authLabelCls}>E-Mail</label>
+          <input id="email" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} className={authInputCls} />
         </div>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="pw" className={authLabelCls}>Passwort</label>
+          <input id="pw" type="password" required minLength={8} autoComplete="new-password" aria-describedby="pw-hint" value={password} onChange={(e) => setPassword(e.target.value)} className={authInputCls} />
+          <p id="pw-hint" className="text-[12px] text-ink-3 mt-1.5">Mindestens 8 Zeichen.</p>
+        </div>
+        <button type="submit" className={authPrimaryCls} disabled={busy}>{busy ? "Konto wird erstellt…" : "Account erstellen"}</button>
+        <p className="text-[12px] text-ink-3 leading-relaxed">
+          Mit der Registrierung akzeptierst du die{" "}
+          <a href="/agb" className="underline underline-offset-2 hover:text-[#1C1917]">AGB</a> und hast die{" "}
+          <a href="/datenschutz" className="underline underline-offset-2 hover:text-[#1C1917]">Datenschutzerklärung</a> gelesen.
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

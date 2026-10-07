@@ -18,7 +18,7 @@ function Pricing() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <h1 className="heading-page text-center">Preise</h1>
         <p className="text-muted-foreground text-center mt-3 max-w-xl mx-auto">Starte kostenlos. Upgrade jederzeit. Kündige jederzeit.</p>
-        <div className="mt-10"><PricingTable /></div>
+        <div className="mt-10"><PricingTable tierHeading="h2" /></div>
       </section>
     </MarketingShell>
   );
