@@ -6,18 +6,18 @@ import { PricingTable } from "@/components/marketing/PricingTable";
 import { FaqList } from "@/components/marketing/FaqList";
 import { detectPlatform } from "@/lib/extract.functions";
 import { analyzePropertyUrl, type AnalyzeResult } from "@/lib/analyze.functions";
-import { isValidUrl } from "@/lib/calc";
+import { fmtPct, isValidUrl, pmt } from "@/lib/calc";
+import { cashflowVerdict, TONE_TEXT } from "@/lib/verdicts";
 import { track } from "@/lib/analytics";
-import { ArrowRight, Calculator, Coins, FileText, House as Home, LinkSimple as Link2, CircleNotch as Loader2, ShieldCheck, TrendUp as TrendingUp, Wallet, Warning as AlertTriangle, GitDiff as GitCompareArrows, UploadSimple as Upload } from "@phosphor-icons/react";
-
+import { ArrowRight, Coins, FileText, House, LinkSimple, CircleNotch, TrendUp, Warning, UploadSimple } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "kaufma – Immobilien-Investments in Sekunden bewerten" },
-      { name: "description", content: "Importiere Inserate oder PDFs, berechne Rendite, Cashflow und Mietrecht-Risiko. Für private Käufer, Anleger und Familien." },
-      { property: "og:title", content: "kaufma – Immobilien-Investments in Sekunden bewerten" },
-      { property: "og:description", content: "Bewerte Wohnungen blitzschnell: Rendite, Cashflow, Maklerkosten und Mietrecht-Risiko." },
+      { title: "kaufma – Wohnungen als Kapitalanlage durchrechnen" },
+      { name: "description", content: "Link zum Inserat einfügen und sehen, ob sich die Wohnung rechnet: Kaufnebenkosten, Kreditrate, Cashflow, Rendite und Mietrecht-Risiko – für Österreich und Deutschland." },
+      { property: "og:title", content: "kaufma – Wohnungen als Kapitalanlage durchrechnen" },
+      { property: "og:description", content: "Kaufnebenkosten, Kreditrate, Cashflow, Rendite und Mietrecht-Risiko – ausgerechnet, bevor du zur Besichtigung fährst." },
     ],
   }),
   component: Landing,
@@ -31,18 +31,6 @@ const TESTIMONIALS: { name: string; age: number; quote: string }[] = [
   { name: "Lisa", age: 54, quote: "Endlich kann ich meinem Mann zeigen warum eine Wohnung in Graz besser ist als eine in Wien. Die Vergleichsfunktion macht das Argument für mich." },
 ];
 
-function Feature({ icon: Icon, title, children }: any) {
-  return (
-    <div className="rounded-xl border bg-card p-6">
-      <div className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center mb-3">
-        <Icon className="size-5" />
-      </div>
-      <h3 className="font-semibold">{title}</h3>
-      <p className="text-sm text-muted-foreground mt-1.5">{children}</p>
-    </div>
-  );
-}
-
 function fmtEUR(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -53,6 +41,85 @@ function estimateNebenkostenPct(country: string): number {
   return 0.10;
 }
 
+/* ───────── Beispielrechnung im Hero ───────── */
+
+/**
+ * Ausgedachtes, aber realistisches Beispiel – live mit derselben Logik gerechnet wie die Rechner.
+ * Zeigt bewusst eine Wohnung, die sich nicht von selbst trägt: genau dort spart kaufma Geld.
+ */
+const EXAMPLE = {
+  title: "2 Zimmer, Altbau, Wien-Favoriten",
+  kaufpreis: 289_000,
+  flaeche: 58,
+  miete: 920, // Nettomiete kalt / Monat
+  nkPct: 0.1,
+  eigenkapital: 80_000,
+  zins: 0.038,
+  jahre: 30,
+  nichtUmlagefaehig: 60,
+  ruecklageProM2: 1,
+};
+
+function ExampleAnalysis() {
+  const e = EXAMPLE;
+  const nk = e.kaufpreis * e.nkPct;
+  const kredit = Math.max(0, e.kaufpreis + nk - e.eigenkapital);
+  const rate = pmt(e.zins / 12, e.jahre * 12, kredit);
+  const ruecklage = e.ruecklageProM2 * e.flaeche;
+  const cashflow = e.miete - rate - e.nichtUmlagefaehig - ruecklage;
+  const brutto = (e.miete * 12) / e.kaufpreis;
+  const faktor = e.kaufpreis / (e.miete * 12);
+  const verdict = cashflowVerdict(cashflow);
+
+  const rows: [string, string][] = [
+    ["Kaufpreis", fmtEUR(e.kaufpreis)],
+    [`Nebenkosten (≈ ${Math.round(e.nkPct * 100)} %)`, fmtEUR(nk)],
+    ["Kreditrate / Monat", fmtEUR(rate)],
+    ["Bruttorendite", fmtPct(brutto)],
+    ["Kaufpreisfaktor", faktor.toLocaleString("de-DE", { maximumFractionDigits: 1 })],
+  ];
+
+  return (
+    <figure className="rounded-[16px] border border-[#EAE6DF] bg-white p-5 sm:p-6" aria-labelledby="example-title">
+      <div className="text-[12px] text-ink-3">Beispielrechnung</div>
+      <div id="example-title" className="mt-1 text-[16px] font-semibold text-[#1C1917]">{e.title}</div>
+      <div className="text-[13px] text-ink-2">{e.flaeche} m² · vermietet um {fmtEUR(e.miete)} netto kalt</div>
+
+      <div className="mt-5 border-t border-[#EAE6DF] pt-4">
+        <div className="text-[12px] text-ink-3">Cashflow pro Monat</div>
+        <div className={`font-display text-[40px] font-extrabold leading-none tabular-nums mt-1 ${TONE_TEXT[verdict?.tone ?? "neutral"]}`}>
+          {fmtEUR(cashflow)}
+        </div>
+        {verdict && <p className="mt-2 text-[14px] text-[#1C1917]">{verdict.text}</p>}
+      </div>
+
+      <dl className="mt-4 divide-y divide-[#F5F3EE]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-baseline justify-between py-2 text-[13px]">
+            <dt className="text-ink-2">{k}</dt>
+            <dd className="font-medium tabular-nums text-[#1C1917]">{v}</dd>
+          </div>
+        ))}
+        <div className="flex items-start justify-between gap-4 py-2 text-[13px]">
+          <dt className="text-ink-2">Mietrecht</dt>
+          <dd className="text-right">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[12px] font-medium text-[#92400E]">
+              <Warning size={13} aria-hidden /> prüfen
+            </span>
+            <div className="mt-1 text-[12px] text-ink-2 max-w-[220px]">Altbau vor 1945: Richtwert-Mietzins wahrscheinlich – die angesetzte Miete könnte zu hoch sein.</div>
+          </dd>
+        </div>
+      </dl>
+
+      <figcaption className="mt-3 text-[11px] text-ink-3 leading-relaxed">
+        Annahmen: {fmtEUR(e.eigenkapital)} Eigenkapital, {(e.zins * 100).toLocaleString("de-DE")} % Zins, {e.jahre} Jahre, Rücklage {e.ruecklageProM2} €/m², {fmtEUR(e.nichtUmlagefaehig)} nicht umlagefähige Kosten. Keine echte Immobilie.
+      </figcaption>
+    </figure>
+  );
+}
+
+/* ───────── Ergebnis nach eigener Link-Analyse ───────── */
+
 function PreviewCard({ data }: { data: AnalyzeResult }) {
   const price = data.purchase_price;
   const area = data.living_area_m2;
@@ -61,7 +128,7 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
   const neben = price ? Math.round(price * nebenPct) : null;
   const total = price && neben ? price + neben : null;
   const quality = data.data_quality_score;
-  const qualityClass = quality >= 70 ? "text-success bg-success/10" : quality >= 40 ? "text-warning bg-warning/10" : "text-destructive bg-destructive/10";
+  const qualityClass = quality >= 70 ? "bg-[#E8F5EE] text-[#2D6A4F]" : quality >= 40 ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#FEE2E2] text-[#991B1B]";
   const location = [data.district, data.city].filter(Boolean).join(" · ") || data.region || "—";
 
   const handleCtaClick = () => {
@@ -74,37 +141,35 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
   };
 
   return (
-    <div className="mt-5 rounded-2xl border bg-card p-5 text-left shadow-sm">
+    <div className="mt-5 rounded-[16px] border border-[#EAE6DF] bg-white p-5 text-left">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Erste Analyse</div>
-          <div className="font-semibold truncate">{data.title || "Immobilie"}</div>
+          <div className="text-[16px] font-semibold text-[#1C1917] truncate">{data.title || "Deine Immobilie"}</div>
+          <div className="text-[13px] text-ink-2">Erste Auswertung aus dem Inserat</div>
         </div>
-        {data.platform && (
-          <span className="text-[10px] px-2 py-1 rounded-full bg-muted shrink-0">{data.platform}</span>
-        )}
+        {data.platform && <span className="text-[11px] px-2 py-1 rounded-full bg-[#F5F3EE] text-ink-2 shrink-0">{data.platform}</span>}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
         <Stat label="Kaufpreis" value={fmtEUR(price)} />
         <Stat label="Wohnfläche" value={area ? `${area} m²` : "—"} />
         <Stat label="Preis / m²" value={pricePerM2 ? fmtEUR(pricePerM2) : "—"} />
-        <Stat label="Stadt / Bezirk" value={location} />
-        <Stat label={`Nebenkosten (≈${Math.round(nebenPct * 100)} %)`} value={fmtEUR(neben)} />
+        <Stat label="Lage" value={location} />
+        <Stat label={`Nebenkosten (≈ ${Math.round(nebenPct * 100)} %)`} value={fmtEUR(neben)} />
         <Stat label="Gesamtkapital" value={fmtEUR(total)} highlight />
-      </div>
+      </dl>
 
-      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-        <div className="text-xs text-muted-foreground">Datenqualität</div>
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${qualityClass}`}>{quality}%</span>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#EAE6DF] pt-3 text-[13px]">
+        <span className="text-ink-2">Vollständigkeit der Angaben</span>
+        <span className={`text-[12px] font-semibold px-2 py-0.5 rounded-full ${qualityClass}`}>{quality} %</span>
       </div>
 
       {data.missing_fields && data.missing_fields.length > 0 && (
-        <div className="mt-3 rounded-lg border border-warning/40 bg-warning/5 p-3 flex items-start gap-2 text-xs">
-          <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
+        <div className="mt-3 rounded-[10px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2 text-[13px]">
+          <Warning className="size-4 text-[#92400E] shrink-0 mt-0.5" aria-hidden />
           <div>
-            <div className="font-medium text-foreground">Fehlende Daten</div>
-            <div className="text-muted-foreground mt-0.5">{data.missing_fields.slice(0, 6).join(", ")}</div>
+            <div className="font-medium text-[#1C1917]">Im Inserat fehlt noch</div>
+            <div className="text-ink-2 mt-0.5">{data.missing_fields.slice(0, 6).join(", ")}</div>
           </div>
         </div>
       )}
@@ -112,13 +177,13 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
       <a
         href="/signup"
         onClick={handleCtaClick}
-        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold text-sm hover:bg-primary/90 transition-colors"
+        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-5 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors"
       >
-        Account erstellen und vollständige Analyse sehen
-        <ArrowRight className="size-4" />
+        Konto anlegen und ganze Auswertung sehen
+        <ArrowRight className="size-4" aria-hidden />
       </a>
-      <p className="mt-2 text-[11px] text-muted-foreground text-center">
-        Inkl. Finanzierungs-Szenarien, Mietrecht-Risiko, Vergleich & CRM. Keine Kreditkarte.
+      <p className="mt-2 text-[12px] text-ink-3 text-center">
+        Mit Finanzierung, Cashflow, Mietrecht-Risiko und Vergleich. Keine Kreditkarte.
       </p>
     </div>
   );
@@ -126,9 +191,9 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 ${highlight ? "bg-primary/10" : "bg-muted/40"}`}>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`text-base font-semibold mt-0.5 ${highlight ? "text-primary" : ""}`}>{value}</div>
+    <div>
+      <dt className="text-[12px] text-ink-3">{label}</dt>
+      <dd className={`text-[15px] font-semibold mt-0.5 tabular-nums ${highlight ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}>{value}</dd>
     </div>
   );
 }
@@ -153,8 +218,8 @@ function LinkAnalyzer() {
     setPreview(null);
     setFailedUrl(null);
     const trimmed = url.trim();
-    if (!trimmed) { setError("Bitte einen Immobilienlink einfügen."); return; }
-    if (!isValidUrl(trimmed)) { setError("Bitte eine gültige URL mit https:// einfügen."); return; }
+    if (!trimmed) { setError("Bitte füg zuerst einen Link zu einem Inserat ein."); return; }
+    if (!isValidUrl(trimmed)) { setError("Das sieht nicht nach einem Link aus. Er sollte mit https:// beginnen."); return; }
     setLoading(true);
     track("landing_link_submitted", { platform: platform || "unknown" });
     try {
@@ -162,7 +227,7 @@ function LinkAnalyzer() {
       if (!res.success) {
         persistPending(trimmed);
         setFailedUrl(trimmed);
-        setError(res.error || "Analyse aktuell nicht möglich.");
+        setError(res.error || "Dieses Inserat konnten wir gerade nicht auslesen.");
         track("landing_preview_failed", { platform: platform || "unknown", error_code: res.error?.slice(0, 40) || "unknown" });
         return;
       }
@@ -173,7 +238,7 @@ function LinkAnalyzer() {
     } catch (err) {
       persistPending(trimmed);
       setFailedUrl(trimmed);
-      setError(err instanceof Error ? err.message : "Analyse aktuell nicht möglich.");
+      setError(err instanceof Error ? err.message : "Dieses Inserat konnten wir gerade nicht auslesen.");
       track("landing_preview_failed", { platform: platform || "unknown", error_code: "exception" });
     } finally {
       setLoading(false);
@@ -182,44 +247,44 @@ function LinkAnalyzer() {
 
   return (
     <div>
-      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-2xl border bg-card p-2">
+      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-[14px] border-[1.5px] border-[#EAE6DF] bg-white p-2 focus-within:border-[#2D6A4F] transition-colors">
         <div className="flex-1 flex items-center gap-2 px-3">
-          <Link2 className="size-4 text-muted-foreground shrink-0" />
+          <LinkSimple className="size-4 text-ink-3 shrink-0" aria-hidden />
           <input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Immobilienlink einfügen"
-            className="flex-1 outline-none bg-transparent text-sm py-3 min-w-0"
-            aria-label="Immobilienlink"
+            placeholder="https://www.willhaben.at/…"
+            className="flex-1 outline-none bg-transparent text-[15px] py-3 min-w-0 placeholder:text-ink-3"
+            aria-label="Link zum Inserat"
           />
-          {platform && <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted hidden sm:inline">{platform}</span>}
+          {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] text-ink-2 hidden sm:inline">{platform}</span>}
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+          className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-5 py-3 text-[14px] font-semibold hover:bg-[#235740] disabled:opacity-60 transition-colors whitespace-nowrap"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-          {loading ? "Immobilie wird analysiert…" : "Kostenlos analysieren"}
+          {loading ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <ArrowRight className="size-4" aria-hidden />}
+          {loading ? "Inserat wird ausgelesen…" : "Kostenlos analysieren"}
         </button>
       </form>
 
       {error && (
-        <div className="mt-3 text-xs text-left bg-warning/5 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
-          <AlertTriangle className="size-3.5 text-warning shrink-0 mt-0.5" />
+        <div className="mt-3 text-[13px] text-left rounded-[10px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2" role="alert">
+          <Warning className="size-4 text-[#92400E] shrink-0 mt-0.5" aria-hidden />
           <div className="space-y-2">
-            <div className="text-foreground">{error}</div>
+            <div className="text-[#1C1917]">{error}</div>
             {failedUrl && (
               <div className="flex flex-wrap gap-2 pt-1">
-                <a href="/signup" className="inline-flex items-center gap-1 rounded-md bg-primary text-primary-foreground px-2.5 py-1.5 font-medium hover:bg-primary/90">
-                  <ArrowRight className="size-3" /> Trotzdem in App öffnen
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] bg-[#2D6A4F] text-white px-2.5 py-1.5 font-medium hover:bg-[#235740]">
+                  <ArrowRight className="size-3" aria-hidden /> Trotzdem in der App öffnen
                 </a>
-                <a href="/signup" className="inline-flex items-center gap-1 rounded-md border bg-card px-2.5 py-1.5 font-medium hover:bg-muted">
-                  <FileText className="size-3" /> Inseratstext einfügen
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] border border-[#EAE6DF] bg-white px-2.5 py-1.5 font-medium hover:border-[#1C1917]">
+                  <FileText className="size-3" aria-hidden /> Inseratstext einfügen
                 </a>
-                <a href="/signup" className="inline-flex items-center gap-1 rounded-md border bg-card px-2.5 py-1.5 font-medium hover:bg-muted">
-                  <Upload className="size-3" /> PDF hochladen
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] border border-[#EAE6DF] bg-white px-2.5 py-1.5 font-medium hover:border-[#1C1917]">
+                  <UploadSimple className="size-3" aria-hidden /> Exposé als PDF hochladen
                 </a>
               </div>
             )}
@@ -227,245 +292,178 @@ function LinkAnalyzer() {
         </div>
       )}
 
-      {!preview && !loading && (
-        <a
-          href="/demo"
-          className="mt-3 inline-flex text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-        >
-          Kein Link zur Hand? Demo ansehen
-        </a>
-      )}
-
       {preview && <PreviewCard data={preview} />}
     </div>
   );
 }
 
+/* ───────── So prüfst du eine Wohnung ───────── */
 
-
-
+const STEPS: { title: string; text: string; details: string[] }[] = [
+  {
+    title: "Inserat einfügen",
+    text: "Link von willhaben, ImmoScout24 & Co. einfügen – kaufma liest Preis, Fläche, Lage und Baujahr aus.",
+    details: ["Exposé als PDF hochladen", "oder Daten selbst eingeben"],
+  },
+  {
+    title: "Die echten Kosten sehen",
+    text: "Nicht nur der Kaufpreis: Grunderwerbsteuer, Grundbuch, Notar und Makler – auch rückwärts aus dem Bruttobetrag gerechnet.",
+    details: ["Kreditrate und Bank-Szenarien", "Sondertilgungen im Zahlungsplan"],
+  },
+  {
+    title: "Rechnet sie sich?",
+    text: "Cashflow nach Rate, Rücklage und Leerstand, Brutto- und Nettorendite, und die Miete, ab der du nichts mehr zuzahlst.",
+    details: ["Mietrecht-Ampel: MRG, Richtwert, Befristungsabschlag", "fehlende Angaben werden markiert"],
+  },
+  {
+    title: "Vergleichen und dranbleiben",
+    text: "Kandidaten nebeneinanderlegen und sehen, welche bleibt. Besichtigungen, Notizen und nächste Schritte pro Wohnung.",
+    details: ["Pipeline vom ersten Blick bis zum Angebot", "Erinnerungen für Follow-ups"],
+  },
+];
 
 function Landing() {
   return (
     <MarketingShell>
-      {/* ===== HERO SECTION ===== */}
-      <section className="relative overflow-hidden">
-        {/* Subtle background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent pointer-events-none" />
-        
-        <div className="max-w-6xl mx-auto px-6 pt-12 pb-20 md:pt-20 md:pb-28">
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3.5 py-1.5 text-xs text-muted-foreground mb-6 shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-              </span>
-              Für private Käufer und Anleger in Österreich & Deutschland
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1]">
-              Immobilie gefunden?{" "}
-              <span className="text-primary">Link einfügen</span>{" "}
-              und sofort prüfen.
+      {/* ===== HERO ===== */}
+      <section id="analyse" className="scroll-mt-20">
+        <div className="max-w-6xl mx-auto px-6 pt-10 pb-16 md:pt-16 md:pb-24 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-14 items-center">
+          <div>
+            <h1 className="font-display text-[38px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.04] text-[#1C1917] text-balance" style={{ letterSpacing: "-0.035em" }}>
+              Immobilie gefunden? <span className="text-[#2D6A4F]">Link einfügen</span> und sofort prüfen.
             </h1>
-
-            {/* Subheadline */}
-            <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Erhalte erste Kennzahlen zu Kaufpreis, Nebenkosten, Finanzierung, Miete und Cashflow –{" "}
-              <strong className="text-foreground">ohne Excel</strong> und ohne Vorwissen.
+            <p className="mt-5 text-[17px] text-ink-2 max-w-xl leading-relaxed">
+              Kaufnebenkosten, Kreditrate, Cashflow und Mietrecht-Risiko – ausgerechnet, bevor du zur Besichtigung fährst. Für Käuferinnen und Käufer in Österreich und Deutschland.
             </p>
 
-            {/* Link input — central element */}
-            <div className="mt-8 max-w-2xl mx-auto">
+            <div className="mt-8 max-w-xl">
               <LinkAnalyzer />
-              <p className="mt-3 text-xs text-muted-foreground">
-                Funktioniert mit Immobilienlinks aus Österreich und Deutschland.
+              <p className="mt-3 text-[13px] text-ink-2">
+                Eine Immobilie ist gratis, ohne Kreditkarte. Kein Link zur Hand?{" "}
+                <a href="/demo" className="font-medium text-[#2D6A4F] underline underline-offset-4">Demo ansehen</a>
+                {" "}oder{" "}
+                <Link to="/rechner" className="font-medium text-[#2D6A4F] underline underline-offset-4">Rechner ohne Anmeldung</Link>.
               </p>
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                <a href="/demo" className="text-sm font-medium text-primary underline underline-offset-4">Demo ansehen</a>
-                <a href="/pricing" className="text-sm font-medium text-primary underline underline-offset-4">Preise ansehen</a>
-                <a href="/rechner" className="text-sm font-medium text-primary underline underline-offset-4">Rechner nutzen</a>
-              </div>
             </div>
           </div>
+
+          <ExampleAnalysis />
         </div>
       </section>
 
-      {/* ===== SO FUNKTIONIERT'S SECTION ===== */}
-      <section className="border-t bg-muted/20">
+      {/* ===== SO PRÜFST DU EINE WOHNUNG ===== */}
+      <section id="features" className="border-t border-[#EAE6DF] bg-white scroll-mt-20">
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
-          {/* Header */}
-          <div className="max-w-2xl mx-auto text-center mb-14">
-            <h2 className="heading-section">
-              Immobilienanalyse in 3 einfachen Schritten
-            </h2>
-            <p className="text-muted-foreground mt-3 leading-relaxed">
-              Kein Excel, keine komplizierten Formeln. Du fügst eine Immobilie hinzu und bekommst eine strukturierte Bewertung.
+          <div className="max-w-2xl">
+            <h2 className="heading-section">So prüfst du eine Wohnung mit kaufma</h2>
+            <p className="text-[16px] text-ink-2 mt-3 leading-relaxed">
+              Vom Inserat zur Entscheidung, ohne Excel. Jeder Schritt steht für sich – du kannst auch nur einen davon nutzen.
             </p>
           </div>
 
-          {/* Steps */}
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting line — desktop only */}
-            <div className="hidden md:block absolute top-14 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+          <ol className="mt-12 grid md:grid-cols-2 gap-x-14 gap-y-12">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="border-t-2 border-[#1C1917] pt-5">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-display text-[15px] font-extrabold text-[#2D6A4F] tabular-nums" aria-hidden>{i + 1}</span>
+                  <h3 className="font-display text-[22px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.02em" }}>{s.title}</h3>
+                </div>
+                <p className="mt-2 text-[15px] text-[#1C1917]/85 leading-relaxed">{s.text}</p>
+                <ul className="mt-3 space-y-1">
+                  {s.details.map((d) => (
+                    <li key={d} className="flex items-baseline gap-2 text-[14px] text-ink-2">
+                      <span className="size-1 shrink-0 rounded-full bg-[#2D6A4F] translate-y-[-3px]" aria-hidden />
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
 
-            {/* Step 1 */}
-            <div className="relative text-center">
-              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
-                <Link2 className="size-6" />
-                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">1</span>
-              </div>
-              <h3 className="font-semibold text-base">Link einfügen oder PDF hochladen</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
-                Füge einfach den Link eines Immobilieninserats ein, lade ein Exposé hoch oder trage die Daten manuell ein.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative text-center">
-              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
-                <Calculator className="size-6" />
-                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">2</span>
-              </div>
-              <h3 className="font-semibold text-base">Kosten, Finanzierung und Cashflow verstehen</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
-                Die App berechnet Kaufnebenkosten, Maklerkosten, Kreditrate, Break-even-Miete, Rendite, Cashflow und wichtige Risiken.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="relative text-center">
-              <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-5 shadow-sm">
-                <GitCompareArrows className="size-6" />
-                <span className="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shadow-sm">3</span>
-              </div>
-              <h3 className="font-semibold text-base">Vergleichen und entscheiden</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
-                Vergleiche mehrere Immobilien nebeneinander und erkenne, welches Objekt wirklich interessant ist – und welches du lieber aussortierst.
-              </p>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-14 text-center">
-            <a
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-7 py-3.5 font-semibold text-sm hover:bg-primary/90 transition-colors"
-            >
-              Kostenlos starten <ArrowRight className="size-4" />
+          <div className="mt-14 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <a href="/signup" className="inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
+              Kostenlos ausprobieren <ArrowRight className="size-4" aria-hidden />
             </a>
-            <p className="mt-3 text-xs text-muted-foreground">Keine Kreditkarte. 1 Immobilie gratis. Jederzeit upgraden.</p>
+            <span className="text-[13px] text-ink-2">Eine Immobilie gratis. Upgrade nur, wenn du vergleichen willst.</span>
           </div>
         </div>
       </section>
 
-      {/* ===== REST UNCHANGED ===== */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-16 border-t">
-        <h2 className="heading-section text-center">Alles in einem Tool</h2>
-        <p className="text-muted-foreground text-center mt-2">Von der ersten Inserat-Idee bis zum Notartermin.</p>
-        <div className="grid md:grid-cols-3 gap-5 mt-10">
-          <Feature icon={Link2} title="Link- & PDF-Import">Inserate von willhaben oder ImmoScout per URL erfassen, Exposés als PDF hochladen.</Feature>
-          <Feature icon={TrendingUp} title="Rendite & Cashflow">Brutto-/Nettorendite, monatlicher Cashflow, Mindestmiete – inkl. aller Kaufnebenkosten.</Feature>
-          <Feature icon={Wallet} title="Maklerkosten transparent">Provision in %, netto, brutto, USt – auch rückwärts gerechnet. Verkäuferart Privat/Makler/Bauträger.</Feature>
-          <Feature icon={ShieldCheck} title="Mietrecht-Risiko">MRG-Vollanwendung erkennen, Richtwertzonen, Befristungsabschlag – als Ampel.</Feature>
-          <Feature icon={Calculator} title="Bank-Szenarien">Mehrere Finanzierungen vergleichen, Zahlungsplan als Grafik, Sondertilgungen.</Feature>
-          <Feature icon={FileText} title="CRM & Follow-ups">Pipeline, Besichtigungen, Aufgaben, Notizen – pro Immobilie und Projekt.</Feature>
-        </div>
-      </section>
-
-      {/* ===== RECHNER SECTION ===== */}
+      {/* ===== RECHNER ===== */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="heading-section">Kostenlose Rechner</h2>
-        <p className="text-[13px] text-ink-2 mt-1.5">Schnelle Antworten ohne Anmeldung.</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="heading-section">Rechner ohne Anmeldung</h2>
+            <p className="text-[15px] text-ink-2 mt-2">Für die schnelle Frage zwischendurch – direkt im Browser.</p>
+          </div>
+          <Link to="/rechner" className="text-[14px] text-[#2D6A4F] font-medium underline-offset-4 hover:underline">
+            Alle 7 Rechner ansehen
+          </Link>
+        </div>
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link
-            to="/rechner/$slug"
-            params={{ slug: "kaufnebenkosten" }}
-            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
-          >
-            <Coins className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold text-[#1C1917]">Kaufnebenkosten-Rechner</div>
-              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Steuern, Notar, Makler, Grundbuch</div>
-            </div>
-            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
-          </Link>
-
-          <Link
-            to="/rechner/$slug"
-            params={{ slug: "cashflow" }}
-            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
-          >
-            <Home className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold text-[#1C1917]">Cashflow-Rechner</div>
-              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Was bleibt monatlich übrig</div>
-            </div>
-            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
-          </Link>
-
-          <Link
-            to="/rechner/$slug"
-            params={{ slug: "rendite" }}
-            className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition hover:border-[#2D6A4F]"
-          >
-            <TrendingUp className="size-7 text-[#2D6A4F] shrink-0" strokeWidth={1.5} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold text-[#1C1917]">Rendite-Rechner</div>
-              <div className="text-[13px] text-ink-2 mt-0.5 truncate">Brutto, Netto, Eigenkapital</div>
-            </div>
-            <span className="text-[13px] text-[#2D6A4F] font-medium shrink-0">Berechnen →</span>
-          </Link>
-        </div>
-
-        <div className="mt-6 text-center">
-          <Link to="/rechner" className="text-[13px] text-[#2D6A4F] font-medium hover:underline">
-            Alle 6 Rechner ansehen →
-          </Link>
+          {([
+            { slug: "kaufnebenkosten", icon: Coins, title: "Kaufnebenkosten", text: "Steuern, Notar, Makler und Grundbuch" },
+            { slug: "cashflow", icon: House, title: "Cashflow", text: "Was nach Rate und Rücklage übrig bleibt" },
+            { slug: "rendite", icon: TrendUp, title: "Rendite", text: "Brutto, netto und auf dein Eigenkapital" },
+          ] as const).map((c) => (
+            <Link
+              key={c.slug}
+              to="/rechner/$slug"
+              params={{ slug: c.slug }}
+              className="group rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition-colors hover:border-[#2D6A4F]"
+            >
+              <c.icon className="size-7 text-[#2D6A4F] shrink-0" aria-hidden />
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-semibold text-[#1C1917]">{c.title}</div>
+                <div className="text-[13px] text-ink-2 mt-0.5">{c.text}</div>
+              </div>
+              <ArrowRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] shrink-0" aria-hidden />
+            </Link>
+          ))}
         </div>
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="bg-white border-t border-[#EAE6DF]">
+      <section className="border-t border-[#EAE6DF]">
         <div className="max-w-6xl mx-auto px-6 py-16">
-          <h2 className="heading-section text-center">
-            Das sagen unsere Nutzer
-          </h2>
+          <h2 className="heading-section text-center">Das sagen unsere Nutzer</h2>
           <div className="mt-10 grid md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((t) => (
               <figure key={t.name} className="bg-white border border-[#EAE6DF] rounded-[12px] p-6">
-                <blockquote className="text-[14px] italic leading-[1.6] text-ink-2" style={{ fontFamily: "Inter, sans-serif" }}>
-                  „{t.quote}“
-                </blockquote>
-                <figcaption className="mt-4 text-[13px] font-semibold text-[#1C1917]" style={{ fontFamily: "Inter, sans-serif" }}>
-                  {t.name}, {t.age}
-                </figcaption>
+                <blockquote className="text-[15px] leading-[1.6] text-[#1C1917]">„{t.quote}“</blockquote>
+                <figcaption className="mt-4 text-[13px] font-semibold text-ink-2">{t.name}, {t.age}</figcaption>
               </figure>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16 border-t">
-        <h2 className="heading-section text-center">Einfache Preise</h2>
-        <p className="text-muted-foreground text-center mt-2">Starte gratis, upgrade wenn du mehr brauchst.</p>
+      {/* ===== PREISE ===== */}
+      <section className="max-w-6xl mx-auto px-6 py-16 border-t border-[#EAE6DF]">
+        <h2 className="heading-section text-center">Preise</h2>
+        <p className="text-[15px] text-ink-2 text-center mt-2">Eine Immobilie ist gratis. Mehr brauchst du erst, wenn du ernsthaft vergleichst.</p>
         <div className="mt-10"><PricingTable /></div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 py-16 border-t">
+      {/* ===== FAQ ===== */}
+      <section className="max-w-3xl mx-auto px-6 py-16 border-t border-[#EAE6DF]">
         <h2 className="heading-section text-center">Häufige Fragen</h2>
         <div className="mt-8"><FaqList /></div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-6 py-20 text-center border-t">
-        <h2 className="heading-section">Bereit, die erste Immobilie zu bewerten?</h2>
-        <p className="text-muted-foreground mt-2">Kostenlos starten – Upgrade nur, wenn du es wirklich brauchst.</p>
-        <a href="/signup" className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-6 py-3 font-medium">
-          Kostenlos starten <ArrowRight className="size-4" />
-        </a>
+      {/* ===== ABSCHLUSS ===== */}
+      <section className="border-t border-[#EAE6DF] bg-[#1C1917] text-white">
+        <div className="max-w-4xl mx-auto px-6 py-16 md:py-20 text-center">
+          <h2 className="font-display text-[30px] md:text-[38px] font-extrabold leading-tight text-balance" style={{ letterSpacing: "-0.03em" }}>
+            Hast du gerade ein Inserat offen?
+          </h2>
+          <p className="text-[16px] text-white/75 mt-3">Füg den Link ein und sieh, ob sich die Wohnung rechnet – bevor du Zeit in Besichtigungen steckst.</p>
+          <a href="#analyse" className="mt-7 inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
+            Inserat prüfen <ArrowRight className="size-4" aria-hidden />
+          </a>
+        </div>
       </section>
     </MarketingShell>
   );
