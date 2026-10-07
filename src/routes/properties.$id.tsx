@@ -35,12 +35,12 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "finanzierung" | "mietrecht" | "analysen" | "besichtigung" | "crm";
+type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "finanzierung", label: "Finanzierung" },
-  { key: "mietrecht", label: "Mietrecht" },
   { key: "analysen", label: "Analysen" },
+  { key: "mietrecht", label: "Mietrecht" },
   { key: "besichtigung", label: "Besichtigung" },
   { key: "crm", label: "CRM" },
 ];
