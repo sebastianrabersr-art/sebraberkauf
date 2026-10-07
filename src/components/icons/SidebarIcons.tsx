@@ -37,14 +37,14 @@ export const IconRechner = ({ size = 18, color = "currentColor" }: IconProps) =>
 
 export const IconPipeline = ({ size = 18, color = "currentColor" }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
-    <circle cx="4" cy="7" r="2.5" stroke={color} strokeWidth="1.5" />
-    <circle cx="9" cy="7" r="2.5" stroke={color} strokeWidth="1.5" />
-    <circle cx="14" cy="7" r="2.5" stroke={color} strokeWidth="1.5" />
-    <line x1="6.5" y1="7" x2="6.5" y2="7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="11.5" y1="7" x2="11.5" y2="7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="4" y1="9.5" x2="4" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="9" y1="9.5" x2="9" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="14" y1="9.5" x2="14" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="3" cy="6" r="2" stroke={color} strokeWidth="1.5" />
+    <circle cx="9" cy="6" r="2" stroke={color} strokeWidth="1.5" />
+    <circle cx="15" cy="6" r="2" stroke={color} strokeWidth="1.5" />
+    <line x1="5" y1="6" x2="7" y2="6" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="11" y1="6" x2="13" y2="6" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="3" y1="8" x2="3" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="9" y1="8" x2="9" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="15" y1="8" x2="15" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
 
