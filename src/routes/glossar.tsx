@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { GlossarList } from "@/components/GlossarList";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/glossar")({
   head: () => ({
@@ -14,7 +16,27 @@ export const Route = createFileRoute("/glossar")({
   component: GlossarPage,
 });
 
+// Öffentlich (für Besucher und Suchmaschinen) im Website-Layout; wer eingeloggt ist,
+// bleibt im App-Layout mit Sidebar – das Glossar steht dort in der Navigation.
 function GlossarPage() {
+  const { session } = useAuth();
+
+  if (session) {
+    return (
+      <AppShell>
+        <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+          <div className="max-w-3xl">
+            <header className="mb-6">
+              <h1 className="heading-page-sm">Glossar</h1>
+              <p className="text-[13px] text-ink-2 mt-1">Alle Fachbegriffe einfach erklärt</p>
+            </header>
+            <GlossarList />
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <MarketingShell>
       <div className="max-w-3xl mx-auto px-6 py-12">
