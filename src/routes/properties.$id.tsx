@@ -21,6 +21,10 @@ import { Warning as AlertTriangle, ArrowLeft, Buildings as Building2, Calendar, 
 import { Fragment, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { REQUIRED_BORDER, REQUIRED_FIELDS, REQUIRED_FINANCE_EMPTY_ID, flashRequiredField, missingRequiredFields, requiredFieldDomId, type RequiredFieldKey } from "@/lib/requiredFields";
 import { RequiredFieldHint } from "@/components/RequiredFieldHint";
+import { isBought, isInPortfolio, legacyStatusPatch, portfolioAddPatch, promptAddToPortfolio, prozessStatusPatch } from "@/lib/statusSync";
+import { ReminderButton, usePropertyReminders } from "@/components/crm/ReminderButton";
+import type { Reminder } from "@/lib/reminders";
+import { PropertyDocumentsPanel } from "@/components/PropertyDocumentsPanel";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
@@ -37,7 +41,7 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm";
+type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "finanzierung", label: "Finanzierung" },
@@ -45,6 +49,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "mietrecht", label: "Mietrecht" },
   { key: "besichtigung", label: "Besichtigung" },
   { key: "crm", label: "CRM" },
+  { key: "dokumente", label: "Dokumente" },
 ];
 
 function Detail() {
@@ -293,6 +298,17 @@ function Detail() {
           {tab === "crm" && (
             <CrmTab p={p} u={u} />
           )}
+          {tab === "dokumente" && (
+            <>
+              <Section title="Dokumente" defaultOpen>
+                <PropertyDocumentsPanel propertyId={p.id} />
+              </Section>
+              <Section title="Exposé auslesen">
+                <p className="text-[12px] text-ink-2 mb-3">Lädt ein Makler-Exposé hoch und übernimmt erkannte Daten (Preis, Fläche, Adresse …) in die Immobilie.</p>
+                <PdfUploader propertyId={p.id} />
+              </Section>
+            </>
+          )}
         </div>
 
         {/* ============ STICKY SIDEBAR ============ */}
@@ -342,6 +358,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   navTo: (target: TabKey, sectionId?: string) => void;
 }) {
   const missingReq = missingRequiredFields(p);
+  const navigate = useNavigate();
+  const { updateProperty } = useStore();
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
   if (c.cashflowMtl < 0) alerts.push({ text: "Cashflow negativ", tone: "red" });
@@ -485,7 +503,16 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
-              <Sel value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })}>
+              <Sel
+                value={p.status}
+                onChange={(e) => {
+                  // Bewertung und Pipeline-Prozess mitziehen (src/lib/statusSync.ts)
+                  const next = e.target.value as PropertyStatus;
+                  const wasBought = isBought(p);
+                  u(legacyStatusPatch(p, next));
+                  if (next === "Gekauft") promptAddToPortfolio(p, wasBought, updateProperty, (id) => navigate({ to: "/portfolio/$id", params: { id } }));
+                }}
+              >
                 {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
               </Sel>
             </F>
@@ -950,9 +977,6 @@ function BesichtigungTab({ p, viewings, setViewing }: {
           ))}
         </div>
       </Section>
-      <Section title="Dokumente / Exposé-PDF">
-        <PdfUploader propertyId={p.id} />
-      </Section>
     </>
   );
 }
@@ -963,6 +987,17 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
   const bewertung: Bewertung = p.bewertung ?? mig.bewertung;
   const prozess: ProzessStatus = (p.prozessStatus ?? mig.prozessStatus) as ProzessStatus;
   const assumptions = useActiveAssumptions();
+  const navigate = useNavigate();
+  const { updateProperty } = useStore();
+  const openPortfolio = (id: string) => navigate({ to: "/portfolio/$id", params: { id } });
+  const { reminders, reload: reloadReminders } = usePropertyReminders(p.id);
+
+  // Gleicher Status-Abgleich wie in der Pipeline (src/lib/statusSync.ts).
+  const setProzess = (ps: ProzessStatus) => {
+    const wasBought = isBought(p);
+    u(prozessStatusPatch(p, ps));
+    if (ps === "Gekauft") promptAddToPortfolio(p, wasBought, updateProperty, openPortfolio);
+  };
 
   const card: React.CSSProperties = {
     background: "#FFFFFF",
@@ -984,14 +1019,34 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
     <>
       {/* SECTION A — STATUS */}
       <div style={card}>
-        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+          {isInPortfolio(p) ? (
+            <Link
+              to="/portfolio/$id"
+              params={{ id: p.id }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium hover:underline"
+              style={{ background: "#E8F5EE", color: "#2D6A4F" }}
+            >
+              <Check weight="bold" size={11} aria-hidden /> Im Portfolio →
+            </Link>
+          ) : isBought(p) ? (
+            <button
+              type="button"
+              onClick={() => { u(portfolioAddPatch(p)); toast.success("Im Portfolio", { action: { label: "Öffnen", onClick: () => openPortfolio(p.id) } }); }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F5EE]"
+            >
+              Zum Portfolio hinzufügen
+            </button>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2 mb-1">
           {ALL_PROZESS_STATUSES.map((s) => {
             const active = prozess === s;
             return (
               <button
                 key={s}
-                onClick={() => u({ prozessStatus: active ? "" : s })}
+                onClick={() => setProzess(active ? "" : s)}
                 className="inline-flex items-center gap-1.5 rounded-full transition-colors"
                 style={{
                   fontSize: 13, fontWeight: 500, padding: "8px 16px",
@@ -1034,7 +1089,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 
       {/* SECTION B — NÄCHSTE AKTION */}
       <div style={card}>
-        <NextActionCard p={p} u={u} />
+        <NextActionCard p={p} u={u} reminders={reminders} onRemindersChanged={reloadReminders} />
       </div>
 
       {/* SECTION C — KONTAKT */}
@@ -1049,7 +1104,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 
       {/* SECTION E — AKTIVITÄTEN TIMELINE */}
       <div style={card}>
-        <ActivityTimeline propertyId={p.id} />
+        <ActivityTimeline propertyId={p.id} reminders={reminders} onRemindersChanged={reloadReminders} />
       </div>
 
       {/* SECTION F — BESCHREIBUNG & NOTIZEN (Accordion) */}
@@ -1104,7 +1159,12 @@ function activityIconFor(type?: string) {
   return CalendarPlus;
 }
 
-function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+function NextActionCard({ p, u, reminders, onRemindersChanged }: {
+  p: Property; u: (patch: Partial<Property>) => void;
+  reminders: Reminder[]; onRemindersChanged: () => void;
+}) {
+  // Die nächste Aktion hat keine eigene ID: Erinnerungen ohne action_id gehören zu ihr.
+  const nextActionReminder = reminders.find((r) => !r.action_id);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(p.nextAction ?? "");
   const [date, setDate] = useState(p.nextActionDate ?? "");
@@ -1153,6 +1213,13 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
               {p.priority && <>Priorität: {p.priority}</>}
             </div>
           </div>
+          <ReminderButton
+            propertyId={p.id}
+            suggestedDate={p.nextActionDate}
+            suggestedNote={p.nextAction}
+            existing={nextActionReminder}
+            onChanged={onRemindersChanged}
+          />
           <button
             onClick={() => u({ nextAction: "", nextActionDate: "", lastContactDate: new Date().toISOString().slice(0, 10) })}
             className="text-[12px] rounded-md px-3 py-1.5 hover:bg-[#FAFAF8]"
@@ -1395,7 +1462,9 @@ function PreviewStat({ label, value, tone }: { label: string; value: string; ton
   );
 }
 
-function ActivityTimeline({ propertyId }: { propertyId: string }) {
+function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
+  propertyId: string; reminders: Reminder[]; onRemindersChanged: () => void;
+}) {
   const { activities, addActivity, deleteActivity } = useStore();
   const items = activities.filter((a) => a.propertyId === propertyId)
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -1440,15 +1509,25 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
             return (
               <li key={a.id} className="relative mb-3 last:mb-0">
                 <span className="absolute rounded-full" style={{ width: 8, height: 8, background: color, left: -24, top: 6 }} />
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(open ? null : a.id)}
-                  className="w-full text-left"
-                >
-                  <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
-                  <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
-                  <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
-                </button>
+                <div className="flex items-start gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(open ? null : a.id)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
+                    <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
+                    <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                  </button>
+                  <ReminderButton
+                    propertyId={propertyId}
+                    actionId={a.id}
+                    suggestedDate={a.dueDate ?? a.date}
+                    suggestedNote={a.title}
+                    existing={reminders.find((r) => r.action_id === a.id)}
+                    onChanged={onRemindersChanged}
+                  />
+                </div>
                 {open && a.description && (
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}

@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
 import { migrateLegacyStatus, userRatingAvg, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
+import { isBought, promptAddToPortfolio, prozessStatusPatch } from "@/lib/statusSync";
 import { DotsThree as MoreHorizontal, Calendar, DotsSixVertical as GripVertical, Plus, CheckCircle as CheckCircle2, XCircle, X, MagnifyingGlass as Search } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/pipeline")({
@@ -63,16 +63,20 @@ function Pipeline() {
   );
 
   const setBewertung = (id: string, b: Bewertung) => updateProperty(id, { bewertung: b });
+  // Gleicher Status-Abgleich wie im CRM-Tab (src/lib/statusSync.ts).
   const setProzess = (id: string, ps: ProzessStatus) => {
-    updateProperty(id, { prozessStatus: ps });
+    const p = properties.find((x) => x.id === id);
+    if (!p) return;
+    const wasBought = isBought(p);
+    updateProperty(id, prozessStatusPatch(p, ps));
     if (ps === "Gekauft") {
-      updateProperty(id, { prozessStatus: "Gekauft", status: "Gekauft" });
-      toast.success("Glückwunsch! Immobilie ins Portfolio verschoben.");
-      setTimeout(() => navigate({ to: "/portfolio" }), 400);
+      promptAddToPortfolio(p, wasBought, updateProperty, (pid) => navigate({ to: "/portfolio/$id", params: { id: pid } }));
     }
   };
   const addToPipeline = (id: string) => {
-    updateProperty(id, { prozessStatus: "Kontaktiert", bewertung: "Interessant" });
+    const p = properties.find((x) => x.id === id);
+    if (!p) return;
+    updateProperty(id, { ...prozessStatusPatch(p, "Kontaktiert"), bewertung: "Interessant" });
     setShowAddModal(false);
   };
   useEffect(() => {
@@ -119,7 +123,7 @@ function Pipeline() {
         <div className="text-[13px] font-semibold text-[#1C1917]">{label}</div>
       </div>
       <div className="text-[11px] text-ink-3 mt-1">
-        {col === "Gekauft" ? "Wandert ins Portfolio" : "Archiviert"}
+        {col === "Gekauft" ? "Danach: ins Portfolio übernehmen" : "Archiviert"}
       </div>
       <div className="flex items-center justify-between mt-2">
         <span className="text-[11px] text-ink-2">
@@ -254,7 +258,7 @@ function Pipeline() {
                               <button key={b} onClick={() => { setBewertung(p.id, b); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Als {b} markieren</button>
                             ))}
                             <div className="border-t border-[#EAE6DF] my-1" />
-                            <button onClick={() => { updateProperty(p.id, { prozessStatus: "" }); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-[#DC2626]">Aus Pipeline entfernen</button>
+                            <button onClick={() => { updateProperty(p.id, prozessStatusPatch(p, "")); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-[#DC2626]">Aus Pipeline entfernen</button>
                             <div className="border-t border-[#EAE6DF] my-1" />
                             <button onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Detail öffnen</button>
                           </div>
