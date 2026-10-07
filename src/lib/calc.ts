@@ -1612,9 +1612,11 @@ export function calcInvestorModel(
   const proj = p.projections ?? {};
   // Sichere Defaults für die Wachstumsannahmen.
   const horizon = Math.max(1, Math.round(safeNum(proj.horizonJahre, 10)));
-  const valueGrowth = safeNum(proj.wertsteigerungPct, 0.02);   // 2 % p.a.
-  const rentGrowth = safeNum(proj.mietsteigerungPct, 0.02);
-  const costGrowth = safeNum(proj.kostensteigerungPct, 0.02);
+  // Eingaben sind Prozentwerte (z. B. 1.5 = 1,5 % p.a.) → in Bruchteile umrechnen.
+  // Defaults identisch mit calcLongTermProjection und den Placeholdern im UI.
+  const valueGrowth = safeNum(proj.wertsteigerungPct ?? 1.5, 1.5) / 100;
+  const rentGrowth = safeNum(proj.mietsteigerungPct ?? 2, 2) / 100;
+  const costGrowth = safeNum(proj.kostensteigerungPct ?? 2, 2) / 100;
   const sellingCostPct = 0.035;                                 // konservativer Default
 
   const activeFin = getActiveFinance(p);
