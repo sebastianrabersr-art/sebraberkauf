@@ -11,6 +11,7 @@ import type { Property } from "@/lib/types";
 import { BigResult as Big, ResultRow as Row, NumInput } from "@/components/marketing/PublicCalcLayout";
 import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
 import { CalcPdfButton } from "@/components/pdf/CalcPdf";
+import { RatgeberChip } from "@/components/marketing/RatgeberLinks";
 import { pdfEur, pdfNum, pdfPct, pdfPctPoints, toneOf } from "@/components/pdf/PdfKit";
 
 // Einheiten für die PDF-Eingabetabellen (Werte wie im Rechner eingegeben).
@@ -193,7 +194,11 @@ function AppRechnerHub() {
 
 /* ───────── Shared UI ───────── */
 
-function CalcShell({ title, hint, result, children }: { title: string; hint?: string; result: React.ReactNode; children: React.ReactNode }) {
+function CalcShell({ title, hint, result, children, ratgeber }: {
+  title: string; hint?: string; result: React.ReactNode; children: React.ReactNode;
+  /** Slug des passenden Ratgeber-Artikels – Chip unter dem Ergebnis. */
+  ratgeber?: string;
+}) {
   return (
     <div className="grid lg:grid-cols-5 gap-5 items-start">
       <div className="lg:col-span-3 space-y-3">
@@ -209,6 +214,7 @@ function CalcShell({ title, hint, result, children }: { title: string; hint?: st
           <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-3">Ergebnis</div>
           {result}
         </div>
+        {ratgeber && <div className="mt-3"><RatgeberChip slug={ratgeber} /></div>}
       </div>
     </div>
   );
@@ -238,7 +244,7 @@ function NebenkostenCalc({ sel }: { sel?: Property }) {
 
   return (
     <CalcShell
-      title="Kaufnebenkosten-Rechner"
+      title="Kaufnebenkosten-Rechner" ratgeber="kaufnebenkosten-oesterreich"
       hint="Makler, Grunderwerbsteuer, Grundbuch, Vertragserrichtung und sonstige Kosten."
       result={
         <div className="space-y-5">
@@ -327,7 +333,7 @@ function FinanceCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
 
   return (
     <CalcShell
-      title="Finanzierungsrechner"
+      title="Finanzierungsrechner" ratgeber="annuitaetendarlehen-erklaert"
       hint="Kreditbetrag, monatliche Rate und Restschuld auf einen Blick."
       result={
         <div className="space-y-5">
@@ -387,7 +393,7 @@ function CashflowCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActi
 
   return (
     <CalcShell
-      title="Miet- & Cashflow-Rechner"
+      title="Miet- & Cashflow-Rechner" ratgeber="cashflow-immobilie-berechnen"
       hint="Was bleibt jeden Monat übrig – nach Kreditrate, Betriebskosten, Rücklage und Leerstand."
       result={
         <div className="space-y-5">
@@ -454,7 +460,7 @@ function RenditeCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
 
   return (
     <CalcShell
-      title="Rendite-Rechner"
+      title="Rendite-Rechner" ratgeber="immobilien-rendite-berechnen"
       hint="Brutto-, Netto- und Eigenkapitalrendite – jährlich in Prozent."
       result={
         <div className="space-y-5">
@@ -523,7 +529,7 @@ function BreakEvenCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useAct
 
   return (
     <CalcShell
-      title="Break-even-Miete-Rechner"
+      title="Break-even-Miete-Rechner" ratgeber="break-even-miete-berechnen"
       hint="Welche Miete brauchst du, damit die Immobilie monatlich nicht negativ läuft?"
       result={
         <div className="space-y-5">
@@ -591,7 +597,7 @@ function LeistbarkeitCalc({ a }: { a: ReturnType<typeof useActiveAssumptions> })
 
   return (
     <CalcShell
-      title="Leistbarkeitsrechner"
+      title="Leistbarkeitsrechner" ratgeber="wie-viel-kredit-leisten"
       hint="Welchen Kaufpreis kannst du dir bei deiner Wunsch-Monatsrate leisten?"
       result={
         <div className="space-y-5">
@@ -672,7 +678,7 @@ function FixFlipCalc() {
 
   return (
     <CalcShell
-      title="Fix & Flip Rechner"
+      title="Fix & Flip Rechner" ratgeber="eigenkapitalrendite-berechnen"
       hint="Einkauf → Renovierung → Verkauf. Optional: Mieteinnahmen während der Renovierung berücksichtigen."
       result={
         <div className="space-y-4">

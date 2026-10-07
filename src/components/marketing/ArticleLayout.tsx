@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { RatgeberArticle } from "@/lib/ratgeber";
 import { ArrowRight } from "@phosphor-icons/react";
+import { RelatedArticles } from "./RatgeberLinks";
 
 /**
  * Inline-Markdown für Artikeltexte: **fett** und *kursiv*.
@@ -139,6 +140,8 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           Kostenlos ausprobieren <ArrowRight className="size-4" />
         </Link>
       </div>
+
+      <RelatedArticles article={article} />
 
       {article.faq && article.faq.length > 0 && (
         <section id="faq" className="mt-14 scroll-mt-24">
