@@ -2,47 +2,82 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { scrapeListing } from "./scrape";
 
+// Tolerante Feldtypen: Die KI liefert für fehlende Werte oft null statt "", Zahlen als
+// Text ("350.000 €", "3,5") oder "ja"/"nein" statt true/false. Ein strenges Schema ließ
+// deshalb jeden zweiten Import mit "Antwort konnte nicht geparst werden" scheitern.
+export function parseLooseNumber(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v !== "string") return null;
+  let s = v.replace(/[^\d.,-]/g, "");
+  if (!s || !/\d/.test(s)) return null;
+  const hasDot = s.includes("."), hasComma = s.includes(",");
+  if (hasDot && hasComma) {
+    // "1.234,56" (de) oder "1,234.56" (en): das letzte Trennzeichen ist das Dezimalzeichen.
+    s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (hasComma) {
+    s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  } else if (hasDot && /^-?\d{1,3}(\.\d{3})+$/.test(s)) {
+    s = s.replace(/\./g, ""); // "350.000" = Tausenderpunkt
+  }
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+const looseStr = z.preprocess((v) => (v == null ? "" : typeof v === "string" ? v : Array.isArray(v) ? v.join(", ") : String(v)), z.string());
+const looseNum = z.preprocess(parseLooseNumber, z.number().nullable());
+const looseBool = z.preprocess((v) => {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") {
+    if (/^(ja|yes|true|vorhanden|1)$/i.test(v.trim())) return true;
+    if (/^(nein|no|false|nicht vorhanden|0)$/i.test(v.trim())) return false;
+  }
+  return null;
+}, z.boolean().nullable());
+const looseStrArr = z.preprocess(
+  (v) => (Array.isArray(v) ? v.filter((x) => x != null).map(String) : typeof v === "string" && v.trim() ? [v] : []),
+  z.array(z.string()),
+);
+
 const extractedSchema = z.object({
-  title: z.string().default(""),
-  url: z.string().default(""),
-  platform: z.string().default(""),
-  country: z.string().default(""),
-  purchase_price: z.number().nullable().default(null),
-  living_area_m2: z.number().nullable().default(null),
-  plot_area_m2: z.number().nullable().default(null),
-  outdoor_area_m2: z.number().nullable().default(null),
-  rooms: z.number().nullable().default(null),
-  address: z.string().default(""),
-  district: z.string().default(""),
-  location: z.string().default(""),
-  city: z.string().default(""),
-  region: z.string().default(""),
-  property_type: z.string().default(""),
-  year_built: z.number().nullable().default(null),
-  condition: z.string().default(""),
-  floor: z.string().default(""),
-  has_elevator: z.boolean().nullable().default(null),
-  has_balcony: z.boolean().nullable().default(null),
-  has_terrace: z.boolean().nullable().default(null),
-  has_loggia: z.boolean().nullable().default(null),
-  has_garden: z.boolean().nullable().default(null),
-  has_basement: z.boolean().nullable().default(null),
-  has_parking: z.boolean().nullable().default(null),
-  monthly_operating_costs: z.number().nullable().default(null),
-  monthly_heating_costs: z.number().nullable().default(null),
-  commission_pct: z.number().nullable().default(null),
-  commission_eur: z.number().nullable().default(null),
-  energy_class: z.string().default(""),
-  hwb: z.number().nullable().default(null),
-  availability: z.string().default(""),
-  seller_type: z.string().default(""),
-  description: z.string().default(""),
-  features: z.string().default(""),
-  image_urls: z.array(z.string()).default([]),
-  estimated_rent_monthly: z.number().nullable().default(null),
-  rent_is_estimate: z.boolean().default(true),
-  mietrecht_hint: z.string().default(""),
-  missing_data: z.array(z.string()).default([]),
+  title: looseStr,
+  url: looseStr,
+  platform: looseStr,
+  country: looseStr,
+  purchase_price: looseNum,
+  living_area_m2: looseNum,
+  plot_area_m2: looseNum,
+  outdoor_area_m2: looseNum,
+  rooms: looseNum,
+  address: looseStr,
+  district: looseStr,
+  location: looseStr,
+  city: looseStr,
+  region: looseStr,
+  property_type: looseStr,
+  year_built: looseNum,
+  condition: looseStr,
+  floor: looseStr,
+  has_elevator: looseBool,
+  has_balcony: looseBool,
+  has_terrace: looseBool,
+  has_loggia: looseBool,
+  has_garden: looseBool,
+  has_basement: looseBool,
+  has_parking: looseBool,
+  monthly_operating_costs: looseNum,
+  monthly_heating_costs: looseNum,
+  commission_pct: looseNum,
+  commission_eur: looseNum,
+  energy_class: looseStr,
+  hwb: looseNum,
+  availability: looseStr,
+  seller_type: looseStr,
+  description: looseStr,
+  features: looseStr,
+  image_urls: looseStrArr,
+  estimated_rent_monthly: looseNum,
+  rent_is_estimate: z.preprocess((v) => (v == null ? true : v), looseBool).transform((v) => v ?? true),
+  mietrecht_hint: looseStr,
+  missing_data: looseStrArr,
 });
 
 export type ExtractedProperty = z.infer<typeof extractedSchema>;
@@ -196,56 +231,77 @@ Zusätzliche Hinweise für schwierige Fälle:
 - Wenn 'Makler' oder 'Provision' erwähnt wird ohne Prozentsatz: AT-Standard = 3.0, DE-Standard = 3.57.
 - estimated_rent_monthly: Berechne als (Kaufpreis / 200) als grobe Schätzung wenn keine Mietangaben vorhanden, aber markiere rent_is_estimate = true.`;
 
-    const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\nLand (URL-Heuristik): ${country || "unbekannt"}\n\nInseratstext:\n${text}`;
+    // Strg+A auf einer Inseratsseite kann sehr lang werden; mehr als ~60.000 Zeichen
+    // verlängern nur die Antwortzeit (Gefahr von Zeitüberschreitung beim ersten Versuch).
+    const user = `URL: ${url || "(nicht angegeben)"}\nPlattform: ${platform}\nLand (URL-Heuristik): ${country || "unbekannt"}\n\nInseratstext:\n${text.slice(0, 60000)}`;
 
-    let json: unknown;
-    try {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [{ role: "system", content: system }, { role: "user", content: user }],
-          response_format: { type: "json_object" },
-        }),
-      });
-      if (resp.status === 429) return { ok: false as const, platform, country, url, error: "Rate-Limit – bitte später erneut versuchen." };
-      if (resp.status === 402) return { ok: false as const, platform, country, url, error: "Lovable AI Credits aufgebraucht – bitte aufladen." };
-      if (!resp.ok) {
-        const t = await resp.text();
-        return { ok: false as const, platform, country, url, error: `AI-Fehler: ${resp.status} ${t.slice(0, 200)}` };
-      }
-      const body = await resp.json();
-      const content = body?.choices?.[0]?.message?.content ?? "{}";
-      if (typeof content === "string") {
-        let cleaned = content.trim();
-        // Strip markdown code fences
-        cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-        // Extract just the JSON object
-        const first = cleaned.indexOf("{");
-        const last = cleaned.lastIndexOf("}");
-        if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1);
-        try {
-          json = JSON.parse(cleaned);
-        } catch {
-          try {
-            json = JSON.parse(cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]"));
-          } catch {
-            return { ok: false as const, platform, country, url, error: "Antwort konnte nicht geparst werden – bitte erneut versuchen." };
-          }
-        }
-      } else {
-        json = content;
-      }
-    } catch (e) {
-      return { ok: false as const, platform, country, url, error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
+    // Bis zu zwei Versuche: Eine kaputte KI-Antwort, ein 5xx-Fehler oder ein Netzwerkfehler
+    // werden still wiederholt, statt den Nutzer erneut klicken zu lassen.
+    let lastError = "Antwort konnte nicht verarbeitet werden – bitte erneut versuchen.";
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const res = await callExtractionAi(apiKey, system, user);
+      if (res.kind === "fatal") return { ok: false as const, platform, country, url, error: res.error };
+      if (res.kind === "retry") { lastError = res.error; continue; }
+
+      const json = res.json as Record<string, unknown>;
+      const merged = { ...json, url, platform: json?.platform || platform, country: json?.country || country };
+      const parsed = extractedSchema.safeParse(merged);
+      if (parsed.success) return { ok: true as const, data: parsed.data, fetchedFromUrl: fetched };
+      lastError = "Antwort konnte nicht verarbeitet werden – bitte erneut versuchen.";
     }
-
-    const merged = { ...(json as object), url, platform: (json as Record<string, unknown>)?.platform || platform, country: (json as Record<string, unknown>)?.country || country };
-    const parsed = extractedSchema.safeParse(merged);
-    if (!parsed.success) return { ok: false as const, platform, country, url, error: "Antwort konnte nicht geparst werden." };
-    return { ok: true as const, data: parsed.data, fetchedFromUrl: fetched };
+    return { ok: false as const, platform, country, url, error: lastError };
   });
+
+type AiResult = { kind: "ok"; json: unknown } | { kind: "retry"; error: string } | { kind: "fatal"; error: string };
+
+async function callExtractionAi(apiKey: string, system: string, user: string): Promise<AiResult> {
+  try {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [{ role: "system", content: system }, { role: "user", content: user }],
+        response_format: { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (resp.status === 429) return { kind: "fatal", error: "Rate-Limit – bitte später erneut versuchen." };
+    if (resp.status === 402) return { kind: "fatal", error: "Lovable AI Credits aufgebraucht – bitte aufladen." };
+    if (!resp.ok) {
+      const t = await resp.text();
+      const error = `AI-Fehler: ${resp.status} ${t.slice(0, 200)}`;
+      return resp.status >= 500 ? { kind: "retry", error } : { kind: "fatal", error };
+    }
+    const body = await resp.json();
+    const content = body?.choices?.[0]?.message?.content ?? "";
+    if (typeof content !== "string") return content && typeof content === "object" ? { kind: "ok", json: content } : { kind: "retry", error: "Leere KI-Antwort." };
+    const json = parseJsonLoose(content);
+    return json ? { kind: "ok", json } : { kind: "retry", error: "Antwort konnte nicht verarbeitet werden – bitte erneut versuchen." };
+  } catch (e) {
+    return { kind: "retry", error: `AI-Fehler: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+/** JSON aus einer KI-Antwort holen – auch mit Code-Fences, Text drumherum oder Trailing-Kommas. */
+function parseJsonLoose(content: string): Record<string, unknown> | null {
+  let cleaned = content.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first === -1 || last <= first) return null;
+  cleaned = cleaned.slice(first, last + 1);
+  for (const candidate of [cleaned, cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")]) {
+    try {
+      const v = JSON.parse(candidate);
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        // Manche Antworten verpacken das Objekt: { "data": {...} } / { "property": {...} }
+        const inner = (v as Record<string, unknown>).data ?? (v as Record<string, unknown>).property;
+        return inner && typeof inner === "object" && !Array.isArray(inner) && !("title" in v) ? (inner as Record<string, unknown>) : v;
+      }
+    } catch { /* nächster Versuch */ }
+  }
+  return null;
+}
 
 // PDF -> structured fields via Gemini (file content block)
 export const extractFromPdf = createServerFn({ method: "POST" })

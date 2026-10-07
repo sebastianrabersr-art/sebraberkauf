@@ -85,7 +85,17 @@ type ImportResult = { property: Property; quality: ReturnType<typeof calcDataQua
 
 export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   const navigate = useNavigate();
-  const extract = useServerFn(extractProperty);
+  const extractOnce = useServerFn(extractProperty);
+  // Ein Netzwerk- oder Kaltstartfehler des Servers soll nicht als "fehlgeschlagen" beim
+  // Nutzer landen: einmal still wiederholen.
+  const extract = async (args: Parameters<typeof extractOnce>[0]) => {
+    try {
+      return await extractOnce(args);
+    } catch {
+      await new Promise((r) => setTimeout(r, 800));
+      return await extractOnce(args);
+    }
+  };
   const project = useActiveProject();
   const { addProperty, findByLink, properties } = useStore();
 
