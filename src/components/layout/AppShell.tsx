@@ -1,26 +1,34 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChartPieSlice, Buildings, GitDiff, Calculator, Kanban, Vault, FolderSimple, GearSix, UserCircle, Sparkle, SignOut, BookOpen, DotsThreeOutline, X } from "@phosphor-icons/react";
+import { UserCircle, Sparkle, SignOut, DotsThreeOutline, X } from "@phosphor-icons/react";
+import {
+  IconDashboard, IconKaufkandidaten, IconVergleichen, IconRechner,
+  IconPipeline, IconPortfolio, IconProjekte, IconGlossar, IconEinstellungen,
+} from "@/components/icons/SidebarIcons";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { useStore } from "@/lib/store";
 import { planLabel, useAuth } from "@/lib/auth";
 
-type NavItem = { to: string; label: string; short?: string; icon: React.ComponentType<any> };
+type NavItem = { to: string; label: string; short?: string; icon: React.ComponentType<{ size?: number; color?: string }> };
+
+// Navigations-Icons: aktiv Grün, inaktiv Stein
+const ICON_ACTIVE = "#2D6A4F";
+const ICON_INACTIVE = "#78716C";
 
 const NAV_PRIMARY: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", short: "Start", icon: ChartPieSlice },
-  { to: "/properties", label: "Kaufkandidaten", short: "Kandidaten", icon: Buildings },
-  { to: "/vergleich", label: "Vergleichen", icon: GitDiff },
-  { to: "/rechner", label: "Rechner", icon: Calculator },
+  { to: "/dashboard", label: "Dashboard", short: "Start", icon: IconDashboard },
+  { to: "/properties", label: "Kaufkandidaten", short: "Kandidaten", icon: IconKaufkandidaten },
+  { to: "/vergleich", label: "Vergleichen", icon: IconVergleichen },
+  { to: "/rechner", label: "Rechner", icon: IconRechner },
 ];
 
 const NAV_SECONDARY: NavItem[] = [
-  { to: "/pipeline", label: "Pipeline", icon: Kanban },
-  { to: "/portfolio", label: "Portfolio", icon: Vault },
-  { to: "/projects", label: "Projekte", icon: FolderSimple },
-  { to: "/glossar", label: "Glossar", icon: BookOpen },
-  { to: "/settings", label: "Einstellungen", icon: GearSix },
+  { to: "/pipeline", label: "Pipeline", icon: IconPipeline },
+  { to: "/portfolio", label: "Portfolio", icon: IconPortfolio },
+  { to: "/projects", label: "Projekte", icon: IconProjekte },
+  { to: "/glossar", label: "Glossar", icon: IconGlossar },
+  { to: "/settings", label: "Einstellungen", icon: IconEinstellungen },
 ];
 
 function isActive(pathname: string, to: string) {
@@ -66,7 +74,7 @@ function NavSection({ items, pathname, label }: { items: NavItem[]; pathname: st
                 ? "text-[#2D6A4F] font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-[#2D6A4F] before:rounded-full"
                 : "text-ink-2 hover:bg-[#EAE6DF] rounded-lg",
             )}>
-            <n.icon weight="duotone" size={18} className={cn("shrink-0", active ? "text-[#2D6A4F]" : "text-ink-3")} aria-hidden />
+            <span className="shrink-0 inline-flex"><n.icon size={18} color={active ? ICON_ACTIVE : ICON_INACTIVE} /></span>
             <span className="truncate">{n.label}</span>
           </Link>
         );
@@ -164,7 +172,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
                     aria-current={active ? "page" : undefined}
                     className={cn("flex min-h-[48px] items-center gap-3 border-b border-[#F5F3EE] text-[15px]", active ? "text-[#2D6A4F] font-semibold" : "text-[#1C1917]")}
                   >
-                    <n.icon size={20} className={active ? "text-[#2D6A4F]" : "text-ink-3"} aria-hidden />
+                    <n.icon size={20} color={active ? ICON_ACTIVE : ICON_INACTIVE} />
                     {n.label}
                   </Link>
                 </li>
@@ -185,7 +193,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
           const active = isActive(pathname, n.to) && !moreOpen;
           return (
             <Link key={n.to} to={n.to} aria-current={active ? "page" : undefined} className={tabCls(active)}>
-              <n.icon size={22} weight={active ? "fill" : "duotone"} aria-hidden />
+              <n.icon size={22} color={active ? ICON_ACTIVE : ICON_INACTIVE} />
               {n.short ?? n.label}
             </Link>
           );
