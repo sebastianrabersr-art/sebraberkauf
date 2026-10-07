@@ -117,7 +117,7 @@ export function ChartCard({
 
   return (
     <>
-      <div className="rounded-[12px] bg-white border border-[#EAE6DF] py-4 px-5">
+      <div className="rounded-[12px] bg-white border border-[#EAE6DF] p-5">
         {header}
         {controls}
         <div style={{ height }}>{children}</div>

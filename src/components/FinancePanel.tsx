@@ -7,6 +7,7 @@ import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmt
 import { useActiveAssumptions, useStore } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 import { CHART_STYLE } from "@/components/ChartCard";
+import { CHART_COLORS, CHART_CONTAINER_CLS, CHART_MARGIN, ChartTooltip, GRID_PROPS, LEGEND_PROPS, LINE_PROPS, X_AXIS_CATEGORY, X_AXIS_TIME, yAxisProps } from "@/components/charts/chartKit";
 
 const STATUS_TONE: Record<FinanceStatus, string> = {
   "Anfrage": "bg-muted text-muted-foreground border-muted-foreground/30",
@@ -179,24 +180,24 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
             <Kpi label="Davon Tilgung" value={fmtEUR(scn.kreditBetrag ?? 0)} />
           </div>
 
+          <div className={CHART_CONTAINER_CLS}>
+          <div className="text-[14px] font-semibold text-[#1C1917] mb-2">Zahlungsplan</div>
           <div className="h-72 w-full">
             <ResponsiveContainer>
-              <ComposedChart data={schedule}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                <Tooltip
-                  formatter={(v: any) => fmtEUR(Number(v))}
-                  contentStyle={CHART_STYLE.tooltipContent}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="left" dataKey="interest" stackId="a" fill={CHART_STYLE.colors.negative} name="Zinsen" />
-                <Bar yAxisId="left" dataKey="principal" stackId="a" fill={CHART_STYLE.colors.positive} name="Tilgung" />
+              <ComposedChart data={schedule} margin={CHART_MARGIN}>
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="year" {...X_AXIS_TIME} />
+                <YAxis yAxisId="left" {...yAxisProps("€ / Jahr")} />
+                <YAxis yAxisId="right" {...yAxisProps("€ Restschuld", "right")} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: "#FAFAF8" }} />
+                <Legend {...LEGEND_PROPS} />
+                <Bar yAxisId="left" dataKey="interest" stackId="a" fill={CHART_COLORS.equity} name="Zinsen" />
+                <Bar yAxisId="left" dataKey="principal" stackId="a" fill={CHART_COLORS.value} name="Tilgung" />
                 <Bar yAxisId="left" dataKey="extraPayment" stackId="a" fill={CHART_STYLE.colors.soft} name="Sondertilgung" />
-                <Line yAxisId="right" type="monotone" dataKey="balanceEnd" stroke={CHART_STYLE.colors.secondary} strokeWidth={2} dot={false} name="Restschuld" />
+                <Line yAxisId="right" {...LINE_PROPS} dataKey="balanceEnd" stroke={CHART_COLORS.debt} name="Restschuld" />
               </ComposedChart>
             </ResponsiveContainer>
+          </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -402,18 +403,18 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
         <MiniBarChart title="Monatliche Rate" data={chartData} dataKey="rate" kind="rate" yLabel="€ / Monat" />
         <MiniBarChart title="Gesamtzinskosten" data={chartData} dataKey="interest" kind="interest" yLabel="€ über Laufzeit" />
         <MiniBarChart title="Cashflow mtl." data={chartData} dataKey="cashflow" kind="cashflow" yLabel="€ / Monat" higherBetter />
-        <div className="rounded-lg border bg-card p-3">
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Restschuld über Zeit</div>
-          <div className="h-48 w-full">
+        <div className={CHART_CONTAINER_CLS}>
+          <div className="text-[14px] font-semibold text-[#1C1917] mb-2">Restschuld über Zeit</div>
+          <div className="h-56 w-full">
             <ResponsiveContainer>
-              <LineChart data={balanceData.data}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="year" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                <Tooltip formatter={(v: any) => fmtEUR(Number(v))} contentStyle={{ ...CHART_STYLE.tooltipContent, fontSize: 11 }} />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
+              <LineChart data={balanceData.data} margin={CHART_MARGIN}>
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="year" {...X_AXIS_TIME} />
+                <YAxis {...yAxisProps()} />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#EAE6DF" }} />
+                <Legend {...LEGEND_PROPS} />
                 {balanceData.lines.map((l) => (
-                  <Line key={l.name} type="monotone" dataKey={l.name} stroke={l.color} strokeWidth={l.name === rows.find((r) => r.scn.id === activeId)?.scn.name ? 3 : 1.5} dot={false} />
+                  <Line key={l.name} {...LINE_PROPS} dataKey={l.name} stroke={l.color} strokeOpacity={l.name === rows.find((r) => r.scn.id === activeId)?.scn.name ? 1 : 0.55} />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -512,34 +513,16 @@ function MiniBarChart({
       : COLOR_NEG;
   const legendName =
     kind === "rate" ? "Monatsrate" : kind === "interest" ? "Zinskosten gesamt" : "Cashflow mtl.";
-  const compact = new Intl.NumberFormat("de-DE", { notation: "compact", maximumFractionDigits: 1 });
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
-      <div className="h-48 w-full">
+    <div className={CHART_CONTAINER_CLS}>
+      <div className="text-[14px] font-semibold text-[#1C1917] mb-2">{title}</div>
+      <div className="h-56 w-full">
         <ResponsiveContainer>
-          <BarChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={44} />
-            <YAxis
-              tick={{ fontSize: 10 }}
-              tickFormatter={(v) => `${compact.format(Number(v))} €`}
-              label={yLabel ? { value: yLabel, angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 10, fill: "var(--muted-foreground)" } } : undefined}
-            />
-            <Tooltip
-              formatter={(v: any) => [
-                new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(v)),
-                legendName,
-              ]}
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 11,
-                color: "var(--card-foreground)",
-              }}
-            />
-            <Legend wrapperStyle={{ fontSize: 10 }} formatter={() => legendName} />
+          <BarChart data={data} margin={CHART_MARGIN}>
+            <CartesianGrid {...GRID_PROPS} />
+            <XAxis dataKey="name" {...X_AXIS_CATEGORY} angle={-15} textAnchor="end" height={44} />
+            <YAxis {...yAxisProps(yLabel ?? "€")} />
+            <Tooltip content={<ChartTooltip labelFormatter={(l) => String(l ?? "")} />} cursor={{ fill: "#FAFAF8" }} />
             <Bar dataKey={dataKey} radius={[6, 6, 0, 0]} name={legendName}>
               {data.map((d, i) => (
                 <Cell key={i} fill={colorFor(Number(d[dataKey]) || 0)} />

@@ -18,6 +18,7 @@ import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 import { ArrowLeft, FileText, Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
+import { CHART_COLORS, CHART_MARGIN, ChartTooltip, GRID_PROPS, LEGEND_PROPS, LINE_PROPS, X_AXIS_TIME, yAxisProps } from "@/components/charts/chartKit";
 import {
   LineChart,
   Line,
@@ -252,15 +253,15 @@ function UebersichtTab({ p }: { p: Property }) {
         height={280}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid {...CHART_STYLE.grid} />
-            <XAxis dataKey="jahr" tick={CHART_STYLE.axisTick} axisLine={CHART_STYLE.axisLine} />
-            <YAxis tick={CHART_STYLE.axisTick} axisLine={CHART_STYLE.axisLine} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-            <Tooltip formatter={(v: number) => fmtEUR(v)} contentStyle={CHART_STYLE.tooltipContent} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Line type="monotone" dataKey="Objektwert" stroke={CHART_STYLE.colors.positive} strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Restschuld" stroke={CHART_STYLE.colors.negative} strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Eigenkapital" stroke={CHART_STYLE.colors.secondary} strokeWidth={2} dot={false} />
+          <LineChart data={chartData} margin={CHART_MARGIN}>
+            <CartesianGrid {...GRID_PROPS} />
+            <XAxis dataKey="jahr" {...X_AXIS_TIME} />
+            <YAxis {...yAxisProps()} />
+            <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#EAE6DF" }} />
+            <Legend {...LEGEND_PROPS} />
+            <Line {...LINE_PROPS} dataKey="Objektwert" stroke={CHART_COLORS.value} />
+            <Line {...LINE_PROPS} dataKey="Restschuld" stroke={CHART_COLORS.debt} />
+            <Line {...LINE_PROPS} dataKey="Eigenkapital" stroke={CHART_COLORS.equity} />
             {kreditAbbezahltJahr !== null && (
               <ReferenceLine
                 x={kreditAbbezahltJahr}

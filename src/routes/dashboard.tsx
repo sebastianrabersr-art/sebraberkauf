@@ -5,6 +5,7 @@ import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct } from "@/lib/
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard, CHART_STYLE } from "@/components/ChartCard";
+import { CHART_MARGIN, ChartTooltip, GRID_PROPS, X_AXIS_CATEGORY, fmtAxisNumber, fmtEuro } from "@/components/charts/chartKit";
 import { CaretRight as ChevronRight, ListNumbers, WarningCircle, CalendarCheck } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
@@ -301,11 +302,15 @@ function Dashboard() {
             <div className="grid lg:grid-cols-2 gap-4">
               <ChartCard title="Score-Verteilung">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={scoreBuckets} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                    <CartesianGrid {...CHART_STYLE.grid} vertical={false} />
-                    <XAxis dataKey="name" tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
-                    <YAxis tick={CHART_STYLE.axisTick} allowDecimals={false} tickLine={false} axisLine={CHART_STYLE.axisLine} />
-                    <Tooltip cursor={{ fill: "#FAFAF8" }} contentStyle={CHART_STYLE.tooltipContent} />
+                  <BarChart data={scoreBuckets} margin={CHART_MARGIN}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="name" {...X_AXIS_CATEGORY} />
+                    <YAxis tick={{ fontSize: 11, fill: "#A8A29E" }} allowDecimals={false} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "Objekte", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <Tooltip
+                      content={<ChartTooltip labelFormatter={(l) => `Score ${l}`} valueFormatter={(v) => `${v} ${Number(v) === 1 ? "Objekt" : "Objekte"}`} />}
+                      cursor={{ fill: "#FAFAF8" }}
+                    />
                     <Bar dataKey="count" radius={CHART_STYLE.bar.radius}>
                       {scoreBuckets.map((_, i) => (
                         <Cell key={i} fill={i === 0 ? CHART_STYLE.colors.negative : i === 1 ? "#D97706" : CHART_STYLE.colors.positive} />
@@ -316,11 +321,15 @@ function Dashboard() {
               </ChartCard>
               <ChartCard title="Kaufpreis vs. Bruttorendite">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid {...CHART_STYLE.grid} />
-                    <XAxis dataKey="x" name="Kaufpreis" tickFormatter={(v) => `${Math.round(v / 1000)}k`} tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
-                    <YAxis dataKey="y" name="Bruttorendite %" tick={CHART_STYLE.axisTick} tickLine={false} axisLine={CHART_STYLE.axisLine} />
-                    <Tooltip formatter={(v: any, n) => (n === "x" ? fmtEUR(v) : `${Number(v).toFixed(2)}%`)} labelFormatter={() => ""} contentStyle={CHART_STYLE.tooltipContent} />
+                  <ScatterChart margin={{ ...CHART_MARGIN, bottom: 4 }}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis type="number" dataKey="x" name="Kaufpreis" tickFormatter={fmtAxisNumber} tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} tickCount={4} />
+                    <YAxis type="number" dataKey="y" name="Bruttorendite" tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "%", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <Tooltip
+                      content={<ChartTooltip labelFormatter={() => ""} valueFormatter={(v, e) => (e.name === "Kaufpreis" ? fmtEuro(Number(v)) : `${Number(v).toLocaleString("de-DE", { maximumFractionDigits: 2 })} %`)} />}
+                      cursor={{ stroke: "#EAE6DF" }}
+                    />
                     <Scatter data={scatter}>
                       {scatter.map((d, i) => (
                         <Cell key={i} fill={d.ampel === "green" ? CHART_STYLE.colors.positive : d.ampel === "yellow" ? "#D97706" : CHART_STYLE.colors.negative} />
