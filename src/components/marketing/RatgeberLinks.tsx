@@ -69,6 +69,76 @@ export function RelatedArticles({ article }: { article: RatgeberArticle }) {
   );
 }
 
+/* ───────── Artikel → passender Rechner (Umkehrung der Rechner-Chips) ───────── */
+
+type CalcLink = { slug: string; name: string };
+
+const CALC_BY_ARTICLE: Record<string, CalcLink> = {
+  "immobilien-rendite-berechnen": { slug: "rendite", name: "Rendite-Rechner" },
+  "cashflow-immobilie-berechnen": { slug: "cashflow", name: "Cashflow-Rechner" },
+  "kaufnebenkosten-oesterreich": { slug: "kaufnebenkosten", name: "Kaufnebenkosten-Rechner" },
+  "annuitaetendarlehen-erklaert": { slug: "finanzierung", name: "Finanzierungsrechner" },
+  "wie-viel-kredit-leisten": { slug: "leistbarkeit", name: "Leistbarkeitsrechner" },
+  "break-even-miete-berechnen": { slug: "breakeven", name: "Break-even-Miete-Rechner" },
+  "eigenkapitalrendite-berechnen": { slug: "fixflip", name: "Fix & Flip Rechner" },
+};
+const CALC_BY_CATEGORY: Partial<Record<RatgeberCategory, CalcLink>> = {
+  "Rendite & Cashflow": { slug: "rendite", name: "Rendite-Rechner" },
+  "Kaufnebenkosten": { slug: "kaufnebenkosten", name: "Kaufnebenkosten-Rechner" },
+  "Österreich": { slug: "kaufnebenkosten", name: "Kaufnebenkosten-Rechner" },
+  "Deutschland": { slug: "kaufnebenkosten", name: "Kaufnebenkosten-Rechner" },
+  "Finanzierung": { slug: "finanzierung", name: "Finanzierungsrechner" },
+};
+
+/** Rechner zum Artikel: erst die feste Zuordnung, dann nach Kategorie; sonst null (→ Rechner-Übersicht). */
+export function calculatorForArticle(article: RatgeberArticle): CalcLink | null {
+  return CALC_BY_ARTICLE[article.slug] ?? CALC_BY_CATEGORY[article.category] ?? null;
+}
+
+/** "Selbst berechnen: …" am Artikelende. */
+export function SelfCalcCta({ article }: { article: RatgeberArticle }) {
+  const calc = calculatorForArticle(article);
+  return (
+    <p className="mt-10 text-[15px] text-[#1C1917]">
+      Selbst berechnen:{" "}
+      {calc ? (
+        <Link to="/rechner/$slug" params={{ slug: calc.slug }} className="font-semibold text-[#2D6A4F] underline-offset-4 hover:underline">
+          {calc.name}
+        </Link>
+      ) : (
+        <Link to="/rechner" className="font-semibold text-[#2D6A4F] underline-offset-4 hover:underline">
+          alle Rechner ohne Anmeldung
+        </Link>
+      )}
+    </p>
+  );
+}
+
+/* ───────── Glossar → Ratgeber ───────── */
+
+/** Höchstens 5 Begriffe (Linkbudget der Glossar-Seite) – die Artikel, die den Begriff wirklich vertiefen. */
+export const ARTICLE_BY_GLOSSARY_ID: Record<string, string> = {
+  bruttorendite: "bruttorendite-vs-nettorendite",
+  cashflow: "cashflow-immobilie-berechnen",
+  annuitaetendarlehen: "annuitaetendarlehen-erklaert",
+  zinsbindung: "zinsbindung-immobilien",
+  leerstand: "leerstand-immobilien-kalkulieren",
+};
+
+export function GlossaryArticleLink({ termId }: { termId: string }) {
+  const slug = ARTICLE_BY_GLOSSARY_ID[termId];
+  const article = slug ? RATGEBER_ARTICLES.find((a) => a.slug === slug) : undefined;
+  if (!article) return null;
+  return (
+    <p className="mt-2 text-[12px] text-ink-2">
+      Mehr dazu:{" "}
+      <Link to="/ratgeber/$slug" params={{ slug }} className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+        {shortTitle(article.title)}
+      </Link>
+    </p>
+  );
+}
+
 /** Haupttitel ohne Untertitel ("Break-even-Miete berechnen: Ab welcher …" → "Break-even-Miete berechnen"). */
 function shortTitle(title: string): string {
   const q = title.indexOf("? ");

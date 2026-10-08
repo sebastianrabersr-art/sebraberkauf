@@ -18,7 +18,7 @@ export function Logo({ size = 32, textSize = 16 }: { size?: number; textSize?: n
         <>
           <img
             src="/favicon.png"
-            alt="kaufma"
+            alt="kaufma Logo"
             width={size}
             height={size}
             className="rounded-full"

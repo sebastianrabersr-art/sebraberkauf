@@ -25,6 +25,7 @@ import { isBought, isInPortfolio, legacyStatusPatch, portfolioAddPatch, promptAd
 import { ReminderButton, usePropertyReminders } from "@/components/crm/ReminderButton";
 import type { Reminder } from "@/lib/reminders";
 import { PropertyDocumentsPanel } from "@/components/PropertyDocumentsPanel";
+import { ZinshausSummary, ZinshausUnitsPanel } from "@/components/ZinshausUnitsPanel";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
@@ -41,7 +42,7 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
+type TabKey = "uebersicht" | "einheiten" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "finanzierung", label: "Finanzierung" },
@@ -80,7 +81,11 @@ function Detail() {
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
 
-  const [tab, setTab] = useState<TabKey>("uebersicht");
+  const [tabState, setTab] = useState<TabKey>("uebersicht");
+  // Zinshaus: "Einheiten" als zweiter Tab. Wird der Typ geändert, fällt ein offener Einheiten-Tab auf die Übersicht zurück.
+  const isZinshaus = p.propertyType === "zinshaus";
+  const tabs = isZinshaus ? [TABS[0], { key: "einheiten" as TabKey, label: "Einheiten" }, ...TABS.slice(1)] : TABS;
+  const tab: TabKey = tabState === "einheiten" && !isZinshaus ? "uebersicht" : tabState;
   const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportUpgradeOpen, setExportUpgradeOpen] = useState(false);
@@ -164,15 +169,20 @@ function Detail() {
   // Pflichtfelder-Banner: Sprung zum Eingabefeld (Tab wechseln, Sektion öffnen, fokussieren, kurz hervorheben)
   const missingReq = missingRequiredFields(p);
   const goToRequiredField = (key: RequiredFieldKey) => {
+    // Zinshaus: Miete und Fläche kommen aus den Einheiten → dorthin springen.
+    const fromUnits = isZinshaus && (key === "miete" || key === "wohnflaeche");
     const target: { tab: TabKey; section: string } =
       key === "eigenkapital" || key === "zinssatz" ? { tab: "finanzierung", section: "sec-finanzierung" }
+      : fromUnits ? { tab: "einheiten", section: "sec-einheiten" }
       : key === "miete" ? { tab: "uebersicht", section: "sec-miete" }
       : { tab: "uebersicht", section: "sec-objektdaten" };
     setTab(target.tab);
     setTimeout(() => {
       const section = document.getElementById(target.section) as HTMLDetailsElement | null;
       if (section?.tagName === "DETAILS") section.open = true;
-      const field = document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
+      const field = fromUnits
+        ? document.getElementById("zinshaus-add-unit") ?? section
+        : document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
       if (!field) return;
       field.scrollIntoView({ behavior: "smooth", block: "center" });
       const input = field.querySelector<HTMLElement>("input, select, button") ?? field;
@@ -228,7 +238,7 @@ function Detail() {
 
         {/* ============ TAB NAV ============ */}
         <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto">
-          {TABS.map((t) => {
+          {tabs.map((t) => {
             const active = tab === t.key;
             return (
               <button
@@ -261,6 +271,11 @@ function Detail() {
               setDqBannerDismissed={setDqBannerDismissed}
               navTo={navTo}
             />
+          )}
+          {tab === "einheiten" && (
+            <Section id="sec-einheiten" title="Einheiten" defaultOpen>
+              <ZinshausUnitsPanel p={p} u={u} />
+            </Section>
           )}
           {tab === "finanzierung" && (
             <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
@@ -323,14 +338,6 @@ function Detail() {
             <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
           </div>
           <div className="text-[12px] text-ink-2">{dq.filled} von {dq.total} Pflichtfeldern</div>
-
-          {mietrecht.risiko !== "niedrig" && (
-            <div className="mt-5 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-[#92400E]">Mietrecht-Risiko</div>
-              <div className="text-[13px] font-semibold text-[#1C1917] mt-0.5">{mietrecht.kategorie}</div>
-              <div className="text-[11px] text-ink-2 mt-0.5">Risiko: {mietrecht.risiko}</div>
-            </div>
-          )}
         </aside>
       </div>
       <ExportPdfDialog open={exportOpen} onClose={() => setExportOpen(false)} property={p} assumptions={assumptions} />
@@ -384,6 +391,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   return (
     <>
       {!dqBannerDismissed && <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} onDismiss={() => setDqBannerDismissed(true)} />}
+
+      {/* Zinshaus: Einheiten-Kennzahlen über den normalen Rendite-/Cashflow-Kennzahlen */}
+      {p.propertyType === "zinshaus" && <ZinshausSummary p={p} onGoUnits={() => navTo("einheiten")} />}
 
       {/* === SECTION A: Kennzahlen === */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -462,7 +472,11 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               </Sel>
             </F>
             <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
+            {p.propertyType === "zinshaus" ? (
+              <F label="Wohnfläche m² (Summe der Einheiten)"><N value={p.wohnflaecheM2} edit={false} on={() => {}} /></F>
+            ) : (
+              <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
+            )}
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
             <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
@@ -657,7 +671,11 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       {/* === SECTION E: Miete & Betriebskosten === */}
       <Section id="sec-miete" title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
-          <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          {p.propertyType === "zinshaus" ? (
+            <F label="Miete €/Mt (effektiv, Summe der Einheiten)"><N value={p.nettomieteMtl} edit={false} on={() => {}} /></F>
+          ) : (
+            <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          )}
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
               <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />

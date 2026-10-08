@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { GLOSSARY, CATEGORY_LABELS, CATEGORY_COLORS, type GlossaryTerm } from "@/lib/glossary";
 import { MagnifyingGlass } from "@phosphor-icons/react";
+import { GlossaryArticleLink } from "@/components/marketing/RatgeberLinks";
 
 const CATEGORY_ORDER: GlossaryTerm["category"][] = [
   "rendite",
@@ -93,6 +94,7 @@ export function GlossarList() {
                       >
                         {t.long}
                       </p>
+                      <GlossaryArticleLink termId={t.id} />
                     </article>
                   );
                 })}

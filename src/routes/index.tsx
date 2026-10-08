@@ -299,7 +299,7 @@ function LinkAnalyzer() {
 
 /* ───────── So prüfst du eine Wohnung ───────── */
 
-const STEPS: { title: string; text: string; details: string[] }[] = [
+const STEPS: { title: string; text: string; details: string[]; more?: { label: string; href: string } }[] = [
   {
     title: "Inserat einfügen",
     text: "Link von willhaben, ImmoScout24 & Co. einfügen – kaufma liest Preis, Fläche, Lage und Baujahr aus.",
@@ -309,11 +309,13 @@ const STEPS: { title: string; text: string; details: string[] }[] = [
     title: "Die echten Kosten sehen",
     text: "Nicht nur der Kaufpreis: Grunderwerbsteuer, Grundbuch, Notar und Makler – auch rückwärts aus dem Bruttobetrag gerechnet.",
     details: ["Kreditrate und Bank-Szenarien", "Sondertilgungen im Zahlungsplan"],
+    more: { label: "Kaufnebenkosten-Rechner", href: "/rechner/kaufnebenkosten" },
   },
   {
     title: "Rechnet sie sich?",
     text: "Cashflow nach Rate, Rücklage und Leerstand, Brutto- und Nettorendite, und die Miete, ab der du nichts mehr zuzahlst.",
     details: ["Mietrecht-Ampel: MRG, Richtwert, Befristungsabschlag", "fehlende Angaben werden markiert"],
+    more: { label: "Rendite berechnen", href: "/rechner" },
   },
   {
     title: "Vergleichen und dranbleiben",
@@ -357,7 +359,8 @@ function Landing() {
           <div className="max-w-2xl">
             <h2 className="heading-section">So prüfst du eine Wohnung mit kaufma</h2>
             <p className="text-[16px] text-ink-2 mt-3 leading-relaxed">
-              Vom Inserat zur Entscheidung, ohne Excel. Jeder Schritt steht für sich – du kannst auch nur einen davon nutzen.
+              Vom Inserat zur Entscheidung, ohne Excel. Jeder Schritt steht für sich – du kannst auch nur einen davon nutzen. Was hinter den Zahlen steckt, erklärt der{" "}
+              <Link to="/ratgeber" className="font-medium text-[#2D6A4F] underline underline-offset-4">Ratgeber</Link>.
             </p>
           </div>
 
@@ -377,6 +380,11 @@ function Landing() {
                     </li>
                   ))}
                 </ul>
+                {s.more && (
+                  <a href={s.more.href} className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+                    {s.more.label} <ArrowRight className="size-3.5" aria-hidden />
+                  </a>
+                )}
               </li>
             ))}
           </ol>
@@ -463,6 +471,10 @@ function Landing() {
           <a href="#analyse" className="mt-7 inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
             Inserat prüfen <ArrowRight className="size-4" aria-hidden />
           </a>
+          <p className="mt-4 text-[14px] text-white/75">
+            Mehr als eine Immobilie im Blick?{" "}
+            <Link to="/preise" className="font-medium text-white underline underline-offset-4">Preise ansehen</Link>
+          </p>
         </div>
       </section>
     </MarketingShell>

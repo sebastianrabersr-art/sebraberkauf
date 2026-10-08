@@ -37,6 +37,8 @@ function NewPropertyPage() {
   const isHouseSeparate = propertyType === "house_with_separate_land";
   const isHouse = propertyType === "house_with_land" || propertyType === "house_with_separate_land";
   const isLand = propertyType === "land_only";
+  // Zinshaus: Fläche und Miete kommen aus den Einheiten (Tab "Einheiten" im Objekt).
+  const isZinshaus = propertyType === "zinshaus";
   const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
   const checkLimit = () => {
@@ -63,11 +65,12 @@ function NewPropertyPage() {
       landPurchasePrice: isHouseSeparate ? landPurchasePrice : null,
       totalPurchasePrice: isHouseSeparate && computedTotal ? computedTotal : null,
       landAreaSqm: (isHouse || isLand) ? landAreaSqm : null,
-      wohnflaecheM2: isLand ? null : m2,
+      wohnflaecheM2: isLand || isZinshaus ? null : m2,
       livingAreaSqm: isHouse ? m2 : null,
-      zimmer: isLand ? null : zimmer,
-      nettomieteMtl: miete,
-      nettomieteGeschaetzt: !!miete,
+      zimmer: isLand || isZinshaus ? null : zimmer,
+      nettomieteMtl: isZinshaus ? null : miete,
+      nettomieteGeschaetzt: !isZinshaus && !!miete,
+      ...(isZinshaus ? { units: [], objekttyp: "Zinshaus" } : {}),
     });
     const wasFirst = properties.filter((x) => !x.isDemo).length === 0;
     addProperty(p);
@@ -133,7 +136,12 @@ function NewPropertyPage() {
           {(isHouse || isLand) && (
             <Row label="Grundstücksfläche m²"><N value={landAreaSqm} on={setLandAreaSqm} /></Row>
           )}
-          {!isLand && (
+          {isZinshaus && (
+            <p className="col-span-2 text-xs text-muted-foreground">
+              Fläche und Miete ergeben sich aus den Einheiten – die legst du nach dem Erstellen im Tab „Einheiten“ an.
+            </p>
+          )}
+          {!isLand && !isZinshaus && (
             <>
               <Row label={isHouse ? "Wohnfläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
               <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>

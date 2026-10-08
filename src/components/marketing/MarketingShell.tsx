@@ -123,7 +123,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <footer className="border-t mt-16">
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground flex flex-wrap gap-6 justify-between">
           <span>© {new Date().getFullYear()} kaufma</span>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Rechtliches">
+          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Fußzeile">
+            <a href="/rechner" className="hover:text-foreground">Rechner</a>
+            <a href="/ratgeber" className="hover:text-foreground">Ratgeber</a>
+            <a href="/preise" className="hover:text-foreground">Preise</a>
             <a href="/glossar" className="hover:text-foreground">Glossar</a>
             <a href="/impressum" className="hover:text-foreground">Impressum</a>
             <a href="/datenschutz" className="hover:text-foreground">Datenschutz</a>
