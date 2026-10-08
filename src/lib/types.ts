@@ -329,6 +329,11 @@ export interface Property {
   bewertung?: Bewertung;
   prozessStatus?: ProzessStatus;
   userRating?: UserRating;
+  /**
+   * Portfolio-Zugehörigkeit gekaufter Objekte. undefined = Altbestand, gilt als im Portfolio.
+   * false = als "Gekauft" markiert, Aufnahme ins Portfolio noch nicht bestätigt ("Später").
+   */
+  inPortfolio?: boolean;
 }
 
 export interface UserRating {

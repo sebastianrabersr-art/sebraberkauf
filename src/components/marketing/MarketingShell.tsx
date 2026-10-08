@@ -19,9 +19,18 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * Feste "Kostenlos starten"-Leiste auf dem Handy: Startseite, Rechner-Übersicht, Ratgeber.
+ * Nicht auf den Einzelrechnern (/rechner/…) – dort steht schon die feste Ergebnisleiste.
+ */
+function showsStickyCta(pathname: string) {
+  return pathname === "/" || pathname === "/rechner" || pathname === "/ratgeber" || pathname.startsWith("/ratgeber/");
+}
+
 export function MarketingShell({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const stickyCta = !loading && !session && showsStickyCta(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
 
@@ -126,7 +135,24 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           <a href="mailto:hallo@kaufma.eu" className="w-full md:w-auto md:text-right hover:text-foreground">hallo@kaufma.eu</a>
           <span className="w-full md:w-auto md:text-right">Hinweis: kaufma ersetzt keine Rechts-, Steuer- oder Finanzberatung.</span>
         </div>
+        {/* Platz für die feste CTA-Leiste, damit die Fußzeile nicht verdeckt wird */}
+        {stickyCta && <div aria-hidden className="md:hidden h-[calc(72px+env(safe-area-inset-bottom))]" />}
       </footer>
+
+      {stickyCta && (
+        <div
+          className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[#EAE6DF] bg-white px-4 pt-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+        >
+          <a
+            href="/signup"
+            className="flex h-12 w-full items-center justify-center rounded-[10px] bg-[#2D6A4F] text-[15px] font-semibold text-white transition-colors hover:bg-[#235740] active:bg-[#235740]"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Kostenlos starten
+          </a>
+        </div>
+      )}
     </div>
   );
 }

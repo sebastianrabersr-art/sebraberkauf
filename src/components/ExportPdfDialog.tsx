@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { X } from "@phosphor-icons/react";
-import type { Property } from "@/lib/types";
-import { exportPropertyPdf, type PropertyExportOptions } from "@/lib/pdfExport";
+import type { Assumptions, Property } from "@/lib/types";
+import { useStore } from "@/lib/store";
+import { pdfFileName } from "@/lib/pdfExport";
+import { usePdfExport } from "@/components/pdf/PdfKit";
+import { PropertyPdfDocument, type PropertyPdfSections } from "@/components/pdf/PropertyPdf";
+
+const ITEMS: { key: keyof PropertyPdfSections; label: string; description: string }[] = [
+  { key: "uebersicht", label: "Übersicht", description: "Kaufpreis, Rendite, Cashflow, Nebenkosten" },
+  { key: "finanzierung", label: "Finanzierung", description: "Kreditrate, Tilgungsplan, Zinsentwicklung" },
+  { key: "analysen", label: "Analysen", description: "Szenarien, Wertsteigerung, Cashflow-Prognose" },
+  { key: "steuer", label: "Steuer & AfA", description: "AfA-Berechnung, Steuerersparnis" },
+  { key: "besichtigung", label: "Besichtigung & Notizen", description: "Checkliste, eigene Notizen" },
+];
 
 export function ExportPdfDialog({
   open,
@@ -12,75 +23,102 @@ export function ExportPdfDialog({
   open: boolean;
   onClose: () => void;
   property: Property;
-  assumptions: any;
+  assumptions: Assumptions;
 }) {
-  const [opts, setOpts] = useState<PropertyExportOptions>({
-    eckdaten: true,
-    rendite: true,
+  const [sections, setSections] = useState<PropertyPdfSections>({
+    uebersicht: true,
     finanzierung: true,
-    mietrecht: true,
-    bewertung: false,
+    analysen: true,
+    steuer: true,
+    besichtigung: true,
   });
+  const { viewings } = useStore();
+  const pdf = usePdfExport();
 
-  if (!open) return null;
+  if (!open && !pdf.exporting) return null;
 
-  const toggle = (k: keyof PropertyExportOptions) => setOpts((o) => ({ ...o, [k]: !o[k] }));
+  const toggle = (k: keyof PropertyPdfSections) => setSections((s) => ({ ...s, [k]: !s[k] }));
+  const anySelected = Object.values(sections).some(Boolean);
 
-  const items: { key: keyof PropertyExportOptions; label: string }[] = [
-    { key: "eckdaten", label: "Eckdaten (Kaufpreis, Nebenkosten, Gesamtkapital, Monatliche Rate)" },
-    { key: "rendite", label: "Rendite & Cashflow (Brutto-/Nettorendite, Cashflow, Break-even)" },
-    { key: "finanzierung", label: "Finanzierung (aktives Szenario: Bank, Betrag, Zins, Rate, Laufzeit)" },
-    { key: "mietrecht", label: "Mietrecht-Einschätzung (Risiko-Level + Kurztext)" },
-    { key: "bewertung", label: "Meine Bewertung (Ø + einzelne Kategorien)" },
-  ];
-
-  const onDownload = () => {
-    exportPropertyPdf(property, opts, assumptions);
-    onClose();
+  const onCreate = () => {
+    if (!anySelected) return;
+    pdf.run(
+      <PropertyPdfDocument
+        p={property}
+        a={assumptions}
+        sections={sections}
+        viewingChecks={viewings[property.id]?.checks}
+      />,
+      pdfFileName(property.title || property.bezirk || property.city || "objekt"),
+      onClose,
+    );
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-[520px] rounded-[12px] bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-[16px] font-semibold text-[#1C1917]">PDF exportieren</h2>
-          <button onClick={onClose} className="text-ink-3 hover:text-[#1C1917]">
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <div className="space-y-3 mb-6">
-          {items.map((it) => (
-            <label key={it.key} className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={opts[it.key]}
-                onChange={() => toggle(it.key)}
-                className="mt-0.5 size-4 accent-[#2D6A4F] cursor-pointer"
-              />
-              <span className="text-[13px] text-[#1C1917] leading-snug">{it.label}</span>
-            </label>
-          ))}
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="h-9 rounded-lg border border-[#EAE6DF] bg-white px-4 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8]"
+    <>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 no-print" onClick={pdf.exporting ? undefined : onClose}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pdf-export-title"
+            className="w-full max-w-[460px] bg-white p-6"
+            style={{ border: "1px solid #EAE6DF", borderRadius: 14 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            Abbrechen
-          </button>
-          <button
-            onClick={onDownload}
-            className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740]"
-          >
-            PDF herunterladen
-          </button>
+            <div className="flex items-start justify-between mb-3">
+              <h2 id="pdf-export-title" className="text-[16px] font-semibold text-[#1C1917]">PDF exportieren</h2>
+              <button onClick={onClose} disabled={pdf.exporting} aria-label="Schließen" className="text-ink-3 hover:text-[#1C1917]">
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              {ITEMS.map((it) => (
+                <label
+                  key={it.key}
+                  className="flex items-center gap-3 cursor-pointer border-b border-[#F5F3EE] last:border-0"
+                  style={{ minHeight: 44, fontFamily: "Inter, sans-serif", paddingBlock: 6 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={sections[it.key]}
+                    onChange={() => toggle(it.key)}
+                    className="size-4 cursor-pointer shrink-0"
+                    style={{ accentColor: "#2D6A4F" }}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-[14px] leading-tight text-[#1C1917]">{it.label}</span>
+                    <span className="block text-[11px] leading-tight mt-0.5" style={{ color: "#A8A29E" }}>{it.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={onClose}
+                disabled={pdf.exporting}
+                className="h-9 rounded-lg border border-[#EAE6DF] bg-white px-4 text-[13px] text-[#1C1917] hover:bg-[#FAFAF8] disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={onCreate}
+                disabled={!anySelected || pdf.exporting}
+                className="h-9 rounded-lg px-4 text-[13px] font-medium text-white hover:bg-[#235740] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "#2D6A4F" }}
+              >
+                {pdf.exporting ? "Wird erstellt …" : "PDF erstellen"}
+              </button>
+            </div>
+            <p className="text-[11px] mt-3" style={{ color: "#A8A29E" }}>
+              Im Druckdialog „Als PDF speichern“ wählen.
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+      {pdf.portal}
+    </>
   );
 }

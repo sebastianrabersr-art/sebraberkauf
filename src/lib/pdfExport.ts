@@ -1,21 +1,115 @@
 import jsPDF from "jspdf";
-import type { Property } from "./types";
-import { userRatingAvg } from "./types";
-import {
-  calcProperty,
-  fmtEUR,
-  fmtPct,
-  getActiveFinance,
-  inferMietrecht,
-} from "./calc";
 
-export interface PropertyExportOptions {
-  eckdaten: boolean;
-  rendite: boolean;
-  finanzierung: boolean;
-  mietrecht: boolean;
-  bewertung: boolean;
+/* ════════════════════════════════════════════════════════════════════════════
+ * PDF-Export über den Druckdialog des Browsers ("Als PDF speichern").
+ *
+ * Objekt- und Rechner-Exporte rendern ein eigenes Druckdokument (siehe
+ * src/components/pdf/) und übergeben es hier. Recharts-Diagramme werden vor dem
+ * Drucken per html2canvas in Bilder umgewandelt: Beim Druck ändert sich die
+ * Seitenbreite, Recharts würde neu messen und seine Animation neu starten –
+ * im PDF landeten dann leere oder halb gezeichnete Diagramme.
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/** Wartet, bis Schriften geladen und das Layout zweimal gezeichnet ist. */
+export async function waitForLayout(extraMs = 150): Promise<void> {
+  try { await document.fonts?.ready; } catch { /* ignore */ }
+  // requestAnimationFrame pausiert in Hintergrund-Tabs – ohne Zeitgrenze bliebe der
+  // Export hängen, wenn jemand direkt nach dem Klick den Tab wechselt.
+  const frame = () =>
+    new Promise<void>((resolve) => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      requestAnimationFrame(finish);
+      setTimeout(finish, 100);
+    });
+  await frame();
+  await frame();
+  if (extraMs > 0) await new Promise((r) => setTimeout(r, extraMs));
 }
+
+/** Ersetzt alle Recharts-Diagramme in `element` durch Bilder; gibt eine Funktion zum Wiederherstellen zurück. */
+export async function captureCharts(element: HTMLElement): Promise<() => void> {
+  const restores: (() => void)[] = [];
+  const wrappers = Array.from(element.querySelectorAll<HTMLElement>(".recharts-wrapper"));
+  if (wrappers.length === 0) return () => {};
+  const { default: html2canvas } = await import("html2canvas");
+  for (const w of wrappers) {
+    try {
+      const canvas = await html2canvas(w, {
+        backgroundColor: "#FFFFFF",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        // Ohne Ausgleich verschiebt html2canvas das Bild um die aktuelle Scrollposition.
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+      });
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL("image/png");
+      img.alt = "";
+      img.className = "pdf-chart-img";
+      img.style.width = `${w.offsetWidth}px`;
+      img.style.height = `${w.offsetHeight}px`;
+      w.parentElement?.insertBefore(img, w);
+      const prevDisplay = w.style.display;
+      w.style.display = "none";
+      restores.push(() => { img.remove(); w.style.display = prevDisplay; });
+    } catch {
+      // Ein Diagramm, das sich nicht erfassen lässt, wird als SVG gedruckt.
+    }
+  }
+  return () => restores.forEach((r) => r());
+}
+
+/**
+ * Druckt `element` als PDF: Diagramme erfassen → Druckdialog öffnen → danach alles
+ * wiederherstellen. `filename` wird als Dokumenttitel gesetzt – Browser schlagen ihn
+ * beim Speichern als Dateinamen vor.
+ */
+export async function exportToPdf(element: HTMLElement, filename: string): Promise<void> {
+  await waitForLayout();
+  const restoreCharts = await captureCharts(element);
+
+  const prevTitle = document.title;
+  document.title = filename.replace(/\.pdf$/i, "");
+  document.body.classList.add("kaufma-printing");
+  element.classList.add("kaufma-print-active");
+
+  try {
+    await new Promise<void>((resolve) => {
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        window.removeEventListener("afterprint", done);
+        resolve();
+      };
+      window.addEventListener("afterprint", done);
+      window.print();
+      // Die meisten Browser blockieren in print(), bis der Dialog zu ist; wo nicht,
+      // hat der Browser das Dokument bereits für den Druck übernommen.
+      setTimeout(done, 300);
+    });
+  } finally {
+    element.classList.remove("kaufma-print-active");
+    document.body.classList.remove("kaufma-printing");
+    document.title = prevTitle;
+    restoreCharts();
+  }
+}
+
+export function pdfFileName(...parts: (string | null | undefined)[]): string {
+  const slug = parts
+    .filter(Boolean)
+    .join("-")
+    .toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `kaufma_${slug || "export"}_${new Date().toISOString().slice(0, 10)}.pdf`;
+}
+
+/* ═════════════════════════ Vergleichs-PDF (jsPDF) ═════════════════════════ */
 
 const M = 50; // margin pt
 const PAGE_W = 595;
@@ -24,10 +118,6 @@ const FOOTER = "kaufma.eu · Keine Anlage- oder Rechtsberatung";
 
 function fmtDate(d = new Date()): string {
   return d.toLocaleDateString("de-AT");
-}
-
-function safeFile(s: string | undefined | null): string {
-  return (s || "objekt").toString().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "objekt";
 }
 
 function ensureSpace(doc: jsPDF, y: number, needed: number, onNewPage: () => number): number {
@@ -69,129 +159,6 @@ function drawFooters(doc: jsPDF) {
     doc.text(`${FOOTER} · Seite ${i} von ${total}`, PAGE_W / 2, PAGE_H - 25, { align: "center" });
   }
 }
-
-function sectionHeading(doc: jsPDF, label: string, y: number): number {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(45, 106, 79);
-  doc.text(label, M, y);
-  return y + 14;
-}
-
-function kv(doc: jsPDF, rows: [string, string][], y: number): number {
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const labelX = M;
-  const valueX = M + 220;
-  for (const [k, v] of rows) {
-    doc.setTextColor(120, 113, 108);
-    doc.text(k, labelX, y);
-    doc.setTextColor(28, 25, 23);
-    doc.text(v, valueX, y);
-    y += 14;
-  }
-  return y + 6;
-}
-
-export function exportPropertyPdf(p: Property, opts: PropertyExportOptions, assumptions: any) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const c = calcProperty(p, assumptions);
-
-  const title = p.title || "Objekt ohne Titel";
-  const address = [p.adresse, p.bezirk, p.city, p.bundesland, p.land].filter(Boolean).join(", ") || "—";
-
-  let y = drawHeader(doc, title, address);
-  const newPage = () => drawHeader(doc, title, address);
-
-  if (opts.eckdaten) {
-    y = ensureSpace(doc, y, 100, newPage);
-    y = sectionHeading(doc, "Eckdaten", y);
-    y = kv(doc, [
-      ["Kaufpreis", p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"],
-      ["Kaufnebenkosten", c.kaufNebenkosten != null ? fmtEUR(c.kaufNebenkosten) : "—"],
-      ["Gesamtkapital", c.gesamtkosten != null ? fmtEUR(c.gesamtkosten) : "—"],
-      ["Monatliche Rate", c.kreditRateMtl != null && isFinite(c.kreditRateMtl) ? fmtEUR(c.kreditRateMtl) : "—"],
-    ], y);
-  }
-
-  if (opts.rendite) {
-    y = ensureSpace(doc, y, 100, newPage);
-    y = sectionHeading(doc, "Rendite & Cashflow", y);
-    y = kv(doc, [
-      ["Bruttorendite", c.bruttorendite != null ? fmtPct(c.bruttorendite, 2) : "—"],
-      ["Nettorendite", c.nettorendite != null ? fmtPct(c.nettorendite, 2) : "—"],
-      ["Cashflow / Monat", c.cashflowMtl != null && isFinite(c.cashflowMtl) ? fmtEUR(c.cashflowMtl) : "—"],
-      ["Break-even Miete", c.requiredBreakEvenRent != null ? fmtEUR(c.requiredBreakEvenRent) : "—"],
-    ], y);
-  }
-
-  if (opts.finanzierung) {
-    const fin = getActiveFinance(p);
-    y = ensureSpace(doc, y, 110, newPage);
-    y = sectionHeading(doc, "Finanzierung (aktives Szenario)", y);
-    if (fin) {
-      y = kv(doc, [
-        ["Bank", fin.bankName || fin.name || "—"],
-        ["Kreditbetrag", fin.kreditBetrag != null ? fmtEUR(fin.kreditBetrag) : "—"],
-        ["Zinssatz", fmtPct(fin.zinssatz, 2)],
-        ["Rate / Monat", c.kreditRateMtl != null && isFinite(c.kreditRateMtl) ? fmtEUR(c.kreditRateMtl) : "—"],
-        ["Laufzeit", fin.laufzeitJahre != null ? `${fin.laufzeitJahre} Jahre` : "—"],
-      ], y);
-    } else {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(120, 113, 108);
-      doc.text("Kein Finanzierungs-Szenario hinterlegt.", M, y);
-      y += 20;
-    }
-  }
-
-  if (opts.mietrecht) {
-    const m = inferMietrecht(p);
-    y = ensureSpace(doc, y, 90, newPage);
-    y = sectionHeading(doc, "Mietrecht-Einschätzung", y);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    const color = m.risiko === "hoch" ? [220, 38, 38] : m.risiko === "mittel" ? [217, 119, 6] : [45, 106, 79];
-    doc.setTextColor(color[0], color[1], color[2]);
-    doc.text(`Risiko: ${m.risiko}`, M, y);
-    y += 14;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(28, 25, 23);
-    const lines = doc.splitTextToSize(`${m.kategorie}. ${m.erklaerung}`, PAGE_W - 2 * M);
-    doc.text(lines, M, y);
-    y += lines.length * 12 + 10;
-  }
-
-  if (opts.bewertung) {
-    const r = p.userRating;
-    const avg = userRatingAvg(r);
-    y = ensureSpace(doc, y, 110, newPage);
-    y = sectionHeading(doc, "Meine Bewertung", y);
-    if (avg == null) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(120, 113, 108);
-      doc.text("Noch keine Bewertung erfasst.", M, y);
-      y += 20;
-    } else {
-      y = kv(doc, [
-        ["Ø Gesamt", `${avg.toFixed(1).replace(".", ",")} / 10`],
-        ["Lage", r?.lage != null ? `${r.lage} / 10` : "—"],
-        ["Preis / Leistung", r?.preisLeistung != null ? `${r.preisLeistung} / 10` : "—"],
-        ["Zustand", r?.zustand != null ? `${r.zustand} / 10` : "—"],
-        ["Vermietbarkeit", r?.vermietbarkeit != null ? `${r.vermietbarkeit} / 10` : "—"],
-        ["Bauchgefühl", r?.bauchgefuehl != null ? `${r.bauchgefuehl} / 10` : "—"],
-      ], y);
-    }
-  }
-
-  drawFooters(doc);
-  const filename = `kaufma_${safeFile(p.bezirk || p.city)}_${new Date().toISOString().slice(0, 10)}.pdf`;
-  doc.save(filename);
-}
-
-// =========== Comparison PDF ===========
 
 export interface ComparisonRow {
   label: string;

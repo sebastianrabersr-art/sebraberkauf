@@ -2,6 +2,8 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { RatgeberArticle } from "@/lib/ratgeber";
 import { ArrowRight } from "@phosphor-icons/react";
+import { RelatedArticles } from "./RatgeberLinks";
+import { Breadcrumb } from "./Breadcrumb";
 
 /**
  * Inline-Markdown für Artikeltexte: **fett** und *kursiv*.
@@ -51,13 +53,14 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
 
   return (
     <article className="max-w-3xl mx-auto px-6 py-12">
-      <nav className="text-[13px] text-ink-2 mb-8 flex gap-2 flex-wrap" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-[#1C1917]">Start</Link>
-        <span aria-hidden>/</span>
-        <Link to="/ratgeber" className="hover:text-[#1C1917]">Ratgeber</Link>
-        <span aria-hidden>/</span>
-        <span className="text-[#1C1917]">{article.category}</span>
-      </nav>
+      <Breadcrumb
+        className="mb-8"
+        items={[
+          { label: "Startseite", href: "/" },
+          { label: "Ratgeber", href: "/ratgeber" },
+          { label: article.title },
+        ]}
+      />
 
       <header className="mb-10">
         <h1 className="font-display text-[34px] md:text-[42px] font-extrabold leading-[1.08] text-[#1C1917] text-balance">
@@ -139,6 +142,8 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           Kostenlos ausprobieren <ArrowRight className="size-4" />
         </Link>
       </div>
+
+      <RelatedArticles article={article} />
 
       {article.faq && article.faq.length > 0 && (
         <section id="faq" className="mt-14 scroll-mt-24">

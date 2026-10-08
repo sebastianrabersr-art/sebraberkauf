@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { detectCountry, detectPlatform } from "./extract.functions";
+import { scrapeListing } from "./scrape";
 
 // Source: 'landingpage' = öffentliche Vorschau (keine Auth nötig).
 // 'app' = aus eingeloggter App (später kann hier User-Quota geprüft werden).
@@ -46,58 +47,6 @@ function emptyResult(url: string, platform: string, country: string): Omit<Analy
   };
 }
 
-// Pluggable Content-Fetcher: bevorzugt Firecrawl (wenn FIRECRAWL_API_KEY gesetzt),
-// sonst direkter Fetch. So kann später Apify o.ä. ergänzt werden.
-async function fetchContent(url: string): Promise<{ text: string; images: string[] }> {
-  const fcKey = process.env.FIRECRAWL_API_KEY;
-  if (fcKey) {
-    try {
-      const r = await fetch("https://api.firecrawl.dev/v2/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${fcKey}` },
-        body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
-        signal: AbortSignal.timeout(20000),
-      });
-      if (r.ok) {
-        const j: any = await r.json();
-        const md: string = j?.data?.markdown || j?.markdown || "";
-        const links: string[] = j?.data?.links || j?.links || [];
-        const images = links.filter((l) => /\.(jpe?g|png|webp)(\?|$)/i.test(l)).slice(0, 6);
-        if (md && md.length > 200) return { text: md.slice(0, 22000), images };
-      }
-    } catch { /* fall through to direct fetch */ }
-  }
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "de-AT,de;q=0.9,en;q=0.8",
-      },
-      signal: AbortSignal.timeout(15000),
-      redirect: "follow",
-    });
-    if (!res.ok) return { text: "", images: [] };
-    const html = await res.text();
-    const ld = Array.from(html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
-      .map((m) => m[1]).join("\n").slice(0, 6000);
-    const imgs = Array.from(html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi))
-      .map((m) => m[1])
-      .filter((s) => /^https?:\/\//.test(s) && /\.(jpe?g|png|webp)(\?|$)/i.test(s))
-      .slice(0, 6);
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 22000);
-    return { text: ld ? `JSON-LD:\n${ld}\n\nText:\n${text}` : text, images: imgs };
-  } catch { return { text: "", images: [] }; }
-}
-
 function score(d: AnalyzeResult): number {
   // 0..100 nach befüllten Schlüsselfeldern
   const fields: (keyof AnalyzeResult)[] = [
@@ -130,7 +79,7 @@ export const analyzePropertyUrl = createServerFn({ method: "POST" })
       return { success: false, ...emptyResult(url, platform, country), error: "AI-Schlüssel fehlt – bitte später erneut versuchen.", error_code: "ai_failed" };
     }
 
-    const { text, images } = await fetchContent(url);
+    const { text, images } = await scrapeListing(url);
     if (!text || text.length < 200) {
       return { success: false, ...emptyResult(url, platform, country), error: "Inserat konnte nicht ausgelesen werden. Bitte Inseratstext einfügen oder PDF hochladen.", error_code: "fetch_failed" };
     }

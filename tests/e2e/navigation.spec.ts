@@ -55,7 +55,9 @@ test.describe("Öffentliche Navigation", () => {
 
   test("unbekannte Seite zeigt die 404-Ansicht", async ({ page, problems }) => {
     const res = await page.goto("/diese-seite-gibt-es-nicht");
-    await expect(page.getByRole("heading", { name: "Nicht gefunden" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Diese Seite gibt es nicht." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Zur Startseite" })).toHaveAttribute("href", "/");
+    await expect(page.getByRole("link", { name: "Rechner öffnen" })).toHaveAttribute("href", "/rechner");
     expect(res?.status()).toBe(404);
     problems.http.length = 0; // hier ist der 404 gewollt
     problems.console.length = 0;

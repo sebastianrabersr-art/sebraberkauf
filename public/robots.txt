@@ -1,2 +1,22 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /properties
+Disallow: /api
+Disallow: /settings
+Disallow: /onboarding
+Sitemap: https://kaufma.eu/sitemap.xml
+
+# LLM crawlers
+# Eigene Gruppe = eigene Regeln (die *-Gruppe gilt für sie nicht), daher die Sperren wiederholen.
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+Allow: /
+Disallow: /dashboard
+Disallow: /properties
+Disallow: /api
+Disallow: /settings
+Disallow: /onboarding

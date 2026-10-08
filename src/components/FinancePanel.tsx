@@ -3,7 +3,9 @@ import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineCh
 import { Plus, Trash as Trash2, Check, Star, Copy, Lightbulb, TrendDown as TrendingDown, TrendUp as TrendingUp } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import type { FinanceScenario, FinanceStatus, Property, Sondertilgung, Tilgungsart, ZahlungsIntervall } from "@/lib/types";
-import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmtEUR, fmtPct, getActiveFinance, makeFinanceScenario, summarizeScenario } from "@/lib/calc";
+import { REQUIRED_BORDER, REQUIRED_FINANCE_EMPTY_ID, requiredFieldDomId } from "@/lib/requiredFields";
+import { RequiredFieldHint } from "@/components/RequiredFieldHint";
 import { useActiveAssumptions, useStore } from "@/lib/store";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 import { CHART_STYLE } from "@/components/ChartCard";
@@ -21,7 +23,8 @@ const STATUS_OPTIONS: FinanceStatus[] = ["Anfrage", "Angebot erhalten", "Favorit
 export function FinancePanel({ p }: { p: Property }) {
   const { updateProperty } = useStore();
   const scenarios = p.financeScenarios ?? [];
-  const activeId = p.activeFinanceId ?? scenarios[0]?.id;
+  // Wie getActiveFinance: verweist activeFinanceId ins Leere, gilt das erste Szenario.
+  const activeId = getActiveFinance(p)?.id;
   const [selId, setSelId] = useState<string>(activeId ?? "");
 
   const setScenarios = (next: FinanceScenario[], activeFinanceId?: string) =>
@@ -99,11 +102,27 @@ export function FinancePanel({ p }: { p: Property }) {
       </div>
 
       {!current ? (
-        <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
-          Noch keine Finanzierung. Lege ein Szenario an.
+        <div
+          id={REQUIRED_FINANCE_EMPTY_ID}
+          className="text-sm text-muted-foreground rounded-md p-6 text-center scroll-mt-24"
+          style={{ border: REQUIRED_BORDER, background: "#FFF7ED" }}
+        >
+          <p>Noch keine Finanzierung – Eigenkapital und Zinssatz fehlen für die Analyse.</p>
+          <button
+            type="button"
+            onClick={addScenario}
+            className="mt-3 inline-flex items-center gap-1 rounded-md bg-[#2D6A4F] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#235740]"
+          >
+            <Plus className="size-3" /> Finanzierungsszenario anlegen
+          </button>
         </div>
       ) : (
-        <ScenarioEditor scn={current} onChange={(patch) => updateScn(current.id, patch)} onDelete={() => removeScn(current.id)} />
+        <ScenarioEditor
+          scn={current}
+          isActive={current.id === activeId}
+          onChange={(patch) => updateScn(current.id, patch)}
+          onDelete={() => removeScn(current.id)}
+        />
       )}
 
       {scenarios.length >= 2 && <ScenarioComparison p={p} scenarios={scenarios} activeId={p.activeFinanceId} />}
@@ -111,7 +130,11 @@ export function FinancePanel({ p }: { p: Property }) {
   );
 }
 
-function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onChange: (p: Partial<FinanceScenario>) => void; onDelete: () => void }) {
+function ScenarioEditor({ scn, onChange, onDelete, isActive = false }: {
+  scn: FinanceScenario; onChange: (p: Partial<FinanceScenario>) => void; onDelete: () => void;
+  /** Nur das aktive Szenario fließt in die Analyse ein – nur dort Pflichtfelder markieren. */
+  isActive?: boolean;
+}) {
   const schedule = useMemo(() => calcAmortizationSchedule(scn), [scn]);
   const totalInterest = schedule.reduce((s, y) => s + y.interest, 0);
   const totalPayment = schedule.reduce((s, y) => s + y.payment, 0);
@@ -137,8 +160,12 @@ function ScenarioEditor({ scn, onChange, onDelete }: { scn: FinanceScenario; onC
         </Fld>
         <Fld label="Startdatum"><Inp type="date" v={scn.startDate} onChange={(v) => onChange({ startDate: v })} /></Fld>
         <Fld label="Kreditbetrag €"><NumInp v={scn.kreditBetrag} onChange={(v) => onChange({ kreditBetrag: v })} /></Fld>
-        <Fld label="Eigenkapital €"><NumInp v={scn.eigenkapital} onChange={(v) => onChange({ eigenkapital: v })} /></Fld>
-        <Fld label="Zinssatz % p.a."><NumInp v={scn.zinssatz * 100} onChange={(v) => onChange({ zinssatz: v == null ? 0 : v / 100 })} step={0.01} /></Fld>
+        <Fld label="Eigenkapital €" id={isActive ? requiredFieldDomId("eigenkapital") : undefined} required={isActive && !scn.eigenkapital}>
+          <NumInp v={scn.eigenkapital} missing={isActive && !scn.eigenkapital} onChange={(v) => onChange({ eigenkapital: v })} />
+        </Fld>
+        <Fld label="Zinssatz % p.a." id={isActive ? requiredFieldDomId("zinssatz") : undefined} required={isActive && !scn.zinssatz}>
+          <NumInp v={scn.zinssatz * 100} missing={isActive && !scn.zinssatz} onChange={(v) => onChange({ zinssatz: v == null ? 0 : v / 100 })} step={0.01} />
+        </Fld>
         <Fld label={<>Zinsbindung<GlossaryTooltip termId="zinsbindung" /></>}>
           <select value={scn.zinsbindung ?? "fix"} onChange={(e) => onChange({ zinsbindung: e.target.value as any })} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
             <option value="fix">Fixzins</option>
@@ -535,14 +562,30 @@ function MiniBarChart({
   );
 }
 
-function Fld({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
-  return <label className="block"><div className="text-xs text-muted-foreground mb-1">{label}</div>{children}</label>;
+function Fld({ label, children, id, required }: { label: React.ReactNode; children: React.ReactNode; id?: string; required?: boolean }) {
+  return (
+    <label id={id} className="block scroll-mt-24">
+      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      {children}
+      {required && <RequiredFieldHint />}
+    </label>
+  );
 }
 function Inp({ v, onChange, type }: { v: string; onChange: (v: string) => void; type?: string }) {
   return <input type={type ?? "text"} value={v} onChange={(e) => onChange(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
 }
-function NumInp({ v, onChange, step }: { v: number | null | undefined; onChange: (v: number | null) => void; step?: number }) {
-  return <input type="number" step={step ?? 1} value={v ?? ""} onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />;
+function NumInp({ v, onChange, step, missing }: { v: number | null | undefined; onChange: (v: number | null) => void; step?: number; missing?: boolean }) {
+  return (
+    <input
+      type="number"
+      step={step ?? 1}
+      value={v ?? ""}
+      onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+      style={missing ? { border: REQUIRED_BORDER } : undefined}
+      aria-invalid={missing || undefined}
+    />
+  );
 }
 function Kpi({ label, value }: { label: string; value: string }) {
   return (

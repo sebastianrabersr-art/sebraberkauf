@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { makeActivity, useActiveAssumptions, useStore, VIEWING_CHECKLIST } from "@/lib/store";
-import { calcDataQuality, calcProperty, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
+import { calcDataQuality, calcProperty, calcTaxEstimate, fmtEUR, fmtPct, getFieldsByGroup, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { PdfUploader } from "@/components/PdfUploader";
 import { FinancePanel } from "@/components/FinancePanel";
@@ -18,7 +18,13 @@ import { ALL_BEWERTUNGEN, ALL_MIETRECHTE, ALL_PROZESS_STATUSES, ALL_STATUSES, PR
 import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { resolvePurchaseCostRules } from "@/lib/purchaseCostRules";
 import { Warning as AlertTriangle, ArrowLeft, Buildings as Building2, Calendar, CalendarPlus, CaretDown as ChevronDown, CaretRight as ChevronRight, Copy, DownloadSimple as Download, ArrowSquareOut as ExternalLink, Globe, Lock, Envelope as Mail, MapPin, DotsThree as MoreHorizontal, PencilSimple as Pencil, Phone, Trash as Trash2, User, MagicWand as Wand2, X, Check, ExclamationMark } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
+import { Fragment, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
+import { REQUIRED_BORDER, REQUIRED_FIELDS, REQUIRED_FINANCE_EMPTY_ID, flashRequiredField, missingRequiredFields, requiredFieldDomId, type RequiredFieldKey } from "@/lib/requiredFields";
+import { RequiredFieldHint } from "@/components/RequiredFieldHint";
+import { isBought, isInPortfolio, legacyStatusPatch, portfolioAddPatch, promptAddToPortfolio, prozessStatusPatch } from "@/lib/statusSync";
+import { ReminderButton, usePropertyReminders } from "@/components/crm/ReminderButton";
+import type { Reminder } from "@/lib/reminders";
+import { PropertyDocumentsPanel } from "@/components/PropertyDocumentsPanel";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
@@ -35,14 +41,15 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "finanzierung" | "mietrecht" | "analysen" | "besichtigung" | "crm";
+type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "finanzierung", label: "Finanzierung" },
-  { key: "mietrecht", label: "Mietrecht" },
   { key: "analysen", label: "Analysen" },
+  { key: "mietrecht", label: "Mietrecht" },
   { key: "besichtigung", label: "Besichtigung" },
   { key: "crm", label: "CRM" },
+  { key: "dokumente", label: "Dokumente" },
 ];
 
 function Detail() {
@@ -154,6 +161,26 @@ function Detail() {
     }
   };
 
+  // Pflichtfelder-Banner: Sprung zum Eingabefeld (Tab wechseln, Sektion öffnen, fokussieren, kurz hervorheben)
+  const missingReq = missingRequiredFields(p);
+  const goToRequiredField = (key: RequiredFieldKey) => {
+    const target: { tab: TabKey; section: string } =
+      key === "eigenkapital" || key === "zinssatz" ? { tab: "finanzierung", section: "sec-finanzierung" }
+      : key === "miete" ? { tab: "uebersicht", section: "sec-miete" }
+      : { tab: "uebersicht", section: "sec-objektdaten" };
+    setTab(target.tab);
+    setTimeout(() => {
+      const section = document.getElementById(target.section) as HTMLDetailsElement | null;
+      if (section?.tagName === "DETAILS") section.open = true;
+      const field = document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
+      if (!field) return;
+      field.scrollIntoView({ behavior: "smooth", block: "center" });
+      const input = field.querySelector<HTMLElement>("input, select, button") ?? field;
+      input.focus({ preventScroll: true });
+      flashRequiredField(input);
+    }, 80);
+  };
+
   // Negative margins to break out of AppShell padding (p-6 md:p-10)
   const breakout = "-mx-6 md:-mx-10";
 
@@ -195,6 +222,8 @@ function Detail() {
           </button>
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
         </div>
+
+        {missingReq.length > 0 && <RequiredFieldsBanner missing={missingReq} onGo={goToRequiredField} />}
 
 
         {/* ============ TAB NAV ============ */}
@@ -269,6 +298,17 @@ function Detail() {
           {tab === "crm" && (
             <CrmTab p={p} u={u} />
           )}
+          {tab === "dokumente" && (
+            <>
+              <Section title="Dokumente" defaultOpen>
+                <PropertyDocumentsPanel propertyId={p.id} />
+              </Section>
+              <Section title="Exposé auslesen">
+                <p className="text-[12px] text-ink-2 mb-3">Lädt ein Makler-Exposé hoch und übernimmt erkannte Daten (Preis, Fläche, Adresse …) in die Immobilie.</p>
+                <PdfUploader propertyId={p.id} />
+              </Section>
+            </>
+          )}
         </div>
 
         {/* ============ STICKY SIDEBAR ============ */}
@@ -317,6 +357,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   setDqBannerDismissed: (v: boolean) => void;
   navTo: (target: TabKey, sectionId?: string) => void;
 }) {
+  const missingReq = missingRequiredFields(p);
+  const navigate = useNavigate();
+  const { updateProperty } = useStore();
   const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
   if (c.cashflowMtl < 0) alerts.push({ text: "Cashflow negativ", tone: "red" });
@@ -418,8 +461,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 {projects.map((pr) => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
               </Sel>
             </F>
-            <F label="Kaufpreis €" hint={!p.kaufpreis ? <RequiredHint /> : undefined}><N value={p.kaufpreis} edit on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²" hint={!p.wohnflaecheM2 ? <RequiredHint /> : undefined}><N value={p.wohnflaecheM2} edit on={(v) => u({ wohnflaecheM2: v })} /></F>
+            <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
+            <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
             <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
@@ -460,7 +503,16 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Bezirk / Landkreis" hint={!p.bezirk?.trim() ? <RequiredHint /> : undefined}><T value={p.bezirk} edit on={(v) => u({ bezirk: v })} /></F>
             <F label="Adresse"><T value={p.adresse} edit on={(v) => u({ adresse: v })} /></F>
             <F label="Status">
-              <Sel value={p.status} onChange={(e) => u({ status: e.target.value as PropertyStatus })}>
+              <Sel
+                value={p.status}
+                onChange={(e) => {
+                  // Bewertung und Pipeline-Prozess mitziehen (src/lib/statusSync.ts)
+                  const next = e.target.value as PropertyStatus;
+                  const wasBought = isBought(p);
+                  u(legacyStatusPatch(p, next));
+                  if (next === "Gekauft") promptAddToPortfolio(p, wasBought, updateProperty, (id) => navigate({ to: "/portfolio/$id", params: { id } }));
+                }}
+              >
                 {STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
               </Sel>
             </F>
@@ -603,9 +655,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       </Section>
 
       {/* === SECTION E: Miete & Betriebskosten === */}
-      <Section title="Miete & Betriebskosten">
+      <Section id="sec-miete" title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
-          <F label="Erwartete Miete €/Mt" hint={!p.nettomieteMtl ? <RequiredHint /> : undefined}><N value={p.nettomieteMtl} edit on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
               <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />
@@ -778,21 +830,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
   const { updateProperty } = useStore();
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
 
-  const steuersatz = p.persSteuersatz ?? 0.35;
-  const afaSatz = p.afaSatz ?? 0.015;
-  const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
-
-  const kaufpreis = p.kaufpreis ?? 0;
-  const gebaeudewert = kaufpreis * gebaeudewertPct;
-  const afaJahr = gebaeudewert * afaSatz;
-  const afaMtl = afaJahr / 12;
-
-  const miete = p.nettomieteMtl ?? 0;
-  const kosten = (p.betriebskostenMtl ?? 0) + c.ruecklageMtl + (c.kreditRateMtl * 0.6);
-  const gewinnVorAfa = (miete - kosten) * 12;
-  const gewinnNachAfa = gewinnVorAfa - afaJahr;
-  const steuerBetrag = Math.max(0, gewinnNachAfa * steuersatz);
-  const cashflowNachSteuer = c.cashflowJahr - steuerBetrag;
+  const { steuersatz, afaSatz, gebaeudewertPct, kaufpreis, gebaeudewert, afaJahr, afaMtl, gewinnVorAfa, gewinnNachAfa, steuerBetrag, cashflowNachSteuer } = calcTaxEstimate(p, c);
 
   const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
 
@@ -939,9 +977,6 @@ function BesichtigungTab({ p, viewings, setViewing }: {
           ))}
         </div>
       </Section>
-      <Section title="Dokumente / Exposé-PDF">
-        <PdfUploader propertyId={p.id} />
-      </Section>
     </>
   );
 }
@@ -952,6 +987,17 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
   const bewertung: Bewertung = p.bewertung ?? mig.bewertung;
   const prozess: ProzessStatus = (p.prozessStatus ?? mig.prozessStatus) as ProzessStatus;
   const assumptions = useActiveAssumptions();
+  const navigate = useNavigate();
+  const { updateProperty } = useStore();
+  const openPortfolio = (id: string) => navigate({ to: "/portfolio/$id", params: { id } });
+  const { reminders, reload: reloadReminders } = usePropertyReminders(p.id);
+
+  // Gleicher Status-Abgleich wie in der Pipeline (src/lib/statusSync.ts).
+  const setProzess = (ps: ProzessStatus) => {
+    const wasBought = isBought(p);
+    u(prozessStatusPatch(p, ps));
+    if (ps === "Gekauft") promptAddToPortfolio(p, wasBought, updateProperty, openPortfolio);
+  };
 
   const card: React.CSSProperties = {
     background: "#FFFFFF",
@@ -973,14 +1019,34 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
     <>
       {/* SECTION A — STATUS */}
       <div style={card}>
-        <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Prozess</div>
+          {isInPortfolio(p) ? (
+            <Link
+              to="/portfolio/$id"
+              params={{ id: p.id }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium hover:underline"
+              style={{ background: "#E8F5EE", color: "#2D6A4F" }}
+            >
+              <Check weight="bold" size={11} aria-hidden /> Im Portfolio →
+            </Link>
+          ) : isBought(p) ? (
+            <button
+              type="button"
+              onClick={() => { u(portfolioAddPatch(p)); toast.success("Im Portfolio", { action: { label: "Öffnen", onClick: () => openPortfolio(p.id) } }); }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F5EE]"
+            >
+              Zum Portfolio hinzufügen
+            </button>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2 mb-1">
           {ALL_PROZESS_STATUSES.map((s) => {
             const active = prozess === s;
             return (
               <button
                 key={s}
-                onClick={() => u({ prozessStatus: active ? "" : s })}
+                onClick={() => setProzess(active ? "" : s)}
                 className="inline-flex items-center gap-1.5 rounded-full transition-colors"
                 style={{
                   fontSize: 13, fontWeight: 500, padding: "8px 16px",
@@ -1023,7 +1089,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 
       {/* SECTION B — NÄCHSTE AKTION */}
       <div style={card}>
-        <NextActionCard p={p} u={u} />
+        <NextActionCard p={p} u={u} reminders={reminders} onRemindersChanged={reloadReminders} />
       </div>
 
       {/* SECTION C — KONTAKT */}
@@ -1038,7 +1104,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 
       {/* SECTION E — AKTIVITÄTEN TIMELINE */}
       <div style={card}>
-        <ActivityTimeline propertyId={p.id} />
+        <ActivityTimeline propertyId={p.id} reminders={reminders} onRemindersChanged={reloadReminders} />
       </div>
 
       {/* SECTION F — BESCHREIBUNG & NOTIZEN (Accordion) */}
@@ -1093,7 +1159,12 @@ function activityIconFor(type?: string) {
   return CalendarPlus;
 }
 
-function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
+function NextActionCard({ p, u, reminders, onRemindersChanged }: {
+  p: Property; u: (patch: Partial<Property>) => void;
+  reminders: Reminder[]; onRemindersChanged: () => void;
+}) {
+  // Die nächste Aktion hat keine eigene ID: Erinnerungen ohne action_id gehören zu ihr.
+  const nextActionReminder = reminders.find((r) => !r.action_id);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(p.nextAction ?? "");
   const [date, setDate] = useState(p.nextActionDate ?? "");
@@ -1142,6 +1213,13 @@ function NextActionCard({ p, u }: { p: Property; u: (patch: Partial<Property>) =
               {p.priority && <>Priorität: {p.priority}</>}
             </div>
           </div>
+          <ReminderButton
+            propertyId={p.id}
+            suggestedDate={p.nextActionDate}
+            suggestedNote={p.nextAction}
+            existing={nextActionReminder}
+            onChanged={onRemindersChanged}
+          />
           <button
             onClick={() => u({ nextAction: "", nextActionDate: "", lastContactDate: new Date().toISOString().slice(0, 10) })}
             className="text-[12px] rounded-md px-3 py-1.5 hover:bg-[#FAFAF8]"
@@ -1384,7 +1462,9 @@ function PreviewStat({ label, value, tone }: { label: string; value: string; ton
   );
 }
 
-function ActivityTimeline({ propertyId }: { propertyId: string }) {
+function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
+  propertyId: string; reminders: Reminder[]; onRemindersChanged: () => void;
+}) {
   const { activities, addActivity, deleteActivity } = useStore();
   const items = activities.filter((a) => a.propertyId === propertyId)
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -1429,15 +1509,25 @@ function ActivityTimeline({ propertyId }: { propertyId: string }) {
             return (
               <li key={a.id} className="relative mb-3 last:mb-0">
                 <span className="absolute rounded-full" style={{ width: 8, height: 8, background: color, left: -24, top: 6 }} />
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(open ? null : a.id)}
-                  className="w-full text-left"
-                >
-                  <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
-                  <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
-                  <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
-                </button>
+                <div className="flex items-start gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(open ? null : a.id)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
+                    <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
+                    <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                  </button>
+                  <ReminderButton
+                    propertyId={propertyId}
+                    actionId={a.id}
+                    suggestedDate={a.dueDate ?? a.date}
+                    suggestedNote={a.title}
+                    existing={reminders.find((r) => r.action_id === a.id)}
+                    onChanged={onRemindersChanged}
+                  />
+                </div>
                 {open && a.description && (
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
@@ -1685,8 +1775,20 @@ function VerificationChecklist({ p, dq, u }: {
 }
 
 
-function F({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
-  return <label className="block"><div className="text-[11px] text-ink-2 mb-1">{label}</div>{children}{hint}</label>;
+function F({ label, children, hint, id, required }: {
+  label: string; children: React.ReactNode; hint?: React.ReactNode;
+  /** Sprungziel für den Pflichtfelder-Banner. */
+  id?: string;
+  /** Fehlendes Pflichtfeld: "Pflichtfeld"-Hinweis unter dem Eingabefeld. */
+  required?: boolean;
+}) {
+  return (
+    <label id={id} className="block scroll-mt-24">
+      <div className="text-[11px] text-ink-2 mb-1">{label}</div>
+      {children}
+      {required ? <RequiredFieldHint /> : hint}
+    </label>
+  );
 }
 function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
   if (dq.score === 100) return null;
@@ -1735,6 +1837,35 @@ function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof 
   );
 }
 
+/** Hinweis unter dem Titel, solange eine der fünf Kernangaben fehlt. Verschwindet von selbst. */
+function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
+  const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key));
+  return (
+    <div
+      role="status"
+      className="mt-3 flex items-start gap-2.5"
+      style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 10, padding: "12px 16px" }}
+    >
+      <AlertTriangle weight="fill" className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} aria-hidden />
+      <p className="text-[13px] leading-snug" style={{ color: "#9A3412" }}>
+        Für eine vollständige Analyse fehlen noch:{" "}
+        {fields.map((f, i) => (
+          <Fragment key={f.key}>
+            {i > 0 && ", "}
+            <button
+              type="button"
+              onClick={() => onGo(f.key)}
+              className="font-semibold underline decoration-[#FDBA74] underline-offset-2 hover:decoration-[#D97706] focus-visible:outline-2 focus-visible:outline-[#D97706] rounded-sm"
+            >
+              {f.label}
+            </button>
+          </Fragment>
+        ))}
+      </p>
+    </div>
+  );
+}
+
 function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
   return (
     <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
@@ -1771,7 +1902,7 @@ function T({ value, on, edit }: { value: string; on: (v: string) => void; edit: 
     />
   );
 }
-function N({ value, on, edit }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean }) {
+function N({ value, on, edit, missing }: { value: number | null | undefined; on: (v: number | null) => void; edit: boolean; missing?: boolean }) {
   const [local, setLocal] = useState<string>(value == null ? "" : String(value));
   const originalRef = useRef<string>(value == null ? "" : String(value));
   useEffect(() => { const s = value == null ? "" : String(value); setLocal(s); originalRef.current = s; }, [value]);
@@ -1795,6 +1926,8 @@ function N({ value, on, edit }: { value: number | null | undefined; on: (v: numb
         else if (e.key === "Escape") { setLocal(originalRef.current); (e.target as HTMLInputElement).blur(); }
       }}
       className={inputCls}
+      style={missing ? { border: REQUIRED_BORDER } : undefined}
+      aria-invalid={missing || undefined}
     />
   );
 }

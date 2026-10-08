@@ -1,0 +1,32 @@
+# kaufma
+kaufma.eu ist eine Immobilienanalyse-Plattform für
+private Käufer und Kleinanleger in Österreich und Deutschland.
+
+## Was kaufma kann
+- Immobilien-Inserate direkt importieren (willhaben, ImmobilienScout24)
+- Rendite, Cashflow und Kaufnebenkosten automatisch berechnen
+- Mietrecht-Risiko prüfen (MRG Anwendung)
+- Immobilien vergleichen (bis zu 10 Objekte)
+- Fix & Flip Kalkulationen
+- Kaufangebote erstellen
+- Portfolio-Verwaltung
+
+## Zielgruppe
+Private Käufer und Kleinanleger in Österreich und Deutschland
+die eine Eigentumswohnung oder ein Zinshaus kaufen möchten.
+
+## Pakete
+- Free: 1 Immobilie, Grundkalkulation
+- Plus: 5 Immobilien, €9,99/Monat
+- Premium: Unbegrenzt, €29,99/Monat
+
+## Kontakt
+hallo@kaufma.eu | kaufma.eu
+
+## Rechtliches
+Betrieben von ayoka GmbH, Wien, Österreich (FN 514214y)
+Keine Anlage- oder Rechtsberatung.
+
+## Mehr
+Ausführliche Fassung mit allen Funktionen, Ratgeber-Artikeln, Rechnern und Glossarbegriffen:
+https://kaufma.eu/llms-full.txt

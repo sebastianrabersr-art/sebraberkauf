@@ -185,3 +185,49 @@
 input[type=number] { -moz-appearance: textfield; }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ───────── PDF-Export (src/components/pdf, src/lib/pdfExport.ts) ─────────
+   Das Druckdokument wird während der Vorbereitung sichtbar unter einem Overlay
+   gerendert (html2canvas braucht ein gezeichnetes Element) und beim Drucken als
+   einziges Element ausgegeben. */
+.kaufma-print-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 210mm;
+  background: #FFFFFF;
+  color: #1C1917;
+  font-family: Inter, system-ui, sans-serif;
+  pointer-events: none;
+}
+.kaufma-print-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: rgba(245, 243, 238, 0.97);
+}
+.pdf-page {
+  position: relative;
+  width: 180mm;
+  height: 266mm; /* 297 − 2 × 15 mm Rand, 1 mm Puffer gegen Rundungs-Leerseiten */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  break-after: page;
+  page-break-after: always;
+}
+.pdf-page:last-child { break-after: auto; page-break-after: auto; }
+.pdf-cover { width: 210mm; height: 296mm; }
+
+@media print {
+  @page { size: A4 portrait; margin: 15mm; }
+  .no-print { display: none !important; }
+  .page-break { page-break-before: always; break-before: page; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body.kaufma-printing { background: #FFFFFF !important; }
+  body.kaufma-printing > *:not(.kaufma-print-active) { display: none !important; }
+  body.kaufma-printing > .kaufma-print-active { position: static; width: auto; }
+}

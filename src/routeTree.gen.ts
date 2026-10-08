@@ -52,6 +52,7 @@ import { Route as PortfolioNewRouteImport } from './routes/portfolio.new'
 import { Route as PortfolioIdRouteImport } from './routes/portfolio.$id'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicRemindersDispatchRouteImport } from './routes/api/public/reminders/dispatch'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const WiderrufRoute = WiderrufRouteImport.update({
@@ -270,6 +271,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicRemindersDispatchRoute =
+  ApiPublicRemindersDispatchRouteImport.update({
+    id: '/api/public/reminders/dispatch',
+    path: '/api/public/reminders/dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -321,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/ratgeber/': typeof RatgeberIndexRoute
   '/rechner/': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reminders/dispatch': typeof ApiPublicRemindersDispatchRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -364,6 +372,7 @@ export interface FileRoutesByTo {
   '/ratgeber': typeof RatgeberIndexRoute
   '/rechner': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reminders/dispatch': typeof ApiPublicRemindersDispatchRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -411,6 +420,7 @@ export interface FileRoutesById {
   '/ratgeber/': typeof RatgeberIndexRoute
   '/rechner/': typeof RechnerIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reminders/dispatch': typeof ApiPublicRemindersDispatchRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -459,6 +469,7 @@ export interface FileRouteTypes {
     | '/ratgeber/'
     | '/rechner/'
     | '/api/public/payments/webhook'
+    | '/api/public/reminders/dispatch'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/ratgeber'
     | '/rechner'
     | '/api/public/payments/webhook'
+    | '/api/public/reminders/dispatch'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -548,6 +560,7 @@ export interface FileRouteTypes {
     | '/ratgeber/'
     | '/rechner/'
     | '/api/public/payments/webhook'
+    | '/api/public/reminders/dispatch'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -588,6 +601,7 @@ export interface RootRouteChildren {
   PropertiesNewRoute: typeof PropertiesNewRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicRemindersDispatchRoute: typeof ApiPublicRemindersDispatchRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -894,6 +908,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/reminders/dispatch': {
+      id: '/api/public/reminders/dispatch'
+      path: '/api/public/reminders/dispatch'
+      fullPath: '/api/public/reminders/dispatch'
+      preLoaderRoute: typeof ApiPublicRemindersDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -984,6 +1005,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesNewRoute: PropertiesNewRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicRemindersDispatchRoute: ApiPublicRemindersDispatchRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport

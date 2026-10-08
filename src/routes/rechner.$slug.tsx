@@ -12,6 +12,7 @@ import {
 import { fmtEUR, fmtPct, pmt } from "@/lib/calc";
 import { breakEvenVerdict, bruttoRenditeVerdict, cashflowVerdict, flipVerdict } from "@/lib/verdicts";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { RatgeberChip } from "@/components/marketing/RatgeberLinks";
 
 type CalcSlug = "kaufnebenkosten" | "rendite" | "cashflow" | "finanzierung" | "breakeven" | "leistbarkeit" | "fixflip";
 
@@ -245,6 +246,7 @@ function KaufNebenCalculator() {
             <div className="text-xs text-primary font-medium">Gesamtkosten beim Kauf</div>
             <div className="text-2xl font-semibold tabular-nums">{fmtEUR(gesamt)}</div>
           </div>
+          <div className="border-t pt-3"><RatgeberChip slug="kaufnebenkosten-oesterreich" /></div>
         </div>
       }
       explanation={
@@ -306,6 +308,7 @@ function RenditeCalculator() {
           <p className="text-xs text-muted-foreground border-t pt-3">
             <strong>Brutto</strong> = Jahresmiete ÷ Kaufpreis. <strong>Netto</strong> = (Jahresmiete − laufende Kosten) ÷ (Kaufpreis + Nebenkosten). <strong>EK-Rendite</strong> = Überschuss ÷ Eigenkapital.
           </p>
+          <div className="border-t pt-3"><RatgeberChip slug="immobilien-rendite-berechnen" /></div>
         </div>
       }
       explanation={
@@ -381,6 +384,7 @@ function CashflowCalculator() {
             <div className="text-xs text-primary font-medium">Benötigte Miete für Cashflow ≥ 0</div>
             <div className="text-2xl font-semibold tabular-nums">{fmtEUR(breakEven)}</div>
           </div>
+          <div className="border-t pt-3"><RatgeberChip slug="cashflow-immobilie-berechnen" /></div>
         </div>
       }
       explanation={
@@ -449,6 +453,7 @@ function FinanceCalculator() {
             <ResultRow label="Zinskosten gesamt" value={fmtEUR(zinsenTotal)} />
             <ResultRow label="Restschuld nach 10 Jahren" value={fmtEUR(restschuld10)} />
           </div>
+          <div className="border-t pt-3"><RatgeberChip slug="annuitaetendarlehen-erklaert" /></div>
         </div>
       }
       explanation={
@@ -514,6 +519,7 @@ function BreakEvenCalculator() {
               Über 30 €/m² ist in den meisten Lagen unrealistisch. Überlege Kaufpreisreduktion oder mehr Eigenkapital.
             </div>
           )}
+          <div className="border-t pt-3"><RatgeberChip slug="break-even-miete-berechnen" /></div>
         </div>
       }
       explanation={
@@ -577,6 +583,7 @@ function LeistbarkeitCalculator() {
           <p className="text-xs text-muted-foreground border-t pt-3">
             Annahme: Du bringst dein Eigenkapital ein und finanzierst den Rest mit der gewählten Monatsrate über die Laufzeit.
           </p>
+          <div className="border-t pt-3"><RatgeberChip slug="wie-viel-kredit-leisten" /></div>
         </div>
       }
       explanation={
@@ -663,6 +670,7 @@ function FixFlipCalculator() {
             <ResultRow label="ROI auf Eigenkapital" value={fmtPct(roiPct)} tone={roiPct >= 0 ? "good" : "bad"} />
             <ResultRow label="Annualisierte Rendite" value={fmtPct(annualisiertePct)} tone={annualisiertePct >= 0 ? "good" : "bad"} />
           </div>
+          <div className="border-t pt-3"><RatgeberChip slug="eigenkapitalrendite-berechnen" /></div>
         </div>
       }
       explanation={

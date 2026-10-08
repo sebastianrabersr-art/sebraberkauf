@@ -5,6 +5,7 @@ import { ArrowDown, ShieldCheck } from "@phosphor-icons/react";
 import { SaveCalcCTA } from "@/components/marketing/SaveCalcCTA";
 import type { PendingCalc } from "@/lib/pendingCalc";
 import { TONE_TEXT, type Tone, type Verdict } from "@/lib/verdicts";
+import { Breadcrumb } from "@/components/marketing/Breadcrumb";
 
 export type CalcFaqItem = { q: string; a: string };
 
@@ -39,13 +40,14 @@ export function PublicCalcLayout({
   return (
     <MarketingShell>
       <section className="max-w-6xl mx-auto px-6 pt-12 pb-28 lg:pb-12 bg-[#F5F3EE]">
-        <nav className="text-[12px] text-ink-3 mb-5 flex gap-2 flex-wrap" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-[#1C1917]">Start</Link>
-          <span aria-hidden>/</span>
-          <Link to="/rechner" className="hover:text-[#1C1917]">Rechner</Link>
-          <span aria-hidden>/</span>
-          <span className="text-[#1C1917]">{category}</span>
-        </nav>
+        <Breadcrumb
+          className="mb-5"
+          items={[
+            { label: "Startseite", href: "/" },
+            { label: "Rechner", href: "/rechner" },
+            { label: category.includes(" ") ? `${category} Rechner` : `${category}-Rechner` },
+          ]}
+        />
 
         <header className="mb-8">
           <h1 className="heading-page-sm sm:text-[32px]">{h1}</h1>

@@ -6,6 +6,7 @@ import { fmtEUR, summarizePayments } from "@/lib/calc";
 import { Buildings as Building2, Plus } from "@phosphor-icons/react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
+import { isInPortfolio } from "@/lib/statusSync";
 
 export const Route = createFileRoute("/portfolio/")({
   head: () => ({ meta: [{ title: "Portfolio – Bestand" }] }),
@@ -15,18 +16,20 @@ export const Route = createFileRoute("/portfolio/")({
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
 function Portfolio() {
-  const { properties, payments } = useStore();
+  const { properties, payments, activities } = useStore();
   const navigate = useNavigate();
   const { subscription } = useAuth();
   const rows = useMemo(() => {
     return properties
-      .filter((p) => p.status === "Gekauft" || p.prozessStatus === "Gekauft")
+      // Gekauft und Aufnahme bestätigt (bzw. Altbestand) – "Später" bleibt draußen.
+      .filter(isInPortfolio)
       .map((p) => {
         const list = payments.filter((x) => x.propertyId === p.id);
         const sum = summarizePayments(list);
-        return { p, sum };
+        const crmCount = activities.filter((a) => a.propertyId === p.id).length;
+        return { p, sum, crmCount };
       });
-  }, [properties, payments]);
+  }, [properties, payments, activities]);
 
   if (!planLimits(subscription?.plan).portfolio) {
     return (
@@ -75,7 +78,7 @@ function Portfolio() {
           </div>
         ) : (
           <div className="grid lg:grid-cols-2 gap-4">
-            {rows.map(({ p, sum }) => {
+            {rows.map(({ p, sum, crmCount }) => {
               const pi = p.purchase ?? {};
               const mtlMiete = pi.aktuelleMonatsmiete ?? p.nettomieteMtl ?? 0;
               const mtlRate = pi.aktuelleMonatsrate ?? 0;
@@ -100,7 +103,18 @@ function Portfolio() {
                       </div>
                       {pi.kaufdatum && <div className="text-[11px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
                     </div>
-                    <span className="text-[11px] rounded-[6px] px-2 py-0.5 shrink-0" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {crmCount > 0 && (
+                        <span
+                          className="text-[11px] rounded-[6px] px-2 py-0.5"
+                          style={{ background: "#F5F3EE", color: "#78716C", border: "1px solid #EAE6DF" }}
+                          title={`${crmCount} CRM-Aktivität${crmCount === 1 ? "" : "en"}`}
+                        >
+                          CRM · {crmCount}
+                        </span>
+                      )}
+                      <span className="text-[11px] rounded-[6px] px-2 py-0.5" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
+                    </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <Stat label="Aktueller Wert" value={fmtEUR(pi.aktuellerObjektwert)} />

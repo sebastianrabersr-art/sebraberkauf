@@ -12,20 +12,22 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
 import { AssumptionsPanel } from "@/components/settings/AssumptionsPanel";
+import { RemindersPanel } from "@/components/settings/RemindersPanel";
 
-type SettingsTab = "profil" | "annahmen";
+type SettingsTab = "profil" | "annahmen" | "erinnerungen";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Einstellungen – kaufma" }] }),
   // "profil" ist der Default und taucht deshalb nicht in der URL auf.
   validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } =>
-    search.tab === "annahmen" ? { tab: "annahmen" } : {},
+    search.tab === "annahmen" || search.tab === "erinnerungen" ? { tab: search.tab } : {},
   component: SettingsPage,
 });
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "profil", label: "Profil & Konto" },
   { id: "annahmen", label: "Annahmen" },
+  { id: "erinnerungen", label: "Erinnerungen" },
 ];
 
 type PriceKey = "plus_monthly" | "plus_yearly" | "premium_monthly" | "premium_yearly";
@@ -488,6 +490,8 @@ function SettingsPage() {
         </section>
       </div>
       )}
+
+      {tab === "erinnerungen" && <RemindersPanel />}
       {checkoutDialog}
     </AppShell>
   );

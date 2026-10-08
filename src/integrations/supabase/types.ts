@@ -49,6 +49,85 @@ export type Database = {
           },
         ]
       }
+      property_documents: {
+        Row: {
+          created_at: string
+          file_size: number
+          filename: string
+          id: string
+          property_id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size: number
+          filename: string
+          id?: string
+          property_id: string
+          storage_path: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: number
+          filename?: string
+          id?: string
+          property_id?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          action_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          property_id: string
+          remind_at: string
+          sent: boolean
+          user_id: string
+        }
+        Insert: {
+          action_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          property_id: string
+          remind_at: string
+          sent?: boolean
+          user_id?: string
+        }
+        Update: {
+          action_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          property_id?: string
+          remind_at?: string
+          sent?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calc_email_leads: {
         Row: {
           calc_payload: Json | null
