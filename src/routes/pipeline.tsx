@@ -122,17 +122,17 @@ function Pipeline() {
           : <XCircle className="w-4 h-4 text-[#DC2626]" />}
         <div className="text-[13px] font-semibold text-[#1C1917]">{label}</div>
       </div>
-      <div className="text-[11px] text-ink-3 mt-1">
+      <div className="text-[12px] text-ink-3 mt-1">
         {col === "Gekauft" ? "Danach: ins Portfolio übernehmen" : "Archiviert"}
       </div>
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[11px] text-ink-2">
+        <span className="text-[12px] text-ink-2">
           {(col === "Gekauft" ? boughtCount : rejectedCount)} Objekte
         </span>
         {col === "Gekauft" && (
           <button
             onClick={() => navigate({ to: "/portfolio" })}
-            className="text-[11px] text-[#2D6A4F] hover:underline"
+            className="text-[12px] text-[#2D6A4F] hover:underline"
           >
             Portfolio öffnen →
           </button>
@@ -207,13 +207,13 @@ function Pipeline() {
               >
                 <div className="flex items-center justify-between mb-2 px-1">
                   <div className="text-[13px] font-semibold text-[#1C1917]">{col}</div>
-                  <span className="text-[11px] font-semibold bg-[#2D6A4F] text-white rounded-[20px] px-2 py-0.5">{items.length}</span>
+                  <span className="text-[12px] font-semibold bg-[#2D6A4F] text-white rounded-[20px] px-2 py-0.5">{items.length}</span>
                 </div>
                 <div className="space-y-2">
                   {items.length === 0 && (
                     <div className="rounded-[8px] border-[1.5px] border-dashed border-[#D4CFC8] bg-transparent p-4 text-center">
                       <div className="text-[12px] text-ink-3">Keine Objekte</div>
-                      <div className="text-[11px] text-ink-3 mt-1">Ziehe Objekte hierher</div>
+                      <div className="text-[12px] text-ink-3 mt-1">Ziehe Objekte hierher</div>
                     </div>
                   )}
                   {items.map((p) => {
@@ -227,7 +227,7 @@ function Pipeline() {
                     const due = p.nextActionDate;
                     const isOverdue = due && due < today;
                     const isToday = due === today;
-                    const actionColor = isOverdue ? "#DC2626" : isToday ? "#D97706" : "#A8A29E";
+                    const actionColor = isOverdue ? "#DC2626" : isToday ? "#B45309" : "#736C67";
                     const actionBg = isOverdue || isToday ? "#FEF3C7" : "transparent";
 
                     return (
@@ -264,12 +264,12 @@ function Pipeline() {
                           </div>
                         )}
                         <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 mt-1">{p.title || "—"}</div>
-                        <div className="text-[11px] text-ink-3 mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
+                        <div className="text-[12px] text-ink-3 mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-[6px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
+                          <span className="text-[12px] px-1.5 py-0.5 rounded-[6px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
                         </div>
                         {p.nextAction && (
-                          <div className="mt-2 flex items-center gap-1 text-[11px]" style={{ background: actionBg, color: actionColor, padding: "4px 8px", borderRadius: 6 }}>
+                          <div className="mt-2 flex items-center gap-1 text-[12px]" style={{ background: actionBg, color: actionColor, padding: "4px 8px", borderRadius: 6 }}>
                             <Calendar className="w-3 h-3 shrink-0" />
                             <span className="truncate">{p.nextAction}{due ? ` · ${due}` : ""}</span>
                           </div>
@@ -318,9 +318,9 @@ function Pipeline() {
                     <div key={p.id} className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-[#FAFAF8]">
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                        <div className="text-[11px] text-ink-3">{p.bezirk || "—"}</div>
+                        <div className="text-[12px] text-ink-3">{p.bezirk || "—"}</div>
                       </div>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
+                      <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
                       <button
                         onClick={() => addToPipeline(p.id)}
                         className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235740]"

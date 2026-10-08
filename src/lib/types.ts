@@ -184,6 +184,11 @@ export interface Project {
   preferredDistricts: string;
   status: ProjectStatus;
   assumptions: Assumptions;
+  /**
+   * true, sobald die Person die Annahmen bestätigt hat (Onboarding oder Einstellungen → Annahmen).
+   * Dann bekommen neue Objekte Eigenkapital, Zins und Laufzeit als Finanzierung vorausgefüllt.
+   */
+  assumptionsConfirmed?: boolean;
   createdAt: string;
   updatedAt: string;
   isDemo?: boolean;

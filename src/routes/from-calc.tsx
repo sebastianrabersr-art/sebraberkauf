@@ -9,6 +9,7 @@ import { fmtEUR } from "@/lib/calc";
 import { toast } from "sonner";
 import { ArrowRight, Calculator, House as Home } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 
 export const Route = createFileRoute("/from-calc")({
   head: () => ({ meta: [{ title: "Berechnung übernehmen – kaufma" }] }),
@@ -22,6 +23,7 @@ function FromCalcPage() {
   const project = useActiveProject();
   const [calc, setCalc] = useState<PendingCalc | null>(null);
   const [missing, setMissing] = useState(false);
+  const propertyLimit = usePropertyLimit();
 
   useEffect(() => {
     const c = getPendingCalc();
@@ -54,6 +56,7 @@ function FromCalcPage() {
   const draft = calcToPropertyDraft(calc);
 
   const createProperty = () => {
+    if (!propertyLimit.guard()) return;
     const p = makeEmptyProperty({
       projectId: project.id,
       title: draft.title,
@@ -112,6 +115,7 @@ function FromCalcPage() {
           </div>
         </div>
       </div>
+      {propertyLimit.dialog}
     </AppShell>
   );
 }

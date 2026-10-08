@@ -29,6 +29,7 @@ import { ZinshausSummary, ZinshausUnitsPanel } from "@/components/ZinshausUnitsP
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
@@ -86,11 +87,11 @@ function Detail() {
   const isZinshaus = p.propertyType === "zinshaus";
   const tabs = isZinshaus ? [TABS[0], { key: "einheiten" as TabKey, label: "Einheiten" }, ...TABS.slice(1)] : TABS;
   const tab: TabKey = tabState === "einheiten" && !isZinshaus ? "uebersicht" : tabState;
-  const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportUpgradeOpen, setExportUpgradeOpen] = useState(false);
   const plan = usePlan();
   const canExport = plan === "plus" || plan === "premium";
+  const propertyLimit = usePropertyLimit();
 
   const applyRegionDefaults = () => {
     const d = regionDefaultsForProperty(p);
@@ -118,6 +119,7 @@ function Detail() {
     }
   };
   const onDuplicate = () => {
+    if (!propertyLimit.guard()) return;
     const newId = duplicateProperty(p.id);
     if (newId) {
       suppressLeaveWarnRef.current = true;
@@ -213,8 +215,9 @@ function Detail() {
           {[p.bezirk, p.platform, project?.name, `hinzugefügt ${new Date(p.createdAt).toLocaleDateString("de-AT")}`].filter(Boolean).join(" · ")}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
-            DQ {dq.score}% · {dq.level}
+          {/* Ab lg steht die Datenqualität in der Seitenleiste */}
+          <span className="lg:hidden inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
+            Datenqualität {dq.score}%
           </span>
           {linkValid && (
             <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1">
@@ -258,17 +261,12 @@ function Detail() {
       <div className={`${breakout} flex items-start`}>
         <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
-            <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("uebersicht", "sec-objektdaten")} />
-          )}
-          {tab === "uebersicht" && (
             <OverviewTab
               p={p} c={c} dq={dq} mietrecht={mietrecht}
               u={u} projects={projects} regions={regions}
               applyRegionDefaults={applyRegionDefaults} linkValid={linkValid}
               onGoMietrecht={() => navTo("mietrecht")}
               onGoCrm={() => navTo("crm")}
-              dqBannerDismissed={dqBannerDismissed}
-              setDqBannerDismissed={setDqBannerDismissed}
               navTo={navTo}
             />
           )}
@@ -300,7 +298,7 @@ function Detail() {
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
                 </div>
-                <p className="text-[11px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
+                <p className="text-[12px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
               </Section>
             </>
           )}
@@ -340,6 +338,7 @@ function Detail() {
           <div className="text-[12px] text-ink-2">{dq.filled} von {dq.total} Pflichtfeldern</div>
         </aside>
       </div>
+      {propertyLimit.dialog}
       <ExportPdfDialog open={exportOpen} onClose={() => setExportOpen(false)} property={p} assumptions={assumptions} />
       <UpgradeDialog
         open={exportUpgradeOpen}
@@ -353,15 +352,13 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed, navTo }: {
+function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, navTo }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>;
   u: (patch: Partial<Property>) => void;
   projects: { id: string; name: string }[]; regions: ReturnType<typeof regionsOf>;
   applyRegionDefaults: () => void; linkValid: boolean;
   onGoMietrecht: () => void; onGoCrm: () => void;
-  dqBannerDismissed: boolean;
-  setDqBannerDismissed: (v: boolean) => void;
   navTo: (target: TabKey, sectionId?: string) => void;
 }) {
   const missingReq = missingRequiredFields(p);
@@ -373,25 +370,16 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   if (mietrechtWarn) alerts.push({ text: "Mietrecht prüfen", tone: "red" });
   if (p.betriebskostenMtl == null) alerts.push({ text: "Betriebskosten fehlen", tone: "amber" });
   if (p.ruecklageFonds == null && p.ruecklageMtl == null) alerts.push({ text: "Rücklage fehlt", tone: "amber" });
-  if (dq.score < 70) alerts.push({ text: `Daten unvollständig (${dq.missing.slice(0, 2).join(", ")}${dq.missing.length > 2 ? "…" : ""})`, tone: "amber" });
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
   const [alertsExpanded, setAlertsExpanded] = useState(false);
   const visibleAlerts = alertsExpanded ? alerts : alerts.slice(0, 2);
   const hiddenAlertsCount = alerts.length - visibleAlerts.length;
 
-  const scrollToFirstMissing = () => {
-    const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
-    if (el) {
-      if (el.tagName === "DETAILS") el.open = true;
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
+  // Vollständigkeit: Kernangaben im Banner unter dem Titel, Details in "Daten prüfen",
+  // Prozent in der Seitenleiste. Keine weiteren Hinweise hier, damit sich nichts widerspricht.
   return (
     <>
-      {!dqBannerDismissed && <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} onDismiss={() => setDqBannerDismissed(true)} />}
-
       {/* Zinshaus: Einheiten-Kennzahlen über den normalen Rendite-/Cashflow-Kennzahlen */}
       {p.propertyType === "zinshaus" && <ZinshausSummary p={p} onGoUnits={() => navTo("einheiten")} />}
 
@@ -444,10 +432,6 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         </div>
       )}
 
-      {!p.dataVerified && (
-        <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
-      )}
-
       <VerificationChecklist p={p} dq={dq} u={u} />
 
 
@@ -455,7 +439,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
       {/* === SECTION B: Objektdaten (editable, open) === */}
       <div>
-        <div className="flex items-center gap-1.5 mb-1.5 text-[11px]" style={{ color: "#D97706" }}>
+        <div className="flex items-center gap-1.5 mb-1.5 text-[12px]" style={{ color: "#D97706" }}>
           <AlertTriangle className="size-3" />
           <span>Bitte nach Import prüfen</span>
         </div>
@@ -605,7 +589,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-[#F5F3EE] last:border-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] text-ink-2">{item.label}</span>
-                    {item.pct && <span className="text-[11px] text-ink-3 bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
+                    {item.pct && <span className="text-[12px] text-ink-3 bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
                   </div>
                   <span
                     className="text-[13px] font-medium text-[#1C1917] tabular-nums"
@@ -690,7 +674,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] rounded-lg bg-[#E8F5EE] px-3 py-2.5">
           <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Break-even Miete</div>
           <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.breakEvenMiete)} / Monat</div>
-          <div className="text-[11px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
+          <div className="text-[12px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
         </div>
       </Section>
 
@@ -856,7 +840,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
     <div className="space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">Persönlicher Steuersatz %</div>
+          <div className="text-[12px] text-ink-2 mb-1">Persönlicher Steuersatz %</div>
           <input
             type="number"
             value={(steuersatz * 100).toFixed(0)}
@@ -865,7 +849,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <div className="text-[12px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
           <input
             type="number"
             step="0.1"
@@ -875,7 +859,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">Gebäudewert % vom Kaufpreis</div>
+          <div className="text-[12px] text-ink-2 mb-1">Gebäudewert % vom Kaufpreis</div>
           <input
             type="number"
             value={(gebaeudewertPct * 100).toFixed(0)}
@@ -898,7 +882,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-[#EAE6DF] first:border-0">
             <div>
               <div className="text-[13px] text-ink-2">{row.label}</div>
-              <div className="text-[11px] text-ink-3">{row.sub}</div>
+              <div className="text-[12px] text-ink-3">{row.sub}</div>
             </div>
             <div className="text-[13px] font-medium text-[#1C1917] tabular-nums">{row.value}</div>
           </div>
@@ -911,7 +895,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
         </div>
       </div>
 
-      <p className="text-[11px] text-ink-3">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
+      <p className="text-[12px] text-ink-3">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
     </div>
   );
 }
@@ -941,7 +925,7 @@ function RendLine({ label, formula, value, termId }: { label: string; formula: s
     <div className="flex items-baseline justify-between gap-3">
       <div>
         <div className="text-[#1C1917]">{label}{termId && <GlossaryTooltip termId={termId} />}</div>
-        <div className="text-[11px] text-ink-3">{formula}</div>
+        <div className="text-[12px] text-ink-3">{formula}</div>
       </div>
       <span className="tabular-nums font-medium text-[#1C1917]">{value}</span>
     </div>
@@ -953,7 +937,7 @@ function MiniBox({ label, value, sub, tone }: { label: string; value: string; su
     <div className="rounded-lg border border-[#EAE6DF] bg-[#FAFAF8] px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold">{label}</div>
       <div className="mt-0.5 text-[15px] tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
-      {sub && <div className="text-[11px] text-ink-2 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[12px] text-ink-2 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -1133,7 +1117,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
         </summary>
         <div className="mt-3 space-y-3">
           <div>
-            <div className="text-[11px] text-ink-2 mb-1">Beschreibung (aus Inserat)</div>
+            <div className="text-[12px] text-ink-2 mb-1">Beschreibung (aus Inserat)</div>
             <textarea
               value={p.beschreibung ?? ""}
               onChange={(e) => u({ beschreibung: e.target.value })}
@@ -1142,7 +1126,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
             />
           </div>
           <div>
-            <div className="text-[11px] text-ink-2 mb-1">Eigene Notizen</div>
+            <div className="text-[12px] text-ink-2 mb-1">Eigene Notizen</div>
             <textarea
               value={p.notizen}
               onChange={(e) => u({ notizen: e.target.value })}
@@ -1225,7 +1209,7 @@ function NextActionCard({ p, u, reminders, onRemindersChanged }: {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.nextAction || "Nächste Aktion"}</div>
-            <div className="text-[11px] text-ink-2">
+            <div className="text-[12px] text-ink-2">
               {p.nextActionDate && <>Fällig: {p.nextActionDate}</>}
               {p.nextActionDate && p.priority && " · "}
               {p.priority && <>Priorität: {p.priority}</>}
@@ -1305,7 +1289,7 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
       <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
         <Icon className="size-[14px] text-ink-2" />
       </div>
-      <div className="text-[11px] text-ink-3 w-20 shrink-0">{label}</div>
+      <div className="text-[12px] text-ink-3 w-20 shrink-0">{label}</div>
       {editing ? (
         <input
           type={type}
@@ -1344,7 +1328,7 @@ function ContactList({ p, u }: { p: Property; u: (patch: Partial<Property>) => v
         <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
           <User className="size-[14px] text-ink-2" />
         </div>
-        <div className="text-[11px] text-ink-3 w-20 shrink-0">Typ</div>
+        <div className="text-[12px] text-ink-3 w-20 shrink-0">Typ</div>
         <select value={p.sellerType ?? "unklar"} onChange={(e) => u({ sellerType: e.target.value as Property["sellerType"] })} className={CRM_INPUT + " flex-1"}>
           {(["Privat", "Makler", "Bauträger", "Bank", "Sonstige", "unklar"] as const).map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -1458,7 +1442,7 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
 
       {cPreview && previewPrice > 0 && (
         <div className="mt-4 rounded-[10px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
-          <div className="text-[11px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
+          <div className="text-[12px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
           <div className="grid grid-cols-3 gap-2">
             <PreviewStat label="Rendite" value={fmtPct(cPreview.bruttorendite)} />
             <PreviewStat label="Cashflow/Mo" value={fmtEUR(cPreview.cashflowMtl)} tone={cPreview.cashflowMtl >= 0 ? "good" : "bad"} />
@@ -1535,7 +1519,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   >
                     <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
                     <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
-                    <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                    <span className="text-[12px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
                   </button>
                   <ReminderButton
                     propertyId={propertyId}
@@ -1550,7 +1534,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
                 {open && (
-                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[11px] text-[#DC2626] hover:underline ml-2">
+                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[12px] text-[#DC2626] hover:underline ml-2">
                     Löschen
                   </button>
                 )}
@@ -1646,7 +1630,7 @@ function OverviewStat({ label, value, sub, tone, editable }: {
       ) : (
         <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
       )}
-      {sub && <div className="text-[11px] text-ink-3 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[12px] text-ink-3 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -1715,7 +1699,7 @@ function VerificationChecklist({ p, dq, u }: {
       <div className="flex items-center justify-between mb-3">
         <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
 
-        <div className="text-[11px] text-ink-2">{dq.filled}/{dq.total} ausgefüllt</div>
+        <div className="text-[12px] text-ink-2">{dq.filled}/{dq.total} ausgefüllt</div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3 mb-4">
@@ -1782,7 +1766,7 @@ function VerificationChecklist({ p, dq, u }: {
         <span className="text-[12px] text-[#1C1917]">
           Ich habe alle Daten geprüft und bestätigt – die Kalkulation kann beginnen.
           {!canVerify && (
-            <span className="block text-[11px] text-[#92400E] mt-0.5">
+            <span className="block text-[12px] text-[#92400E] mt-0.5">
               Bitte zuerst Basisdaten und Kaufnebenkosten vollständig ausfüllen.
             </span>
           )}
@@ -1802,59 +1786,12 @@ function F({ label, children, hint, id, required }: {
 }) {
   return (
     <label id={id} className="block scroll-mt-24">
-      <div className="text-[11px] text-ink-2 mb-1">{label}</div>
+      <div className="text-[12px] text-ink-2 mb-1">{label}</div>
       {children}
       {required ? <RequiredFieldHint /> : hint}
     </label>
   );
 }
-function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
-  if (dq.score === 100) return null;
-  if (dq.score >= 70) {
-    return (
-      <div
-        className="inline-flex items-center gap-1.5 rounded-full"
-        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "4px 12px" }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-        <span className="text-[12px]" style={{ color: "#2D6A4F" }}>{dq.score}% Datenqualität · {dq.level}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-[10px] flex items-start gap-2.5 relative" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
-      <AlertTriangle className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} />
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium" style={{ color: "#92400E" }}>
-          {dq.filled} von {dq.total} Pflichtfeldern ausgefüllt · {dq.score}% Datenqualität
-        </div>
-        {dq.missing.length > 0 && (
-          <div className="text-[11px] mt-0.5" style={{ color: "#92400E" }}>
-            Fehlend: {dq.missing.join(", ")}
-          </div>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onScroll}
-        className="text-[12px] font-medium shrink-0 hover:underline"
-        style={{ color: "#92400E" }}
-      >
-        Felder ausfüllen ↓
-      </button>
-      {onDismiss && (
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="absolute top-2 right-2 text-[#92400E] hover:text-[#1C1917]"
-        >
-          <X className="size-4" />
-        </button>
-      )}
-    </div>
-  );
-}
-
 /** Hinweis unter dem Titel, solange eine der fünf Kernangaben fehlt. Verschwindet von selbst. */
 function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
   const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key));
@@ -1886,7 +1823,7 @@ function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; 
 
 function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
   return (
-    <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
+    <div className="flex items-center gap-1 mt-1 text-[12px]" style={{ color: "#D97706" }}>
       <AlertTriangle style={{ width: 12, height: 12 }} />
       <span>{text}</span>
     </div>
@@ -1949,97 +1886,6 @@ function N({ value, on, edit, missing }: { value: number | null | undefined; on:
     />
   );
 }
-
-// ============ DATA CHECK BANNER ============
-function DataCheckBanner({ propertyId, dqScore, onCheck }: { propertyId: string; dqScore: number; onCheck: () => void }) {
-  const key = `pwt:${propertyId}:bannerDismissed`;
-  const [dismissed, setDismissed] = useState(false);
-  useEffect(() => {
-    try { if (sessionStorage.getItem(key) === "1") setDismissed(true); } catch {}
-  }, [key]);
-  if (dismissed || dqScore >= 100) return null;
-  return (
-    <div className="flex items-start gap-3 rounded-[10px] px-4 py-3" style={{ background: "#FEF3C7", border: "1px solid #FCD34D" }}>
-      <AlertTriangle className="size-4 mt-0.5 shrink-0" style={{ color: "#D97706" }} />
-      <p className="text-[13px] flex-1" style={{ color: "#92400E" }}>
-        Bitte prüfe die importierten Daten bevor du kalkulierst – nicht alle Felder werden automatisch korrekt ausgelesen.
-      </p>
-      <div className="flex items-center gap-3 shrink-0">
-        <button onClick={onCheck} className="text-[13px] font-medium hover:underline" style={{ color: "#92400E" }}>Jetzt prüfen →</button>
-        <button
-          onClick={() => { try { sessionStorage.setItem(key, "1"); } catch {} setDismissed(true); }}
-          className="inline-flex items-center gap-1 text-[13px] hover:underline"
-          style={{ color: "#92400E" }}
-        >Ignorieren <X size={12} weight="bold" aria-hidden /></button>
-      </div>
-    </div>
-  );
-}
-
-// ============ SETUP WALKTHROUGH ============
-function SetupWalkthrough({ propertyId, navTo, p, dq }: {
-  propertyId: string;
-  navTo: (tab: TabKey, sectionId?: string) => void;
-  p: Property;
-  dq: ReturnType<typeof calcDataQuality>;
-}) {
-  const seenKey = `walkthrough_${propertyId}`;
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    try { if (localStorage.getItem(seenKey) === "1") setDismissed(true); } catch {}
-  }, [seenKey]);
-
-  const activeScenario = p.financeScenarios?.find((s) => s.id === p.activeFinanceId) ?? p.financeScenarios?.[0];
-
-  const steps = [
-    { label: "Kaufpreis & Fläche prüfen", go: () => navTo("uebersicht", "sec-objektdaten"), checked: (p.kaufpreis ?? 0) > 0 && (p.wohnflaecheM2 ?? 0) > 0 },
-    { label: "Erwartete Miete eingeben", go: () => navTo("uebersicht", "sec-kauf-nebenkosten"), checked: (p.nettomieteMtl ?? 0) > 0 },
-    { label: "Finanzierung eintragen", go: () => navTo("finanzierung", "sec-finanzierung"), checked: (activeScenario?.eigenkapital ?? 0) > 0 && (activeScenario?.zinssatz ?? 0) > 0 },
-    { label: "Score & Cashflow prüfen", go: () => navTo("uebersicht"), checked: dq.score >= 70 },
-  ];
-
-  const allDone = steps.every((s) => s.checked);
-
-  useEffect(() => {
-    if (!allDone || dismissed) return;
-    const t = setTimeout(() => {
-      setDismissed(true);
-      try { localStorage.setItem(seenKey, "1"); } catch {}
-    }, 2000);
-    return () => clearTimeout(t);
-  }, [allDone, dismissed, seenKey]);
-
-  if (dismissed) return null;
-
-  return (
-    <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px]">
-      <div className="text-[13px] font-semibold text-[#1C1917] mb-3">In 4 Schritten zur ersten Einschätzung</div>
-      <ol className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={i} className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={s.checked}
-              readOnly
-              className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F]"
-            />
-            <span className={`text-[13px] ${s.checked ? "text-[#2D6A4F] line-through" : "text-ink-2"}`}>
-              {s.label}
-            </span>
-          </li>
-        ))}
-      </ol>
-      <div className="flex justify-end mt-3">
-        <button
-          onClick={() => { try { localStorage.setItem(seenKey, "1"); } catch {} setDismissed(true); }}
-          className="text-[12px] text-ink-3 hover:text-ink-2"
-        >Walkthrough ausblenden</button>
-      </div>
-    </div>
-  );
-}
-
 
 // ============ MEINE BEWERTUNG ============
 function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {

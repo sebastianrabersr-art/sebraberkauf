@@ -143,15 +143,15 @@ function CandidateCard({ r, onOpen }: { r: Row; onOpen: () => void }) {
       <div className="mt-0.5 text-[12px] text-ink-3 truncate">{address || "Adresse fehlt"}</div>
       <dl className="mt-auto pt-4 grid grid-cols-3 gap-2">
         <div>
-          <dt className="text-[11px] text-ink-3">Kaufpreis</dt>
+          <dt className="text-[12px] text-ink-3">Kaufpreis</dt>
           <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</dd>
         </div>
         <div>
-          <dt className="text-[11px] text-ink-3">Rendite</dt>
+          <dt className="text-[12px] text-ink-3">Rendite</dt>
           <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{fmtPct(r.c.bruttorendite)}</dd>
         </div>
         <div>
-          <dt className="text-[11px] text-ink-3">Cashflow</dt>
+          <dt className="text-[12px] text-ink-3">Cashflow</dt>
           <dd className="text-[13px] font-semibold tabular-nums" style={{ color: cashColor(cf) }}>{fmtEUR(cf)}</dd>
         </div>
       </dl>
@@ -177,7 +177,7 @@ function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
         </span>
         <span className="min-w-0">
           <span className="block text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "Ohne Titel"}</span>
-          <span className="block text-[11px] text-ink-3 truncate">{address || "Adresse fehlt"}</span>
+          <span className="block text-[12px] text-ink-3 truncate">{address || "Adresse fehlt"}</span>
           {/* Mobil: Kennzahlen als zweite Zeile */}
           <span className="sm:hidden mt-1 flex flex-wrap gap-x-2 text-[12px] tabular-nums text-ink-2">
             <span>{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</span>
@@ -363,7 +363,7 @@ function Dashboard() {
           </div>
         ) : (
           <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
-            <div className="hidden sm:grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] gap-x-3 px-4 py-2 border-b border-[#EAE6DF] text-[11px] text-ink-3">
+            <div className="hidden sm:grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] gap-x-3 px-4 py-2 border-b border-[#EAE6DF] text-[12px] text-ink-3">
               <span>Score</span>
               <span>Objekt</span>
               <span className="text-right">Kaufpreis</span>
@@ -417,7 +417,7 @@ function Dashboard() {
             ) : (
               <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
                 <table className="w-full text-[13px]">
-                  <thead className="text-left text-[11px] text-ink-3">
+                  <thead className="text-left text-[12px] text-ink-3">
                     <tr>
                       <th className="px-4 py-2 font-normal">Objekt</th>
                       <th className="px-2 py-2 font-normal hidden sm:table-cell">Bezirk</th>
@@ -471,8 +471,8 @@ function Dashboard() {
                   <BarChart data={scoreBuckets} margin={CHART_MARGIN}>
                     <CartesianGrid {...GRID_PROPS} />
                     <XAxis dataKey="name" {...X_AXIS_CATEGORY} />
-                    <YAxis tick={{ fontSize: 11, fill: "#A8A29E" }} allowDecimals={false} tickLine={false} axisLine={false} width={40}
-                      label={{ value: "Objekte", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#736C67" }} allowDecimals={false} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "Objekte", position: "top", offset: 10, fontSize: 11, fill: "#736C67" }} />
                     <Tooltip
                       content={<ChartTooltip labelFormatter={(l) => `Score ${l}`} valueFormatter={(v) => `${v} ${Number(v) === 1 ? "Objekt" : "Objekte"}`} />}
                       cursor={{ fill: "#FAFAF8" }}
@@ -489,9 +489,9 @@ function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ ...CHART_MARGIN, bottom: 4 }}>
                     <CartesianGrid {...GRID_PROPS} />
-                    <XAxis type="number" dataKey="x" name="Kaufpreis" tickFormatter={fmtAxisNumber} tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} tickCount={4} />
-                    <YAxis type="number" dataKey="y" name="Bruttorendite" tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} width={40}
-                      label={{ value: "%", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <XAxis type="number" dataKey="x" name="Kaufpreis" tickFormatter={fmtAxisNumber} tick={{ fontSize: 11, fill: "#736C67" }} tickLine={false} axisLine={false} tickCount={4} />
+                    <YAxis type="number" dataKey="y" name="Bruttorendite" tick={{ fontSize: 11, fill: "#736C67" }} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "%", position: "top", offset: 10, fontSize: 11, fill: "#736C67" }} />
                     <Tooltip
                       content={<ChartTooltip labelFormatter={() => ""} valueFormatter={(v, e) => (e.name === "Kaufpreis" ? fmtEuro(Number(v)) : `${Number(v).toLocaleString("de-DE", { maximumFractionDigits: 2 })} %`)} />}
                       cursor={{ stroke: "#EAE6DF" }}

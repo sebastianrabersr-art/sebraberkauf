@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkle as Sparkles, Check } from "@phosphor-icons/react";
 import { PLAN_PRICING } from "@/lib/auth";
 import { track } from "@/lib/analytics";
+import { PLAN_HIGHLIGHTS } from "@/lib/planFeatures";
 
 interface Props {
   open: boolean;
@@ -13,18 +14,7 @@ interface Props {
   recommendPlan?: "plus" | "premium";
 }
 
-const FEATURES = {
-  plus: [
-    "Bis zu 5 Immobilien",
-    "Vergleichsfunktion",
-    "PDF-Upload, Pipeline, Follow-ups",
-  ],
-  premium: [
-    "Unbegrenzt Immobilien & Projekte",
-    "Portfolio & Zahlungs-Tracking",
-    "Export & Advanced-Berechnungen",
-  ],
-};
+const FEATURES = PLAN_HIGHLIGHTS;
 
 export function UpgradeDialog({ open, onOpenChange, title, description, recommendPlan = "plus" }: Props) {
   const p = PLAN_PRICING[recommendPlan];

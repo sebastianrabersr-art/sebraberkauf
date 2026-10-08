@@ -27,7 +27,7 @@ export function Breadcrumb({ items, className = "" }: { items: BreadcrumbItem[];
   return (
     <>
       <nav aria-label="Brotkrumen-Navigation" className={className}>
-        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]" style={{ color: "#A8A29E", fontFamily: "Inter, sans-serif" }}>
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3" style={{ fontFamily: "Inter, sans-serif" }}>
           {items.map((it, i) => {
             const last = i === items.length - 1;
             return (

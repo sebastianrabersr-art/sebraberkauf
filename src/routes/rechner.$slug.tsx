@@ -1,5 +1,6 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import {
   PublicCalcLayout,
   NumInput,
@@ -156,8 +157,21 @@ export const Route = createFileRoute("/rechner/$slug")({
   component: CalcPage,
 });
 
+/** Rechner-Tab im App-Bereich (/rechner?tab=…) für eingeloggte Nutzer. */
+const APP_TAB: Record<CalcSlug, "nebenkosten" | "finanzierung" | "cashflow" | "rendite" | "breakeven" | "leistbar" | "fixflip"> = {
+  kaufnebenkosten: "nebenkosten", finanzierung: "finanzierung", cashflow: "cashflow", rendite: "rendite",
+  breakeven: "breakeven", leistbarkeit: "leistbar", fixflip: "fixflip",
+};
+
 function CalcPage() {
   const { slug } = Route.useLoaderData();
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  // Eingeloggt: im App-Layout rechnen (mit PDF-Export und Objekt-Verknüpfung) statt auf der Marketingseite.
+  useEffect(() => {
+    if (session) navigate({ to: "/rechner", search: { tab: APP_TAB[slug] }, replace: true });
+  }, [session, slug, navigate]);
+  if (session) return null;
   if (slug === "kaufnebenkosten") return <KaufNebenCalculator />;
   if (slug === "rendite") return <RenditeCalculator />;
   if (slug === "cashflow") return <CashflowCalculator />;
@@ -214,7 +228,7 @@ function KaufNebenCalculator() {
             ]}
           />
           <label className="block">
-            <div className="text-[11px] text-ink-2 mb-1">Bundesland / Region (optional)</div>
+            <div className="text-[12px] text-ink-2 mb-1">Bundesland / Region (optional)</div>
             <input
               type="text"
               value={region}
@@ -369,16 +383,16 @@ function CashflowCalculator() {
       result={
         <div className="space-y-5">
           <BigResult label="Cashflow pro Monat" value={fmtEUR(cf)} verdict={cashflowVerdict(cf)} />
-          <div className="text-xs text-muted-foreground">
-            {cf >= 0 ? "Die Immobilie läuft monatlich positiv." : "Die Immobilie läuft monatlich negativ – du müsstest zuzahlen."}
-          </div>
+          {/* Rechenweg von oben nach unten: Miete minus Ausgaben = Cashflow */}
           <div className="border-t pt-3">
-            <ResultRow label="Cashflow pro Jahr" value={fmtEUR(cfYear)} tone={cfYear >= 0 ? "good" : "bad"} />
+            <ResultRow label="+ Mieteinnahmen" value={fmtEUR(miete)} />
             <ResultRow label="− Kreditrate" value={fmtEUR(rate)} />
             <ResultRow label="− Betriebskosten" value={fmtEUR(bk)} />
             <ResultRow label="− Rücklage" value={fmtEUR(ruecklage)} />
             <ResultRow label="− Leerstandspuffer" value={fmtEUR(leerstandEUR)} />
             <ResultRow label="− Sonstiges" value={fmtEUR(sonst)} />
+            <ResultRow label="= Cashflow pro Monat" value={fmtEUR(cf)} tone={cf >= 0 ? "good" : "bad"} />
+            <ResultRow label="Cashflow pro Jahr" value={fmtEUR(cfYear)} tone={cfYear >= 0 ? "good" : "bad"} />
           </div>
           <div className="rounded-xl bg-primary/10 p-4">
             <div className="text-xs text-primary font-medium">Benötigte Miete für Cashflow ≥ 0</div>

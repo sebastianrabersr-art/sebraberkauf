@@ -183,7 +183,7 @@ function UebersichtTab({ p }: { p: Property }) {
   const assumptions = (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
+        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
           Wertsteigerung % p.a.
           <input
             type="number"
@@ -193,7 +193,7 @@ function UebersichtTab({ p }: { p: Property }) {
             className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </label>
-        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
+        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
           Tilgungsanteil %
           <input
             type="number"
@@ -206,7 +206,7 @@ function UebersichtTab({ p }: { p: Property }) {
       </div>
       <div className="w-full sm:w-80">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] text-ink-2">Zeitraum: <strong>{years} Jahre</strong></span>
+          <span className="text-[12px] text-ink-2">Zeitraum: <strong>{years} Jahre</strong></span>
         </div>
         <input
           type="range"
@@ -503,7 +503,7 @@ function DokumenteTab({
               <FileText className="w-4 h-4 text-ink-3 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#1C1917] truncate">{d.name}</div>
-                <div className="text-[11px] text-ink-3">
+                <div className="text-[12px] text-ink-3">
                   {d.typ}{d.datum ? ` · ${d.datum}` : ""}{d.notiz ? ` · ${d.notiz}` : ""}
                 </div>
               </div>
@@ -558,12 +558,12 @@ function DokumenteTab({
               <div key={r.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.title}</div>
-                  <div className="text-[11px] text-ink-3">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
+                  <div className="text-[12px] text-ink-3">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
                 </div>
                 <select
                   value={r.status}
                   onChange={(e) => updateRepair(r.id, { status: e.target.value as typeof r.status })}
-                  className="text-[11px] font-medium px-2 py-1 rounded-[6px] border-none outline-none"
+                  className="text-[12px] font-medium px-2 py-1 rounded-[6px] border-none outline-none"
                   style={{ background: st.bg, color: st.fg }}
                 >
                   <option>Offen</option>
@@ -609,7 +609,7 @@ function DokumenteTab({
               <div key={pay.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{pay.description || pay.category}</div>
-                  <div className="text-[11px] text-ink-3">{pay.date} · {pay.category}</div>
+                  <div className="text-[12px] text-ink-3">{pay.date} · {pay.category}</div>
                 </div>
                 <div className="text-[13px] tabular-nums font-semibold" style={{ color: isInc ? "#2D6A4F" : "#DC2626" }}>
                   {isInc ? "+" : "−"}{fmtEUR(pay.amount)}

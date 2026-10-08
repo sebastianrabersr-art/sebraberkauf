@@ -503,7 +503,7 @@ function ScenarioComparison({ p, scenarios, activeId }: { p: Property; scenarios
           </tbody>
         </table>
       </div>
-      <p className="text-[11px] text-muted-foreground">Das <strong>aktive Szenario</strong> wird weiterhin für Investment Summary, Cashflow, DSCR, Break-even-Miete und Score verwendet.</p>
+      <p className="text-[12px] text-muted-foreground">Das <strong>aktive Szenario</strong> wird weiterhin für Investment Summary, Cashflow, DSCR, Break-even-Miete und Score verwendet.</p>
     </div>
   );
 }

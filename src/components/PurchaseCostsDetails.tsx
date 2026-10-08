@@ -77,7 +77,7 @@ export function PurchaseCostsDetails({
           </svg>
           <div className="min-w-0">
             <h3 className="font-semibold text-sm tracking-tight">Kaufnebenkosten Details</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {rules.country === "AT" ? "Österreich" : "Deutschland"}
               {rules.regionLabel ? ` · ${rules.regionLabel}` : ""}
             </p>
@@ -132,7 +132,7 @@ export function PurchaseCostsDetails({
                 ))}
               </select>
               {country === "DE" && !p.bundesland && (
-                <p className="text-[11px] text-warning mt-1">
+                <p className="text-[12px] text-warning mt-1">
                   Bundesland wählen — sonst wird mit Default „Bayern" gerechnet.
                 </p>
               )}
@@ -221,7 +221,7 @@ export function PurchaseCostsDetails({
               <div className="text-base font-semibold tabular-nums">
                 {fmtEUR(c.kaufNebenkosten)}
               </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
+              <div className="text-[12px] text-muted-foreground mt-0.5">
                 {fmtPct(c.nebenkostenPct, 2)} vom Kaufpreis
               </div>
             </div>
@@ -230,14 +230,14 @@ export function PurchaseCostsDetails({
                 Gesamter Kapitalbedarf
               </div>
               <div className="text-base font-semibold tabular-nums">{fmtEUR(kapitalbedarf)}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
+              <div className="text-[12px] text-muted-foreground mt-0.5">
                 Kaufpreis + Nebenkosten + Sanierung + Einrichtung + Reserve
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
-            <p className="text-[11px] text-muted-foreground max-w-xl">
+            <p className="text-[12px] text-muted-foreground max-w-xl">
               Die Werte sind Richtwerte und ersetzen keine steuerliche oder rechtliche Beratung.
             </p>
             <button
@@ -287,14 +287,14 @@ function CostRow({
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium">{label}</span>
-          <span className="text-[11px] text-muted-foreground">Default {pctLabel}</span>
+          <span className="text-[12px] text-muted-foreground">Default {pctLabel}</span>
           {isOverridden && (
             <span className="text-[10px] uppercase tracking-wide bg-warning/15 text-warning rounded px-1.5 py-0.5">
               manuell angepasst
             </span>
           )}
         </div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">
+        <div className="text-[12px] text-muted-foreground mt-0.5">
           {basisHint} · effektiv {fmtEUR(effective)}
           {extraNote ? ` · ${extraNote}` : ""}
         </div>

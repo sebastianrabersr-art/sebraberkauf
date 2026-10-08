@@ -5,8 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { detectPlatform } from "@/lib/extract.functions";
 import { isValidUrl } from "@/lib/calc";
-import { planLimits, useAuth } from "@/lib/auth";
-import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { track } from "@/lib/analytics";
 import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
 
@@ -19,9 +18,7 @@ function NewPropertyPage() {
   const navigate = useNavigate();
   const { addProperty, properties } = useStore();
   const project = useActiveProject();
-  const { subscription } = useAuth();
-  const limits = planLimits(subscription?.plan);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const propertyLimit = usePropertyLimit();
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [bezirk, setBezirk] = useState("");
@@ -41,13 +38,7 @@ function NewPropertyPage() {
   const isZinshaus = propertyType === "zinshaus";
   const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
-  const checkLimit = () => {
-    if (limits.properties != null && properties.length >= limits.properties) {
-      setUpgradeOpen(true);
-      return false;
-    }
-    return true;
-  };
+  const checkLimit = () => propertyLimit.guard();
 
   const submit = () => {
     if (!title.trim()) { toast.error("Bitte Titel angeben."); return; }
@@ -158,13 +149,7 @@ function NewPropertyPage() {
         </div>
         <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen. Tipp: „Leeres Objekt für PDF-Upload" rechts oben legt dir direkt eine Hülle an, in die du anschließend das Makler-PDF einlesen kannst.</p>
       </div>
-      <UpgradeDialog
-        open={upgradeOpen}
-        onOpenChange={setUpgradeOpen}
-        title="Limit erreicht"
-        description={`Dein Plan erlaubt max. ${limits.properties} Immobilie${limits.properties === 1 ? "" : "n"}. Upgrade, um mehr anzulegen.`}
-        recommendPlan={subscription?.plan === "plus" ? "premium" : "plus"}
-      />
+      {propertyLimit.dialog}
     </AppShell>
   );
 }

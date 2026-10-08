@@ -46,7 +46,7 @@ export function AdvancedInvestmentPanel({ p }: { p: Property }) {
           )}
         </div>
         {!isHaus && (
-          <p className="text-[11px] text-muted-foreground mt-2">Grund-/Gebäudeaufteilung ist bei Wohnungen meist nicht relevant. Aktiviere „Haus" / „Zinshaus" / „Grundstück" für die zusätzlichen Felder.</p>
+          <p className="text-[12px] text-muted-foreground mt-2">Grund-/Gebäudeaufteilung ist bei Wohnungen meist nicht relevant. Aktiviere „Haus" / „Zinshaus" / „Grundstück" für die zusätzlichen Felder.</p>
         )}
       </Block>
 
@@ -305,8 +305,8 @@ function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) 
             <ResultCard label="AfA-Satz" value={`${afa.satzPct.toFixed(2).replace(".", ",")} %`} />
             <ResultCard label="AfA pro Jahr" value={fmtEUR(afa.jahresAfa)} accent />
           </div>
-          <p className="text-[11px] text-ink-2 mt-2">{afa.hinweis}</p>
-          <p className="inline-flex items-center gap-1 text-[11px] text-[#92400E] font-medium mt-1">
+          <p className="text-[12px] text-ink-2 mt-2">{afa.hinweis}</p>
+          <p className="inline-flex items-center gap-1 text-[12px] text-[#92400E] font-medium mt-1">
             <Warning size={12} aria-hidden /> Keine Steuerberatung. Nur vereinfachte Modellrechnung.
           </p>
           <button onClick={() => setExpert(false)} className="mt-3 text-[12px] text-ink-3 hover:text-[#1C1917] cursor-pointer" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>

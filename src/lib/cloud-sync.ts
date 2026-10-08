@@ -99,8 +99,18 @@ async function pushChanges(userId: string) {
           data: p as any,
         }));
         const { error } = await supabase.from("properties").upsert(rows);
-        if (error) throw error;
-        for (const p of d.upserts) snapshot.properties.set(p.id, JSON.stringify(p));
+        if (error && /property_limit_reached/.test(error.message)) {
+          // Ein neues Objekt über dem Plan-Limit darf die übrigen Änderungen nicht blockieren:
+          // einzeln speichern und nur die abgelehnten Zeilen auslassen.
+          for (let i = 0; i < rows.length; i++) {
+            const { error: rowError } = await supabase.from("properties").upsert(rows[i]);
+            if (rowError) { console.warn("[cloud-sync] property rejected:", rows[i].id, rowError.message); continue; }
+            snapshot.properties.set(d.upserts[i].id, JSON.stringify(d.upserts[i]));
+          }
+        } else {
+          if (error) throw error;
+          for (const p of d.upserts) snapshot.properties.set(p.id, JSON.stringify(p));
+        }
       }
       if (d.deletes.length) {
         await supabase.from("properties").delete().in("id", d.deletes).eq("user_id", userId);
@@ -162,6 +172,14 @@ async function pushChanges(userId: string) {
   } finally {
     saving = false;
   }
+}
+
+/** Ausstehende Änderungen sofort speichern – z. B. vor einem harten Seitenwechsel. */
+export async function flushCloudSync() {
+  if (!currentUserId) return;
+  if (writeTimer) { clearTimeout(writeTimer); writeTimer = null; }
+  for (let i = 0; i < 20 && saving; i++) await new Promise((r) => setTimeout(r, 100));
+  await pushChanges(currentUserId);
 }
 
 function scheduleWrite(userId: string) {
@@ -323,12 +341,27 @@ export async function initCloudSync(userId: string) {
     // Ensure user always has at least one project
     if (useStore.getState().projects.length === 0) {
       const { DEFAULT_ASSUMPTIONS } = await import("@/lib/calc");
+      // Werte aus dem Onboarding übernehmen, falls es vor dem ersten Laden abgeschlossen wurde.
+      const { data: us } = await supabase
+        .from("user_settings")
+        .select("default_equity, default_interest_rate")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const ek = (us as any)?.default_equity as number | null | undefined;
+      const zinsPct = (us as any)?.default_interest_rate as number | null | undefined;
+      const confirmed = ek != null || zinsPct != null;
       const nowIso = new Date().toISOString();
       const proj: Project = {
         id: crypto.randomUUID(), name: "Mein erstes Projekt", description: "",
         investmentGoal: "", locationFocus: "Wien", budgetMin: null, budgetMax: null,
         maxNegativeCashflow: null, preferredSizeMin: null, preferredSizeMax: null,
-        preferredDistricts: "", status: "Aktiv", assumptions: { ...DEFAULT_ASSUMPTIONS },
+        preferredDistricts: "", status: "Aktiv",
+        assumptions: {
+          ...DEFAULT_ASSUMPTIONS,
+          ...(ek != null ? { eigenkapital: ek } : {}),
+          ...(zinsPct != null ? { zinssatz: zinsPct / 100 } : {}),
+        },
+        ...(confirmed ? { assumptionsConfirmed: true } : {}),
         createdAt: nowIso, updatedAt: nowIso,
       } as Project;
       useStore.setState({ projects: [proj], activeProjectId: proj.id } as any);

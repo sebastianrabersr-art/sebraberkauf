@@ -17,7 +17,7 @@ export const CHART_COLORS = {
   cashflowPre: "#78716C", // Cashflow vor Steuer
   cashflowPost: "#1C1917", // Cashflow nach Steuer / kumuliert
   grid: "#F5F3EE",
-  tick: "#A8A29E",
+  tick: "#736C67",
   legend: "#78716C",
 } as const;
 

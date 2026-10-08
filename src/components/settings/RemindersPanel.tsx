@@ -41,7 +41,7 @@ export function RemindersPanel() {
   return (
     <section className="bg-white" style={{ border: "1px solid #EAE6DF", borderRadius: 12, padding: "20px 24px", maxWidth: 680 }}>
       <h2 className="text-[14px] font-semibold text-[#1C1917]">Anstehende Erinnerungen</h2>
-      <p className="text-[11px] text-ink-3 mt-1">
+      <p className="text-[12px] text-ink-3 mt-1">
         Du bekommst zur gewählten Zeit eine E-Mail. Neue Erinnerungen setzt du im CRM-Tab einer Immobilie über die Glocke.
       </p>
 

@@ -106,7 +106,7 @@ export function ZinshausUnitsPanel({ p, u }: { p: Property; u: (patch: Partial<P
       ) : (
         <div className="rounded-[10px] border border-[#EAE6DF] bg-white overflow-x-auto">
           <table className="w-full min-w-[640px] text-[13px]">
-            <thead className="text-left text-[11px] text-ink-3">
+            <thead className="text-left text-[12px] text-ink-3">
               <tr className="border-b border-[#EAE6DF]">
                 <th className="px-4 py-2 font-normal">Name</th>
                 <th className="px-2 py-2 font-normal text-right">Fläche</th>
@@ -148,7 +148,7 @@ export function ZinshausUnitsPanel({ p, u }: { p: Property; u: (patch: Partial<P
                   >
                     <td className="px-4 py-2.5">
                       <div className="font-medium text-[#1C1917]">{unit.name}</div>
-                      {unit.mieter && <div className="text-[11px] text-ink-3">{unit.mieter}</div>}
+                      {unit.mieter && <div className="text-[12px] text-ink-3">{unit.mieter}</div>}
                     </td>
                     <td className="px-2 py-2.5 text-right tabular-nums">{fmtNum(unit.flaeche, 1)} m²</td>
                     <td className="px-2 py-2.5 text-right tabular-nums">{fmtEUR(unit.miete)}</td>
@@ -177,33 +177,33 @@ export function ZinshausUnitsPanel({ p, u }: { p: Property; u: (patch: Partial<P
           {dialogUnit && (
             <div className="grid grid-cols-2 gap-3">
               <label className="col-span-2 block">
-                <span className="block text-[11px] text-ink-2 mb-1">Name</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Name</span>
                 <input value={dialogUnit.name} onChange={(e) => setDialogUnit({ ...dialogUnit, name: e.target.value })} placeholder="z. B. Top 1, EG links" className={inputCls} />
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Fläche (m²)</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Fläche (m²)</span>
                 <input type="number" min={0} value={dialogUnit.flaeche || ""} onChange={(e) => setDialogUnit({ ...dialogUnit, flaeche: num(e.target.value) })} className={inputCls} />
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Kaltmiete (€/Mo)</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Kaltmiete (€/Mo)</span>
                 <input type="number" min={0} value={dialogUnit.miete || ""} onChange={(e) => setDialogUnit({ ...dialogUnit, miete: num(e.target.value) })} className={inputCls} />
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Leerstand (%)</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Leerstand (%)</span>
                 <input type="number" min={0} max={100} value={dialogUnit.leerstand ? Math.round(dialogUnit.leerstand * 1000) / 10 : ""} onChange={(e) => setDialogUnit({ ...dialogUnit, leerstand: Math.min(100, num(e.target.value)) / 100 })} className={inputCls} />
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Zustand</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Zustand</span>
                 <select value={dialogUnit.zustand} onChange={(e) => setDialogUnit({ ...dialogUnit, zustand: e.target.value as ZinshausUnit["zustand"] })} className={inputCls}>
                   {Object.entries(ZUSTAND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                 </select>
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Mieter (optional)</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Mieter (optional)</span>
                 <input value={dialogUnit.mieter ?? ""} onChange={(e) => setDialogUnit({ ...dialogUnit, mieter: e.target.value || undefined })} className={inputCls} />
               </label>
               <label className="block">
-                <span className="block text-[11px] text-ink-2 mb-1">Mietbeginn (optional)</span>
+                <span className="block text-[12px] text-ink-2 mb-1">Mietbeginn (optional)</span>
                 <input type="date" value={dialogUnit.mietbeginn ?? ""} onChange={(e) => setDialogUnit({ ...dialogUnit, mietbeginn: e.target.value || undefined })} className={inputCls} />
               </label>
             </div>
@@ -238,7 +238,7 @@ export function ZinshausSummary({ p, onGoUnits }: { p: Property; onGoUnits: () =
       <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
         {items.map((it) => (
           <div key={it.label}>
-            <dt className="text-[11px] text-ink-3">{it.label}</dt>
+            <dt className="text-[12px] text-ink-3">{it.label}</dt>
             <dd className="mt-0.5 text-[16px] font-semibold tabular-nums text-[#1C1917]">{it.value}</dd>
           </div>
         ))}

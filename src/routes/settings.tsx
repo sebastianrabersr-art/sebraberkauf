@@ -402,32 +402,6 @@ function SettingsPage() {
 
         <PromoCodeCard />
 
-        {/* Benachrichtigungen */}
-        <section className={cardCls} style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Benachrichtigungen</h2>
-          <div className="space-y-3 mt-4">
-            {[
-              ["tasks_due", "Aufgaben fällig"],
-              ["followup_reminders", "Follow-up Erinnerungen"],
-              ["viewing_reminders", "Besichtigungs-Erinnerungen"],
-              ["weekly_summary", "Wöchentliche Zusammenfassung"],
-              ["product_updates", "Produkt-Updates"],
-            ].map(([k, label]) => {
-              const np = settings?.notification_preferences ?? {};
-              const v = np[k] ?? true;
-              return (
-                <div key={k} className="flex items-center justify-between">
-                  <div style={{ fontFamily: "Inter", fontSize: 13, color: "#1C1917" }}>{label}</div>
-                  <Toggle checked={v} onChange={(checked) => setS("notification_preferences", { ...np, [k]: checked })} label={label} />
-                </div>
-              );
-            })}
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Benachrichtigungen speichern
-          </button>
-        </section>
-
         {/* Glossar */}
         <section className={cardCls} style={cardStyle}>
           <h2 style={sectionTitleStyle}>Fachbegriffe</h2>
@@ -467,27 +441,6 @@ function SettingsPage() {
       {tab === "annahmen" && (
       <div className="space-y-8">
         <AssumptionsPanel />
-
-        {/* Standardwerte */}
-        <section className={cardCls} style={{ ...cardStyle, maxWidth: 680 }}>
-          <h2 style={sectionTitleStyle}>Standardwerte für neue Immobilien</h2>
-          <p style={{ ...descStyle, marginTop: 4 }}>Werden bei neuen Objekten vorausgefüllt.</p>
-          <div className="grid sm:grid-cols-2 gap-3 mt-4">
-            <NumField label="Eigenkapital" suffix="€" desc="Standard-Eigenkapital" v={settings?.default_equity} onChange={(v) => setS("default_equity", v)} />
-            <NumField label="Zinssatz" suffix="%" desc="Aktueller Marktzins" v={settings?.default_interest_rate} onChange={(v) => setS("default_interest_rate", v)} />
-            <NumField label="Laufzeit" suffix="Jahre" desc="Kreditlaufzeit" v={settings?.default_loan_term} onChange={(v) => setS("default_loan_term", v)} />
-            <NumField label="Maklerprovision" suffix="%" desc="Kauf-Provision" v={settings?.default_commission_percent} onChange={(v) => setS("default_commission_percent", v)} />
-            <NumField label="USt" suffix="%" desc="Umsatzsteuer" v={settings?.default_vat_rate} onChange={(v) => setS("default_vat_rate", v)} />
-            <NumField label="Grunderwerbsteuer" suffix="%" desc="Standard 3,5 %" v={settings?.default_grunderwerbsteuer} onChange={(v) => setS("default_grunderwerbsteuer", v)} />
-            <NumField label="Grundbuch" suffix="%" desc="Eintragungsgebühr" v={settings?.default_grundbuchkosten} onChange={(v) => setS("default_grundbuchkosten", v)} />
-            <NumField label="Vertragskosten" suffix="%" desc="Notar & Anwalt" v={settings?.default_vertragskosten} onChange={(v) => setS("default_vertragskosten", v)} />
-            <NumField label="Leerstandspuffer" suffix="%" desc="Mietausfallsrisiko" v={settings?.default_vacancy_buffer} onChange={(v) => setS("default_vacancy_buffer", v)} />
-            <NumField label="Instandhaltung" suffix="€/m²/J" desc="Reserve pro Jahr" v={settings?.default_repair_reserve} onChange={(v) => setS("default_repair_reserve", v)} />
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Standardwerte speichern
-          </button>
-        </section>
       </div>
       )}
 

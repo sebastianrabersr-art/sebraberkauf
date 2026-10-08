@@ -84,7 +84,7 @@ export function PaymentsPanel({ p }: { p: Property }) {
         <button onClick={add} className="inline-flex items-center justify-center gap-1 rounded-md bg-primary text-primary-foreground px-3 py-2 text-sm">
           <Plus className="size-3.5" /> Erfassen
         </button>
-        <label className="col-span-2 md:col-span-7 text-[11px] inline-flex items-center gap-1.5">
+        <label className="col-span-2 md:col-span-7 text-[12px] inline-flex items-center gap-1.5">
           <input type="checkbox" checked={draft.recurring} onChange={(e) => setDraft({ ...draft, recurring: e.target.checked })} /> wiederkehrend
         </label>
       </div>
@@ -112,7 +112,7 @@ export function PaymentsPanel({ p }: { p: Property }) {
                   <td className="py-1.5 pr-2 text-muted-foreground">{x.description || "—"}{x.recurring ? " · wiederkehrend" : ""}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums font-medium">{fmtEUR(x.amount)}</td>
                   <td className="py-1.5 pr-2">
-                    <select value={x.status} onChange={(e) => updatePayment(x.id, { status: e.target.value as PaymentStatus })} className="text-[11px] rounded border bg-background px-1.5 py-0.5">
+                    <select value={x.status} onChange={(e) => updatePayment(x.id, { status: e.target.value as PaymentStatus })} className="text-[12px] rounded border bg-background px-1.5 py-0.5">
                       <option value="bezahlt">bezahlt</option><option value="offen">offen</option>
                     </select>
                   </td>

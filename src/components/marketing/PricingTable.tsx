@@ -6,60 +6,15 @@ import { useNavigate } from "@tanstack/react-router";
 import { isStripeConfigured } from "@/lib/stripe";
 import { toast } from "sonner";
 
+import { PLAN_FEATURES } from "@/lib/planFeatures";
+
 type Cycle = "monthly" | "yearly";
 type PaidPlan = "plus" | "premium";
-type Feature = { label: string; included: boolean };
-
-const yes = (label: string): Feature => ({ label, included: true });
-const no = (label: string): Feature => ({ label, included: false });
 
 const TIERS = [
-  {
-    id: "free" as const,
-    name: "Kostenlos",
-    cta: "Kostenlos starten",
-    highlight: false,
-    features: [
-      yes("1 Immobilie"),
-      yes("1 Projekt"),
-      yes("Volle Analyse für diese eine Immobilie"),
-      yes("Link-Import"),
-      yes("Finanzierung, Miete & Cashflow, Rendite"),
-      yes("Score"),
-      no("Vergleichsfunktion"),
-      no("Portfolio"),
-    ],
-  },
-  {
-    id: "plus" as const,
-    name: "Plus",
-    cta: "Plus starten",
-    highlight: true,
-    features: [
-      yes("Bis zu 5 Immobilien"),
-      yes("1 Projekt"),
-      yes("Alle Analysen"),
-      yes("Vergleichsfunktion"),
-      yes("Finanzierungsszenarien"),
-      yes("PDF-Upload"),
-      yes("Pipeline, Follow-ups, Besichtigungen"),
-      no("Portfolio"),
-    ],
-  },
-  {
-    id: "premium" as const,
-    name: "Premium",
-    cta: "Premium starten",
-    highlight: false,
-    features: [
-      yes("Unbegrenzt Immobilien"),
-      yes("Unbegrenzt Projekte"),
-      yes("Alle Funktionen"),
-      yes("Portfolio & Zahlungs-Tracking"),
-      yes("Export"),
-      yes("Advanced-Berechnungen"),
-    ],
-  },
+  { id: "free" as const, name: "Kostenlos", cta: "Kostenlos starten", highlight: false, features: PLAN_FEATURES.free },
+  { id: "plus" as const, name: "Plus", cta: "Plus starten", highlight: true, features: PLAN_FEATURES.plus },
+  { id: "premium" as const, name: "Premium", cta: "Premium starten", highlight: false, features: PLAN_FEATURES.premium },
 ];
 
 const eur = (n: number) =>

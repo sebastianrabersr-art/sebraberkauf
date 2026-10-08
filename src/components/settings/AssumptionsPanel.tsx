@@ -43,6 +43,7 @@ export function AssumptionsPanel() {
           <h2 className="text-lg font-semibold tracking-tight">Annahmen</h2>
           <p className="text-muted-foreground mt-1 text-sm">
             Diese Werte gelten für das Projekt „{project.name}" und fließen in alle seine Berechnungen ein.
+            Neue Objekte übernehmen Eigenkapital, Zinssatz und Laufzeit als Finanzierung – im Objekt kannst du sie anpassen.
           </p>
         </div>
         <div className="flex gap-2">
@@ -84,7 +85,7 @@ export function AssumptionsPanel() {
         ))}
       </div>
       <p className="text-xs text-muted-foreground mt-6">
-        Standard-Defaults aus deiner Excel: EK {DEFAULT_ASSUMPTIONS.eigenkapital.toLocaleString("de-AT")} €, Zins {(DEFAULT_ASSUMPTIONS.zinssatz * 100).toFixed(2)} %, Laufzeit {DEFAULT_ASSUMPTIONS.laufzeit} J.
+        Standardwerte: EK {DEFAULT_ASSUMPTIONS.eigenkapital.toLocaleString("de-AT")} €, Zins {(DEFAULT_ASSUMPTIONS.zinssatz * 100).toFixed(2)} %, Laufzeit {DEFAULT_ASSUMPTIONS.laufzeit} J.
       </p>
     </div>
   );

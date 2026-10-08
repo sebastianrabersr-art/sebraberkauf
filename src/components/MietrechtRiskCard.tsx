@@ -58,7 +58,7 @@ export function MietrechtRiskCard({ p, compact }: Props) {
         </div>
       )}
 
-      <p className="text-[11px] italic text-muted-foreground border-t pt-2">
+      <p className="text-[12px] italic text-muted-foreground border-t pt-2">
         Diese Einschätzung ist eine KI-basierte Orientierung und ersetzt keine Rechts-, Steuer- oder Finanzberatung.
       </p>
     </div>

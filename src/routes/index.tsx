@@ -23,14 +23,6 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-const TESTIMONIALS: { name: string; age: number; quote: string }[] = [
-  { name: "Katharina", age: 31, quote: "Ich hab früher stundenlang Excel-Tabellen gebastelt. Mit kaufma sehe ich Rendite und Cashflow in Sekunden – und kann Immobilien direkt vergleichen." },
-  { name: "Yannik", age: 26, quote: "Ich hab mir eine Wohnung in Wien angeschaut und wusste nicht ob der Preis gerechtfertigt ist. kaufma hat mir in zwei Minuten gezeigt dass der Kaufpreisfaktor bei 32 liegt – zu teuer für die Lage." },
-  { name: "Wolfgang", age: 60, quote: "Ich investiere seit Jahren in Immobilien. Was mich überzeugt hat: die Kaufkostenaufschlüsselung ist transparenter als bei jedem anderen Tool das ich kenne." },
-  { name: "Markus", age: 34, quote: "Der Fix & Flip Rechner ist genau was ich gesucht habe. Kaufpreis, Renovierung, Verkauf – alles auf einen Blick mit Steuerberechnung." },
-  { name: "Lisa", age: 54, quote: "Endlich kann ich meinem Mann zeigen warum eine Wohnung in Graz besser ist als eine in Wien. Die Vergleichsfunktion macht das Argument für mich." },
-];
-
 function fmtEUR(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -111,7 +103,7 @@ function ExampleAnalysis() {
         </div>
       </dl>
 
-      <figcaption className="mt-3 text-[11px] text-ink-3 leading-relaxed">
+      <figcaption className="mt-3 text-[12px] text-ink-3 leading-relaxed">
         Annahmen: {fmtEUR(e.eigenkapital)} Eigenkapital, {(e.zins * 100).toLocaleString("de-DE")} % Zins, {e.jahre} Jahre, Rücklage {e.ruecklageProM2} €/m², {fmtEUR(e.nichtUmlagefaehig)} nicht umlagefähige Kosten. Keine echte Immobilie.
       </figcaption>
     </figure>
@@ -266,7 +258,7 @@ function LinkAnalyzer() {
           className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-5 py-3 text-[14px] font-semibold hover:bg-[#235740] disabled:opacity-60 transition-colors whitespace-nowrap"
         >
           {loading ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <ArrowRight className="size-4" aria-hidden />}
-          {loading ? "Inserat wird ausgelesen…" : "Kostenlos analysieren"}
+          {loading ? "Inserat wird ausgelesen…" : "Inserat prüfen"}
         </button>
       </form>
 
@@ -391,7 +383,7 @@ function Landing() {
 
           <div className="mt-14 flex flex-wrap items-center gap-x-5 gap-y-3">
             <a href="/signup" className="inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
-              Kostenlos ausprobieren <ArrowRight className="size-4" aria-hidden />
+              Kostenlos starten <ArrowRight className="size-4" aria-hidden />
             </a>
             <span className="text-[13px] text-ink-2">Eine Immobilie gratis. Upgrade nur, wenn du vergleichen willst.</span>
           </div>
@@ -433,21 +425,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* ===== TESTIMONIALS ===== */}
-      <section className="border-t border-[#EAE6DF]">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <h2 className="heading-section text-center">Das sagen unsere Nutzer</h2>
-          <div className="mt-10 grid md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <figure key={t.name} className="bg-white border border-[#EAE6DF] rounded-[12px] p-6">
-                <blockquote className="text-[15px] leading-[1.6] text-[#1C1917]">„{t.quote}“</blockquote>
-                <figcaption className="mt-4 text-[13px] font-semibold text-ink-2">{t.name}, {t.age}</figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ===== PREISE ===== */}
       <section className="max-w-6xl mx-auto px-6 py-16 border-t border-[#EAE6DF]">
         <h2 className="heading-section text-center">Preise</h2>
@@ -473,7 +450,7 @@ function Landing() {
           </a>
           <p className="mt-4 text-[14px] text-white/75">
             Mehr als eine Immobilie im Blick?{" "}
-            <Link to="/preise" className="font-medium text-white underline underline-offset-4">Preise ansehen</Link>
+            <Link to="/pricing" className="font-medium text-white underline underline-offset-4">Preise ansehen</Link>
           </p>
         </div>
       </section>

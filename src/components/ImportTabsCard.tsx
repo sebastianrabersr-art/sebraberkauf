@@ -9,6 +9,7 @@ import { calcDataQuality, isValidUrl } from "@/lib/calc";
 import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer, Buildings } from "@phosphor-icons/react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 
 type TabKey = "link" | "text" | "excel" | "manuell";
 
@@ -98,6 +99,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   };
   const project = useActiveProject();
   const { addProperty, findByLink, properties } = useStore();
+  const propertyLimit = usePropertyLimit();
 
   const [activeTab, setActiveTab] = useState<TabKey>("link");
   const [url, setUrl] = useState(initialUrl);
@@ -200,10 +202,12 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       nettomieteMtl: d.estimated_rent_monthly, nettomieteGeschaetzt: d.rent_is_estimate,
       missingData: d.missing_data,
     });
-    const dq = calcDataQuality(draft);
-    const status: Property["extractionStatus"] = dq.score >= 60 ? "ok" : "partial";
-    const p = makeEmptyProperty({ ...draft, extractionStatus: status });
-    addProperty(p);
+    const draftDq = calcDataQuality(draft);
+    const status: Property["extractionStatus"] = draftDq.score >= 60 ? "ok" : "partial";
+    addProperty(makeEmptyProperty({ ...draft, extractionStatus: status }));
+    // Der Store ergänzt ggf. die Standard-Finanzierung – Qualität am gespeicherten Objekt messen.
+    const p = useStore.getState().properties.find((x) => x.id === draft.id) ?? draft;
+    const dq = calcDataQuality(p);
     setResult({ property: p, quality: dq, partial: dq.score < 60 });
     if (dq.score < 60) {
       toast.warning(`Nur ${dq.score}% der wichtigen Daten gefunden – Import unvollständig.`);
@@ -224,6 +228,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       });
       return;
     }
+    if (!propertyLimit.guard()) return;
     setLoading(true);
     try {
       const res = await extract({ data: { url, text: "" } });
@@ -243,13 +248,16 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
     if (text.includes("\t")) {
       const { rows, hasHeader } = parseTSV(text);
       if (hasHeader && rows.length > 0) {
+        if (!propertyLimit.guard()) return;
         let created = 0;
+        let skippedByLimit = 0;
         for (const row of rows) {
           const partial = rowToProperty(row, project.id);
           if (partial.link) {
             const dup = checkDuplicate(partial.link as string);
             if (dup) continue;
           }
+          if (created >= propertyLimit.remaining) { skippedByLimit++; continue; }
           const p = makeEmptyProperty({ ...partial, projectId: project.id, extractionStatus: "manuell" });
           addProperty(p);
           created++;
@@ -259,6 +267,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
           }
         }
         toast.success(rows.length === 1 ? "Immobilie aus Excel importiert" : `${created} Immobilien aus Excel importiert`);
+        if (skippedByLimit > 0) {
+          toast.warning(`${skippedByLimit} weitere Zeile${skippedByLimit === 1 ? "" : "n"} nicht importiert: Plan-Limit erreicht.`);
+        }
         setText("");
         return;
       }
@@ -272,6 +283,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         return;
       }
     }
+    if (!propertyLimit.guard()) return;
     setLoading(true);
     try {
       const res = await extract({ data: { url: textUrl, text } });
@@ -283,6 +295,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   };
 
   const createManual = () => {
+    if (!propertyLimit.guard()) return;
     const title = manualTitle.trim() || "Neue Immobilie";
     const mappedType: Property["propertyType"] =
       propertyType === "house" || propertyType === "multi_family"
@@ -312,6 +325,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
 
   return (
     <div>
+      {propertyLimit.dialog}
       {/* Tab Pills */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {TABS.map((t) => {
@@ -370,7 +384,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 {loading ? "Lädt…" : "Analysieren"}
               </button>
             </div>
-            <p className="text-[11px] text-ink-3 mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
+            <p className="text-[12px] text-ink-3 mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
             {(platform || country) && (
               <div className="mt-2 flex gap-1">
                 {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-ink-2">{platform}</span>}
@@ -397,7 +411,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
               style={{ width: "100%", minHeight: 200, border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "9px 12px", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit" }}
             />
             <div className="mt-3">
-              <label className="block text-[11px] text-ink-3 mb-1">Link zur Immobilie (optional)</label>
+              <label className="block text-[12px] text-ink-3 mb-1">Link zur Immobilie (optional)</label>
               <input type="url" value={textUrl} placeholder="https://..." onChange={(e) => setTextUrl(e.target.value)}
                 style={{ width: "100%", border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "7px 12px", fontSize: 12, outline: "none" }} />
             </div>
@@ -427,7 +441,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
             >
               <DownloadSimple weight="duotone" size={16} /> Vorlage herunterladen
             </button>
-            <p className="text-[11px] text-ink-3 mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
+            <p className="text-[12px] text-ink-3 mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
         )}
 
@@ -462,7 +476,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                       </div>
                       <div>
                         <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{s.label}</div>
-                        <div className="text-[11px] text-ink-3">{s.sub}</div>
+                        <div className="text-[12px] text-ink-3">{s.sub}</div>
                       </div>
                     </button>
                   );

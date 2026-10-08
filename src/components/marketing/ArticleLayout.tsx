@@ -198,7 +198,7 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           to="/signup"
           className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
         >
-          Kostenlos ausprobieren <ArrowRight className="size-4" />
+          Kostenlos starten <ArrowRight className="size-4" />
         </Link>
       </div>
 

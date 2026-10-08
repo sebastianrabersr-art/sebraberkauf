@@ -101,19 +101,19 @@ function Portfolio() {
                       <div className="text-[12px] text-ink-3 mt-0.5 truncate">
                         {[p.adresse, p.bezirk, p.city, p.land].filter(Boolean).join(", ") || "—"}
                       </div>
-                      {pi.kaufdatum && <div className="text-[11px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
+                      {pi.kaufdatum && <div className="text-[12px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
                     </div>
                     <span className="flex items-center gap-1.5 shrink-0">
                       {crmCount > 0 && (
                         <span
-                          className="text-[11px] rounded-[6px] px-2 py-0.5"
+                          className="text-[12px] rounded-[6px] px-2 py-0.5"
                           style={{ background: "#F5F3EE", color: "#78716C", border: "1px solid #EAE6DF" }}
                           title={`${crmCount} CRM-Aktivität${crmCount === 1 ? "" : "en"}`}
                         >
                           CRM · {crmCount}
                         </span>
                       )}
-                      <span className="text-[11px] rounded-[6px] px-2 py-0.5" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
+                      <span className="text-[12px] rounded-[6px] px-2 py-0.5" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">

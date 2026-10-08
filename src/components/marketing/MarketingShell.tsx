@@ -68,11 +68,12 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
             {!session && (
-              <a href="/login" className="hidden sm:inline-flex text-sm px-3 py-2 text-ink-2 hover:text-foreground">Login</a>
+              <a href="/login" className={`${stickyCta ? "inline-flex" : "hidden sm:inline-flex"} text-sm px-3 py-2 text-ink-2 hover:text-foreground`}>Login</a>
             )}
+            {/* Mit fester CTA-Leiste unten keinen zweiten grünen Button im mobilen Header */}
             <a
               href={primaryCta.href}
-              className="rounded-[8px] bg-[#2D6A4F] text-white px-3.5 sm:px-4 py-2 text-sm font-medium hover:bg-[#235740] transition-colors whitespace-nowrap"
+              className={`${stickyCta ? "hidden md:inline-flex" : "inline-flex"} rounded-[8px] bg-[#2D6A4F] text-white px-3.5 sm:px-4 py-2 text-sm font-medium hover:bg-[#235740] transition-colors whitespace-nowrap`}
             >
               {primaryCta.label}
             </a>
@@ -126,7 +127,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Fußzeile">
             <a href="/rechner" className="hover:text-foreground">Rechner</a>
             <a href="/ratgeber" className="hover:text-foreground">Ratgeber</a>
-            <a href="/preise" className="hover:text-foreground">Preise</a>
+            <a href="/pricing" className="hover:text-foreground">Preise</a>
             <a href="/glossar" className="hover:text-foreground">Glossar</a>
             <a href="/impressum" className="hover:text-foreground">Impressum</a>
             <a href="/datenschutz" className="hover:text-foreground">Datenschutz</a>

@@ -112,7 +112,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
         <span className="text-[13px] font-medium text-[#1C1917]">
           {uploading > 0 ? "Wird hochgeladen …" : "PDF hier ablegen oder klicken zum Hochladen"}
         </span>
-        <span className="text-[11px] text-ink-3">Nur PDF · max. 10 MB pro Datei</span>
+        <span className="text-[12px] text-ink-3">Nur PDF · max. 10 MB pro Datei</span>
       </button>
 
       {docs === null ? (
@@ -130,7 +130,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
               <FileText className="size-5 shrink-0" weight="duotone" style={{ color: "#2D6A4F" }} aria-hidden />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#1C1917] truncate" title={d.filename}>{d.filename}</div>
-                <div className="text-[11px] text-ink-3">
+                <div className="text-[12px] text-ink-3">
                   {new Date(d.created_at).toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" })} · {fmtFileSize(d.file_size)}
                 </div>
               </div>

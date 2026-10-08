@@ -286,7 +286,7 @@ function PropertiesList() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[12px]">
                   {c.bruttorendite ? <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-ink-2 tabular-nums">{fmtPct(c.bruttorendite)} brutto</span> : null}
                   <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>Mietrecht {m.risiko}</AmpelBadge>
                   <AmpelBadge ampel={dq.ampel}>Daten {dq.score}%</AmpelBadge>
@@ -359,7 +359,7 @@ function PropertiesList() {
                       )}
                     </td>
                     <td className="py-3 px-4 align-middle">
-                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-ink-2">{p.status}</span>
+                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[12px] text-ink-2">{p.status}</span>
                     </td>
                     <td className="py-3 px-4 align-middle text-[12px] text-ink-3">{p.priority ?? "—"}</td>
                     <td className="py-3 px-4 align-middle max-w-sm">
@@ -369,7 +369,7 @@ function PropertiesList() {
                       >
                         {p.title || "—"}
                       </div>
-                      <div className="text-[11px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                      <div className="text-[12px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
                     </td>
                     <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>

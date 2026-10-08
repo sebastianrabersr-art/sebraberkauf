@@ -19,7 +19,7 @@ const ICON_INACTIVE = "#78716C";
 const NAV_PRIMARY: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", short: "Start", icon: IconDashboard },
   { to: "/properties", label: "Kaufkandidaten", short: "Kandidaten", icon: IconKaufkandidaten },
-  { to: "/vergleich", label: "Vergleichen", icon: IconVergleichen },
+  { to: "/vergleich", label: "Vergleich", icon: IconVergleichen },
   { to: "/rechner", label: "Rechner", icon: IconRechner },
 ];
 

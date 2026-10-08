@@ -14,7 +14,7 @@ import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { exportComparisonPdf, type ComparisonSection } from "@/lib/pdfExport";
 
 export const Route = createFileRoute("/vergleich")({
-  head: () => ({ meta: [{ title: "Analyse – Immobilien vergleichen" }] }),
+  head: () => ({ meta: [{ title: "Vergleich – kaufma" }] }),
   component: ComparePage,
 });
 
@@ -37,7 +37,7 @@ function ComparePage() {
       <AppShell>
         <PageHead compareLimit={compareLimit} />
         <FeatureLocked
-          title="Analyse ist in Plus & Premium enthalten"
+          title="Vergleich ist in Plus & Premium enthalten"
           description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
@@ -51,12 +51,12 @@ function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="heading-page-sm">
-        Analyse
+        Vergleich
       </h1>
       <p className="mt-1 text-[13px] text-ink-2">
         {compareLimit > 0
-          ? `Bis zu ${compareLimit} Immobilien analysieren und die beste Wahl treffen`
-          : "2–4 Immobilien analysieren und die beste Wahl treffen"}
+          ? `Bis zu ${compareLimit} Immobilien vergleichen und die beste Wahl treffen`
+          : "Immobilien nebeneinanderlegen und die beste Wahl treffen"}
       </p>
     </div>
   );
@@ -259,14 +259,14 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[12px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                      <div className="text-[11px] text-ink-3 truncate mt-0.5">
+                      <div className="text-[12px] text-ink-3 truncate mt-0.5">
                         {[p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
                       </div>
-                      <div className="text-[11px] text-ink-3 truncate mt-1 tabular-nums">
+                      <div className="text-[12px] text-ink-3 truncate mt-1 tabular-nums">
                         {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
                       </div>
                       <div
-                        className="text-[11px] tabular-nums mt-0.5"
+                        className="text-[12px] tabular-nums mt-0.5"
                         style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#B91C1C" }}
                       >
                         {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
@@ -461,7 +461,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
   return (
     <>
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white mb-4" style={{ padding: "16px 20px" }}>
-        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Analyse</div>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Auswertung</div>
         <div
           className="rounded-[10px] mb-3 flex items-start justify-between gap-4"
           style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "14px 18px" }}
@@ -515,7 +515,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
                 {computed.map((x) => (
                   <th key={x.p.id} className="text-right px-[14px] py-3 min-w-[140px] align-top">
                     <div className="font-display font-bold text-[13px] text-[#1C1917]">{x.p.title || "—"}</div>
-                    <div className="font-normal text-[11px] text-ink-3 tabular-nums mt-0.5">
+                    <div className="font-normal text-[12px] text-ink-3 tabular-nums mt-0.5">
                       {x.p.kaufpreis != null ? fmtEUR(x.p.kaufpreis) : "—"}
                     </div>
                   </th>

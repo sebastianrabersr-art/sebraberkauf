@@ -118,7 +118,7 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
           <div className="mb-3 flex items-start justify-between gap-2 rounded-[8px] px-3 py-2 text-[12px]" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>
             <span>
               Gesetzt für {fmtReminderDate(existing.remind_at)}
-              {existing.note ? <span className="block text-[11px] text-ink-2 mt-0.5">{existing.note}</span> : null}
+              {existing.note ? <span className="block text-[12px] text-ink-2 mt-0.5">{existing.note}</span> : null}
             </span>
             <button type="button" onClick={remove} disabled={busy} aria-label="Erinnerung löschen" className="text-[#DC2626] hover:opacity-80 shrink-0 mt-0.5">
               <Trash size={14} aria-hidden />
@@ -127,11 +127,11 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
         )}
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
-            <span className="block text-[11px] text-ink-2 mb-1">Datum</span>
+            <span className="block text-[12px] text-ink-2 mb-1">Datum</span>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
           </label>
           <label className="block">
-            <span className="block text-[11px] text-ink-2 mb-1">Uhrzeit</span>
+            <span className="block text-[12px] text-ink-2 mb-1">Uhrzeit</span>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputCls} />
           </label>
         </div>
@@ -154,7 +154,7 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
             Speichern
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-ink-3">Du bekommst zur gewählten Zeit eine E-Mail (± 5 Minuten).</p>
+        <p className="mt-2 text-[12px] text-ink-3">Du bekommst zur gewählten Zeit eine E-Mail (± 5 Minuten).</p>
       </PopoverContent>
     </Popover>
   );

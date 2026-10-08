@@ -17,11 +17,26 @@ import {
   CircleNotch,
 } from "@phosphor-icons/react";
 import { Logo } from "@/components/Logo";
+import { useStore } from "@/lib/store";
+import { flushCloudSync } from "@/lib/cloud-sync";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [{ title: "Willkommen bei kaufma" }] }),
   component: Onboarding,
 });
+
+/** Eigenkapital und Zins in die Annahmen aller eigenen Projekte schreiben (Demo-Projekte bleiben unberührt). */
+function applyOnboardingAssumptions(ek: number | null, zinsPct: number | null) {
+  const { projects, activeProjectId, updateProjectAssumptions } = useStore.getState();
+  const own = projects.filter((p) => !p.isDemo);
+  const targets = own.length > 0 ? own : projects.filter((p) => p.id === activeProjectId);
+  for (const p of targets) {
+    updateProjectAssumptions(p.id, {
+      ...(ek != null ? { eigenkapital: ek } : {}),
+      ...(zinsPct != null ? { zinssatz: zinsPct / 100 } : {}),
+    });
+  }
+}
 
 const GOALS = [
   { id: "vermieten", label: "Vermieten", sub: "Immobilie als Investment kaufen und vermieten", icon: TrendUp },
@@ -61,12 +76,18 @@ function Onboarding() {
     setBusy(mode === "skip" ? "skip" : to);
     try {
       if (mode === "complete") {
+        const ek = Number(equity) || null;
+        const zinsPct = Number(String(zinssatz).replace(",", ".")) || null;
+        // Eine Quelle für Rechnungen: die Projekt-Annahmen. Neue Objekte übernehmen sie als Finanzierung.
+        applyOnboardingAssumptions(ek, zinsPct);
+        // Zusätzlich im Profil sichern – falls die Projekte beim ersten Login noch nicht geladen sind,
+        // legt cloud-sync das erste Projekt mit diesen Werten an.
         await supabase.from("user_settings").upsert({
           user_id: user.id,
           goal,
           location_focus: location.trim() || null,
-          default_equity: Number(equity) || null,
-          default_zinssatz: Number(String(zinssatz).replace(",", ".")) || null,
+          default_equity: ek,
+          default_interest_rate: zinsPct,
         } as any);
       }
       await supabase.from("profiles").update({
@@ -74,6 +95,8 @@ function Onboarding() {
         ...(mode === "complete" ? { first_name: vorname.trim() || null, last_name: nachname.trim() || null } : {}),
       } as any).eq("id", user.id);
       await refresh();
+      // Vor dem harten Seitenwechsel speichern, sonst gehen die neuen Annahmen verloren.
+      await flushCloudSync();
       if (mode === "complete") toast.success("Alles eingerichtet.");
     } catch (e) {
       console.error("Onboarding save error:", e);
@@ -136,7 +159,7 @@ function Onboarding() {
             <div>
               <h1 className="heading-page-sm">Willkommen bei kaufma.</h1>
               <p className="text-[14px] text-ink-2 mt-3 leading-relaxed">
-                Zwei kurze Fragen, dann analysierst du deine erste Immobilie. Dauert etwa eine Minute.
+                Zwei kurze Schritte, dann analysierst du deine erste Immobilie. Dauert etwa eine Minute.
               </p>
               <ul className="mt-6 space-y-2.5">
                 {["Inserate direkt importieren", "Rendite, Cashflow & Mietrecht prüfen", "Immobilien vergleichen & entscheiden"].map((item) => (
@@ -164,7 +187,7 @@ function Onboarding() {
           {step === 1 && (
             <form onSubmit={next}>
               <h2 className={h2Cls}>Wie heißt du?</h2>
-              <p className="text-[13px] text-ink-2 mt-1 mb-5">Optional – erscheint auf Kaufangeboten und Dokumenten, die du erstellst.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Optional – damit wir dich in der App mit Namen ansprechen.</p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div>
                   <label htmlFor={ids.vorname} className={labelCls}>Vorname</label>
@@ -212,7 +235,7 @@ function Onboarding() {
           {step === 2 && (
             <form onSubmit={next}>
               <h2 className={h2Cls}>Deine Finanzdaten</h2>
-              <p className="text-[13px] text-ink-2 mt-1 mb-5">Startwerte für alle Berechnungen – jederzeit in den Einstellungen änderbar.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Startwerte für die Finanzierung deiner Objekte – jederzeit unter Einstellungen → Annahmen änderbar.</p>
 
               <div className="space-y-4">
                 <div>

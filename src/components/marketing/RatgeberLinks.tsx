@@ -43,7 +43,7 @@ export function RelatedArticles({ article }: { article: RatgeberArticle }) {
   if (related.length === 0) return null;
   return (
     <section className="mt-14" aria-labelledby="related-heading">
-      <h2 id="related-heading" className="text-[13px] uppercase tracking-wider mb-4" style={{ color: "#A8A29E", fontFamily: "Inter, sans-serif" }}>
+      <h2 id="related-heading" className="text-[13px] uppercase tracking-wider mb-4 text-ink-3" style={{ fontFamily: "Inter, sans-serif" }}>
         Das könnte dich auch interessieren
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -60,7 +60,7 @@ export function RelatedArticles({ article }: { article: RatgeberArticle }) {
                 {a.category}
               </span>
               <span className="mt-2.5 text-[14px] font-semibold leading-snug text-[#1C1917] line-clamp-3">{a.title}</span>
-              <span className="mt-auto pt-3 text-[11px]" style={{ color: "#A8A29E" }}>{a.readingMinutes} min Lesezeit</span>
+              <span className="mt-auto pt-3 text-[12px] text-ink-3">{a.readingMinutes} min Lesezeit</span>
             </Link>
           );
         })}

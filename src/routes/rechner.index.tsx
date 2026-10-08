@@ -30,12 +30,19 @@ export const Route = createFileRoute("/rechner/")({
     ],
     links: [{ rel: "canonical", href: "/rechner" }],
   }),
+  // ?tab=… öffnet im App-Bereich direkt einen Rechner (z. B. von /rechner/cashflow aus).
+  validateSearch: (s: Record<string, unknown>): { tab?: AppCalcTab } =>
+    typeof s.tab === "string" && (APP_CALC_TABS as readonly string[]).includes(s.tab) ? { tab: s.tab as AppCalcTab } : {},
   component: RechnerIndex,
 });
 
+const APP_CALC_TABS = ["nebenkosten", "finanzierung", "cashflow", "rendite", "breakeven", "leistbar", "fixflip"] as const;
+type AppCalcTab = (typeof APP_CALC_TABS)[number];
+
 function RechnerIndex() {
   const { session } = useAuth();
-  if (session) return <AppRechnerHub />;
+  const { tab } = Route.useSearch();
+  if (session) return <AppRechnerHub initialTab={tab} />;
   return <PublicRechnerHub />;
 }
 
@@ -134,7 +141,7 @@ function PublicRechnerHub() {
 
 /* ───────── Logged-in app hub (unchanged behaviour) ───────── */
 
-function AppRechnerHub() {
+function AppRechnerHub({ initialTab }: { initialTab?: AppCalcTab }) {
   const { properties } = useStore();
   const project = useActiveProject();
   const a = useActiveAssumptions();
@@ -169,7 +176,7 @@ function AppRechnerHub() {
       </div>
 
 
-      <Tabs defaultValue="nebenkosten" className="w-full">
+      <Tabs defaultValue={initialTab ?? "nebenkosten"} className="w-full">
         <TabsList className="h-auto p-1 bg-[#FAFAF8] border border-[#EAE6DF] flex-wrap">
           <TabsTrigger value="nebenkosten" className="gap-1.5 text-[13px]"><Coins className="size-3.5" />Kaufnebenkosten</TabsTrigger>
           <TabsTrigger value="finanzierung" className="gap-1.5 text-[13px]"><Wallet className="size-3.5" />Finanzierung</TabsTrigger>
