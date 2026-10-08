@@ -1,0 +1,175 @@
+# kaufma
+kaufma.eu ist eine Immobilienanalyse-Plattform für
+private Käufer und Kleinanleger in Österreich und Deutschland.
+
+## Was kaufma kann
+- Immobilien-Inserate direkt importieren (willhaben, ImmobilienScout24)
+- Rendite, Cashflow und Kaufnebenkosten automatisch berechnen
+- Mietrecht-Risiko prüfen (MRG Anwendung)
+- Immobilien vergleichen (bis zu 10 Objekte)
+- Fix & Flip Kalkulationen
+- Kaufangebote erstellen
+- Portfolio-Verwaltung
+
+## Zielgruppe
+Private Käufer und Kleinanleger in Österreich und Deutschland
+die eine Eigentumswohnung oder ein Zinshaus kaufen möchten.
+
+## Pakete
+- Free: 1 Immobilie, Grundkalkulation
+- Plus: 5 Immobilien, €9,99/Monat
+- Premium: Unbegrenzt, €29,99/Monat
+
+## Kontakt
+hallo@kaufma.eu | kaufma.eu
+
+## Rechtliches
+Betrieben von ayoka GmbH, Wien, Österreich (FN 514214y)
+Keine Anlage- oder Rechtsberatung.
+
+## Funktionen pro Paket
+### Free (kostenlos)
+- 1 Immobilie, 1 Projekt
+- Grundkalkulation: Kaufnebenkosten, Finanzierung, Rendite, Cashflow, Mietrecht-Einschätzung
+- Inserat-Import per Link, Text oder Excel-Vorlage
+- CRM und Pipeline
+### Plus (€9,99/Monat oder €99,99/Jahr)
+- 5 Immobilien, 1 Projekt
+- Vergleich von bis zu 4 Objekten
+- PDF-Export
+- CRM und Pipeline, Excel-Import
+### Premium (€29,99/Monat oder €299,99/Jahr)
+- Unbegrenzt viele Immobilien und Projekte
+- Vergleich von bis zu 10 Objekten
+- Portfolio-Verwaltung (gekaufte Immobilien, Zahlungen, Cashflow nach dem Kauf)
+- Kaufangebote erstellen
+- Fix & Flip Kalkulationen
+- PDF-Export, CRM und Pipeline, Excel-Import
+
+## Ratgeber-Artikel
+Übersicht: https://kaufma.eu/ratgeber
+
+### Kaufnebenkosten
+- Kaufnebenkosten beim Immobilienkauf einfach erklärt – https://kaufma.eu/ratgeber/kaufnebenkosten-immobilienkauf
+
+### Rendite & Cashflow
+- Bruttorendite vs. Nettorendite: Welche Kennzahl ist für Immobilieninvestoren wirklich wichtig? – https://kaufma.eu/ratgeber/bruttorendite-vs-nettorendite
+- Cashflow bei Immobilien: Was Käufer wissen müssen – https://kaufma.eu/ratgeber/cashflow-bei-immobilien
+- Immobilien Rendite berechnen: Formel, Beispiele und typische Fehler – https://kaufma.eu/ratgeber/immobilien-rendite-berechnen
+- Cashflow Immobilie berechnen: Warum diese Kennzahl oft wichtiger ist als die Rendite – https://kaufma.eu/ratgeber/cashflow-immobilie-berechnen
+- Kaufpreisfaktor berechnen: Wann ist eine Immobilie wirklich günstig? – https://kaufma.eu/ratgeber/kaufpreisfaktor-berechnen
+- Mietrendite berechnen: Formel, Beispiele und typische Fehler – https://kaufma.eu/ratgeber/mietrendite-berechnen
+- Break-even-Miete berechnen: Ab welcher Miete trägt sich eine Immobilie? – https://kaufma.eu/ratgeber/break-even-miete-berechnen
+- Leerstand bei Immobilien richtig kalkulieren: Warum dieses Risiko viele Anleger unterschätzen – https://kaufma.eu/ratgeber/leerstand-immobilien-kalkulieren
+- Instandhaltungsrücklage berechnen: Wie viel Geld solltest du wirklich zurücklegen? – https://kaufma.eu/ratgeber/instandhaltungsruecklage-berechnen
+
+### Immobilienkauf
+- Wohnung kaufen zur Vermietung: Rechnet sich das? – https://kaufma.eu/ratgeber/wohnung-kaufen-zur-vermietung
+- Immobilie bewerten: Die wichtigsten Kennzahlen für Privatinvestoren – https://kaufma.eu/ratgeber/immobilie-bewerten-kennzahlen
+- Wohnung als Kapitalanlage: Lohnt sich der Kauf noch? – https://kaufma.eu/ratgeber/wohnung-als-kapitalanlage
+- Wohnung kaufen oder mieten? Warum die Antwort komplizierter ist, als viele denken – https://kaufma.eu/ratgeber/wohnung-kaufen-oder-mieten
+- Immobilien als Inflationsschutz: Wie gut schützen Wohnungen wirklich vor steigenden Preisen? – https://kaufma.eu/ratgeber/immobilien-inflationsschutz
+- Mikro- vs. Makrolage: Warum die Lage einer Immobilie mehr ist als nur die Stadt – https://kaufma.eu/ratgeber/mikro-makrolage
+- B-Lage vs. A-Lage: Wo liegen die besseren Renditen bei Immobilien? – https://kaufma.eu/ratgeber/b-lage-vs-a-lage
+- Wie wichtig ist die Lage wirklich? Warum „Lage, Lage, Lage“ nur die halbe Wahrheit ist – https://kaufma.eu/ratgeber/wie-wichtig-ist-die-lage
+- Was macht einen guten Immobilienstandort aus? Worauf erfolgreiche Investoren wirklich achten – https://kaufma.eu/ratgeber/immobilien-standort-analyse
+
+### Österreich
+- Immobilie in Österreich kaufen: Kosten und Risiken – https://kaufma.eu/ratgeber/immobilie-oesterreich-kaufen
+- Kaufnebenkosten in Österreich: Mit diesen Kosten müssen Immobilienkäufer rechnen – https://kaufma.eu/ratgeber/kaufnebenkosten-oesterreich
+- Wohnung als Kapitalanlage in Österreich: Worauf Investoren wirklich achten sollten – https://kaufma.eu/ratgeber/wohnung-kapitalanlage-oesterreich
+- Die besten Städte für Immobilieninvestments in Österreich: Wo sich Kapitalanleger genauer umsehen sollten – https://kaufma.eu/ratgeber/beste-staedte-immobilien-oesterreich
+
+### Deutschland
+- Immobilie in Deutschland kaufen: Kosten und Finanzierung – https://kaufma.eu/ratgeber/immobilie-deutschland-kaufen
+- Kaufnebenkosten in Deutschland: Mit diesen Kosten müssen Immobilienkäufer rechnen – https://kaufma.eu/ratgeber/kaufnebenkosten-deutschland
+- Wohnung als Kapitalanlage in Deutschland: Worauf Investoren wirklich achten sollten – https://kaufma.eu/ratgeber/wohnung-kapitalanlage-deutschland
+- Die besten Städte für Immobilieninvestments in Deutschland: Worauf Kapitalanleger wirklich achten sollten – https://kaufma.eu/ratgeber/beste-staedte-immobilien-deutschland
+
+### Finanzierung
+- Eigenkapitalrendite berechnen: Warum Fremdkapital deine Rendite erhöhen kann – https://kaufma.eu/ratgeber/eigenkapitalrendite-berechnen
+- Wie viel Eigenkapital braucht man für eine Immobilie? – https://kaufma.eu/ratgeber/eigenkapital-immobilie
+- Hebeleffekt bei Immobilien: Wie Fremdkapital deine Rendite erhöhen kann – und warum viele Anleger ihn falsch verstehen – https://kaufma.eu/ratgeber/hebeleffekt-immobilien
+- Annuitätendarlehen einfach erklärt: So funktioniert die häufigste Immobilienfinanzierung – https://kaufma.eu/ratgeber/annuitaetendarlehen-erklaert
+- Wie viel Kredit kann ich mir leisten? Die wichtigste Frage vor dem Immobilienkauf – https://kaufma.eu/ratgeber/wie-viel-kredit-leisten
+- 100-%-Finanzierung bei Immobilien: Chancen, Risiken und für wen sie sinnvoll sein kann – https://kaufma.eu/ratgeber/100-prozent-finanzierung
+- 110-%-Finanzierung bei Immobilien: Ohne Eigenkapital zur ersten Immobilie? – https://kaufma.eu/ratgeber/110-prozent-finanzierung
+- Zinsbindung bei Immobilien: Wie lange sollte sie wirklich sein? – https://kaufma.eu/ratgeber/zinsbindung-immobilien
+
+## Rechner (kostenlos, ohne Anmeldung)
+Übersicht: https://kaufma.eu/rechner
+
+- Kaufnebenkosten-Rechner für Immobilien – https://kaufma.eu/rechner/kaufnebenkosten
+  Berechne Grunderwerbsteuer, Notar, Makler und Grundbuch beim Immobilienkauf. Für Österreich und Deutschland, kostenlos online.
+- Renditerechner für Immobilien – https://kaufma.eu/rechner/rendite
+  Berechne Bruttorendite, Nettorendite und Eigenkapitalrendite deiner Anlageimmobilie. Kostenlos, ohne Anmeldung.
+- Cashflow-Rechner für Immobilien – https://kaufma.eu/rechner/cashflow
+  Berechne monatlichen und jährlichen Cashflow deiner Vermietung – inklusive Kreditrate, Betriebskosten, Rücklage und Leerstand.
+- Finanzierungsrechner für Immobilien – https://kaufma.eu/rechner/finanzierung
+  Berechne monatliche Kreditrate, Restschuld und Gesamtzinskosten für deine Immobilienfinanzierung. Kostenlos online.
+- Break-even-Miete-Rechner – https://kaufma.eu/rechner/breakeven
+  Berechne die Mindestmiete, ab der deine Immobilie monatlich nicht negativ läuft. Kostenlos online.
+- Leistbarkeitsrechner für Immobilien – https://kaufma.eu/rechner/leistbarkeit
+  Berechne den maximalen Kaufpreis, den du dir bei deiner Wunsch-Monatsrate leisten kannst. Kostenlos online.
+- Fix & Flip Rechner – https://kaufma.eu/rechner/fixflip
+  Berechne Gewinn, ROI und Rendite deines Fix & Flip Projekts. Inkl. Renovierung, Finanzierungszinsen, Verkauf und Immo-ESt.
+
+## Glossar
+https://kaufma.eu/glossar
+
+- Abschreibung / AfA: Steuerlicher Abzug für den Wertverlust des Gebäudes – reduziert deine Steuerlast.
+- Annuität: Die gleichbleibende monatliche Rate aus Zinsen und Tilgung.
+- Annuitätendarlehen: Die häufigste Kreditform – gleichbleibende Rate, steigender Tilgungsanteil.
+- Asset-Entwicklung: Prognose wie sich der Wert deiner Immobilie und dein Eigenkapital über Zeit entwickeln.
+- Auflassung / Auflassungsvormerkung: Die Einigung über den Eigentumsübergang, beim Notar erklärt und ins Grundbuch eingetragen.
+- Beleihungsgrenze: Der maximale Kreditbetrag den eine Bank bezogen auf den Beleihungswert vergibt.
+- Beleihungswert: Der von der Bank ermittelte nachhaltige Wert einer Immobilie als Kreditsicherheit.
+- Bodenrichtwert: Richtwert für den Preis eines Grundstücks in Euro pro Quadratmeter.
+- Bruttorendite: Jahresmiete geteilt durch Kaufpreis – der einfachste Renditewert.
+- Cash-Entwicklung: Kumulierter Cashflow über die Haltedauer – zeigt wann sich die Investition rechnet.
+- Cashflow: Monatlicher Überschuss oder Fehlbetrag nach allen Einnahmen und Ausgaben.
+- Darlehenshöhe: Der ausstehende Kreditbetrag der im Zeitverlauf durch Tilgung sinkt.
+- Denkmalschutz: Staatlicher Schutz eines Gebäudes wegen kultureller oder historischer Bedeutung.
+- Dienstbarkeit: Ein eingetragenes Nutzungsrecht an einem fremden Grundstück.
+- DSCR: Debt Service Coverage Ratio – zeigt ob die Mieteinnahmen die Kreditrate decken.
+- Effektivzins: Der tatsächliche Jahreszins inklusive aller Gebühren – der einzig faire Vergleichswert.
+- Energieausweis: Pflichtdokument beim Verkauf und Vermieten – zeigt den Energiebedarf einer Immobilie.
+- Erbbaurecht: Das Recht auf einem fremden Grundstück ein Gebäude zu errichten und zu nutzen.
+- Fixzins-Periode: Der Zeitraum in dem ein fixer (nicht variabler) Zinssatz gilt.
+- Flurstück: Die amtlich vermessene und eindeutig bezeichnete kleinste Einheit im Kataster.
+- Gemeinschaftseigentum: Teile des Gebäudes die allen Eigentümern gemeinsam gehören.
+- Grundbuch: Das amtliche Register aller Grundstücke mit Eigentümer, Rechten und Belastungen.
+- Grundschuld: Das häufigste Sicherungsmittel der Bank bei Immobilienkrediten.
+- Hausgeld: Monatliche Vorauszahlung an die Eigentümergemeinschaft für Betrieb und Rücklage.
+- HWB: Heizwärmebedarf – gibt an wie viel Energie ein Gebäude pro Jahr zum Heizen benötigt.
+- Hypothek: Eine ältere Form der Kreditsicherung – heute meist durch die Grundschuld ersetzt.
+- Indexmiete: Miete die sich automatisch nach dem Verbraucherpreisindex entwickelt.
+- Instandhaltungsreserve: Monatlicher Rücklagebetrag für Reparaturen und Instandhaltung der Immobilie.
+- Kostensteigerung: Jährliche Erhöhung der Betriebskosten und Instandhaltungskosten.
+- Leerstand: Zeitraum in dem die Immobilie nicht vermietet ist und keine Mieteinnahmen fließen.
+- Liegenschaftszins: Der marktübliche Zinssatz zur Bewertung von Grundstücken beim Ertragswertverfahren.
+- Mietpreisbremse: Deutsches Instrument das Neuvertragsmieten auf max. 10% über Vergleichsmiete begrenzt.
+- Mietrechtliche Einschätzung: Einordnung ob und wie das MRG (Mietrechtsgesetz) auf die Immobilie zutrifft.
+- Mietspiegel: Übersicht über die ortsübliche Vergleichsmiete in einer Stadt oder Gemeinde.
+- Mietsteigerung: Jährliche prozentuale Erhöhung der Miete – oft an die Inflation gekoppelt.
+- Miteigentumsanteil (MEA): Der rechnerische Bruchteil am Gemeinschaftseigentum einer Wohnanlage.
+- Nettorendite: Rendite nach Abzug aller Kosten – realistischer als die Bruttorendite.
+- Notar: Beurkundet den Kaufvertrag und sorgt für die Eintragung ins Grundbuch.
+- Reserve (Kauf & Nebenkosten): Puffer für unvorhergesehene Kosten beim Kauf – z.B. Renovierung, Einrichtung.
+- Rücklagenfonds: Gemeinschaftliches Sparguthaben der Eigentümergemeinschaft für Reparaturen am Gebäude.
+- Sachwertverfahren: Bewertungsmethode die den Substanzwert eines Gebäudes ermittelt.
+- Sondereigentum: Der Teil einer Eigentumswohnung der ausschließlich dem einzelnen Eigentümer gehört.
+- Sondertilgung: Außerplanmäßige Rückzahlung eines Teils des Kredits um Zinsen zu sparen.
+- Spekulationssteuer / ImmoESt: Steuer auf Gewinne beim Immobilienverkauf – in AT 30%, in DE nach 10 Jahren steuerfrei.
+- Teilungserklärung: Das Gründungsdokument einer Eigentümergemeinschaft – regelt Eigentumsverhältnisse und Rechte.
+- Tilgungsarten: Verschiedene Methoden den Kredit zurückzuzahlen – am häufigsten Annuität.
+- USt auf Provision: 20% Mehrwertsteuer die zusätzlich zur Maklerprovision anfällt.
+- Vergleichswertverfahren: Bewertungsmethode die den Wert anhand vergleichbarer Verkäufe ermittelt.
+- Vorfälligkeitsentschädigung: Gebühr der Bank wenn du einen Fixzinskredit vorzeitig zurückzahlst.
+- Vorkaufsrecht: Das Recht eines Dritten eine Immobilie vor anderen Käufern zu erwerben.
+- Wertsteigerung: Jährliche prozentuale Zunahme des Immobilienwerts – für langfristige Prognosen.
+- Wohnflächenberechnung: Wie die anrechenbare Fläche einer Wohnung berechnet wird.
+- Zielrendite: Die Mindest-Bruttorendite die du für eine Immobilie als akzeptabel definiert hast.
+- Zinsbindung: Zeitraum in dem der vereinbarte Zinssatz fix bleibt und nicht verändert werden kann.
+- Zwangsversteigerung: Staatlich angeordneter Verkauf einer Immobilie zur Befriedigung von Gläubigern.
+- Zwischenfinanzierung: Kurzfristiger Kredit der überbrückt wenn Eigenkapital noch nicht verfügbar ist.

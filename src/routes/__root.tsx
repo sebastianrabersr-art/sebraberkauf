@@ -10,6 +10,7 @@ import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { CookieBanner } from "@/components/CookieBanner";
+import { NotFoundPage } from "@/components/marketing/NotFoundPage";
 import { IconContext, type IconProps } from "@phosphor-icons/react";
 
 const ICON_DEFAULTS: IconProps = { weight: "duotone", size: 24 };
@@ -27,8 +28,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "kaufma – Immobilien-Rechner & CRM" },
       { property: "og:description", content: "Rechne Wohnungen als Kapitalanlage durch: Rendite, Cashflow, Kaufnebenkosten und Mietrecht-Risiko – für Käufer in Österreich und Deutschland." },
       { name: "twitter:description", content: "Rechne Wohnungen als Kapitalanlage durch: Rendite, Cashflow, Kaufnebenkosten und Mietrecht-Risiko – für Käufer in Österreich und Deutschland." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/51532ee0-3a7b-4d03-a1c6-62ca00f544f5/id-preview-cfcaa651--0b41fa67-2b89-4ed5-b794-1a44c3f28cfd.lovable.app-1781106350122.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/51532ee0-3a7b-4d03-a1c6-62ca00f544f5/id-preview-cfcaa651--0b41fa67-2b89-4ed5-b794-1a44c3f28cfd.lovable.app-1781106350122.png" },
+      // Erzeugt aus public/og-image.html (1200 × 630)
+      { property: "og:image", content: "https://kaufma.eu/og-image.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "kaufma – Immobilien durchrechnen: Rendite, Cashflow, Kaufnebenkosten" },
+      { name: "twitter:image", content: "https://kaufma.eu/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -36,6 +41,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/favicon.png" },
+      // Kurzbeschreibung für Sprachmodelle / KI-Suchen (public/llms.txt)
+      { rel: "alternate", type: "text/plain", href: "https://kaufma.eu/llms.txt", title: "LLM Info" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600&display=swap" },
@@ -44,15 +51,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   shellComponent: RootShell,
   component: RootComponent,
-  notFoundComponent: () => (
-    <div className="min-h-screen grid place-items-center p-8 text-center">
-      <div>
-        <h1 className="heading-page-sm">Nicht gefunden</h1>
-        <p className="text-muted-foreground mt-2">Diese Seite existiert nicht.</p>
-        <a href="/" className="inline-block mt-4 text-primary underline">Zur Startseite</a>
-      </div>
-    </div>
-  ),
+  notFoundComponent: NotFoundPage,
   errorComponent: ({ error }) => (
     <div className="min-h-screen grid place-items-center p-8 text-center">
       <div>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>kaufma – OG-Bild Ratgeber-Artikel (1200 × 630)</title>
+  <!--
+    Vorlage für Social-Share-Bilder einzelner Ratgeber-Artikel.
+    Titel, Kategorie und Lesezeit kommen aus der URL, z. B.:
+      og-article.html?title=Kaufpreisfaktor%20berechnen&category=Rendite%20%26%20Cashflow&minutes=6
+    Ohne Parameter wird der Platzhaltertitel gezeigt.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    html, body { width: 1200px; height: 630px; overflow: hidden; }
+    body {
+      position: relative;
+      background: #F5F3EE;
+      font-family: Inter, system-ui, sans-serif;
+      color: #1C1917;
+      -webkit-font-smoothing: antialiased;
+    }
+    .frame { position: absolute; inset: 0 0 8px; padding: 72px 88px 64px; display: flex; flex-direction: column; }
+    .wordmark { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 32px; letter-spacing: -0.03em; color: #2D6A4F; line-height: 1; display: flex; align-items: center; gap: 8px; }
+    .wordmark i { width: 9px; height: 9px; border-radius: 50%; background: #2D6A4F; display: inline-block; }
+    .meta { margin-top: auto; display: flex; align-items: center; gap: 14px; font-size: 16px; color: #78716C; }
+    .pill { background: #E6F4EA; color: #2D6A4F; font-weight: 600; font-size: 14px; padding: 6px 14px; border-radius: 999px; }
+    .title {
+      margin-top: 20px;
+      font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+      font-size: 60px; line-height: 1.06; letter-spacing: -0.025em; color: #1C1917;
+      max-width: 960px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      text-wrap: balance;
+    }
+    .title.long { font-size: 48px; }
+    .strip { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: #2D6A4F; }
+    .tab {
+      position: absolute; right: 88px; bottom: 0;
+      background: #2D6A4F; color: #FFFFFF;
+      font-size: 14px; font-weight: 500; letter-spacing: 0.02em;
+      padding: 9px 18px 15px; border-radius: 10px 10px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="wordmark">kaufma <i></i></div>
+    <div class="meta">
+      <span class="pill" id="category">Ratgeber</span>
+      <span id="minutes">5 min Lesezeit</span>
+    </div>
+    <h1 class="title" id="title">Artikel-Titel als Platzhalter – hier steht die Überschrift des Ratgeber-Artikels</h1>
+  </div>
+  <div class="strip"></div>
+  <div class="tab">kaufma.eu/ratgeber</div>
+
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var title = q.get("title");
+      var category = q.get("category");
+      var minutes = q.get("minutes");
+      var el = document.getElementById("title");
+      if (title) el.textContent = title;
+      if (el.textContent.length > 70) el.classList.add("long");
+      if (category) document.getElementById("category").textContent = category;
+      if (minutes) document.getElementById("minutes").textContent = minutes + " min Lesezeit";
+    })();
+  </script>
+</body>
+</html>

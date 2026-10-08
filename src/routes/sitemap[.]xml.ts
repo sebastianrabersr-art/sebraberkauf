@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { RATGEBER_ARTICLES } from "@/lib/ratgeber";
 
-// TODO: replace with your project URL once a project name or custom domain is set.
-const BASE_URL = "";
+// Sitemaps brauchen absolute URLs.
+const BASE_URL = "https://kaufma.eu";
 
 interface SitemapEntry {
   path: string;
@@ -25,6 +25,12 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/rechner/kaufnebenkosten", changefreq: "monthly", priority: "0.8" },
           { path: "/rechner/rendite", changefreq: "monthly", priority: "0.8" },
           { path: "/rechner/cashflow", changefreq: "monthly", priority: "0.8" },
+          { path: "/rechner/finanzierung", changefreq: "monthly", priority: "0.8" },
+          { path: "/rechner/breakeven", changefreq: "monthly", priority: "0.7" },
+          { path: "/rechner/leistbarkeit", changefreq: "monthly", priority: "0.8" },
+          { path: "/rechner/fixflip", changefreq: "monthly", priority: "0.7" },
+          { path: "/glossar", changefreq: "monthly", priority: "0.6" },
+          { path: "/demo", changefreq: "monthly", priority: "0.6" },
           { path: "/signup", changefreq: "yearly", priority: "0.5" },
           { path: "/login", changefreq: "yearly", priority: "0.3" },
         ];
