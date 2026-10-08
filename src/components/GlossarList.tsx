@@ -43,7 +43,7 @@ export function GlossarList() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Begriff suchen…"
-          className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white pl-9 pr-3 py-[9px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F]"
+          className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white pl-9 pr-3 py-[9px] text-[13px] text-[#1C1917] outline-none focus:border-primary"
         />
       </div>
 

@@ -43,7 +43,7 @@ function Reset() {
     window.location.href = "/dashboard";
   };
 
-  const back = <a href="/login" className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">Zurück zum Login</a>;
+  const back = <a href="/login" className="font-medium text-primary underline-offset-4 hover:underline">Zurück zum Login</a>;
 
   return isRecovery ? (
     <AuthLayout title="Neues Passwort" subtitle="Wähl ein neues Passwort für dein Konto." footer={back}>

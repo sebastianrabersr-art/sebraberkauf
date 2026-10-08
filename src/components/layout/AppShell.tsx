@@ -47,7 +47,7 @@ function ProjectSwitcher({ compact = false }: { compact?: boolean }) {
         id={id}
         value={activeProjectId}
         onChange={(e) => setActiveProject(e.target.value)}
-        className="w-full min-w-0 rounded-lg bg-white text-[#1C1917] border border-[#EAE6DF] px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/40"
+        className="w-full min-w-0 rounded-lg bg-white text-[#1C1917] border border-[#EAE6DF] px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/40"
       >
         {projects.map((p) => (
           <option key={p.id} value={p.id}>
@@ -71,7 +71,7 @@ function NavSection({ items, pathname, label }: { items: NavItem[]; pathname: st
             className={cn(
               "relative flex items-center gap-3 px-3 py-2 text-[13px] transition-colors",
               active
-                ? "text-[#2D6A4F] font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-[#2D6A4F] before:rounded-full"
+                ? "text-primary font-medium bg-[#E8F5EE] rounded-r-md before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-primary before:rounded-full"
                 : "text-ink-2 hover:bg-[#EAE6DF] rounded-lg",
             )}>
             <span className="shrink-0 inline-flex"><n.icon size={18} color={active ? ICON_ACTIVE : ICON_INACTIVE} /></span>
@@ -135,7 +135,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
   const tabCls = (active: boolean) =>
     cn(
       "flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[56px] text-[11px] font-medium",
-      active ? "text-[#2D6A4F]" : "text-ink-2",
+      active ? "text-primary" : "text-ink-2",
     );
 
   return (
@@ -170,7 +170,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
                   <Link
                     to={n.to}
                     aria-current={active ? "page" : undefined}
-                    className={cn("flex min-h-[48px] items-center gap-3 border-b border-[#F5F3EE] text-[15px]", active ? "text-[#2D6A4F] font-semibold" : "text-[#1C1917]")}
+                    className={cn("flex min-h-[48px] items-center gap-3 border-b border-[#F5F3EE] text-[15px]", active ? "text-primary font-semibold" : "text-[#1C1917]")}
                   >
                     <n.icon size={20} color={active ? ICON_ACTIVE : ICON_INACTIVE} />
                     {n.label}
@@ -230,7 +230,7 @@ function AccountBox() {
   return (
     <div className="p-3 border-t border-[#EAE6DF] space-y-1">
       <Link to="/settings" search={{}} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
-        <div className="size-8 rounded-full bg-[#E8F5EE] text-[#2D6A4F] grid place-items-center">
+        <div className="size-8 rounded-full bg-[#E8F5EE] text-primary grid place-items-center">
           <UserCircle weight="duotone" size={18} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">

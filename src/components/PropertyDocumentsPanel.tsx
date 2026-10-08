@@ -98,7 +98,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); void handleFiles(e.dataTransfer.files); }}
-        className="w-full flex flex-col items-center justify-center gap-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-[#2D6A4F]"
+        className="w-full flex flex-col items-center justify-center gap-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-primary"
         style={{
           border: `1.5px dashed ${dragOver ? "#2D6A4F" : "#EAE6DF"}`,
           borderRadius: 10,
@@ -107,8 +107,8 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
         }}
       >
         {uploading > 0
-          ? <CircleNotch className="size-6 animate-spin text-[#2D6A4F]" aria-hidden />
-          : <UploadSimple className="size-6 text-[#2D6A4F]" aria-hidden />}
+          ? <CircleNotch className="size-6 animate-spin text-primary" aria-hidden />
+          : <UploadSimple className="size-6 text-primary" aria-hidden />}
         <span className="text-[13px] font-medium text-[#1C1917]">
           {uploading > 0 ? "Wird hochgeladen …" : "PDF hier ablegen oder klicken zum Hochladen"}
         </span>
@@ -124,7 +124,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
       ) : docs.length === 0 ? (
         <div className="text-[13px] text-ink-3">Noch keine Dokumente. Lade Kaufvertrag, Grundbuchauszug, Energieausweis & Co. hier hoch.</div>
       ) : (
-        <ul className="rounded-[10px] border border-[#EAE6DF] divide-y divide-[#EAE6DF] bg-white">
+        <ul className="rounded-[12px] border border-[#EAE6DF] divide-y divide-[#EAE6DF] bg-white">
           {docs.map((d) => (
             <li key={d.id} className="flex items-center gap-3 px-4 py-3">
               <FileText className="size-5 shrink-0" weight="duotone" style={{ color: "#2D6A4F" }} aria-hidden />
@@ -138,7 +138,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
                 type="button"
                 onClick={() => download(d)}
                 disabled={busyId === d.id}
-                className="inline-flex items-center gap-1 rounded-[8px] border border-[#EAE6DF] px-2.5 py-1.5 text-[12px] text-[#1C1917] hover:border-[#2D6A4F] hover:text-[#2D6A4F] disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-[8px] border border-[#EAE6DF] px-2.5 py-1.5 text-[12px] text-[#1C1917] hover:border-primary hover:text-primary disabled:opacity-50"
               >
                 <DownloadSimple className="size-3.5" aria-hidden /> Download
               </button>
@@ -147,7 +147,7 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
                 onClick={() => remove(d)}
                 disabled={busyId === d.id}
                 aria-label={`${d.filename} löschen`}
-                className="rounded-full p-1.5 text-ink-3 hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50"
+                className="rounded-full p-1.5 text-ink-3 hover:text-destructive hover:bg-[#FEF2F2] disabled:opacity-50"
               >
                 <Trash className="size-4" aria-hidden />
               </button>

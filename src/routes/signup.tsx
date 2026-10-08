@@ -66,7 +66,7 @@ function Signup() {
       footer={
         <>
           Schon ein Konto?{" "}
-          <a href="/login" className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">Anmelden</a>
+          <a href="/login" className="font-medium text-primary underline-offset-4 hover:underline">Anmelden</a>
         </>
       }
     >

@@ -34,7 +34,7 @@ export function Breadcrumb({ items, className = "" }: { items: BreadcrumbItem[];
               <Fragment key={`${i}-${it.label}`}>
                 <li className={last ? "min-w-0" : "shrink-0"}>
                   {it.href && !last ? (
-                    <a href={it.href} className="text-[#78716C] no-underline transition-colors hover:text-[#2D6A4F]">
+                    <a href={it.href} className="text-[#78716C] no-underline transition-colors hover:text-primary">
                       {it.label}
                     </a>
                   ) : (

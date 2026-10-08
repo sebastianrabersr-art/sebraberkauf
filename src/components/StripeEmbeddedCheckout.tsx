@@ -32,20 +32,21 @@ export function StripeEmbeddedCheckout({ priceId, returnUrl }: Props) {
       setReady(true);
       return result.clientSecret;
     } catch (e: any) {
-      const msg = e?.message ?? "Zahlung konnte nicht gestartet werden.";
-      setError(msg);
+      // Technische Details nur in die Konsole – die Person bekommt eine verständliche Meldung.
+      console.error("Stripe-Checkout:", e);
+      setError("Die Zahlungsseite konnte gerade nicht geladen werden. Es wurde nichts abgebucht.");
       throw e;
     }
   };
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5 text-sm">
-        <div className="flex gap-2 items-start">
-          <AlertCircle className="size-4 text-destructive mt-0.5 shrink-0" />
+      <div className="rounded-[12px] p-5 text-[13px]" style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}>
+        <div className="flex gap-2.5 items-start">
+          <AlertCircle className="size-4 mt-0.5 shrink-0" style={{ color: "#D97706" }} aria-hidden />
           <div className="flex-1">
-            <div className="font-medium text-destructive">Zahlung konnte nicht gestartet werden</div>
-            <div className="text-muted-foreground mt-1">{error}</div>
+            <div className="font-semibold text-[#9A3412]">Zahlung konnte nicht gestartet werden</div>
+            <div className="text-[#9A3412] mt-1">{error} Prüf kurz deine Verbindung und versuch es noch einmal. Klappt es weiterhin nicht, schreib an hallo@kaufma.eu.</div>
             <Button size="sm" variant="outline" className="mt-3" onClick={() => setReloadKey((k) => k + 1)}>
               Erneut versuchen
             </Button>
@@ -57,12 +58,12 @@ export function StripeEmbeddedCheckout({ priceId, returnUrl }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="relative min-h-[520px] rounded-lg overflow-hidden border bg-background">
+      <div className="relative min-h-[520px] rounded-[12px] overflow-hidden border border-[#EAE6DF] bg-white">
         {!ready && (
-          <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground bg-background z-10">
+          <div className="absolute inset-0 grid place-items-center text-[13px] text-ink-2 bg-white z-10">
             <div className="flex flex-col items-center gap-2">
-              <Loader2 className="size-5 animate-spin text-primary" />
-              <span>Sichere Zahlung wird vorbereitet…</span>
+              <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
+              <span>Sichere Zahlung wird vorbereitet …</span>
             </div>
           </div>
         )}
@@ -70,9 +71,9 @@ export function StripeEmbeddedCheckout({ priceId, returnUrl }: Props) {
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       </div>
-      <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-        <ShieldCheck className="size-3.5 text-primary" />
-        Sichere Zahlung über Stripe · Karte oder PayPal
+      <div className="flex items-center justify-center gap-1.5 text-[12px] text-ink-2">
+        <ShieldCheck className="size-3.5 text-primary" aria-hidden />
+        Sichere Zahlung über Stripe, mit Karte oder PayPal
       </div>
     </div>
   );

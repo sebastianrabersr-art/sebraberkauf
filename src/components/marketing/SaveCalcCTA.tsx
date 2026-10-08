@@ -29,33 +29,33 @@ export function SaveCalcCTA({ snapshot }: { snapshot: PendingCalc }) {
   };
 
   return (
-    <div className="mt-8 rounded-xl border-2 border-primary/20 bg-primary/5 p-6">
+    <div className="mt-8 rounded-[12px] border border-primary/25 bg-[#E8F5EE]/60 p-6">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
         <div>
-          <div className="font-semibold">Berechnung speichern und Immobilie vollständig analysieren</div>
-          <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+          <div className="font-semibold text-[#1C1917]">Berechnung speichern und Immobilie vollständig analysieren</div>
+          <p className="text-[14px] text-ink-2 mt-1 max-w-xl">
             Erstelle kostenlos einen Account und übernimm deine Eingaben direkt in eine vollständige Immobilienanalyse.
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-90 shrink-0"
-        >
-          Berechnung speichern <ArrowRight className="size-4" />
-        </button>
-      </div>
-      {!session && (
-        <div className="mt-4 pt-4 border-t border-primary/10 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
-          <p className="text-xs text-muted-foreground">Noch keinen Account? Lass dir das Ergebnis per E-Mail schicken.</p>
+        <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
           <button
-            type="button"
-            onClick={() => setMailOpen(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+            onClick={handleSave}
+            className="inline-flex items-center gap-1.5 rounded-[8px] bg-primary text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740]"
           >
-            <Mail className="size-4" /> Berechnung per E-Mail senden
+            Berechnung speichern <ArrowRight className="size-4" aria-hidden />
           </button>
+          {/* Zweiter Weg bewusst nur als Textlink – ein Hauptbutton pro Abschnitt */}
+          {!session && (
+            <button
+              type="button"
+              onClick={() => setMailOpen(true)}
+              className="inline-flex items-center gap-1 text-[13px] text-ink-2 underline-offset-4 hover:text-primary hover:underline"
+            >
+              <Mail className="size-3.5" aria-hidden /> oder per E-Mail schicken
+            </button>
+          )}
         </div>
-      )}
+      </div>
       <EmailLeadDialog open={mailOpen} onOpenChange={setMailOpen} snapshot={snapshot} />
     </div>
   );
@@ -83,7 +83,8 @@ function EmailLeadDialog({
       setDone(true);
       toast.success("Wir haben deine Berechnung notiert.");
     } catch (err: any) {
-      toast.error(err?.message || "Konnte nicht gespeichert werden.");
+      console.error("E-Mail-Versand Berechnung:", err);
+      toast.error("Die E-Mail konnte gerade nicht verschickt werden. Bitte versuch es gleich noch einmal.");
     } finally {
       setBusy(false);
     }

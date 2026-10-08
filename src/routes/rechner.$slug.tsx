@@ -234,7 +234,7 @@ function KaufNebenCalculator() {
               value={region}
               onChange={(e) => setRegion(e.target.value)}
               placeholder={land === "AT" ? "z. B. Wien" : "z. B. Bayern"}
-              className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] placeholder:text-ink-3"
+              className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-primary placeholder:text-ink-3"
             />
           </label>
           <NumInput label="Kaufpreis" value={kp} onChange={setKp} suffix="€" />
@@ -372,12 +372,12 @@ function CashflowCalculator() {
       }}
       inputs={
         <>
-          <NumInput label="Erwartete Monatsmiete" value={miete} onChange={setMiete} suffix="€/M" />
-          <NumInput label="Kreditrate" value={rate} onChange={setRate} suffix="€/M" />
-          <NumInput label="Betriebskosten (nicht umlegbar)" value={bk} onChange={setBk} suffix="€/M" />
-          <NumInput label="Rücklage / Instandhaltung" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+          <NumInput label="Erwartete Monatsmiete" value={miete} onChange={setMiete} suffix="€/Mt" />
+          <NumInput label="Kreditrate" value={rate} onChange={setRate} suffix="€/Mt" />
+          <NumInput label="Betriebskosten (nicht umlegbar)" value={bk} onChange={setBk} suffix="€/Mt" />
+          <NumInput label="Rücklage / Instandhaltung" value={ruecklage} onChange={setRuecklage} suffix="€/Mt" />
           <NumInput label="Leerstandspuffer" value={leerstand} onChange={setLeerstand} suffix="%" step={0.5} />
-          <NumInput label="Sonstige monatliche Kosten" value={sonst} onChange={setSonst} suffix="€/M" />
+          <NumInput label="Sonstige monatliche Kosten" value={sonst} onChange={setSonst} suffix="€/Mt" />
         </>
       }
       result={
@@ -512,12 +512,12 @@ function BreakEvenCalculator() {
       }}
       inputs={
         <>
-          <NumInput label="Kreditrate" value={rate} onChange={setRate} suffix="€/M" />
-          <NumInput label="Betriebskosten" value={bk} onChange={setBk} suffix="€/M" />
-          <NumInput label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+          <NumInput label="Kreditrate" value={rate} onChange={setRate} suffix="€/Mt" />
+          <NumInput label="Betriebskosten" value={bk} onChange={setBk} suffix="€/Mt" />
+          <NumInput label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/Mt" />
           <NumInput label="Leerstandspuffer" value={leerstand} onChange={setLeerstand} suffix="%" step={0.5} />
           <NumInput label="Wohnfläche" value={wfl} onChange={setWfl} suffix="m²" />
-          <NumInput label="Aktuelle Miete" value={aktMiete} onChange={setAktMiete} suffix="€/M" />
+          <NumInput label="Aktuelle Miete" value={aktMiete} onChange={setAktMiete} suffix="€/Mt" />
         </>
       }
       result={
@@ -579,7 +579,7 @@ function LeistbarkeitCalculator() {
       inputs={
         <>
           <NumInput label="Eigenkapital" value={ek} onChange={setEk} suffix="€" />
-          <NumInput label="Wunsch-Monatsrate" value={rate} onChange={setRate} suffix="€/M" />
+          <NumInput label="Wunsch-Monatsrate" value={rate} onChange={setRate} suffix="€/Mt" />
           <NumInput label="Zinssatz p.a." value={zins} onChange={setZins} suffix="%" step={0.1} />
           <NumInput label="Laufzeit" value={laufzeit} onChange={setLaufzeit} suffix="Jahre" />
           <NumInput label="Nebenkosten" value={nkPct} onChange={setNkPct} suffix="%" step={0.5} />
@@ -661,8 +661,8 @@ function FixFlipCalculator() {
           <NumInput label="Eigenkapital" value={eigenkapital} onChange={setEigenkapital} suffix="€" />
           <NumInput label="Zinssatz p.a." value={zinssatz} onChange={setZinssatz} suffix="%" step={0.1} />
           <NumInput label="Haltedauer (Monate)" value={haltedauerMonate} onChange={setHaltedauerMonate} suffix="Monate" />
-          <NumInput label="Mieteinnahmen mtl. (optional)" value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/M" />
-          <NumInput label="Betriebskosten mtl. (optional)" value={betriebskosten} onChange={setBetriebskosten} suffix="€/M" />
+          <NumInput label="Mieteinnahmen mtl. (optional)" value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/Mt" />
+          <NumInput label="Betriebskosten mtl. (optional)" value={betriebskosten} onChange={setBetriebskosten} suffix="€/Mt" />
           <NumInput label="Ziel-Verkaufspreis" value={verkaufspreis} onChange={setVerkaufspreis} suffix="€" />
           <NumInput label="Maklerprovision Verkauf" value={maklerVerkaufPct} onChange={setMaklerVerkaufPct} suffix="%" step={0.1} />
           <NumInput label="Immo-ESt / Spekulationssteuer" value={immoEstSteuer} onChange={setImmoEstSteuer} suffix="%" step={1} />

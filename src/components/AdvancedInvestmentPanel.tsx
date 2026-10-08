@@ -247,7 +247,7 @@ function AfaSection({ p, u, afa }: { p: Property; u: (patch: Partial<Property>) 
   const kaufpreis = p.afa?.basis ?? p.kaufpreis ?? 0;
 
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-4">
       <h4 className="font-semibold text-[13px] text-[#1C1917] mb-3">Abschreibung / AfA<GlossaryTooltip termId="abschreibung" /></h4>
 
       {!expert ? (

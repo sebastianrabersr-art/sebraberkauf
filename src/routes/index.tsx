@@ -120,7 +120,7 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
   const neben = price ? Math.round(price * nebenPct) : null;
   const total = price && neben ? price + neben : null;
   const quality = data.data_quality_score;
-  const qualityClass = quality >= 70 ? "bg-[#E8F5EE] text-[#2D6A4F]" : quality >= 40 ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#FEE2E2] text-[#991B1B]";
+  const qualityClass = quality >= 70 ? "bg-[#E8F5EE] text-primary" : quality >= 40 ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#FEE2E2] text-[#991B1B]";
   const location = [data.district, data.city].filter(Boolean).join(" · ") || data.region || "—";
 
   const handleCtaClick = () => {
@@ -157,7 +157,7 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
       </div>
 
       {data.missing_fields && data.missing_fields.length > 0 && (
-        <div className="mt-3 rounded-[10px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2 text-[13px]">
+        <div className="mt-3 rounded-[12px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2 text-[13px]">
           <Warning className="size-4 text-[#92400E] shrink-0 mt-0.5" aria-hidden />
           <div>
             <div className="font-medium text-[#1C1917]">Im Inserat fehlt noch</div>
@@ -169,7 +169,7 @@ function PreviewCard({ data }: { data: AnalyzeResult }) {
       <a
         href="/signup"
         onClick={handleCtaClick}
-        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-5 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors"
+        className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-[12px] bg-primary text-white px-5 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors"
       >
         Konto anlegen und ganze Auswertung sehen
         <ArrowRight className="size-4" aria-hidden />
@@ -185,7 +185,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
   return (
     <div>
       <dt className="text-[12px] text-ink-3">{label}</dt>
-      <dd className={`text-[15px] font-semibold mt-0.5 tabular-nums ${highlight ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}>{value}</dd>
+      <dd className={`text-[15px] font-semibold mt-0.5 tabular-nums ${highlight ? "text-primary" : "text-[#1C1917]"}`}>{value}</dd>
     </div>
   );
 }
@@ -239,7 +239,7 @@ function LinkAnalyzer() {
 
   return (
     <div>
-      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-[14px] border-[1.5px] border-[#EAE6DF] bg-white p-2 focus-within:border-[#2D6A4F] transition-colors">
+      <form onSubmit={run} className="flex flex-col sm:flex-row gap-2 rounded-[12px] border-[1.5px] border-[#EAE6DF] bg-white p-2 focus-within:border-primary transition-colors">
         <div className="flex-1 flex items-center gap-2 px-3">
           <LinkSimple className="size-4 text-ink-3 shrink-0" aria-hidden />
           <input
@@ -255,7 +255,7 @@ function LinkAnalyzer() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-5 py-3 text-[14px] font-semibold hover:bg-[#235740] disabled:opacity-60 transition-colors whitespace-nowrap"
+          className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-primary text-white px-5 py-3 text-[14px] font-semibold hover:bg-[#235740] disabled:opacity-60 transition-colors whitespace-nowrap"
         >
           {loading ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <ArrowRight className="size-4" aria-hidden />}
           {loading ? "Inserat wird ausgelesen…" : "Inserat prüfen"}
@@ -263,13 +263,13 @@ function LinkAnalyzer() {
       </form>
 
       {error && (
-        <div className="mt-3 text-[13px] text-left rounded-[10px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2" role="alert">
+        <div className="mt-3 text-[13px] text-left rounded-[12px] bg-[#FEF3C7]/60 p-3 flex items-start gap-2" role="alert">
           <Warning className="size-4 text-[#92400E] shrink-0 mt-0.5" aria-hidden />
           <div className="space-y-2">
             <div className="text-[#1C1917]">{error}</div>
             {failedUrl && (
               <div className="flex flex-wrap gap-2 pt-1">
-                <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] bg-[#2D6A4F] text-white px-2.5 py-1.5 font-medium hover:bg-[#235740]">
+                <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] bg-primary text-white px-2.5 py-1.5 font-medium hover:bg-[#235740]">
                   <ArrowRight className="size-3" aria-hidden /> Trotzdem in der App öffnen
                 </a>
                 <a href="/signup" className="inline-flex items-center gap-1 rounded-[8px] border border-[#EAE6DF] bg-white px-2.5 py-1.5 font-medium hover:border-[#1C1917]">
@@ -324,7 +324,7 @@ function Landing() {
         <div className="max-w-6xl mx-auto px-6 pt-10 pb-16 md:pt-16 md:pb-24 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-14 items-center">
           <div>
             <h1 className="font-display text-[38px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.04] text-[#1C1917] text-balance" style={{ letterSpacing: "-0.035em" }}>
-              Immobilie gefunden? <span className="text-[#2D6A4F]">Link einfügen</span> und sofort prüfen.
+              Immobilie gefunden? <span className="text-primary">Link einfügen</span> und sofort prüfen.
             </h1>
             <p className="mt-5 text-[17px] text-ink-2 max-w-xl leading-relaxed">
               Kaufnebenkosten, Kreditrate, Cashflow und Mietrecht-Risiko – ausgerechnet, bevor du zur Besichtigung fährst. Für Käuferinnen und Käufer in Österreich und Deutschland.
@@ -334,9 +334,9 @@ function Landing() {
               <LinkAnalyzer />
               <p className="mt-3 text-[13px] text-ink-2">
                 Eine Immobilie ist gratis, ohne Kreditkarte. Kein Link zur Hand?{" "}
-                <a href="/demo" className="font-medium text-[#2D6A4F] underline underline-offset-4">Demo ansehen</a>
+                <a href="/demo" className="font-medium text-primary underline underline-offset-4">Demo ansehen</a>
                 {" "}oder{" "}
-                <Link to="/rechner" className="font-medium text-[#2D6A4F] underline underline-offset-4">Rechner ohne Anmeldung</Link>.
+                <Link to="/rechner" className="font-medium text-primary underline underline-offset-4">Rechner ohne Anmeldung</Link>.
               </p>
             </div>
           </div>
@@ -352,7 +352,7 @@ function Landing() {
             <h2 className="heading-section">So prüfst du eine Wohnung mit kaufma</h2>
             <p className="text-[16px] text-ink-2 mt-3 leading-relaxed">
               Vom Inserat zur Entscheidung, ohne Excel. Jeder Schritt steht für sich – du kannst auch nur einen davon nutzen. Was hinter den Zahlen steckt, erklärt der{" "}
-              <Link to="/ratgeber" className="font-medium text-[#2D6A4F] underline underline-offset-4">Ratgeber</Link>.
+              <Link to="/ratgeber" className="font-medium text-primary underline underline-offset-4">Ratgeber</Link>.
             </p>
           </div>
 
@@ -360,20 +360,20 @@ function Landing() {
             {STEPS.map((s, i) => (
               <li key={s.title} className="border-t-2 border-[#1C1917] pt-5">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-display text-[15px] font-extrabold text-[#2D6A4F] tabular-nums" aria-hidden>{i + 1}</span>
+                  <span className="font-display text-[15px] font-extrabold text-primary tabular-nums" aria-hidden>{i + 1}</span>
                   <h3 className="font-display text-[22px] font-extrabold text-[#1C1917]" style={{ letterSpacing: "-0.02em" }}>{s.title}</h3>
                 </div>
                 <p className="mt-2 text-[15px] text-[#1C1917]/85 leading-relaxed">{s.text}</p>
                 <ul className="mt-3 space-y-1">
                   {s.details.map((d) => (
                     <li key={d} className="flex items-baseline gap-2 text-[14px] text-ink-2">
-                      <span className="size-1 shrink-0 rounded-full bg-[#2D6A4F] translate-y-[-3px]" aria-hidden />
+                      <span className="size-1 shrink-0 rounded-full bg-primary translate-y-[-3px]" aria-hidden />
                       {d}
                     </li>
                   ))}
                 </ul>
                 {s.more && (
-                  <a href={s.more.href} className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+                  <a href={s.more.href} className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-primary underline-offset-4 hover:underline">
                     {s.more.label} <ArrowRight className="size-3.5" aria-hidden />
                   </a>
                 )}
@@ -382,7 +382,7 @@ function Landing() {
           </ol>
 
           <div className="mt-14 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <a href="/signup" className="inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
+            <a href="/signup" className="inline-flex items-center gap-2 rounded-[12px] bg-primary text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
               Kostenlos starten <ArrowRight className="size-4" aria-hidden />
             </a>
             <span className="text-[13px] text-ink-2">Eine Immobilie gratis. Upgrade nur, wenn du vergleichen willst.</span>
@@ -397,7 +397,7 @@ function Landing() {
             <h2 className="heading-section">Rechner ohne Anmeldung</h2>
             <p className="text-[15px] text-ink-2 mt-2">Für die schnelle Frage zwischendurch – direkt im Browser.</p>
           </div>
-          <Link to="/rechner" className="text-[14px] text-[#2D6A4F] font-medium underline-offset-4 hover:underline">
+          <Link to="/rechner" className="text-[14px] text-primary font-medium underline-offset-4 hover:underline">
             Alle 7 Rechner ansehen
           </Link>
         </div>
@@ -412,14 +412,14 @@ function Landing() {
               key={c.slug}
               to="/rechner/$slug"
               params={{ slug: c.slug }}
-              className="group rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition-colors hover:border-[#2D6A4F]"
+              className="group rounded-[12px] border border-[#EAE6DF] bg-white p-4 flex items-center gap-4 transition-colors hover:border-primary"
             >
-              <c.icon className="size-7 text-[#2D6A4F] shrink-0" aria-hidden />
+              <c.icon className="size-7 text-primary shrink-0" aria-hidden />
               <div className="flex-1 min-w-0">
                 <div className="text-[15px] font-semibold text-[#1C1917]">{c.title}</div>
                 <div className="text-[13px] text-ink-2 mt-0.5">{c.text}</div>
               </div>
-              <ArrowRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] shrink-0" aria-hidden />
+              <ArrowRight className="size-4 text-ink-3 group-hover:text-primary shrink-0" aria-hidden />
             </Link>
           ))}
         </div>
@@ -445,7 +445,7 @@ function Landing() {
             Hast du gerade ein Inserat offen?
           </h2>
           <p className="text-[16px] text-white/75 mt-3">Füg den Link ein und sieh, ob sich die Wohnung rechnet – bevor du Zeit in Besichtigungen steckst.</p>
-          <a href="#analyse" className="mt-7 inline-flex items-center gap-2 rounded-[10px] bg-[#2D6A4F] text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
+          <a href="#analyse" className="mt-7 inline-flex items-center gap-2 rounded-[12px] bg-primary text-white px-6 py-3 font-semibold text-[14px] hover:bg-[#235740] transition-colors">
             Inserat prüfen <ArrowRight className="size-4" aria-hidden />
           </a>
           <p className="mt-4 text-[14px] text-white/75">

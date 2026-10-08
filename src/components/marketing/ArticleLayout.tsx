@@ -50,7 +50,7 @@ function linkGlossary(text: string, linker: GlossaryLinker | undefined, keyBase:
         key={`g${keyBase}-${m.index}`}
         to="/glossar"
         hash={id}
-        className="text-[#2D6A4F] underline decoration-[#2D6A4F]/40 underline-offset-4 hover:decoration-[#2D6A4F]"
+        className="text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
       >
         {m[1]}
       </Link>,
@@ -125,11 +125,16 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
         </h1>
         <p className="text-ink-2 mt-4 text-[18px] leading-relaxed">{article.description}</p>
         <div className="text-[13px] text-ink-3 mt-5">
-          <span className="text-[#2D6A4F] font-medium">{article.category}</span>
-          {" · "}
-          {new Date(article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })}
+          <span className="text-primary font-medium">{article.category}</span>
           {" · "}
           {article.readingMinutes} min Lesezeit
+        </div>
+        {/* Wer schreibt und wie aktuell – wichtig bei Finanzthemen */}
+        <div className="text-[13px] text-ink-2 mt-1.5">
+          Redaktion kaufma · {article.updatedAt && article.updatedAt !== article.publishedAt ? "aktualisiert am " : "veröffentlicht am "}
+          <time dateTime={article.updatedAt ?? article.publishedAt}>
+            {new Date(article.updatedAt ?? article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })}
+          </time>
         </div>
       </header>
 
@@ -141,11 +146,11 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           <ol className="space-y-1.5 text-[14px] list-decimal list-inside marker:text-ink-3">
             {toc.map((t, i) => (
               <li key={`${i}-${t.id}`}>
-                <a href={`#${t.id}`} className="text-[#2D6A4F] underline-offset-4 hover:underline">{t.label}</a>
+                <a href={`#${t.id}`} className="text-primary underline-offset-4 hover:underline">{t.label}</a>
               </li>
             ))}
             {article.faq && article.faq.length > 0 && (
-              <li><a href="#faq" className="text-[#2D6A4F] underline-offset-4 hover:underline">Häufige Fragen</a></li>
+              <li><a href="#faq" className="text-primary underline-offset-4 hover:underline">Häufige Fragen</a></li>
             )}
           </ol>
         </aside>
@@ -164,7 +169,7 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
             if (block.startsWith("- ")) {
               const items = block.split("\n").filter((l) => l.startsWith("- "));
               return (
-                <ul key={i} className="list-disc pl-5 space-y-1.5 my-4 text-[16px] leading-[1.6] text-[#1C1917]/90 marker:text-[#2D6A4F]">
+                <ul key={i} className="list-disc pl-5 space-y-1.5 my-4 text-[16px] leading-[1.6] text-[#1C1917]/90 marker:text-primary">
                   {items.map((item, j) => <li key={j}>{renderInline(item.slice(2), linker)}</li>)}
                 </ul>
               );
@@ -196,7 +201,7 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
         </p>
         <Link
           to="/signup"
-          className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-primary text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
         >
           Kostenlos starten <ArrowRight className="size-4" />
         </Link>
@@ -220,15 +225,15 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
 
       {/* Internal linking */}
       <section className="mt-14 grid sm:grid-cols-3 gap-3">
-        <Link to="/rechner" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/rechner" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Rechner öffnen</div>
           <div className="text-[13px] text-ink-2 mt-1">Rendite & Cashflow selbst durchrechnen</div>
         </Link>
-        <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Preise ansehen</div>
           <div className="text-[13px] text-ink-2 mt-1">Kostenlos, Plus, Premium</div>
         </Link>
-        <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Konto anlegen</div>
           <div className="text-[13px] text-ink-2 mt-1">Eine Immobilie gratis analysieren</div>
         </Link>

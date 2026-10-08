@@ -96,7 +96,7 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
     }
   };
 
-  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-2.5 py-[7px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none";
+  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-2.5 py-[7px] text-[13px] text-[#1C1917] focus:border-primary outline-none";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -120,7 +120,7 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
               Gesetzt für {fmtReminderDate(existing.remind_at)}
               {existing.note ? <span className="block text-[12px] text-ink-2 mt-0.5">{existing.note}</span> : null}
             </span>
-            <button type="button" onClick={remove} disabled={busy} aria-label="Erinnerung löschen" className="text-[#DC2626] hover:opacity-80 shrink-0 mt-0.5">
+            <button type="button" onClick={remove} disabled={busy} aria-label="Erinnerung löschen" className="text-destructive hover:opacity-80 shrink-0 mt-0.5">
               <Trash size={14} aria-hidden />
             </button>
           </div>

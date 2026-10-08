@@ -35,13 +35,13 @@ export function NotFoundPage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="/"
-                className="inline-flex h-11 items-center rounded-[10px] bg-[#2D6A4F] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#235740]"
+                className="inline-flex h-11 items-center rounded-[12px] bg-primary px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#235740]"
               >
                 Zur Startseite
               </a>
               <a
                 href="/rechner"
-                className="inline-flex h-11 items-center rounded-[10px] border border-[#EAE6DF] bg-white px-5 text-[14px] font-semibold text-[#1C1917] transition-colors hover:border-[#2D6A4F] hover:text-[#2D6A4F]"
+                className="inline-flex h-11 items-center rounded-[12px] border border-[#EAE6DF] bg-white px-5 text-[14px] font-semibold text-[#1C1917] transition-colors hover:border-primary hover:text-primary"
               >
                 Rechner öffnen
               </a>
@@ -49,7 +49,7 @@ export function NotFoundPage() {
 
             <p className="mt-6 text-[13px] text-[#78716C]">
               Oder such im Ratgeber:{" "}
-              <a href="/ratgeber" className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+              <a href="/ratgeber" className="font-medium text-primary underline-offset-4 hover:underline">
                 alle Artikel zu Kauf, Finanzierung und Rendite
               </a>
             </p>

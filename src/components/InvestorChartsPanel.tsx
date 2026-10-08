@@ -169,7 +169,7 @@ export function InvestorChartsPanel({ p }: { p: Property }) {
               step={1}
               value={sliderYears}
               onChange={(e) => setSliderYears(Number(e.target.value))}
-              className="w-full accent-[#2D6A4F]"
+              className="w-full accent-primary"
             />
             <div className="flex justify-between text-[10px] text-ink-3">
               <span>5J</span>

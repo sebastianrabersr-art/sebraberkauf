@@ -107,7 +107,10 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   const [textUrl, setTextUrl] = useState("");
   const [manualTitle, setManualTitle] = useState("");
   // "zinshaus" ist keine eigene Strategie, sondern ein Objekttyp mit Einheiten (vermietet = Buy & Hold).
-  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip" | "zinshaus">("buy_and_hold");
+  // Vorauswahl aus dem Onboarding-Ziel ("Fix & Flip" → Fix & Flip, sonst Vermieten).
+  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip" | "zinshaus">(() => {
+    try { return localStorage.getItem("kaufma_goal") === "fixflip" ? "fix_and_flip" : "buy_and_hold"; } catch { return "buy_and_hold"; }
+  });
   const [propertyType, setPropertyType] = useState<"apartment" | "house" | "multi_family" | "land">("apartment");
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState(0);
@@ -238,7 +241,10 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       }
       applyExtracted(res.data, url);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      console.error("Link-Import:", e);
+      // Gleicher Ausweg wie bei einem nicht lesbaren Inserat: Text einfügen.
+      setTextUrl(url); setActiveTab("text"); setAutoSwitchNotice(true);
+      toast.error("Das Inserat konnte gerade nicht geladen werden. Kopier den Text des Inserats hier hinein – das klappt fast immer.");
     } finally { setLoading(false); }
   };
 
@@ -287,10 +293,18 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
     setLoading(true);
     try {
       const res = await extract({ data: { url: textUrl, text } });
-      if (!res.ok) { toast.error(res.error || "Extraktion fehlgeschlagen."); return; }
+      if (!res.ok) {
+        toast.error("Aus dem Text ließen sich keine Daten auslesen. Prüf, ob Preis und Fläche enthalten sind, oder leg das Objekt manuell an.", {
+          action: { label: "Manuell anlegen", onClick: () => setActiveTab("manuell") },
+        });
+        return;
+      }
       applyExtracted(res.data, textUrl);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      console.error("Text-Import:", e);
+      toast.error("Das Auslesen hat gerade nicht geklappt. Bitte versuch es gleich noch einmal oder leg das Objekt manuell an.", {
+        action: { label: "Manuell anlegen", onClick: () => setActiveTab("manuell") },
+      });
     } finally { setLoading(false); }
   };
 
@@ -463,7 +477,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                       key={s.key}
                       type="button"
                       onClick={() => setStrategy(s.key)}
-                      className="flex items-center gap-3 rounded-[10px] border-[1.5px] px-4 py-3 text-left transition-all"
+                      className="flex items-center gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-all"
                       style={{ borderColor: active ? "#2D6A4F" : "#EAE6DF", background: active ? "#E8F5EE" : "white" }}
                     >
                       <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
@@ -528,9 +542,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         )}
 
         {result && (
-          <div className={`mt-5 rounded-[10px] border p-4 text-[13px] ${result.partial ? "border-[#F59E0B]/40 bg-[#FEF3C7]" : "border-[#2D6A4F]/30 bg-[#ECFDF5]"}`}>
+          <div className={`mt-5 rounded-[12px] border p-4 text-[13px] ${result.partial ? "border-[#F59E0B]/40 bg-[#FEF3C7]" : "border-primary/30 bg-[#ECFDF5]"}`}>
             <div className="flex items-start gap-2">
-              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0 text-[#92400E]" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-[#2D6A4F]" />}
+              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0 text-[#92400E]" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-primary" />}
               <div className="flex-1">
                 <div className="font-semibold text-[#1C1917]">
                   {result.partial ? "Import unvollständig" : "Import erfolgreich"}

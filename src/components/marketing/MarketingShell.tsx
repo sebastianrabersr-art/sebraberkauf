@@ -73,7 +73,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             {/* Mit fester CTA-Leiste unten keinen zweiten grünen Button im mobilen Header */}
             <a
               href={primaryCta.href}
-              className={`${stickyCta ? "hidden md:inline-flex" : "inline-flex"} rounded-[8px] bg-[#2D6A4F] text-white px-3.5 sm:px-4 py-2 text-sm font-medium hover:bg-[#235740] transition-colors whitespace-nowrap`}
+              className={`${stickyCta ? "hidden md:inline-flex" : "inline-flex"} rounded-[8px] bg-primary text-white px-3.5 sm:px-4 py-2 text-sm font-medium hover:bg-[#235740] transition-colors whitespace-nowrap`}
             >
               {primaryCta.label}
             </a>
@@ -104,7 +104,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
                   href={n.href}
                   onClick={() => setMenuOpen(false)}
                   aria-current={isActive(pathname, n.href) ? "page" : undefined}
-                  className="flex min-h-[48px] items-center border-b border-[#EAE6DF] text-[16px] text-[#1C1917] aria-[current=page]:font-semibold aria-[current=page]:text-[#2D6A4F]"
+                  className="flex min-h-[48px] items-center border-b border-[#EAE6DF] text-[16px] text-[#1C1917] aria-[current=page]:font-semibold aria-[current=page]:text-primary"
                 >
                   {n.label}
                 </a>
@@ -123,7 +123,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t mt-16">
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground flex flex-wrap gap-6 justify-between">
-          <span>© {new Date().getFullYear()} kaufma</span>
+          <span>
+            © {new Date().getFullYear()} kaufma ·{" "}
+            <a href="/impressum" className="hover:text-foreground">ein Produkt der ayoka GmbH, Wien</a>
+          </span>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Fußzeile">
             <a href="/rechner" className="hover:text-foreground">Rechner</a>
             <a href="/ratgeber" className="hover:text-foreground">Ratgeber</a>
@@ -150,7 +153,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         >
           <a
             href="/signup"
-            className="flex h-12 w-full items-center justify-center rounded-[10px] bg-[#2D6A4F] text-[15px] font-semibold text-white transition-colors hover:bg-[#235740] active:bg-[#235740]"
+            className="flex h-12 w-full items-center justify-center rounded-[12px] bg-primary text-[15px] font-semibold text-white transition-colors hover:bg-[#235740] active:bg-[#235740]"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             Kostenlos starten

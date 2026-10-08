@@ -108,7 +108,7 @@ function Pipeline() {
         const id = e.dataTransfer.getData("text/plain");
         if (id) setProzess(id, col);
       }}
-      className="flex-1 rounded-[10px] p-[14px_16px]"
+      className="flex-1 rounded-[12px] p-[14px_16px]"
       style={{
         background: isOver ? (col === "Gekauft" ? "#E8F5EE" : "#FEE2E2") : "#FFFFFF",
         border: isOver
@@ -118,8 +118,8 @@ function Pipeline() {
     >
       <div className="flex items-center gap-2">
         {col === "Gekauft"
-          ? <CheckCircle2 className="w-4 h-4 text-[#2D6A4F]" />
-          : <XCircle className="w-4 h-4 text-[#DC2626]" />}
+          ? <CheckCircle2 className="w-4 h-4 text-primary" />
+          : <XCircle className="w-4 h-4 text-destructive" />}
         <div className="text-[13px] font-semibold text-[#1C1917]">{label}</div>
       </div>
       <div className="text-[12px] text-ink-3 mt-1">
@@ -132,7 +132,7 @@ function Pipeline() {
         {col === "Gekauft" && (
           <button
             onClick={() => navigate({ to: "/portfolio" })}
-            className="text-[12px] text-[#2D6A4F] hover:underline"
+            className="text-[12px] text-primary hover:underline"
           >
             Portfolio öffnen →
           </button>
@@ -143,7 +143,7 @@ function Pipeline() {
 
   return (
     <AppShell>
-      <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+      <div className="bg-[#F5F3EE] min-h-full">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
             <h1 className="heading-page-sm">Pipeline</h1>
@@ -168,7 +168,7 @@ function Pipeline() {
               <button
                 key={b}
                 onClick={() => setFilter(b)}
-                className="rounded-[20px] px-3 py-[5px] text-[12px] transition-colors"
+                className="rounded-full px-3 py-[5px] text-[12px] transition-colors"
                 style={{
                   background: active ? "#2D6A4F" : "#F5F3EE",
                   color: active ? "#FFFFFF" : "var(--ink-2)",
@@ -197,7 +197,7 @@ function Pipeline() {
                   const id = e.dataTransfer.getData("text/plain");
                   if (id) setProzess(id, col);
                 }}
-                className="shrink-0 rounded-[10px] p-[10px]"
+                className="shrink-0 rounded-[12px] p-[10px]"
                 style={{
                   width: 240,
                   background: isOver ? "#E8F5EE" : "#EAE6DF",
@@ -207,7 +207,7 @@ function Pipeline() {
               >
                 <div className="flex items-center justify-between mb-2 px-1">
                   <div className="text-[13px] font-semibold text-[#1C1917]">{col}</div>
-                  <span className="text-[12px] font-semibold bg-[#2D6A4F] text-white rounded-[20px] px-2 py-0.5">{items.length}</span>
+                  <span className="text-[12px] font-semibold bg-primary text-white rounded-full px-2 py-0.5">{items.length}</span>
                 </div>
                 <div className="space-y-2">
                   {items.length === 0 && (
@@ -239,7 +239,7 @@ function Pipeline() {
                           if ((e.target as HTMLElement).closest("[data-stop]")) return;
                           navigate({ to: "/properties/$id", params: { id: p.id } });
                         }}
-                        className="group relative rounded-[10px] bg-white border border-[#EAE6DF] p-[12px_14px] cursor-pointer hover:border-[#2D6A4F] transition-colors"
+                        className="group relative rounded-[12px] bg-white border border-[#EAE6DF] p-[12px_14px] cursor-pointer hover:border-primary transition-colors"
                       >
                         <GripVertical className="absolute left-0.5 top-3 w-3 h-3 text-[#D4CFC8] opacity-0 group-hover:opacity-100" />
                         <div className="flex items-start justify-between gap-2">
@@ -258,7 +258,7 @@ function Pipeline() {
                               <button key={b} onClick={() => { setBewertung(p.id, b); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Als {b} markieren</button>
                             ))}
                             <div className="border-t border-[#EAE6DF] my-1" />
-                            <button onClick={() => { updateProperty(p.id, prozessStatusPatch(p, "")); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-[#DC2626]">Aus Pipeline entfernen</button>
+                            <button onClick={() => { updateProperty(p.id, prozessStatusPatch(p, "")); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-destructive">Aus Pipeline entfernen</button>
                             <div className="border-t border-[#EAE6DF] my-1" />
                             <button onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Detail öffnen</button>
                           </div>
@@ -266,7 +266,7 @@ function Pipeline() {
                         <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 mt-1">{p.title || "—"}</div>
                         <div className="text-[12px] text-ink-3 mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[12px] px-1.5 py-0.5 rounded-[6px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
+                          <span className="text-[12px] px-1.5 py-0.5 rounded-[8px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
                         </div>
                         {p.nextAction && (
                           <div className="mt-2 flex items-center gap-1 text-[12px]" style={{ background: actionBg, color: actionColor, padding: "4px 8px", borderRadius: 6 }}>
@@ -303,7 +303,7 @@ function Pipeline() {
                   value={addSearch}
                   onChange={(e) => setAddSearch(e.target.value)}
                   placeholder="Nach Titel oder Bezirk suchen…"
-                  className="w-full pl-9 pr-3 py-[9px] text-[13px] border-[1.5px] border-[#EAE6DF] rounded-[8px] outline-none focus:border-[#2D6A4F]"
+                  className="w-full pl-9 pr-3 py-[9px] text-[13px] border-[1.5px] border-[#EAE6DF] rounded-[8px] outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-1 max-h-[50vh] overflow-y-auto">
@@ -320,10 +320,10 @@ function Pipeline() {
                         <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
                         <div className="text-[12px] text-ink-3">{p.bezirk || "—"}</div>
                       </div>
-                      <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
+                      <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[8px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
                       <button
                         onClick={() => addToPipeline(p.id)}
-                        className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-[#2D6A4F] text-white hover:bg-[#235740]"
+                        className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-primary text-white hover:bg-[#235740]"
                       >
                         Hinzufügen
                       </button>

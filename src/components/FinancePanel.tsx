@@ -111,7 +111,7 @@ export function FinancePanel({ p }: { p: Property }) {
           <button
             type="button"
             onClick={addScenario}
-            className="mt-3 inline-flex items-center gap-1 rounded-md bg-[#2D6A4F] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#235740]"
+            className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-[#235740]"
           >
             <Plus className="size-3" /> Finanzierungsszenario anlegen
           </button>

@@ -128,18 +128,18 @@ function Detail() {
     }
   };
 
-  // Leave-warning: fire toast on unmount if required fields are missing
-  const dqRef = useRef(dq);
-  useEffect(() => { dqRef.current = dq; }, [dq]);
+  // Beim Verlassen erinnern – an dieselben Kernangaben wie der Banner unter dem Titel.
+  const missingLabels = REQUIRED_FIELDS.filter((f) => missingRequiredFields(p).includes(f.key)).map((f) => f.label);
+  const missingRef = useRef(missingLabels);
+  missingRef.current = missingLabels;
   useEffect(() => {
     const pid = p.id;
     return () => {
       if (suppressLeaveWarnRef.current) return;
-      const d = dqRef.current;
-      if (d.score < 70 && d.missing.length > 0) {
-        const more = d.missing.length > 3 ? ` und ${d.missing.length - 3} weitere` : "";
-        toast.warning("Einige Pflichtfelder fehlen noch", {
-          description: `Fehlend: ${d.missing.slice(0, 3).join(", ")}${more}`,
+      const missing = missingRef.current;
+      if (missing.length > 0) {
+        toast.warning("Für die Analyse fehlen noch Angaben", {
+          description: `Fehlend: ${missing.join(", ")}`,
           duration: 5000,
           action: {
             label: "Zurück",
@@ -193,16 +193,16 @@ function Detail() {
     }, 80);
   };
 
-  // Negative margins to break out of AppShell padding (p-6 md:p-10)
-  const breakout = "-mx-6 md:-mx-10";
+  // Negative Ränder, um aus dem AppShell-Innenabstand auszubrechen
+  const breakout = "-mx-5 md:-mx-10"; // passt zum AppShell-Rand (p-5 md:p-10)
 
 
 
   return (
     <AppShell>
       {/* ============ HEADER BAR ============ */}
-      <div className={`${breakout} -mt-6 md:-mt-10 bg-white border-b border-[#EAE6DF] px-6 md:px-10 py-4`}>
-        <Link to="/properties" className="inline-flex items-center gap-1 text-[13px] text-[#2D6A4F] hover:text-[#235740] mb-2">
+      <div className={`${breakout} -mt-5 md:-mt-10 bg-white border-b border-[#EAE6DF] px-5 md:px-10 py-4`}>
+        <Link to="/properties" className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-[#235740] mb-2">
           <ArrowLeft className="size-3.5" /> Zurück
         </Link>
         <h1
@@ -220,17 +220,17 @@ function Detail() {
             Datenqualität {dq.score}%
           </span>
           {linkValid && (
-            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1">
+            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-primary px-2 py-1">
               <ExternalLink className="size-3.5" /> Inserat öffnen
             </a>
           )}
           <button
             onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
-            className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1"
+            className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-primary px-2 py-1"
           >
             {canExport ? <Download className="size-3.5" /> : <Lock className="size-3.5" />} Exportieren
           </button>
-          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#DC2626] px-2 py-1">
+          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-destructive px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
           </button>
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
@@ -240,7 +240,10 @@ function Detail() {
 
 
         {/* ============ TAB NAV ============ */}
-        <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto">
+        <div className="relative">
+        {/* Mobil laufen die Tabs seitlich weiter – Verlauf am Rand zeigt das an */}
+        <div aria-hidden className="pointer-events-none absolute right-0 top-4 -bottom-4 w-10 bg-gradient-to-l from-white to-transparent md:hidden z-10" />
+        <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto pr-8 md:pr-0">
           {tabs.map((t) => {
             const active = tab === t.key;
             return (
@@ -250,16 +253,17 @@ function Detail() {
                 className={`relative pb-3 text-[13px] whitespace-nowrap transition-colors ${active ? "text-[#1C1917] font-medium" : "text-ink-2 hover:text-[#1C1917]"}`}
               >
                 {t.label}
-                {active && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#2D6A4F]" />}
+                {active && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-primary" />}
               </button>
             );
           })}
+        </div>
         </div>
       </div>
 
       {/* ============ TWO COLUMN LAYOUT ============ */}
       <div className={`${breakout} flex items-start`}>
-        <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
+        <div className="flex-1 min-w-0 px-5 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
             <OverviewTab
               p={p} c={c} dq={dq} mietrecht={mietrecht}
@@ -448,7 +452,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Titel"><T value={p.title} edit on={(v) => u({ title: v })} /></F>
             <F label="Original-Link">
               <T value={p.link} edit on={(v) => u({ link: v })} />
-              {!linkValid && p.link && <div className="text-[10px] text-[#DC2626] mt-1">Ungültige URL</div>}
+              {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
             </F>
             <F label="Projekt">
               <Sel value={p.projectId} onChange={(e) => u({ projectId: e.target.value })}>
@@ -457,7 +461,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             </F>
             <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
             {p.propertyType === "zinshaus" ? (
-              <F label="Wohnfläche m² (Summe der Einheiten)"><N value={p.wohnflaecheM2} edit={false} on={() => {}} /></F>
+              <F label="Wohnfläche m² (Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.wohnflaecheM2} edit={false} on={() => {}} /></F>
             ) : (
               <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
             )}
@@ -604,8 +608,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 <span className="tabular-nums font-bold text-[#1C1917]" style={{ ...bricolage, fontSize: 16 }}>{fmtEUR(c.kaufNebenkosten)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-[#2D6A4F]">Gesamter Kapitalbedarf</span>
-                <span className="tabular-nums font-bold text-[#2D6A4F]" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
+                <span className="text-[13px] font-semibold text-primary">Gesamter Kapitalbedarf</span>
+                <span className="tabular-nums font-bold text-primary" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
               </div>
             </div>
           );
@@ -656,13 +660,13 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       <Section id="sec-miete" title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
           {p.propertyType === "zinshaus" ? (
-            <F label="Miete €/Mt (effektiv, Summe der Einheiten)"><N value={p.nettomieteMtl} edit={false} on={() => {}} /></F>
+            <F label="Miete €/Mt (effektiv, Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.nettomieteMtl} edit={false} on={() => {}} /></F>
           ) : (
             <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
           )}
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
-              <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />
+              <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-primary" />
               Schätzwert
             </label>
           </F>
@@ -672,7 +676,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
         </div>
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-          <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Break-even Miete</div>
+          <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Break-even Miete</div>
           <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.breakEvenMiete)} / Monat</div>
           <div className="text-[12px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
         </div>
@@ -714,7 +718,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <AmpelBadge ampel={ampelColor}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
         </div>
         <p className="text-[13px] text-ink-2 mt-2">{mietrecht.erklaerung}</p>
-        <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-[#2D6A4F] hover:underline">Details im Mietrecht-Tab →</button>
+        <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-primary hover:underline">Details im Mietrecht-Tab →</button>
       </Section>
 
       {/* === SECTION H: Verkäufer & Makler === */}
@@ -725,7 +729,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Telefon"><T value={p.sellerPhone ?? ""} edit on={(v) => u({ sellerPhone: v })} /></F>
           <F label="E-Mail"><T value={p.sellerEmail ?? ""} edit on={(v) => u({ sellerEmail: v })} /></F>
         </div>
-        <button onClick={onGoCrm} className="mt-3 text-[12px] text-[#2D6A4F] hover:underline">Vollständiges CRM → CRM Tab</button>
+        <button onClick={onGoCrm} className="mt-3 text-[12px] text-primary hover:underline">Vollständiges CRM → CRM Tab</button>
       </Section>
 
       {p.status === "Gekauft" && (
@@ -769,7 +773,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
           <CfLine label="Instandhaltung (mtl.)" value={-instandh} />
           <div className="border-t border-[#EAE6DF] pt-1.5 mt-1.5 flex justify-between">
             <span className="font-semibold">= Cashflow / Monat<GlossaryTooltip termId="cashflow" /></span>
-            <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{fmtEUR(c.cashflowMtl)}</span>
+            <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-primary" : "text-destructive"}`}>{fmtEUR(c.cashflowMtl)}</span>
           </div>
           <div className="flex justify-between text-ink-2">
             <span>Cashflow p.a. (×12)</span>
@@ -789,7 +793,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
           <RendLine label="Eigenkapitalrendite" formula="Jahres-Cashflow / Eigenkapital" value={fmtPct(c.eigenkapitalrendite)} />
           <div className="pt-2 border-t border-[#EAE6DF] flex justify-between">
             <span>vs. Renditeziel ({fmtPct(a.zielBrutto ?? 0)})</span>
-            <span className={`tabular-nums font-medium ${renditeZielDelta >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{renditeZielDelta >= 0 ? "+" : ""}{fmtPct(renditeZielDelta)}</span>
+            <span className={`tabular-nums font-medium ${renditeZielDelta >= 0 ? "text-primary" : "text-destructive"}`}>{renditeZielDelta >= 0 ? "+" : ""}{fmtPct(renditeZielDelta)}</span>
           </div>
         </div>
       </AccordionCard>
@@ -834,7 +838,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
 
   const { steuersatz, afaSatz, gebaeudewertPct, kaufpreis, gebaeudewert, afaJahr, afaMtl, gewinnVorAfa, gewinnNachAfa, steuerBetrag, cashflowNachSteuer } = calcTaxEstimate(p, c);
 
-  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
+  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-primary outline-none";
 
   return (
     <div className="space-y-4">
@@ -869,7 +873,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
         </div>
       </div>
 
-      <div className="rounded-[10px] border border-[#EAE6DF] overflow-hidden">
+      <div className="rounded-[12px] border border-[#EAE6DF] overflow-hidden">
         <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-ink-3">Berechnung</div>
         {[
           { label: "Gebäudewert", value: fmtEUR(gebaeudewert), sub: `${(gebaeudewertPct * 100).toFixed(0)}% von ${fmtEUR(kaufpreis)}` },
@@ -888,7 +892,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           </div>
         ))}
         <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[#EAE6DF] bg-[#E8F5EE]">
-          <span className="text-[13px] font-semibold text-[#2D6A4F]">Cashflow nach Steuer (p.a.)</span>
+          <span className="text-[13px] font-semibold text-primary">Cashflow nach Steuer (p.a.)</span>
           <span className="text-[16px] font-bold tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", color: cashflowNachSteuer >= 0 ? "#2D6A4F" : "#DC2626" }}>
             {fmtEUR(cashflowNachSteuer)}
           </span>
@@ -905,7 +909,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
 function AnalyseStat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="mt-1 text-[22px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
     </div>
@@ -916,7 +920,7 @@ function CfLine({ label, value, sign }: { label: string; value: number; sign?: "
   return (
     <div className="flex justify-between">
       <span className="text-ink-2">{label}</span>
-      <span className={`tabular-nums ${positive ? "text-[#1C1917]" : "text-[#DC2626]"}`}>{sign === "+" && positive ? "+" : ""}{fmtEUR(value)}</span>
+      <span className={`tabular-nums ${positive ? "text-[#1C1917]" : "text-destructive"}`}>{sign === "+" && positive ? "+" : ""}{fmtEUR(value)}</span>
     </div>
   );
 }
@@ -963,7 +967,7 @@ function BesichtigungTab({ p, viewings, setViewing }: {
                   return (
                     <div key={item.key} className="border-b border-[#EAE6DF] last:border-0 pb-2 last:pb-0">
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={v.done} onChange={(e) => setViewing(p.id, item.key, { done: e.target.checked })} className="accent-[#2D6A4F]" />
+                        <input type="checkbox" checked={v.done} onChange={(e) => setViewing(p.id, item.key, { done: e.target.checked })} className="accent-primary" />
                         {item.label}
                       </label>
                       <input
@@ -1036,7 +1040,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
             <button
               type="button"
               onClick={() => { u(portfolioAddPatch(p)); toast.success("Im Portfolio", { action: { label: "Öffnen", onClick: () => openPortfolio(p.id) } }); }}
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F5EE]"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-primary text-primary hover:bg-[#E8F5EE]"
             >
               Zum Portfolio hinzufügen
             </button>
@@ -1122,7 +1126,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
               value={p.beschreibung ?? ""}
               onChange={(e) => u({ beschreibung: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] italic p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] italic p-3 text-[13px] text-[#1C1917] focus:border-primary outline-none"
             />
           </div>
           <div>
@@ -1131,7 +1135,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
               value={p.notizen}
               onChange={(e) => u({ notizen: e.target.value })}
               rows={4}
-              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white p-3 text-[13px] text-[#1C1917] focus:border-primary outline-none"
             />
           </div>
         </div>
@@ -1152,7 +1156,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 }
 
 // ---------- CRM helper subcomponents ----------
-const CRM_INPUT = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+const CRM_INPUT = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 function activityIconFor(type?: string) {
   if (type === "Telefonat") return Phone;
@@ -1233,7 +1237,7 @@ function NextActionCard({ p, u, reminders, onRemindersChanged }: {
       )}
 
       {!editing && hasAction && (
-        <button onClick={() => setEditing(true)} className="text-[12px] text-[#2D6A4F] hover:underline">+ Weitere Aktion</button>
+        <button onClick={() => setEditing(true)} className="text-[12px] text-primary hover:underline">+ Weitere Aktion</button>
       )}
 
       {editing && (
@@ -1301,7 +1305,7 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
           className={CRM_INPUT + " flex-1"}
         />
       ) : (
-        <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-[#2D6A4F]">
+        <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-primary">
           {value || <span className="text-ink-3">—</span>}
         </button>
       )}
@@ -1441,7 +1445,7 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
       )}
 
       {cPreview && previewPrice > 0 && (
-        <div className="mt-4 rounded-[10px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
+        <div className="mt-4 rounded-[12px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
           <div className="text-[12px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
           <div className="grid grid-cols-3 gap-2">
             <PreviewStat label="Rendite" value={fmtPct(cPreview.bruttorendite)} />
@@ -1534,7 +1538,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
                 {open && (
-                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[12px] text-[#DC2626] hover:underline ml-2">
+                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[12px] text-destructive hover:underline ml-2">
                     Löschen
                   </button>
                 )}
@@ -1565,8 +1569,8 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
 
 
 // ============ HELPER COMPONENTS ============
-const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
-const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-primary focus:outline-none hover:border-[#1C1917]";
+const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary focus:outline-none hover:border-[#1C1917]";
 function Sel({ children, className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
@@ -1602,7 +1606,7 @@ function OverviewStat({ label, value, sub, tone, editable }: {
   };
 
   return (
-    <div className="group rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="group rounded-[12px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       {editable && editing ? (
         <input
@@ -1637,7 +1641,7 @@ function OverviewStat({ label, value, sub, tone, editable }: {
 
 function AccordionCard({ title, children, defaultOpen = false, id }: { title: string; children: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details id={id} open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <span className="text-[13px] font-medium text-[#1C1917]">{title}</span>
         <ChevronRight className="size-4 text-ink-3 transition-transform group-open:rotate-90" />
@@ -1709,7 +1713,7 @@ function VerificationChecklist({ p, dq, u }: {
           return (
             <div
               key={group.key}
-              className="rounded-[10px] border"
+              className="rounded-[12px] border"
               style={{
                 borderColor: allOk ? "#2D6A4F" : "#EAE6DF",
                 background: allOk ? "#F0FAF4" : "#FAFAF8",
@@ -1753,7 +1757,7 @@ function VerificationChecklist({ p, dq, u }: {
       </div>
 
       <label
-        className={`flex items-start gap-2 rounded-[10px] ${canVerify ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+        className={`flex items-start gap-2 rounded-[12px] ${canVerify ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
         style={{ background: "#FAFAF8", border: "1px solid #EAE6DF", padding: "10px 12px" }}
       >
         <input
@@ -1761,7 +1765,7 @@ function VerificationChecklist({ p, dq, u }: {
           disabled={!canVerify}
           checked={!!p.dataVerified}
           onChange={(e) => u({ dataVerified: e.target.checked })}
-          className="mt-0.5 accent-[#2D6A4F] size-4"
+          className="mt-0.5 accent-primary size-4"
         />
         <span className="text-[12px] text-[#1C1917]">
           Ich habe alle Daten geprüft und bestätigt – die Kalkulation kann beginnen.
@@ -1931,7 +1935,7 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
                   step={1}
                   value={val}
                   onChange={(e) => set(s.key, Number(e.target.value))}
-                  className="flex-1 accent-[#2D6A4F]"
+                  className="flex-1 accent-primary"
                 />
                 <span className="text-[14px] w-7 text-right tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
                   {r[s.key] != null ? val : "—"}
@@ -1973,7 +1977,7 @@ function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDu
         <MoreHorizontal className="size-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[10px] border border-[#EAE6DF] bg-white shadow-md py-1">
+        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[12px] border border-[#EAE6DF] bg-white shadow-md py-1">
           {mapsUrl && (
             <a
               href={mapsUrl}

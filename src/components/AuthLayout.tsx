@@ -53,7 +53,7 @@ export function OrDivider() {
 }
 
 export const authInputCls =
-  "w-full min-h-[44px] rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3.5 text-[15px] text-[#1C1917] outline-none focus:border-[#2D6A4F] disabled:opacity-60 placeholder:text-ink-3";
+  "w-full min-h-[44px] rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3.5 text-[15px] text-[#1C1917] outline-none focus:border-primary disabled:opacity-60 placeholder:text-ink-3";
 export const authLabelCls = "block text-[13px] font-medium text-[#1C1917] mb-1.5";
 export const authPrimaryCls =
-  "w-full min-h-[44px] rounded-[8px] bg-[#2D6A4F] px-4 text-[14px] font-semibold text-white hover:bg-[#235740] transition-colors disabled:opacity-60";
+  "w-full min-h-[44px] rounded-[8px] bg-primary px-4 text-[14px] font-semibold text-white hover:bg-[#235740] transition-colors disabled:opacity-60";

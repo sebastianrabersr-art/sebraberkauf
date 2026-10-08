@@ -84,12 +84,12 @@ function NewPropertyPage() {
         title="Immobilie manuell hinzufügen"
         description={`Projekt: ${project.name}`}
         actions={
-          <button onClick={createForPdf} className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
+          <button onClick={createForPdf} className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-2 text-[13px] text-[#1C1917] hover:border-[#1C1917]">
             Leeres Objekt für PDF-Upload anlegen →
           </button>
         }
       />
-      <div className="rounded-xl border bg-card p-5 max-w-2xl space-y-3">
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 max-w-2xl space-y-3">
         <Row label="Titel *"><input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
         <Row label="Original-Link (URL)">
           <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
@@ -144,8 +144,8 @@ function NewPropertyPage() {
           )}
         </div>
         <div className="flex gap-2 pt-2">
-          <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>
-          <button onClick={() => navigate({ to: "/properties" })} className="rounded-md border px-4 py-2 text-sm">Abbrechen</button>
+          <button onClick={submit} className="rounded-[8px] bg-primary text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740]">Erstellen</button>
+          <button onClick={() => navigate({ to: "/properties" })} className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-2.5 text-[14px] text-[#1C1917] hover:border-[#1C1917]">Abbrechen</button>
         </div>
         <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen. Tipp: „Leeres Objekt für PDF-Upload" rechts oben legt dir direkt eine Hülle an, in die du anschließend das Makler-PDF einlesen kannst.</p>
       </div>

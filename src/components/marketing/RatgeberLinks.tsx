@@ -54,7 +54,7 @@ export function RelatedArticles({ article }: { article: RatgeberArticle }) {
               key={a.slug}
               to="/ratgeber/$slug"
               params={{ slug: a.slug }}
-              className="group flex flex-col rounded-[10px] border border-[#EAE6DF] bg-white p-4 transition-colors duration-150 hover:border-[#2D6A4F] focus-visible:border-[#2D6A4F] focus-visible:outline-none"
+              className="group flex flex-col rounded-[12px] border border-[#EAE6DF] bg-white p-4 transition-colors duration-150 hover:border-primary focus-visible:border-primary focus-visible:outline-none"
             >
               <span className="self-start rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: c.bg, color: c.fg }}>
                 {a.category}
@@ -102,11 +102,11 @@ export function SelfCalcCta({ article }: { article: RatgeberArticle }) {
     <p className="mt-10 text-[15px] text-[#1C1917]">
       Selbst berechnen:{" "}
       {calc ? (
-        <Link to="/rechner/$slug" params={{ slug: calc.slug }} className="font-semibold text-[#2D6A4F] underline-offset-4 hover:underline">
+        <Link to="/rechner/$slug" params={{ slug: calc.slug }} className="font-semibold text-primary underline-offset-4 hover:underline">
           {calc.name}
         </Link>
       ) : (
-        <Link to="/rechner" className="font-semibold text-[#2D6A4F] underline-offset-4 hover:underline">
+        <Link to="/rechner" className="font-semibold text-primary underline-offset-4 hover:underline">
           alle Rechner ohne Anmeldung
         </Link>
       )}
@@ -132,7 +132,7 @@ export function GlossaryArticleLink({ termId }: { termId: string }) {
   return (
     <p className="mt-2 text-[12px] text-ink-2">
       Mehr dazu:{" "}
-      <Link to="/ratgeber/$slug" params={{ slug }} className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+      <Link to="/ratgeber/$slug" params={{ slug }} className="font-medium text-primary underline-offset-4 hover:underline">
         {shortTitle(article.title)}
       </Link>
     </p>
@@ -156,7 +156,7 @@ export function RatgeberChip({ slug }: { slug: string }) {
       to="/ratgeber/$slug"
       params={{ slug }}
       title={article.title}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-[20px] border border-[#EAE6DF] bg-[#F5F3EE] px-[14px] py-[6px] text-[12px] text-[#78716C] transition-colors duration-150 hover:border-[#2D6A4F] hover:text-[#2D6A4F] focus-visible:border-[#2D6A4F] focus-visible:text-[#2D6A4F] focus-visible:outline-none"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#EAE6DF] bg-[#F5F3EE] px-[14px] py-[6px] text-[12px] text-[#78716C] transition-colors duration-150 hover:border-primary hover:text-primary focus-visible:border-primary focus-visible:text-primary focus-visible:outline-none"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
       <BookOpen size={14} weight="duotone" className="shrink-0" aria-hidden />

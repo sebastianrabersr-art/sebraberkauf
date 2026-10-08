@@ -52,7 +52,7 @@ export function RemindersPanel() {
           Erinnerungen konnten nicht geladen werden. Falls die Funktion gerade erst eingerichtet wurde, fehlt evtl. noch die Datenbank-Migration.
         </div>
       ) : items.length === 0 ? (
-        <div className="mt-4 flex flex-col items-center gap-1.5 rounded-[10px] py-8 text-center" style={{ background: "#FAFAF8", border: "1.5px dashed #D4CFC8" }}>
+        <div className="mt-4 flex flex-col items-center gap-1.5 rounded-[12px] py-8 text-center" style={{ background: "#FAFAF8", border: "1.5px dashed #D4CFC8" }}>
           <Bell className="size-6 text-ink-3" aria-hidden />
           <span className="text-[13px] text-ink-2">Keine anstehenden Erinnerungen.</span>
         </div>
@@ -65,7 +65,7 @@ export function RemindersPanel() {
                 <Bell className="size-4 mt-0.5 shrink-0" style={{ color: "#2D6A4F" }} aria-hidden />
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917]">{fmtReminderDate(r.remind_at)}</div>
-                  <Link to="/properties/$id" params={{ id: r.property_id }} className="block text-[12px] text-ink-2 truncate hover:text-[#2D6A4F]">
+                  <Link to="/properties/$id" params={{ id: r.property_id }} className="block text-[12px] text-ink-2 truncate hover:text-primary">
                     {l.address || l.title}
                   </Link>
                   {r.note && <div className="text-[12px] text-[#1C1917] mt-0.5 whitespace-pre-wrap">{r.note}</div>}
@@ -75,7 +75,7 @@ export function RemindersPanel() {
                   onClick={() => remove(r.id)}
                   disabled={deleting === r.id}
                   aria-label="Erinnerung löschen"
-                  className="shrink-0 rounded-full p-1.5 text-ink-3 hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50"
+                  className="shrink-0 rounded-full p-1.5 text-ink-3 hover:text-destructive hover:bg-[#FEF2F2] disabled:opacity-50"
                 >
                   <Trash className="size-4" aria-hidden />
                 </button>
