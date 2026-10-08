@@ -104,7 +104,7 @@ function Login() {
       footer={
         <>
           Noch kein Konto?{" "}
-          <button type="button" onClick={() => navigate({ to: "/signup" })} className="font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+          <button type="button" onClick={() => navigate({ to: "/signup" })} className="font-medium text-primary underline-offset-4 hover:underline">
             Registrieren
           </button>
         </>

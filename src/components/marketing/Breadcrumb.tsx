@@ -27,14 +27,14 @@ export function Breadcrumb({ items, className = "" }: { items: BreadcrumbItem[];
   return (
     <>
       <nav aria-label="Brotkrumen-Navigation" className={className}>
-        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]" style={{ color: "#A8A29E", fontFamily: "Inter, sans-serif" }}>
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3" style={{ fontFamily: "Inter, sans-serif" }}>
           {items.map((it, i) => {
             const last = i === items.length - 1;
             return (
               <Fragment key={`${i}-${it.label}`}>
                 <li className={last ? "min-w-0" : "shrink-0"}>
                   {it.href && !last ? (
-                    <a href={it.href} className="text-[#78716C] no-underline transition-colors hover:text-[#2D6A4F]">
+                    <a href={it.href} className="text-[#78716C] no-underline transition-colors hover:text-primary">
                       {it.label}
                     </a>
                   ) : (

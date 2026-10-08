@@ -30,12 +30,19 @@ export const Route = createFileRoute("/rechner/")({
     ],
     links: [{ rel: "canonical", href: "/rechner" }],
   }),
+  // ?tab=… öffnet im App-Bereich direkt einen Rechner (z. B. von /rechner/cashflow aus).
+  validateSearch: (s: Record<string, unknown>): { tab?: AppCalcTab } =>
+    typeof s.tab === "string" && (APP_CALC_TABS as readonly string[]).includes(s.tab) ? { tab: s.tab as AppCalcTab } : {},
   component: RechnerIndex,
 });
 
+const APP_CALC_TABS = ["nebenkosten", "finanzierung", "cashflow", "rendite", "breakeven", "leistbar", "fixflip"] as const;
+type AppCalcTab = (typeof APP_CALC_TABS)[number];
+
 function RechnerIndex() {
   const { session } = useAuth();
-  if (session) return <AppRechnerHub />;
+  const { tab } = Route.useSearch();
+  if (session) return <AppRechnerHub initialTab={tab} />;
   return <PublicRechnerHub />;
 }
 
@@ -97,14 +104,14 @@ function PublicRechnerHub() {
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARDS.map((c) => (
-            <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-[#2D6A4F]">
-              <c.icon className="size-9 text-[#2D6A4F]" strokeWidth={1.5} />
+            <div key={c.slug} className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 flex flex-col transition hover:border-primary">
+              <c.icon className="size-9 text-primary" strokeWidth={1.5} />
               <h2 className="mt-4 text-[14px] font-semibold text-[#1C1917]">{c.title}</h2>
               <p className="text-[13px] text-ink-2 mt-1.5 flex-1">{c.benefit}</p>
               <Link
                 to="/rechner/$slug"
                 params={{ slug: c.slug }}
-                className="mt-4 text-[13px] text-[#2D6A4F] font-medium hover:underline self-start"
+                className="mt-4 text-[13px] text-primary font-medium hover:underline self-start"
               >
                 Öffnen →
               </Link>
@@ -117,13 +124,13 @@ function PublicRechnerHub() {
           <p className="text-[13px] text-ink-2 mt-2 max-w-xl mx-auto">
             Statt einzelner Rechner: Inserat-Link einfügen und automatisch Rendite, Cashflow, Mietrecht-Risiko & Ampel-Bewertung erhalten.
           </p>
-          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-5 py-2.5 text-[13px] font-medium hover:bg-[#235740]">
+          <Link to="/signup" className="mt-4 inline-flex items-center gap-1.5 rounded-[8px] bg-primary text-white px-5 py-2.5 text-[13px] font-medium hover:bg-[#235740]">
             Kostenlos starten <ArrowRight className="size-4" />
           </Link>
         </div>
 
         <div className="mt-8 text-center">
-          <Link to="/ratgeber" className="text-[13px] text-[#2D6A4F] hover:underline">
+          <Link to="/ratgeber" className="text-[13px] text-primary hover:underline">
             Mehr Hintergrundwissen im Ratgeber →
           </Link>
         </div>
@@ -134,7 +141,7 @@ function PublicRechnerHub() {
 
 /* ───────── Logged-in app hub (unchanged behaviour) ───────── */
 
-function AppRechnerHub() {
+function AppRechnerHub({ initialTab }: { initialTab?: AppCalcTab }) {
   const { properties } = useStore();
   const project = useActiveProject();
   const a = useActiveAssumptions();
@@ -156,7 +163,7 @@ function AppRechnerHub() {
           <select
             value={selId}
             onChange={(e) => setSelId(e.target.value)}
-            className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]"
+            className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-primary focus:outline-none hover:border-[#1C1917]"
           >
             <option value="">Immobilie verknüpfen (optional)</option>
             {list.map((p) => (
@@ -169,7 +176,7 @@ function AppRechnerHub() {
       </div>
 
 
-      <Tabs defaultValue="nebenkosten" className="w-full">
+      <Tabs defaultValue={initialTab ?? "nebenkosten"} className="w-full">
         <TabsList className="h-auto p-1 bg-[#FAFAF8] border border-[#EAE6DF] flex-wrap">
           <TabsTrigger value="nebenkosten" className="gap-1.5 text-[13px]"><Coins className="size-3.5" />Kaufnebenkosten</TabsTrigger>
           <TabsTrigger value="finanzierung" className="gap-1.5 text-[13px]"><Wallet className="size-3.5" />Finanzierung</TabsTrigger>
@@ -203,7 +210,7 @@ function CalcShell({ title, hint, result, children, ratgeber }: {
     <div className="grid lg:grid-cols-5 gap-5 items-start">
       <div className="lg:col-span-3 space-y-3">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Deine Angaben</div>
-        <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+        <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-4">
           <div className="font-display text-[16px] font-bold tracking-tight text-[#1C1917]">{title}</div>
           {hint && <p className="text-[12px] text-ink-2 mt-1">{hint}</p>}
           <div className="mt-4 space-y-3">{children}</div>
@@ -398,7 +405,6 @@ function CashflowCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActi
       result={
         <div className="space-y-5">
           <Big label="Geldfluss pro Monat" value={fmtEUR(cf)} verdict={cashflowVerdict(cf)} />
-          <div className="text-xs text-muted-foreground">{cf >= 0 ? "Die Immobilie läuft monatlich positiv." : "Die Immobilie läuft monatlich negativ – du müsstest zuzahlen."}</div>
           <div className="border-t pt-3">
             <Row label="Mieteinnahmen" value={fmtEUR(miete)} tone="good" />
             <Row label="− Kreditrate" value={fmtEUR(rate)} />
@@ -432,10 +438,10 @@ function CashflowCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActi
         </div>
       }
     >
-      <NumField label="Erwartete Nettomiete" value={miete} onChange={setMiete} suffix="€/M" />
-      <NumField label="Kreditrate" value={rate} onChange={setRate} suffix="€/M" />
-      <NumField label="Betriebskosten (nicht umlegbar)" value={bk} onChange={setBk} suffix="€/M" />
-      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+      <NumField label="Erwartete Nettomiete" value={miete} onChange={setMiete} suffix="€/Mt" />
+      <NumField label="Kreditrate" value={rate} onChange={setRate} suffix="€/Mt" />
+      <NumField label="Betriebskosten (nicht umlegbar)" value={bk} onChange={setBk} suffix="€/Mt" />
+      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/Mt" />
       <NumField label="Leerstandspuffer" value={leerstand} onChange={setLeerstand} suffix="%" step={0.5} />
     </CalcShell>
   );
@@ -503,9 +509,9 @@ function RenditeCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useActiv
       <NumField label="Kaufpreis" value={kp} onChange={setKp} suffix="€" />
       <NumField label="Nebenkosten" value={nk} onChange={setNk} suffix="€" />
       <NumField label="Eigenkapital" value={ek} onChange={setEk} suffix="€" />
-      <NumField label="Nettomiete" value={miete} onChange={setMiete} suffix="€/M" />
-      <NumField label="Betriebskosten" value={bk} onChange={setBk} suffix="€/M" />
-      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+      <NumField label="Nettomiete" value={miete} onChange={setMiete} suffix="€/Mt" />
+      <NumField label="Betriebskosten" value={bk} onChange={setBk} suffix="€/Mt" />
+      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/Mt" />
     </CalcShell>
   );
 }
@@ -569,12 +575,12 @@ function BreakEvenCalc({ sel, a }: { sel?: Property; a: ReturnType<typeof useAct
         </div>
       }
     >
-      <NumField label="Kreditrate" value={rate} onChange={setRate} suffix="€/M" />
-      <NumField label="Betriebskosten" value={bk} onChange={setBk} suffix="€/M" />
-      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/M" />
+      <NumField label="Kreditrate" value={rate} onChange={setRate} suffix="€/Mt" />
+      <NumField label="Betriebskosten" value={bk} onChange={setBk} suffix="€/Mt" />
+      <NumField label="Rücklage" value={ruecklage} onChange={setRuecklage} suffix="€/Mt" />
       <NumField label="Leerstandspuffer" value={leerstand} onChange={setLeerstand} suffix="%" step={0.5} />
       <NumField label="Wohnfläche" value={wfl} onChange={setWfl} suffix="m²" />
-      <NumField label="Aktuelle Miete" value={aktMiete} onChange={setAktMiete} suffix="€/M" />
+      <NumField label="Aktuelle Miete" value={aktMiete} onChange={setAktMiete} suffix="€/Mt" />
     </CalcShell>
   );
 }
@@ -637,7 +643,7 @@ function LeistbarkeitCalc({ a }: { a: ReturnType<typeof useActiveAssumptions> })
       }
     >
       <NumField label="Eigenkapital" value={ek} onChange={setEk} suffix="€" />
-      <NumField label="Wunsch-Monatsrate" value={rate} onChange={setRate} suffix="€/M" />
+      <NumField label="Wunsch-Monatsrate" value={rate} onChange={setRate} suffix="€/Mt" />
       <NumField label="Zinssatz p.a." value={zins} onChange={setZins} suffix="%" step={0.1} />
       <NumField label="Laufzeit" value={laufzeit} onChange={setLaufzeit} suffix="Jahre" />
       <NumField label="Nebenkosten" value={nkPct} onChange={setNkPct} suffix="%" step={0.5} />
@@ -752,8 +758,8 @@ function FixFlipCalc() {
       <NumField label="Haltedauer" value={haltedauerMonate} onChange={setHaltedauerMonate} suffix="Monate" />
 
       <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-3">Vermietung während Renovierung (optional)</div>
-      <NumField label="Mieteinnahmen mtl." value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/M" />
-      <NumField label="Betriebskosten mtl." value={betriebskosten} onChange={setBetriebskosten} suffix="€/M" />
+      <NumField label="Mieteinnahmen mtl." value={mieteinnahmen} onChange={setMieteinnahmen} suffix="€/Mt" />
+      <NumField label="Betriebskosten mtl." value={betriebskosten} onChange={setBetriebskosten} suffix="€/Mt" />
 
       <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mt-3">Verkauf</div>
       <NumField label="Ziel-Verkaufspreis" value={verkaufspreis} onChange={setVerkaufspreis} suffix="€" />

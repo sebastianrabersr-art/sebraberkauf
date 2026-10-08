@@ -58,7 +58,7 @@ function RatgeberIndex() {
             <a
               key={g.cat}
               href={`#cat-${slug(g.cat)}`}
-              className="text-[13px] px-3 py-1.5 rounded-full border border-[#EAE6DF] bg-white text-[#1C1917] hover:border-[#2D6A4F] hover:text-[#2D6A4F]"
+              className="text-[13px] px-3 py-1.5 rounded-full border border-[#EAE6DF] bg-white text-[#1C1917] hover:border-primary hover:text-primary"
             >
               {g.cat} <span className="text-ink-3 tabular-nums">{g.items.length}</span>
             </a>
@@ -84,7 +84,7 @@ function ArticleRow({ a }: { a: RatgeberArticle }) {
   return (
     <li className="border-b border-[#EAE6DF]">
       <Link to="/ratgeber/$slug" params={{ slug: a.slug }} className="group block py-5">
-        <div className="text-[16px] font-semibold leading-snug text-[#1C1917] group-hover:text-[#2D6A4F] text-balance">{a.title}</div>
+        <div className="text-[16px] font-semibold leading-snug text-[#1C1917] group-hover:text-primary text-balance">{a.title}</div>
         <p className="text-[14px] text-ink-2 mt-1.5 line-clamp-2 leading-relaxed">{a.description}</p>
         <div className="text-[12px] text-ink-3 mt-2">{a.readingMinutes} min Lesezeit</div>
       </Link>

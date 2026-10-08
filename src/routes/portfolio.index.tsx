@@ -34,7 +34,7 @@ function Portfolio() {
   if (!planLimits(subscription?.plan).portfolio) {
     return (
       <AppShell>
-        <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+        <div className="bg-[#F5F3EE] min-h-full">
           <div className="mb-5">
             <h1 className="heading-page-sm">Portfolio</h1>
             <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien.</p>
@@ -52,7 +52,7 @@ function Portfolio() {
   const addBtn = (
     <button
       onClick={() => navigate({ to: "/portfolio/new" })}
-      className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] text-white px-3 py-2 text-[13px] font-medium hover:bg-[#235740]"
+      className="inline-flex items-center gap-2 rounded-[8px] bg-primary text-white px-3 py-2 text-[13px] font-medium hover:bg-[#235740]"
     >
       <Plus className="w-4 h-4" /> Gekaufte Immobilie hinzufügen
     </button>
@@ -60,20 +60,24 @@ function Portfolio() {
 
   return (
     <AppShell>
-      <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+      <div className="bg-[#F5F3EE] min-h-full">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
             <h1 className="heading-page-sm">Portfolio</h1>
-            <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien — Cashflow nach dem Kauf nachverfolgen.</p>
+            <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien. Hier verfolgst du den Cashflow nach dem Kauf.</p>
           </div>
-          {addBtn}
+          {rows.length > 0 && addBtn}
         </div>
 
         {rows.length === 0 ? (
           <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-10 text-center text-ink-2">
-            <Building2 className="w-8 h-8 mx-auto mb-3 opacity-50" />
+            <Building2 className="w-8 h-8 mx-auto mb-3 opacity-50" aria-hidden />
             <div className="font-medium text-[#1C1917]">Noch keine gekauften Immobilien.</div>
-            <div className="text-[13px] mt-1">Klicke oben auf „Gekaufte Immobilie hinzufügen", um eine bereits gekaufte Immobilie zu erfassen.</div>
+            <div className="text-[13px] mt-1 max-w-md mx-auto">
+              Setz einen Kaufkandidaten in der{" "}
+              <Link to="/pipeline" className="font-medium text-primary underline-offset-4 hover:underline">Pipeline</Link>{" "}
+              auf „Gekauft“ und bestätige die Übernahme ins Portfolio. Oder erfasse eine Immobilie, die du schon besitzt.
+            </div>
             <div className="mt-4">{addBtn}</div>
           </div>
         ) : (
@@ -93,7 +97,7 @@ function Portfolio() {
                   key={p.id}
                   to="/portfolio/$id"
                   params={{ id: p.id }}
-                  className="block rounded-[12px] border border-[#EAE6DF] bg-white p-5 hover:border-[#2D6A4F] transition-colors"
+                  className="block rounded-[12px] border border-[#EAE6DF] bg-white p-5 hover:border-primary transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
@@ -101,19 +105,19 @@ function Portfolio() {
                       <div className="text-[12px] text-ink-3 mt-0.5 truncate">
                         {[p.adresse, p.bezirk, p.city, p.land].filter(Boolean).join(", ") || "—"}
                       </div>
-                      {pi.kaufdatum && <div className="text-[11px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
+                      {pi.kaufdatum && <div className="text-[12px] text-ink-3 mt-0.5">Kaufdatum: {pi.kaufdatum}</div>}
                     </div>
                     <span className="flex items-center gap-1.5 shrink-0">
                       {crmCount > 0 && (
                         <span
-                          className="text-[11px] rounded-[6px] px-2 py-0.5"
+                          className="text-[12px] rounded-[8px] px-2 py-0.5"
                           style={{ background: "#F5F3EE", color: "#78716C", border: "1px solid #EAE6DF" }}
                           title={`${crmCount} CRM-Aktivität${crmCount === 1 ? "" : "en"}`}
                         >
                           CRM · {crmCount}
                         </span>
                       )}
-                      <span className="text-[11px] rounded-[6px] px-2 py-0.5" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
+                      <span className="text-[12px] rounded-[8px] px-2 py-0.5" style={{ background: "#E8F5EE", color: "#2D6A4F" }}>Gekauft</span>
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">

@@ -6,6 +6,7 @@ import { ArrowRight, Check, ShieldCheck, Sparkle as Sparkles } from "@phosphor-i
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PLAN_PRICING, type Plan } from "@/lib/auth";
 import { track } from "@/lib/analytics";
+import { PLAN_HIGHLIGHTS } from "@/lib/planFeatures";
 
 type Interval = "monthly" | "yearly";
 type PriceKey = `${Exclude<Plan, "free">}_${"monthly" | "yearly"}`;
@@ -16,21 +17,7 @@ interface CheckoutOptions {
   returnUrl?: string;
 }
 
-const PLAN_FEATURES: Record<Exclude<Plan, "free">, string[]> = {
-  plus: [
-    "Bis zu 5 Immobilien",
-    "Vergleichs-Ansicht",
-    "PDF-Upload & KI-Analyse",
-    "Pipeline & Follow-ups",
-  ],
-  premium: [
-    "Unbegrenzt Immobilien & Projekte",
-    "Portfolio-Übersicht",
-    "Zahlungs-Tracking",
-    "Daten-Export",
-    "Alles aus Plus",
-  ],
-};
+const PLAN_FEATURES: Record<Exclude<Plan, "free">, string[]> = PLAN_HIGHLIGHTS;
 
 function parsePriceKey(key: string): { plan: Exclude<Plan, "free">; interval: Interval } | null {
   const [plan, interval] = key.split("_") as [Exclude<Plan, "free">, Interval];

@@ -66,9 +66,9 @@ function exportCSV(rows: any[]) {
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
 const selectClass =
-  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] appearance-none cursor-pointer";
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] pr-8 text-[13px] text-[#1C1917] outline-none focus:border-primary appearance-none cursor-pointer";
 const inputClass =
-  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none";
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[7px] text-[13px] text-[#1C1917] focus:border-primary focus:outline-none";
 const SelectWrap = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`relative ${className}`}>
     {children}
@@ -164,14 +164,14 @@ function PropertiesList() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowImport((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#2D6A4F] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#235740]"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#235740]"
           >
             <Plus className="size-4" /> {showImport ? "Schließen" : "Immobilie hinzufügen"}
           </button>
           {hasDemo && (
             <button
               onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
-              className="rounded-lg border border-[#EAE6DF] px-3 py-2 text-[12px] text-[#DC2626] hover:bg-[#FEE2E2]/40"
+              className="rounded-lg border border-[#EAE6DF] px-3 py-2 text-[12px] text-destructive hover:bg-[#FEE2E2]/40"
             >
               Demo-Daten löschen
             </button>
@@ -224,7 +224,7 @@ function PropertiesList() {
             onClick={() => exportCSV(rows)}
             title="CSV exportieren"
             aria-label="Als CSV exportieren"
-            className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-ink-2 hover:text-[#2D6A4F] hover:border-[#2D6A4F]/40"
+            className="ml-auto inline-flex items-center justify-center size-8 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white text-ink-2 hover:text-primary hover:border-primary/40"
           >
             <Download className="size-4" />
           </button>
@@ -234,7 +234,7 @@ function PropertiesList() {
         <button
           type="button"
           onClick={() => setScopeAll((v) => !v)}
-          className="text-[12px] text-ink-2 hover:text-[#2D6A4F] underline-offset-2 hover:underline"
+          className="text-[12px] text-ink-2 hover:text-primary underline-offset-2 hover:underline"
         >
           {scopeAll ? "Nur aktives Projekt anzeigen" : "Alle Projekte anzeigen"}
         </button>
@@ -243,7 +243,7 @@ function PropertiesList() {
 
       {sort !== DEFAULT_SORT && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F5EE] px-2.5 py-1 text-[12px] text-[#2D6A4F]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F5EE] px-2.5 py-1 text-[12px] text-primary">
             Sortiert nach: {SORT_OPTIONS.find((o) => o.value === sort)?.label}
             <button
               onClick={() => setSort(DEFAULT_SORT)}
@@ -281,12 +281,12 @@ function PropertiesList() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-display font-bold text-[15px] tabular-nums text-[#1C1917]">{p.kaufpreis ? fmtEUR(p.kaufpreis) : "—"}</div>
-                    <div className={`text-[12px] tabular-nums ${c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-[#2D6A4F]" : "text-ink-3"}`}>
+                    <div className={`text-[12px] tabular-nums ${c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-primary" : "text-ink-3"}`}>
                       {c.cashflowMtl === 0 ? "—" : `${fmtEUR(c.cashflowMtl)}/Monat`}
                     </div>
                   </div>
                 </div>
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[12px]">
                   {c.bruttorendite ? <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-ink-2 tabular-nums">{fmtPct(c.bruttorendite)} brutto</span> : null}
                   <AmpelBadge ampel={m.risiko === "niedrig" ? "green" : m.risiko === "mittel" ? "yellow" : "red"}>Mietrecht {m.risiko}</AmpelBadge>
                   <AmpelBadge ampel={dq.ampel}>Daten {dq.score}%</AmpelBadge>
@@ -359,7 +359,7 @@ function PropertiesList() {
                       )}
                     </td>
                     <td className="py-3 px-4 align-middle">
-                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-ink-2">{p.status}</span>
+                      <span className="inline-flex items-center rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[12px] text-ink-2">{p.status}</span>
                     </td>
                     <td className="py-3 px-4 align-middle text-[12px] text-ink-3">{p.priority ?? "—"}</td>
                     <td className="py-3 px-4 align-middle max-w-sm">
@@ -369,7 +369,7 @@ function PropertiesList() {
                       >
                         {p.title || "—"}
                       </div>
-                      <div className="text-[11px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                      <div className="text-[12px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
                     </td>
                     <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>
@@ -383,14 +383,14 @@ function PropertiesList() {
                       {p.nettomieteGeschaetzt && <div className="text-[10px] text-[#D97706]" style={{ fontFamily: "Inter" }}>geschätzt</div>}
                     </td>
                     <td className={`${COL_NUMERIC}`} style={bricolage} title="Mindestmiete für positiven Cashflow">
-                      <span className={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-[#2D6A4F]" : "text-[#D97706]"}>
+                      <span className={p.nettomieteMtl && p.nettomieteMtl >= c.requiredBreakEvenRent ? "text-primary" : "text-[#D97706]"}>
                         {num(c.requiredBreakEvenRent)}
                       </span>
                       <div className="text-[10px] text-ink-3" style={{ fontFamily: "Inter" }}>{c.requiredBreakEvenRentPerM2 ? `${fmtEUR(c.requiredBreakEvenRentPerM2)}/m²` : "—"}</div>
                     </td>
                     <td className={COL_NUMERIC} style={bricolage}>{c.bruttorendite ? fmtPct(c.bruttorendite) : <span className="text-ink-3">—</span>}</td>
                     <td className={`${COL_NUMERIC}`} style={bricolage}>
-                      <span className={c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-[#2D6A4F]" : "text-ink-3"}>
+                      <span className={c.cashflowMtl < 0 ? "text-[#B91C1C]" : c.cashflowMtl > 0 ? "text-primary" : "text-ink-3"}>
                         {c.cashflowMtl === 0 ? "—" : fmtEUR(c.cashflowMtl)}
                       </span>
                     </td>
@@ -413,12 +413,12 @@ function PropertiesList() {
                     <td className="py-3 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         {isValidUrl(p.link) ? (
-                          <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-[#2D6A4F] hover:text-[#235740]">
+                          <a href={p.link} target="_blank" rel="noopener noreferrer" title="Original-Inserat" className="text-primary hover:text-[#235740]">
                             <ExternalLink className="size-3.5" />
                           </a>
                         ) : <span className="text-[12px] text-ink-3">—</span>}
                         {maps && (
-                          <a href={maps} target="_blank" rel="noopener noreferrer" title="Karte öffnen" className="text-[#2D6A4F] hover:text-[#235740]">
+                          <a href={maps} target="_blank" rel="noopener noreferrer" title="Karte öffnen" className="text-primary hover:text-[#235740]">
                             <MapPin className="size-3.5" />
                           </a>
                         )}
@@ -429,7 +429,7 @@ function PropertiesList() {
                         onClick={() => setToDelete({ id: p.id, title: p.title || "Ohne Titel" })}
                         aria-label={`„${p.title || "Ohne Titel"}“ löschen`}
                         title="Löschen"
-                        className="inline-flex size-8 items-center justify-center rounded-[6px] text-ink-3 hover:text-[#B91C1C] hover:bg-[#FEE2E2]/50"
+                        className="inline-flex size-8 items-center justify-center rounded-[8px] text-ink-3 hover:text-[#B91C1C] hover:bg-[#FEE2E2]/50"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -491,7 +491,7 @@ function EmptyState({ filtersActive, onReset, onAdd }: { filtersActive: boolean;
         Füg den Link zu einem Inserat ein – kaufma liest die Daten aus und rechnet Rendite, Cashflow und Mietrecht-Risiko für dich.
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-        <button type="button" onClick={onAdd} className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#235740]">
+        <button type="button" onClick={onAdd} className="inline-flex items-center gap-2 rounded-[8px] bg-primary px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#235740]">
           <Plus className="size-4" aria-hidden /> Immobilie hinzufügen
         </button>
         <Link to="/properties/new" className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-2.5 text-[13px] font-medium text-[#1C1917] hover:border-[#1C1917]">

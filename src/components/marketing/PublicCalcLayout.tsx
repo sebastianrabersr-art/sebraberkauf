@@ -57,7 +57,7 @@ export function PublicCalcLayout({
         <div className="grid lg:grid-cols-5 gap-5 items-start">
           <div className="lg:col-span-3 space-y-3">
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 font-sans">Deine Angaben</h2>
-            <div className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 space-y-3">{inputs}</div>
+            <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 space-y-3">{inputs}</div>
           </div>
           <div ref={resultRef} className="lg:col-span-2 lg:sticky lg:top-6 scroll-mt-20">
             <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5">
@@ -83,7 +83,7 @@ export function PublicCalcLayout({
             <h2 className="font-display text-[20px] font-bold mb-4 text-[#1C1917]">Häufige Fragen</h2>
             <div className="space-y-3">
               {faq.map((f, i) => (
-                <div key={i} className="rounded-[10px] border border-[#EAE6DF] bg-white p-4">
+                <div key={i} className="rounded-[12px] border border-[#EAE6DF] bg-white p-4">
                   <div className="font-medium text-[14px] text-[#1C1917]">{f.q}</div>
                   <p className="text-[13px] text-ink-2 mt-1.5">{f.a}</p>
                 </div>
@@ -93,15 +93,15 @@ export function PublicCalcLayout({
         )}
 
         <section className="mt-10 grid sm:grid-cols-3 gap-3">
-          <Link to="/ratgeber" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+          <Link to="/ratgeber" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition">
             <div className="text-[13px] font-medium text-[#1C1917]">Ratgeber lesen</div>
             <div className="text-[12px] text-ink-2 mt-1">Hintergrundwissen zu Kauf, Rendite & Cashflow</div>
           </Link>
-          <Link to="/pricing" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+          <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition">
             <div className="text-[13px] font-medium text-[#1C1917]">Preise ansehen</div>
             <div className="text-[12px] text-ink-2 mt-1">Gratis, Plus, Premium</div>
           </Link>
-          <Link to="/signup" className="rounded-[10px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition">
+          <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition">
             <div className="text-[13px] font-medium text-[#1C1917]">Konto anlegen</div>
             <div className="text-[12px] text-ink-2 mt-1">Eine Immobilie gratis analysieren</div>
           </Link>
@@ -119,7 +119,7 @@ export function PublicCalcLayout({
 }
 
 const inputCls =
-  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-[14px] py-[11px] text-[13px] text-[#1C1917] outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 /** "300.000", "3,5", "1.250,50" → Zahl; leer → 0; Unlesbares → null (Eingabe wird ignoriert). */
 export function parseDeNumber(raw: string): number | null {
@@ -234,7 +234,7 @@ export function BigResult({ label, value, tone, verdict }: { label: string; valu
 }
 
 const TONE_DOT: Record<Tone, string> = {
-  good: "bg-[#2D6A4F]",
+  good: "bg-primary",
   bad: "bg-[#B91C1C]",
   caution: "bg-[#D97706]",
   neutral: "bg-[#A8A29E]",
@@ -282,7 +282,7 @@ function MobileResultBar({ summary, targetRef }: { summary: CalcSummary; targetR
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] text-ink-3 truncate">{summary.label}</div>
+          <div className="text-[12px] text-ink-3 truncate">{summary.label}</div>
           <div className={`font-display text-[22px] font-extrabold tabular-nums leading-tight ${TONE_TEXT[summary.tone ?? "neutral"]}`}>
             {summary.value}
           </div>

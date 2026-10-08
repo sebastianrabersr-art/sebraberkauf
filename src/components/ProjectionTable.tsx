@@ -66,7 +66,7 @@ export function ProjectionTable({ p }: { p: Property }) {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-[10px] border border-[#EAE6DF]">
+      <div className="overflow-x-auto rounded-[12px] border border-[#EAE6DF]">
         <table className="w-full text-left" style={inter}>
           <thead>
             <tr style={{ background: "#FAFAF8" }}>
@@ -187,7 +187,7 @@ function YearRow({
         <td className="px-[14px] py-[10px] text-[12px] font-medium" style={{ color: "#1C1917" }}>
           <span className="inline-flex items-center gap-1.5">
             <ChevronRight
-              className="size-[14px] transition-transform group-hover:text-[#2D6A4F]"
+              className="size-[14px] transition-transform group-hover:text-primary"
               style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", color: isOpen ? "#2D6A4F" : "var(--ink-3)" }}
             />
             Jahr {year}

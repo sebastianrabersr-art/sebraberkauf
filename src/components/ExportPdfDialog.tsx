@@ -89,7 +89,7 @@ export function ExportPdfDialog({
                   />
                   <span className="min-w-0">
                     <span className="block text-[14px] leading-tight text-[#1C1917]">{it.label}</span>
-                    <span className="block text-[11px] leading-tight mt-0.5" style={{ color: "#A8A29E" }}>{it.description}</span>
+                    <span className="block text-[12px] leading-tight mt-0.5 text-ink-3">{it.description}</span>
                   </span>
                 </label>
               ))}
@@ -112,7 +112,7 @@ export function ExportPdfDialog({
                 {pdf.exporting ? "Wird erstellt …" : "PDF erstellen"}
               </button>
             </div>
-            <p className="text-[11px] mt-3" style={{ color: "#A8A29E" }}>
+            <p className="text-[12px] mt-3 text-ink-2">
               Im Druckdialog „Als PDF speichern“ wählen.
             </p>
           </div>

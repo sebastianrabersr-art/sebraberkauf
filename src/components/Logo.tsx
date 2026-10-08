@@ -12,13 +12,13 @@ export function Logo({ size = 32, textSize = 16 }: { size?: number; textSize?: n
           >
             kaufma
           </span>
-          <span className="inline-block size-[7px] rounded-full bg-[#2D6A4F]" />
+          <span className="inline-block size-[7px] rounded-full bg-primary" />
         </span>
       ) : (
         <>
           <img
             src="/favicon.png"
-            alt="kaufma"
+            alt="kaufma Logo"
             width={size}
             height={size}
             className="rounded-full"

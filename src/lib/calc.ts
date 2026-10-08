@@ -1,4 +1,4 @@
-import type { Assumptions, FinanceScenario, Mietrecht, Property } from "./types";
+import type { Assumptions, FinanceScenario, Mietrecht, Property, ZinshausUnit } from "./types";
 import {
   computePurchaseCostBreakdown,
   resolvePurchaseCostRules,
@@ -580,6 +580,48 @@ export function resolveTotalPurchasePrice(p: Property): number {
   return p.totalPurchasePrice ?? p.kaufpreis ?? 0;
 }
 
+export interface ZinshausAggregate {
+  einheiten: number;
+  /** Einheiten mit Zustand "vermietet". */
+  belegt: number;
+  totalFlaeche: number;
+  /** Summe der Kaltmieten aller Einheiten (Soll). */
+  sollMiete: number;
+  /** Summe miete × (1 − leerstand) der vermieteten Einheiten. */
+  totalMiete: number;
+  /** Mietgewichteter Leerstand: 1 − totalMiete / sollMiete. */
+  leerstandsquote: number;
+}
+
+/**
+ * Zinshaus: Miete und Fläche über alle Einheiten.
+ * Leere und selbst genutzte Einheiten bringen keine Miete (zählen als 100 % Leerstand).
+ */
+export function calcZinshaus(units: ZinshausUnit[] | undefined): ZinshausAggregate {
+  const list = units ?? [];
+  let totalFlaeche = 0, sollMiete = 0, totalMiete = 0, belegt = 0;
+  for (const u of list) {
+    const flaeche = safeNonNeg(u.flaeche, 0);
+    const miete = safeNonNeg(u.miete, 0);
+    const leer = u.zustand === "vermietet" ? Math.min(1, safeNonNeg(u.leerstand, 0)) : 1;
+    totalFlaeche += flaeche;
+    sollMiete += miete;
+    totalMiete += miete * (1 - leer);
+    if (u.zustand === "vermietet") belegt++;
+  }
+  return {
+    einheiten: list.length,
+    belegt,
+    totalFlaeche,
+    sollMiete,
+    totalMiete,
+    leerstandsquote: sollMiete > 0 ? 1 - totalMiete / sollMiete : 0,
+  };
+}
+
+/** Zinshaus mit mindestens einer Einheit: Miete/Fläche kommen aus den Einheiten. */
+export const isZinshausWithUnits = (p: Property) => p.propertyType === "zinshaus" && (p.units?.length ?? 0) > 0;
+
 /**
  * Hauptfunktion – komponiert die obigen Bausteine zum Calc-Objekt.
  * Die Felder bleiben 1:1 wie bisher, damit kein UI-Code bricht.
@@ -590,12 +632,17 @@ export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCas
   // "normalisiertes" Property an die internen Helfer weiter, damit
   // Pauschalsätze, LTV, Renditen etc. konsistent mit derselben Zahl rechnen.
   const effectiveKaufpreis = resolveTotalPurchasePrice(p);
-  const pn: Property = { ...p, kaufpreis: effectiveKaufpreis };
+  // Zinshaus: Leerstand steckt schon pro Einheit in der Miete → allgemeinen Puffer nicht doppelt abziehen.
+  const zinshaus = isZinshausWithUnits(p) ? calcZinshaus(p.units) : null;
+  const pn: Property = zinshaus
+    ? { ...p, kaufpreis: effectiveKaufpreis, leerstandPufferPct: 0 }
+    : { ...p, kaufpreis: effectiveKaufpreis };
 
   // Wohnfläche: bei Häusern/Gewerbe nehmen wir alternativ livingAreaSqm
   // bzw. usableAreaSqm, damit Preis/m² und Rücklagen-Pauschale sinnvoll bleiben.
-  const m2 = p.wohnflaecheM2 ?? p.livingAreaSqm ?? p.usableAreaSqm ?? 0;
-  const miete = p.nettomieteMtl ?? 0;
+  // Zinshaus: Gesamtfläche und effektive Gesamtmiete aller Einheiten.
+  const m2 = zinshaus ? zinshaus.totalFlaeche : p.wohnflaecheM2 ?? p.livingAreaSqm ?? p.usableAreaSqm ?? 0;
+  const miete = zinshaus ? zinshaus.totalMiete : p.nettomieteMtl ?? 0;
 
   const purchase = calcPurchaseCosts(pn, a);
   const financing = calcFinancing(pn, a, purchase.gesamtkosten);
@@ -1168,9 +1215,11 @@ export function calcLongTermProjection(p: Property, a: Assumptions, c: Calc): Pr
   const mSteig = (proj.mietsteigerungPct ?? 2) / 100;
   const kSteig = (proj.kostensteigerungPct ?? 2) / 100;
   const wSteig = (proj.wertsteigerungPct ?? 1.5) / 100;
-  const leer = (proj.leerstandPct ?? (p.leerstandPufferPct != null ? p.leerstandPufferPct * 100 : a.leerstandPuffer * 100)) / 100;
+  const zinshaus = isZinshausWithUnits(p) ? calcZinshaus(p.units) : null;
+  // Zinshaus: Leerstand ist pro Einheit bereits in der effektiven Miete enthalten.
+  const leer = zinshaus ? 0 : (proj.leerstandPct ?? (p.leerstandPufferPct != null ? p.leerstandPufferPct * 100 : a.leerstandPuffer * 100)) / 100;
   const instand = proj.instandhaltungProJahr ?? 0;
-  const baseMiete = (p.nettomieteMtl ?? 0) * 12 * (1 - leer);
+  const baseMiete = (zinshaus ? zinshaus.totalMiete : p.nettomieteMtl ?? 0) * 12 * (1 - leer);
   const baseBK = (c.nichtUmlMtl + c.ruecklageMtl) * 12;
   const baseWert = p.kaufpreis ?? 0;
   const rateAnnual = c.kreditRateMtl * 12;

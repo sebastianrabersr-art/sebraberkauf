@@ -98,7 +98,7 @@ export function ChartCard({
               <button
                 key={r}
                 onClick={() => onRangeChange?.(r)}
-                className="text-[11px] font-medium px-2 py-1 rounded-[6px] transition-colors"
+                className="text-[12px] font-medium px-2 py-1 rounded-[8px] transition-colors"
                 style={{
                   background: active ? "#2D6A4F" : "#F5F3EE",
                   color: active ? "#FFFFFF" : "var(--ink-2)",

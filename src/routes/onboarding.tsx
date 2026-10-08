@@ -17,11 +17,26 @@ import {
   CircleNotch,
 } from "@phosphor-icons/react";
 import { Logo } from "@/components/Logo";
+import { useStore } from "@/lib/store";
+import { flushCloudSync } from "@/lib/cloud-sync";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [{ title: "Willkommen bei kaufma" }] }),
   component: Onboarding,
 });
+
+/** Eigenkapital und Zins in die Annahmen aller eigenen Projekte schreiben (Demo-Projekte bleiben unberührt). */
+function applyOnboardingAssumptions(ek: number | null, zinsPct: number | null) {
+  const { projects, activeProjectId, updateProjectAssumptions } = useStore.getState();
+  const own = projects.filter((p) => !p.isDemo);
+  const targets = own.length > 0 ? own : projects.filter((p) => p.id === activeProjectId);
+  for (const p of targets) {
+    updateProjectAssumptions(p.id, {
+      ...(ek != null ? { eigenkapital: ek } : {}),
+      ...(zinsPct != null ? { zinssatz: zinsPct / 100 } : {}),
+    });
+  }
+}
 
 const GOALS = [
   { id: "vermieten", label: "Vermieten", sub: "Immobilie als Investment kaufen und vermieten", icon: TrendUp },
@@ -61,12 +76,20 @@ function Onboarding() {
     setBusy(mode === "skip" ? "skip" : to);
     try {
       if (mode === "complete") {
+        const ek = Number(equity) || null;
+        const zinsPct = Number(String(zinssatz).replace(",", ".")) || null;
+        // Eine Quelle für Rechnungen: die Projekt-Annahmen. Neue Objekte übernehmen sie als Finanzierung.
+        applyOnboardingAssumptions(ek, zinsPct);
+        // Ziel als Vorauswahl für den Import merken (Strategie Vermieten / Fix & Flip).
+        try { localStorage.setItem("kaufma_goal", goal); } catch { /* privater Modus */ }
+        // Zusätzlich im Profil sichern – falls die Projekte beim ersten Login noch nicht geladen sind,
+        // legt cloud-sync das erste Projekt mit diesen Werten an.
         await supabase.from("user_settings").upsert({
           user_id: user.id,
           goal,
           location_focus: location.trim() || null,
-          default_equity: Number(equity) || null,
-          default_zinssatz: Number(String(zinssatz).replace(",", ".")) || null,
+          default_equity: ek,
+          default_interest_rate: zinsPct,
         } as any);
       }
       await supabase.from("profiles").update({
@@ -74,6 +97,8 @@ function Onboarding() {
         ...(mode === "complete" ? { first_name: vorname.trim() || null, last_name: nachname.trim() || null } : {}),
       } as any).eq("id", user.id);
       await refresh();
+      // Vor dem harten Seitenwechsel speichern, sonst gehen die neuen Annahmen verloren.
+      await flushCloudSync();
       if (mode === "complete") toast.success("Alles eingerichtet.");
     } catch (e) {
       console.error("Onboarding save error:", e);
@@ -88,9 +113,9 @@ function Onboarding() {
   };
 
   const inputCls =
-    "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-[11px] text-[15px] text-[#1C1917] outline-none focus:border-[#2D6A4F] transition-colors placeholder:text-ink-3";
+    "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-[11px] text-[15px] text-[#1C1917] outline-none focus:border-primary transition-colors placeholder:text-ink-3";
   const primaryBtn =
-    "w-full mt-6 rounded-[10px] py-3 text-[14px] font-semibold text-white bg-[#2D6A4F] hover:bg-[#235740] transition-colors flex items-center justify-center gap-2 disabled:opacity-60";
+    "w-full mt-6 rounded-[12px] py-3 text-[14px] font-semibold text-white bg-primary hover:bg-[#235740] transition-colors flex items-center justify-center gap-2 disabled:opacity-60";
   const labelCls = "flex items-center gap-1.5 mb-1.5 text-[12px] text-ink-2";
   const h2Cls = "font-display text-[22px] font-extrabold text-[#1C1917]";
 
@@ -123,7 +148,7 @@ function Onboarding() {
               aria-label="Fortschritt"
             >
               <div
-                className="h-full bg-[#2D6A4F] rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                className="h-full bg-primary rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
                 style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
               />
             </div>
@@ -136,12 +161,12 @@ function Onboarding() {
             <div>
               <h1 className="heading-page-sm">Willkommen bei kaufma.</h1>
               <p className="text-[14px] text-ink-2 mt-3 leading-relaxed">
-                Zwei kurze Fragen, dann analysierst du deine erste Immobilie. Dauert etwa eine Minute.
+                Zwei kurze Schritte, dann analysierst du deine erste Immobilie. Dauert etwa eine Minute.
               </p>
               <ul className="mt-6 space-y-2.5">
                 {["Inserate direkt importieren", "Rendite, Cashflow & Mietrecht prüfen", "Immobilien vergleichen & entscheiden"].map((item) => (
                   <li key={item} className="flex items-center gap-2.5">
-                    <CheckCircle className="size-4 shrink-0 text-[#2D6A4F]" aria-hidden />
+                    <CheckCircle className="size-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-[14px] text-[#1C1917]">{item}</span>
                   </li>
                 ))}
@@ -164,7 +189,7 @@ function Onboarding() {
           {step === 1 && (
             <form onSubmit={next}>
               <h2 className={h2Cls}>Wie heißt du?</h2>
-              <p className="text-[13px] text-ink-2 mt-1 mb-5">Optional – erscheint auf Kaufangeboten und Dokumenten, die du erstellst.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Optional – damit wir dich in der App mit Namen ansprechen.</p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div>
                   <label htmlFor={ids.vorname} className={labelCls}>Vorname</label>
@@ -187,18 +212,18 @@ function Onboarding() {
                       role="radio"
                       aria-checked={active}
                       onClick={() => setGoal(g.id)}
-                      className={`w-full flex items-center gap-3 rounded-[10px] border-[1.5px] px-4 py-3 text-left transition-colors ${
-                        active ? "border-[#2D6A4F] bg-[#E8F5EE]" : "border-[#EAE6DF] bg-white hover:border-[#1C1917]"
+                      className={`w-full flex items-center gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-colors ${
+                        active ? "border-primary bg-[#E8F5EE]" : "border-[#EAE6DF] bg-white hover:border-[#1C1917]"
                       }`}
                     >
-                      <span className={`size-8 rounded-[8px] grid place-items-center shrink-0 ${active ? "bg-[#2D6A4F] text-white" : "bg-[#F5F3EE] text-ink-2"}`}>
+                      <span className={`size-8 rounded-[8px] grid place-items-center shrink-0 ${active ? "bg-primary text-white" : "bg-[#F5F3EE] text-ink-2"}`}>
                         <g.icon className="size-4" aria-hidden />
                       </span>
                       <span>
-                        <span className={`block text-[14px] font-semibold ${active ? "text-[#2D6A4F]" : "text-[#1C1917]"}`}>{g.label}</span>
+                        <span className={`block text-[14px] font-semibold ${active ? "text-primary" : "text-[#1C1917]"}`}>{g.label}</span>
                         <span className="block text-[12px] text-ink-2">{g.sub}</span>
                       </span>
-                      {active && <CheckCircle className="size-4 ml-auto shrink-0 text-[#2D6A4F]" aria-hidden />}
+                      {active && <CheckCircle className="size-4 ml-auto shrink-0 text-primary" aria-hidden />}
                     </button>
                   );
                 })}
@@ -212,7 +237,7 @@ function Onboarding() {
           {step === 2 && (
             <form onSubmit={next}>
               <h2 className={h2Cls}>Deine Finanzdaten</h2>
-              <p className="text-[13px] text-ink-2 mt-1 mb-5">Startwerte für alle Berechnungen – jederzeit in den Einstellungen änderbar.</p>
+              <p className="text-[13px] text-ink-2 mt-1 mb-5">Startwerte für die Finanzierung deiner Objekte – jederzeit unter Einstellungen → Annahmen änderbar.</p>
 
               <div className="space-y-4">
                 <div>
@@ -250,16 +275,16 @@ function Onboarding() {
                   type="button"
                   onClick={() => finish("/analyze", "complete")}
                   disabled={!!busy}
-                  className="w-full flex items-center gap-4 rounded-[12px] border-[1.5px] border-[#2D6A4F] bg-[#E8F5EE] px-5 py-4 text-left hover:bg-[#d8f0e4] transition-colors disabled:opacity-60"
+                  className="w-full flex items-center gap-4 rounded-[12px] border-[1.5px] border-primary bg-[#E8F5EE] px-5 py-4 text-left hover:bg-[#d8f0e4] transition-colors disabled:opacity-60"
                 >
-                  <span className="size-10 rounded-[10px] bg-[#2D6A4F] text-white grid place-items-center shrink-0">
+                  <span className="size-10 rounded-[12px] bg-primary text-white grid place-items-center shrink-0">
                     {busy === "/analyze" ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <LinkSimple className="size-5" aria-hidden />}
                   </span>
                   <span>
                     <span className="block text-[14px] font-semibold text-[#1C1917]">Erste Immobilie analysieren</span>
                     <span className="block text-[12px] text-ink-2">Link zum Inserat einfügen oder Daten selbst eingeben</span>
                   </span>
-                  <CaretRight className="size-4 ml-auto shrink-0 text-[#2D6A4F]" aria-hidden />
+                  <CaretRight className="size-4 ml-auto shrink-0 text-primary" aria-hidden />
                 </button>
 
                 <button
@@ -268,7 +293,7 @@ function Onboarding() {
                   disabled={!!busy}
                   className="w-full flex items-center gap-4 rounded-[12px] border-[1.5px] border-[#EAE6DF] bg-white px-5 py-4 text-left hover:border-[#1C1917] transition-colors disabled:opacity-60"
                 >
-                  <span className="size-10 rounded-[10px] bg-[#F5F3EE] text-ink-2 grid place-items-center shrink-0">
+                  <span className="size-10 rounded-[12px] bg-[#F5F3EE] text-ink-2 grid place-items-center shrink-0">
                     {busy === "/dashboard" ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <House className="size-5" aria-hidden />}
                   </span>
                   <span>

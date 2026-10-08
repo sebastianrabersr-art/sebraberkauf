@@ -7,7 +7,6 @@ import { redeemPromoCode } from "@/lib/api/redeem-promo.functions";
 import { deleteOwnAccount } from "@/lib/api/delete-account.functions";
 import { toast } from "sonner";
 import { CircleNotch as Loader2 } from "@phosphor-icons/react";
-import { GlossarList } from "@/components/GlossarList";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
@@ -60,16 +59,13 @@ const descStyle: React.CSSProperties = {
   marginTop: 4,
 };
 const inpCls =
-  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
-const numInpCls =
-  inpCls +
-  " [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary focus:outline-none hover:border-[#1C1917]";
 const btnPrimaryCls =
-  "inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#2D6A4F] px-[18px] py-[9px] text-[13px] font-medium text-white hover:bg-[#235740] disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-[8px] bg-primary px-[18px] py-[9px] text-[13px] font-medium text-white hover:bg-[#235740] disabled:opacity-60";
 const btnSecondaryCls =
   "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-[#EAE6DF] px-[18px] py-[9px] text-[13px] text-[#1C1917] hover:border-[#1C1917] disabled:opacity-60";
 const btnDangerCls =
-  "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-[#DC2626] px-[18px] py-[9px] text-[13px] text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-destructive px-[18px] py-[9px] text-[13px] text-destructive hover:bg-[#FEF2F2] disabled:opacity-60";
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
@@ -146,7 +142,6 @@ function SettingsPage() {
   const [lastName, setLastName] = useState<string>((profile as any)?.last_name ?? "");
   const [address, setAddress] = useState<string>((profile as any)?.address ?? "");
   const [marketing, setMarketing] = useState(profile?.marketing_opt_in ?? false);
-  const [settings, setSettings] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
   const [portalBusy, setPortalBusy] = useState(false);
@@ -162,11 +157,6 @@ function SettingsPage() {
     setMarketing(profile?.marketing_opt_in ?? false);
   }, [profile]);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => setSettings(data));
-  }, [user]);
-
   const saveProfile = async () => {
     if (!user) return;
     setBusy(true);
@@ -181,21 +171,13 @@ function SettingsPage() {
       } as any)
       .eq("id", user.id);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("Profil speichern:", error);
+      return toast.error("Dein Profil konnte nicht gespeichert werden. Bitte versuch es gleich noch einmal.");
+    }
     await refresh();
     toast.success("Profil gespeichert");
   };
-
-  const saveSettings = async () => {
-    if (!user) return;
-    setBusy(true);
-    const { error } = await supabase.from("user_settings").upsert({ user_id: user.id, ...settings });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Einstellungen gespeichert");
-  };
-
-  const setS = (k: string, v: any) => setSettings((p: any) => ({ ...(p ?? { user_id: user!.id }), [k]: v }));
 
   const upgrade = (plan: "plus" | "premium") => {
     if (!isStripeConfigured()) return toast.error("Zahlungen sind noch nicht konfiguriert.");
@@ -216,7 +198,8 @@ function SettingsPage() {
       if ("error" in res) throw new Error(res.error);
       window.open(res.url, "_blank");
     } catch (e: any) {
-      toast.error(e?.message ?? "Portal konnte nicht geöffnet werden.");
+      console.error("Kundenportal:", e);
+      toast.error("Die Abo-Verwaltung konnte gerade nicht geöffnet werden. Bitte versuch es gleich noch einmal oder schreib an hallo@kaufma.eu.");
     } finally {
       setPortalBusy(false);
     }
@@ -336,8 +319,8 @@ function SettingsPage() {
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Chip>Immobilien: {limits.properties ?? "∞"}</Chip>
                 <Chip>Projekte: {limits.projects ?? "∞"}</Chip>
-                <Chip>Vergleich: {limits.compareLimit > 0 ? "enthalten" : "—"}</Chip>
-                <Chip>Portfolio: {limits.portfolio ? "enthalten" : "—"}</Chip>
+                <Chip>Vergleich: {limits.compareLimit > 0 ? `bis ${limits.compareLimit} Objekte` : "nicht enthalten"}</Chip>
+                <Chip>Portfolio: {limits.portfolio ? "enthalten" : "nicht enthalten"}</Chip>
               </div>
             </div>
             {hasActiveSub && (
@@ -402,41 +385,6 @@ function SettingsPage() {
 
         <PromoCodeCard />
 
-        {/* Benachrichtigungen */}
-        <section className={cardCls} style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Benachrichtigungen</h2>
-          <div className="space-y-3 mt-4">
-            {[
-              ["tasks_due", "Aufgaben fällig"],
-              ["followup_reminders", "Follow-up Erinnerungen"],
-              ["viewing_reminders", "Besichtigungs-Erinnerungen"],
-              ["weekly_summary", "Wöchentliche Zusammenfassung"],
-              ["product_updates", "Produkt-Updates"],
-            ].map(([k, label]) => {
-              const np = settings?.notification_preferences ?? {};
-              const v = np[k] ?? true;
-              return (
-                <div key={k} className="flex items-center justify-between">
-                  <div style={{ fontFamily: "Inter", fontSize: 13, color: "#1C1917" }}>{label}</div>
-                  <Toggle checked={v} onChange={(checked) => setS("notification_preferences", { ...np, [k]: checked })} label={label} />
-                </div>
-              );
-            })}
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Benachrichtigungen speichern
-          </button>
-        </section>
-
-        {/* Glossar */}
-        <section className={cardCls} style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Fachbegriffe</h2>
-          <p style={{ ...descStyle, marginTop: 4, marginBottom: 12 }}>
-            Alle wichtigen Begriffe rund um Rendite, Finanzierung und Analyse.
-          </p>
-          <GlossarList />
-        </section>
-
         {/* Konto / Danger zone */}
         <section className={cardCls} style={cardStyle}>
           <h2 style={sectionTitleStyle}>Konto</h2>
@@ -467,60 +415,12 @@ function SettingsPage() {
       {tab === "annahmen" && (
       <div className="space-y-8">
         <AssumptionsPanel />
-
-        {/* Standardwerte */}
-        <section className={cardCls} style={{ ...cardStyle, maxWidth: 680 }}>
-          <h2 style={sectionTitleStyle}>Standardwerte für neue Immobilien</h2>
-          <p style={{ ...descStyle, marginTop: 4 }}>Werden bei neuen Objekten vorausgefüllt.</p>
-          <div className="grid sm:grid-cols-2 gap-3 mt-4">
-            <NumField label="Eigenkapital" suffix="€" desc="Standard-Eigenkapital" v={settings?.default_equity} onChange={(v) => setS("default_equity", v)} />
-            <NumField label="Zinssatz" suffix="%" desc="Aktueller Marktzins" v={settings?.default_interest_rate} onChange={(v) => setS("default_interest_rate", v)} />
-            <NumField label="Laufzeit" suffix="Jahre" desc="Kreditlaufzeit" v={settings?.default_loan_term} onChange={(v) => setS("default_loan_term", v)} />
-            <NumField label="Maklerprovision" suffix="%" desc="Kauf-Provision" v={settings?.default_commission_percent} onChange={(v) => setS("default_commission_percent", v)} />
-            <NumField label="USt" suffix="%" desc="Umsatzsteuer" v={settings?.default_vat_rate} onChange={(v) => setS("default_vat_rate", v)} />
-            <NumField label="Grunderwerbsteuer" suffix="%" desc="Standard 3,5 %" v={settings?.default_grunderwerbsteuer} onChange={(v) => setS("default_grunderwerbsteuer", v)} />
-            <NumField label="Grundbuch" suffix="%" desc="Eintragungsgebühr" v={settings?.default_grundbuchkosten} onChange={(v) => setS("default_grundbuchkosten", v)} />
-            <NumField label="Vertragskosten" suffix="%" desc="Notar & Anwalt" v={settings?.default_vertragskosten} onChange={(v) => setS("default_vertragskosten", v)} />
-            <NumField label="Leerstandspuffer" suffix="%" desc="Mietausfallsrisiko" v={settings?.default_vacancy_buffer} onChange={(v) => setS("default_vacancy_buffer", v)} />
-            <NumField label="Instandhaltung" suffix="€/m²/J" desc="Reserve pro Jahr" v={settings?.default_repair_reserve} onChange={(v) => setS("default_repair_reserve", v)} />
-          </div>
-          <button className={btnPrimaryCls + " mt-4"} disabled={busy} onClick={saveSettings}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}Standardwerte speichern
-          </button>
-        </section>
       </div>
       )}
 
       {tab === "erinnerungen" && <RemindersPanel />}
       {checkoutDialog}
     </AppShell>
-  );
-}
-
-function NumField({
-  label,
-  v,
-  onChange,
-  suffix,
-  desc,
-}: {
-  label: string;
-  v: any;
-  onChange: (n: number | null) => void;
-  suffix?: string;
-  desc?: string;
-}) {
-  return (
-    <div>
-      <label style={labelStyle}>{label}{suffix ? ` (${suffix})` : ""}</label>
-      <input
-        type="number"
-        className={numInpCls}
-        value={v ?? ""}
-        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-      />
-      {desc && <div style={descStyle}>{desc}</div>}
-    </div>
   );
 }
 
@@ -570,12 +470,12 @@ function PromoCodeCard() {
           placeholder="Code eingeben"
           spellCheck={false}
           autoCapitalize="characters"
-          className="flex-1 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] uppercase tracking-wider focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]"
+          className="flex-1 rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] uppercase tracking-wider focus:border-primary focus:outline-none hover:border-[#1C1917]"
         />
         <button
           type="submit"
           disabled={busy || !code.trim()}
-          className="inline-flex items-center gap-2 rounded-[8px] bg-[#2D6A4F] px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-[#235740] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-[8px] bg-primary px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-[#235740] disabled:opacity-60"
         >
           {busy && <Loader2 className="size-3.5 animate-spin" />}
           Einlösen

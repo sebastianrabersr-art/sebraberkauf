@@ -6,9 +6,10 @@ import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.fu
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer, Buildings } from "@phosphor-icons/react";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 
 type TabKey = "link" | "text" | "excel" | "manuell";
 
@@ -98,13 +99,18 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   };
   const project = useActiveProject();
   const { addProperty, findByLink, properties } = useStore();
+  const propertyLimit = usePropertyLimit();
 
   const [activeTab, setActiveTab] = useState<TabKey>("link");
   const [url, setUrl] = useState(initialUrl);
   const [text, setText] = useState("");
   const [textUrl, setTextUrl] = useState("");
   const [manualTitle, setManualTitle] = useState("");
-  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip">("buy_and_hold");
+  // "zinshaus" ist keine eigene Strategie, sondern ein Objekttyp mit Einheiten (vermietet = Buy & Hold).
+  // Vorauswahl aus dem Onboarding-Ziel ("Fix & Flip" → Fix & Flip, sonst Vermieten).
+  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip" | "zinshaus">(() => {
+    try { return localStorage.getItem("kaufma_goal") === "fixflip" ? "fix_and_flip" : "buy_and_hold"; } catch { return "buy_and_hold"; }
+  });
   const [propertyType, setPropertyType] = useState<"apartment" | "house" | "multi_family" | "land">("apartment");
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState(0);
@@ -199,10 +205,12 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       nettomieteMtl: d.estimated_rent_monthly, nettomieteGeschaetzt: d.rent_is_estimate,
       missingData: d.missing_data,
     });
-    const dq = calcDataQuality(draft);
-    const status: Property["extractionStatus"] = dq.score >= 60 ? "ok" : "partial";
-    const p = makeEmptyProperty({ ...draft, extractionStatus: status });
-    addProperty(p);
+    const draftDq = calcDataQuality(draft);
+    const status: Property["extractionStatus"] = draftDq.score >= 60 ? "ok" : "partial";
+    addProperty(makeEmptyProperty({ ...draft, extractionStatus: status }));
+    // Der Store ergänzt ggf. die Standard-Finanzierung – Qualität am gespeicherten Objekt messen.
+    const p = useStore.getState().properties.find((x) => x.id === draft.id) ?? draft;
+    const dq = calcDataQuality(p);
     setResult({ property: p, quality: dq, partial: dq.score < 60 });
     if (dq.score < 60) {
       toast.warning(`Nur ${dq.score}% der wichtigen Daten gefunden – Import unvollständig.`);
@@ -223,6 +231,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       });
       return;
     }
+    if (!propertyLimit.guard()) return;
     setLoading(true);
     try {
       const res = await extract({ data: { url, text: "" } });
@@ -232,7 +241,10 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       }
       applyExtracted(res.data, url);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      console.error("Link-Import:", e);
+      // Gleicher Ausweg wie bei einem nicht lesbaren Inserat: Text einfügen.
+      setTextUrl(url); setActiveTab("text"); setAutoSwitchNotice(true);
+      toast.error("Das Inserat konnte gerade nicht geladen werden. Kopier den Text des Inserats hier hinein – das klappt fast immer.");
     } finally { setLoading(false); }
   };
 
@@ -242,13 +254,16 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
     if (text.includes("\t")) {
       const { rows, hasHeader } = parseTSV(text);
       if (hasHeader && rows.length > 0) {
+        if (!propertyLimit.guard()) return;
         let created = 0;
+        let skippedByLimit = 0;
         for (const row of rows) {
           const partial = rowToProperty(row, project.id);
           if (partial.link) {
             const dup = checkDuplicate(partial.link as string);
             if (dup) continue;
           }
+          if (created >= propertyLimit.remaining) { skippedByLimit++; continue; }
           const p = makeEmptyProperty({ ...partial, projectId: project.id, extractionStatus: "manuell" });
           addProperty(p);
           created++;
@@ -258,6 +273,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
           }
         }
         toast.success(rows.length === 1 ? "Immobilie aus Excel importiert" : `${created} Immobilien aus Excel importiert`);
+        if (skippedByLimit > 0) {
+          toast.warning(`${skippedByLimit} weitere Zeile${skippedByLimit === 1 ? "" : "n"} nicht importiert: Plan-Limit erreicht.`);
+        }
         setText("");
         return;
       }
@@ -271,17 +289,27 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         return;
       }
     }
+    if (!propertyLimit.guard()) return;
     setLoading(true);
     try {
       const res = await extract({ data: { url: textUrl, text } });
-      if (!res.ok) { toast.error(res.error || "Extraktion fehlgeschlagen."); return; }
+      if (!res.ok) {
+        toast.error("Aus dem Text ließen sich keine Daten auslesen. Prüf, ob Preis und Fläche enthalten sind, oder leg das Objekt manuell an.", {
+          action: { label: "Manuell anlegen", onClick: () => setActiveTab("manuell") },
+        });
+        return;
+      }
       applyExtracted(res.data, textUrl);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      console.error("Text-Import:", e);
+      toast.error("Das Auslesen hat gerade nicht geklappt. Bitte versuch es gleich noch einmal oder leg das Objekt manuell an.", {
+        action: { label: "Manuell anlegen", onClick: () => setActiveTab("manuell") },
+      });
     } finally { setLoading(false); }
   };
 
   const createManual = () => {
+    if (!propertyLimit.guard()) return;
     const title = manualTitle.trim() || "Neue Immobilie";
     const mappedType: Property["propertyType"] =
       propertyType === "house" || propertyType === "multi_family"
@@ -289,12 +317,14 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         : propertyType === "land"
         ? "land_only"
         : "apartment";
+    const isZinshaus = strategy === "zinshaus";
     const p = makeEmptyProperty({
       projectId: project.id,
       title,
       extractionStatus: "manuell",
-      investmentStrategy: strategy,
-      propertyType: mappedType,
+      investmentStrategy: isZinshaus ? "buy_and_hold" : strategy,
+      propertyType: isZinshaus ? "zinshaus" : mappedType,
+      ...(isZinshaus ? { units: [], objekttyp: "Zinshaus" } : {}),
     });
     addProperty(p);
     navigate({ to: "/properties/$id", params: { id: p.id } });
@@ -309,6 +339,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
 
   return (
     <div>
+      {propertyLimit.dialog}
       {/* Tab Pills */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {TABS.map((t) => {
@@ -367,7 +398,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                 {loading ? "Lädt…" : "Analysieren"}
               </button>
             </div>
-            <p className="text-[11px] text-ink-3 mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
+            <p className="text-[12px] text-ink-3 mt-2">Funktioniert bei willhaben, kleinanzeigen, ohne-makler und vielen weiteren Portalen.</p>
             {(platform || country) && (
               <div className="mt-2 flex gap-1">
                 {platform && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F3EE] border border-[#EAE6DF] text-ink-2">{platform}</span>}
@@ -394,7 +425,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
               style={{ width: "100%", minHeight: 200, border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "9px 12px", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit" }}
             />
             <div className="mt-3">
-              <label className="block text-[11px] text-ink-3 mb-1">Link zur Immobilie (optional)</label>
+              <label className="block text-[12px] text-ink-3 mb-1">Link zur Immobilie (optional)</label>
               <input type="url" value={textUrl} placeholder="https://..." onChange={(e) => setTextUrl(e.target.value)}
                 style={{ width: "100%", border: "1.5px solid #EAE6DF", borderRadius: 8, padding: "7px 12px", fontSize: 12, outline: "none" }} />
             </div>
@@ -424,7 +455,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
             >
               <DownloadSimple weight="duotone" size={16} /> Vorlage herunterladen
             </button>
-            <p className="text-[11px] text-ink-3 mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
+            <p className="text-[12px] text-ink-3 mt-3">Die Vorlage enthält alle importierbaren Felder mit Beispielwerten und Hinweisen.</p>
           </div>
         )}
 
@@ -434,10 +465,11 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
 
             <div className="mb-4">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Investmentstrategie</div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                 {([
                   { key: "buy_and_hold" as const, label: "Buy & Hold", sub: "Kaufen & vermieten" },
                   { key: "fix_and_flip" as const, label: "Fix & Flip", sub: "Kaufen, sanieren, verkaufen" },
+                  { key: "zinshaus" as const, label: "Zinshaus", sub: "Mehrere Wohneinheiten, aggregierte Rendite" },
                 ]).map((s) => {
                   const active = strategy === s.key;
                   return (
@@ -445,23 +477,29 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                       key={s.key}
                       type="button"
                       onClick={() => setStrategy(s.key)}
-                      className="flex items-center gap-3 rounded-[10px] border-[1.5px] px-4 py-3 text-left transition-all"
+                      className="flex items-center gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-all"
                       style={{ borderColor: active ? "#2D6A4F" : "#EAE6DF", background: active ? "#E8F5EE" : "white" }}
                     >
                       <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
                         style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
                         {s.key === "buy_and_hold"
                           ? <Home className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
-                          : <Hammer className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />}
+                          : s.key === "fix_and_flip"
+                          ? <Hammer className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
+                          : <Buildings className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />}
                       </div>
                       <div>
                         <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{s.label}</div>
-                        <div className="text-[11px] text-ink-3">{s.sub}</div>
+                        <div className="text-[12px] text-ink-3">{s.sub}</div>
                       </div>
                     </button>
                   );
                 })}
               </div>
+              {strategy === "zinshaus" ? (
+                <p className="text-[12px] text-ink-2">Die Einheiten (Tops, Geschäftslokale) legst du danach im Tab „Einheiten“ an.</p>
+              ) : (
+              <>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Objektart</div>
               <div className="flex flex-wrap gap-2">
                 {([
@@ -488,6 +526,8 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
                   );
                 })}
               </div>
+              </>
+              )}
             </div>
 
             <label className="block text-[13px] font-medium text-[#1C1917] mb-2">Titel *</label>
@@ -502,9 +542,9 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
         )}
 
         {result && (
-          <div className={`mt-5 rounded-[10px] border p-4 text-[13px] ${result.partial ? "border-[#F59E0B]/40 bg-[#FEF3C7]" : "border-[#2D6A4F]/30 bg-[#ECFDF5]"}`}>
+          <div className={`mt-5 rounded-[12px] border p-4 text-[13px] ${result.partial ? "border-[#F59E0B]/40 bg-[#FEF3C7]" : "border-primary/30 bg-[#ECFDF5]"}`}>
             <div className="flex items-start gap-2">
-              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0 text-[#92400E]" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-[#2D6A4F]" />}
+              {result.partial ? <AlertTriangle className="size-5 mt-0.5 shrink-0 text-[#92400E]" /> : <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-primary" />}
               <div className="flex-1">
                 <div className="font-semibold text-[#1C1917]">
                   {result.partial ? "Import unvollständig" : "Import erfolgreich"}

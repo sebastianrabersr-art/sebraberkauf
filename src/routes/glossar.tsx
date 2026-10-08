@@ -24,7 +24,7 @@ function GlossarPage() {
   if (session) {
     return (
       <AppShell>
-        <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+        <div className="bg-[#F5F3EE] min-h-full">
           <div className="max-w-3xl">
             <header className="mb-6">
               <h1 className="heading-page-sm">Glossar</h1>

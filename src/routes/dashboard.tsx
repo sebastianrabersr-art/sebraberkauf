@@ -33,7 +33,7 @@ type Row = {
 
 /** Ampel → Badge-Farben. Grau = keine Bewertung möglich (Kaufpreis oder Miete fehlt), nicht "schlecht". */
 function decisionBadge(ampel: Row["s"]["ampel"]) {
-  if (ampel === "green") return "bg-[#E8F5EE] text-[#2D6A4F]";
+  if (ampel === "green") return "bg-[#E8F5EE] text-primary";
   if (ampel === "yellow") return "bg-[#FEF3C7] text-[#92400E]";
   if (ampel === "gray") return "bg-[#F5F3EE] text-[#78716C]";
   return "bg-[#FEE2E2] text-[#991B1B]";
@@ -58,7 +58,7 @@ function FirstRunHint() {
       <ul className="mt-3 grid sm:grid-cols-3 gap-x-6 gap-y-4">
         {items.map((it) => (
           <li key={it.title} className="flex gap-3">
-            <it.icon className="size-5 shrink-0 text-[#2D6A4F] mt-0.5" aria-hidden />
+            <it.icon className="size-5 shrink-0 text-primary mt-0.5" aria-hidden />
             <div>
               <div className="text-[13px] font-medium text-[#1C1917]">{it.title}</div>
               <p className="text-[13px] text-ink-2 mt-0.5 leading-snug">{it.text}</p>
@@ -68,9 +68,9 @@ function FirstRunHint() {
       </ul>
       <p className="mt-6 text-[13px] text-ink-2">
         Kein Inserat zur Hand?{" "}
-        <Link to="/properties/new" className="text-[#2D6A4F] font-medium underline-offset-4 hover:underline">Daten selbst eingeben</Link>
+        <Link to="/properties/new" className="text-primary font-medium underline-offset-4 hover:underline">Daten selbst eingeben</Link>
         {" "}oder{" "}
-        <Link to="/rechner" className="text-[#2D6A4F] font-medium underline-offset-4 hover:underline">mit einem Rechner anfangen</Link>.
+        <Link to="/rechner" className="text-primary font-medium underline-offset-4 hover:underline">mit einem Rechner anfangen</Link>.
       </p>
     </section>
   );
@@ -107,7 +107,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
         aria-pressed={active}
         aria-label={label}
         title={label}
-        className="grid place-items-center size-8 rounded-[8px] transition-colors hover:bg-[#F5F3EE] focus-visible:outline-2 focus-visible:outline-[#2D6A4F]"
+        className="grid place-items-center size-8 rounded-[8px] transition-colors hover:bg-[#F5F3EE] focus-visible:outline-2 focus-visible:outline-primary"
         style={{ color: active ? "#2D6A4F" : "#A8A29E" }}
       >
         <Icon size={18} weight={active ? "fill" : "regular"} aria-hidden />
@@ -130,7 +130,7 @@ function CandidateCard({ r, onOpen }: { r: Row; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex flex-col text-left rounded-[10px] border border-[#EAE6DF] bg-white p-4 transition-colors hover:border-[#2D6A4F] focus-visible:outline-2 focus-visible:outline-[#2D6A4F]"
+      className="group flex flex-col text-left rounded-[12px] border border-[#EAE6DF] bg-white p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="font-display font-extrabold tabular-nums text-[24px] leading-none" style={{ color: scoreColor(score) }}>
@@ -143,15 +143,15 @@ function CandidateCard({ r, onOpen }: { r: Row; onOpen: () => void }) {
       <div className="mt-0.5 text-[12px] text-ink-3 truncate">{address || "Adresse fehlt"}</div>
       <dl className="mt-auto pt-4 grid grid-cols-3 gap-2">
         <div>
-          <dt className="text-[11px] text-ink-3">Kaufpreis</dt>
+          <dt className="text-[12px] text-ink-3">Kaufpreis</dt>
           <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</dd>
         </div>
         <div>
-          <dt className="text-[11px] text-ink-3">Rendite</dt>
+          <dt className="text-[12px] text-ink-3">Rendite</dt>
           <dd className="text-[13px] font-semibold tabular-nums text-[#1C1917]">{fmtPct(r.c.bruttorendite)}</dd>
         </div>
         <div>
-          <dt className="text-[11px] text-ink-3">Cashflow</dt>
+          <dt className="text-[12px] text-ink-3">Cashflow</dt>
           <dd className="text-[13px] font-semibold tabular-nums" style={{ color: cashColor(cf) }}>{fmtEUR(cf)}</dd>
         </div>
       </dl>
@@ -169,7 +169,7 @@ function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
       <button
         type="button"
         onClick={onOpen}
-        className="group w-full grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] items-center gap-x-3 px-4 py-3 text-left transition-colors hover:bg-[#FAFAF8] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#2D6A4F]"
+        className="group w-full grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] items-center gap-x-3 px-4 py-3 text-left transition-colors hover:bg-[#FAFAF8] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
       >
         <span className="font-display font-extrabold tabular-nums text-[18px] leading-none" style={{ color: scoreColor(score) }}>
           {score}
@@ -177,7 +177,7 @@ function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
         </span>
         <span className="min-w-0">
           <span className="block text-[13px] font-medium text-[#1C1917] truncate">{r.p.title || "Ohne Titel"}</span>
-          <span className="block text-[11px] text-ink-3 truncate">{address || "Adresse fehlt"}</span>
+          <span className="block text-[12px] text-ink-3 truncate">{address || "Adresse fehlt"}</span>
           {/* Mobil: Kennzahlen als zweite Zeile */}
           <span className="sm:hidden mt-1 flex flex-wrap gap-x-2 text-[12px] tabular-nums text-ink-2">
             <span>{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</span>
@@ -190,7 +190,7 @@ function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
         <span className="hidden sm:block text-right text-[13px] tabular-nums text-[#1C1917]">{r.p.kaufpreis ? fmtEUR(r.p.kaufpreis) : "—"}</span>
         <span className="hidden sm:block text-right text-[13px] tabular-nums text-[#1C1917]">{fmtPct(r.c.bruttorendite)}</span>
         <span className="hidden sm:block text-right text-[13px] font-semibold tabular-nums" style={{ color: cashColor(cf) }}>{fmtEUR(cf)}</span>
-        <ChevronRight className="size-4 text-ink-3 group-hover:text-[#2D6A4F] justify-self-end" aria-hidden />
+        <ChevronRight className="size-4 text-ink-3 group-hover:text-primary justify-self-end" aria-hidden />
       </button>
     </li>
   );
@@ -258,7 +258,7 @@ function Dashboard() {
   if (isEmpty) {
     return (
       <AppShell>
-        <h1 className="font-display text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-[-0.02em] text-[#1C1917] text-balance">
+        <h1 className="heading-page-sm">
           Prüf dein erstes Inserat.
         </h1>
         <p className="mt-2 max-w-[60ch] text-[14px] text-ink-2">
@@ -278,10 +278,10 @@ function Dashboard() {
       {/* Kopf: die wichtigste Zahl ist die Überschrift selbst */}
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h1 className="font-display text-[26px] sm:text-[34px] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#1C1917] text-balance">
+          <h1 className="heading-page-sm">
             {interessant > 0 ? (
               <>
-                <span className="text-[#2D6A4F] tabular-nums">{interessant}</span> von {total}{" "}
+                <span className="text-primary tabular-nums">{interessant}</span> von {total}{" "}
                 {total === 1 ? "Kaufkandidat ist" : "Kaufkandidaten sind"} interessant.
               </>
             ) : (
@@ -292,7 +292,7 @@ function Dashboard() {
         </div>
         <a
           href="#neues-inserat"
-          className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#235740]"
+          className="inline-flex items-center gap-1.5 rounded-[8px] bg-primary px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#235740]"
         >
           Inserat prüfen <ArrowDown className="size-3.5" aria-hidden />
         </a>
@@ -316,7 +316,7 @@ function Dashboard() {
         <div>
           <dt className="text-ink-3">Fehlende Daten</dt>
           <dd className="mt-0.5">
-            <button type="button" onClick={() => showDetail("risiken")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-[#2D6A4F]">
+            <button type="button" onClick={() => showDetail("risiken")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-primary">
               {incomplete.length} {incomplete.length === 1 ? "Objekt" : "Objekte"}
             </button>
           </dd>
@@ -324,7 +324,7 @@ function Dashboard() {
         <div>
           <dt className="text-ink-3">Offene Follow-ups</dt>
           <dd className="mt-0.5">
-            <button type="button" onClick={() => showDetail("followups")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-[#2D6A4F]">
+            <button type="button" onClick={() => showDetail("followups")} className="font-semibold tabular-nums text-[#1C1917] underline decoration-[#D4CFC8] underline-offset-4 hover:decoration-primary">
               {followups.length}
             </button>
           </dd>
@@ -347,7 +347,7 @@ function Dashboard() {
           </h2>
           <div className="flex items-center gap-3">
             {topRanked.length > topVisible.length && (
-              <Link to="/properties" className="text-[13px] font-medium text-[#2D6A4F] underline-offset-4 hover:underline">
+              <Link to="/properties" className="text-[13px] font-medium text-primary underline-offset-4 hover:underline">
                 Alle {topRanked.length}
               </Link>
             )}
@@ -362,8 +362,8 @@ function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
-            <div className="hidden sm:grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] gap-x-3 px-4 py-2 border-b border-[#EAE6DF] text-[11px] text-ink-3">
+          <div className="rounded-[12px] border border-[#EAE6DF] bg-white">
+            <div className="hidden sm:grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_4.5rem_6.5rem_1rem] gap-x-3 px-4 py-2 border-b border-[#EAE6DF] text-[12px] text-ink-3">
               <span>Score</span>
               <span>Objekt</span>
               <span className="text-right">Kaufpreis</span>
@@ -401,7 +401,7 @@ function Dashboard() {
               <TabsTrigger
                 key={t.v}
                 value={t.v}
-                className="rounded-none border-0 bg-transparent px-0 py-3 text-[13px] text-ink-2 whitespace-nowrap data-[state=active]:text-[#1C1917] data-[state=active]:shadow-none relative data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[#2D6A4F]"
+                className="rounded-none border-0 bg-transparent px-0 py-3 text-[13px] text-ink-2 whitespace-nowrap data-[state=active]:text-[#1C1917] data-[state=active]:shadow-none relative data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[2px] data-[state=active]:after:bg-primary"
               >
                 {t.l}
                 {t.n ? <span className="ml-1.5 rounded-full bg-[#F5F3EE] px-1.5 text-[11px] tabular-nums text-ink-2">{t.n}</span> : null}
@@ -415,9 +415,9 @@ function Dashboard() {
                 Bei allen Objekten sind die wichtigsten Angaben da – die Scores beruhen auf vollständigen Daten.
               </p>
             ) : (
-              <div className="rounded-[10px] border border-[#EAE6DF] bg-white">
+              <div className="rounded-[12px] border border-[#EAE6DF] bg-white">
                 <table className="w-full text-[13px]">
-                  <thead className="text-left text-[11px] text-ink-3">
+                  <thead className="text-left text-[12px] text-ink-3">
                     <tr>
                       <th className="px-4 py-2 font-normal">Objekt</th>
                       <th className="px-2 py-2 font-normal hidden sm:table-cell">Bezirk</th>
@@ -433,7 +433,7 @@ function Dashboard() {
                         <td className="px-2 py-2.5 text-ink-2 hidden sm:table-cell">{r.p.bezirk || "—"}</td>
                         <td className="px-2 py-2.5"><AmpelBadge ampel={r.dq.ampel}>{r.dq.score}%</AmpelBadge></td>
                         <td className="px-2 py-2.5 text-[12px] text-ink-2 hidden md:table-cell">{r.dq.missing.slice(0, 3).join(", ")}{r.dq.missing.length > 3 ? "…" : ""}</td>
-                        <td className="px-4 py-2.5 text-right text-[#2D6A4F]"><ChevronRight className="size-4 inline" aria-hidden /></td>
+                        <td className="px-4 py-2.5 text-right text-primary"><ChevronRight className="size-4 inline" aria-hidden /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -448,7 +448,7 @@ function Dashboard() {
                 Keine Follow-ups geplant. Im CRM-Tab einer Immobilie legst du die nächste Aktion fest – Anruf, Besichtigung oder Unterlagen.
               </p>
             ) : (
-              <ul className="rounded-[10px] border border-[#EAE6DF] bg-white divide-y divide-[#EAE6DF]">
+              <ul className="rounded-[12px] border border-[#EAE6DF] bg-white divide-y divide-[#EAE6DF]">
                 {followups.map((p) => (
                   <li key={p.id}>
                     <Link to="/properties/$id" params={{ id: p.id }} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#FAFAF8]">
@@ -471,8 +471,8 @@ function Dashboard() {
                   <BarChart data={scoreBuckets} margin={CHART_MARGIN}>
                     <CartesianGrid {...GRID_PROPS} />
                     <XAxis dataKey="name" {...X_AXIS_CATEGORY} />
-                    <YAxis tick={{ fontSize: 11, fill: "#A8A29E" }} allowDecimals={false} tickLine={false} axisLine={false} width={40}
-                      label={{ value: "Objekte", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#736C67" }} allowDecimals={false} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "Objekte", position: "top", offset: 10, fontSize: 11, fill: "#736C67" }} />
                     <Tooltip
                       content={<ChartTooltip labelFormatter={(l) => `Score ${l}`} valueFormatter={(v) => `${v} ${Number(v) === 1 ? "Objekt" : "Objekte"}`} />}
                       cursor={{ fill: "#FAFAF8" }}
@@ -489,9 +489,9 @@ function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ ...CHART_MARGIN, bottom: 4 }}>
                     <CartesianGrid {...GRID_PROPS} />
-                    <XAxis type="number" dataKey="x" name="Kaufpreis" tickFormatter={fmtAxisNumber} tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} tickCount={4} />
-                    <YAxis type="number" dataKey="y" name="Bruttorendite" tick={{ fontSize: 11, fill: "#A8A29E" }} tickLine={false} axisLine={false} width={40}
-                      label={{ value: "%", position: "top", offset: 10, fontSize: 11, fill: "#A8A29E" }} />
+                    <XAxis type="number" dataKey="x" name="Kaufpreis" tickFormatter={fmtAxisNumber} tick={{ fontSize: 11, fill: "#736C67" }} tickLine={false} axisLine={false} tickCount={4} />
+                    <YAxis type="number" dataKey="y" name="Bruttorendite" tick={{ fontSize: 11, fill: "#736C67" }} tickLine={false} axisLine={false} width={40}
+                      label={{ value: "%", position: "top", offset: 10, fontSize: 11, fill: "#736C67" }} />
                     <Tooltip
                       content={<ChartTooltip labelFormatter={() => ""} valueFormatter={(v, e) => (e.name === "Kaufpreis" ? fmtEuro(Number(v)) : `${Number(v).toLocaleString("de-DE", { maximumFractionDigits: 2 })} %`)} />}
                       cursor={{ stroke: "#EAE6DF" }}

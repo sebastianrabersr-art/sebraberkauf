@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AppShell } from "@/components/layout/AppShell";
-import { useStore } from "@/lib/store";
+import { useActiveAssumptions, useStore } from "@/lib/store";
 import {
   calcDataQuality, calcProperty, calcScore, fmtEUR, fmtNum, fmtPct, getActiveFinance,
 } from "@/lib/calc";
@@ -14,7 +14,7 @@ import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { exportComparisonPdf, type ComparisonSection } from "@/lib/pdfExport";
 
 export const Route = createFileRoute("/vergleich")({
-  head: () => ({ meta: [{ title: "Analyse – Immobilien vergleichen" }] }),
+  head: () => ({ meta: [{ title: "Vergleich – kaufma" }] }),
   component: ComparePage,
 });
 
@@ -37,35 +37,84 @@ function ComparePage() {
       <AppShell>
         <PageHead compareLimit={compareLimit} />
         <FeatureLocked
-          title="Analyse ist in Plus & Premium enthalten"
+          title="Vergleich ist in Plus & Premium enthalten"
           description="Mit Plus kannst du bis zu 4 Immobilien vergleichen. Mit Premium bis zu 10."
           recommendPlan="plus"
         />
+        <ComparePreview />
       </AppShell>
     );
   }
   return <ComparePageInner compareLimit={compareLimit} />;
 }
 
+/**
+ * Vorschau für Kostenlos: zeigt mit den vorhandenen (Demo-)Objekten, wie der Vergleich aussieht.
+ * Nur Ansicht, abgeblendet – die Bedienung bleibt Plus/Premium vorbehalten.
+ */
+function ComparePreview() {
+  const { properties, projects } = useStore();
+  const a = useActiveAssumptions();
+  const sample = properties.slice(0, 3);
+  if (sample.length < 2) return null;
+  const rows = sample.map((p) => {
+    const ass = projects.find((x) => x.id === p.projectId)?.assumptions ?? a;
+    const c = calcProperty(p, ass);
+    return { p, c, score: calcScore(p, ass, c).total };
+  });
+  const lines: { label: string; value: (r: (typeof rows)[number]) => string }[] = [
+    { label: "Kaufpreis", value: (r) => fmtEUR(r.p.kaufpreis) },
+    { label: "Cashflow / Monat", value: (r) => fmtEUR(r.c.cashflowMtl) },
+    { label: "Bruttorendite", value: (r) => fmtPct(r.c.bruttorendite) },
+    { label: "Score", value: (r) => fmtNum(r.score, 0) },
+  ];
+  return (
+    <section aria-label="Vorschau des Vergleichs" className="mt-8 max-w-3xl mx-auto">
+      <p className="text-[13px] text-ink-2 mb-3 text-center">So sieht der Vergleich mit deinen Objekten aus:</p>
+      <div aria-hidden className="relative rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden select-none pointer-events-none">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#EAE6DF]">
+              <th className="px-4 py-2.5 text-left font-normal text-ink-3"> </th>
+              {rows.map((r) => (
+                <th key={r.p.id} className="px-4 py-2.5 text-left font-semibold text-[#1C1917] truncate max-w-[180px]">{r.p.title || "Ohne Titel"}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((l) => (
+              <tr key={l.label} className="border-b border-[#EAE6DF] last:border-0">
+                <td className="px-4 py-2.5 text-ink-2">{l.label}</td>
+                {rows.map((r) => <td key={r.p.id} className="px-4 py-2.5 tabular-nums text-[#1C1917]">{l.value(r)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
+      </div>
+    </section>
+  );
+}
+
 function PageHead({ compareLimit }: { compareLimit: number }) {
   return (
     <div className="mb-6">
       <h1 className="heading-page-sm">
-        Analyse
+        Vergleich
       </h1>
       <p className="mt-1 text-[13px] text-ink-2">
         {compareLimit > 0
-          ? `Bis zu ${compareLimit} Immobilien analysieren und die beste Wahl treffen`
-          : "2–4 Immobilien analysieren und die beste Wahl treffen"}
+          ? `Bis zu ${compareLimit} Immobilien vergleichen und die beste Wahl treffen`
+          : "Immobilien nebeneinanderlegen und die beste Wahl treffen"}
       </p>
     </div>
   );
 }
 
 const selectCls =
-  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+  "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-primary focus:outline-none hover:border-[#1C1917]";
 const inputCls =
-  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+  "rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary focus:outline-none hover:border-[#1C1917]";
 const SelectWrap = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={"relative " + (className ?? "")}>
     {children}
@@ -185,7 +234,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
               key={g.key}
               onClick={() => setGoal(g.key)}
               aria-pressed={goal === g.key}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[20px] text-[13px] font-medium border-[1.5px] transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium border-[1.5px] transition-colors ${
                 goal === g.key
                   ? "bg-[#1C1917] text-white border-[#1C1917]"
                   : "bg-[#F5F3EE] text-ink-2 border-[#EAE6DF] hover:border-[#1C1917] hover:text-[#1C1917]"
@@ -221,7 +270,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 else setStarted(true);
               }}
               disabled={selected.length < 2}
-              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 rounded-lg bg-primary text-white px-4 text-[13px] font-medium hover:bg-[#235740] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Analyse starten
             </button>
@@ -229,7 +278,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-[13px] text-ink-3 py-6 text-center border border-dashed border-[#EAE6DF] rounded-[10px] bg-white">
+          <div className="text-[13px] text-ink-3 py-6 text-center border border-dashed border-[#EAE6DF] rounded-[12px] bg-white">
             Keine Immobilien passen zum Filter.
           </div>
         ) : (
@@ -249,9 +298,9 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                   disabled={disabled}
                   aria-pressed={on}
                   title={disabled ? `In deinem Plan kannst du bis zu ${compareLimit} Immobilien vergleichen.` : undefined}
-                  className={`shrink-0 min-w-[160px] max-w-[200px] text-left rounded-[10px] bg-white px-3.5 py-3 transition ${
+                  className={`shrink-0 min-w-[160px] max-w-[200px] text-left rounded-[12px] bg-white px-3.5 py-3 transition ${
                     on
-                      ? "border-2 border-[#2D6A4F]"
+                      ? "border-2 border-primary"
                       : "border border-[#EAE6DF] hover:border-[#D4CFC8]"
                   } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
                   style={on ? { padding: "calc(0.75rem - 1px) calc(0.875rem - 1px)" } : undefined}
@@ -259,14 +308,14 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[12px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
-                      <div className="text-[11px] text-ink-3 truncate mt-0.5">
+                      <div className="text-[12px] text-ink-3 truncate mt-0.5">
                         {[p.bezirk, p.city].filter(Boolean).join(", ") || "—"}
                       </div>
-                      <div className="text-[11px] text-ink-3 truncate mt-1 tabular-nums">
+                      <div className="text-[12px] text-ink-3 truncate mt-1 tabular-nums">
                         {p.kaufpreis != null ? fmtEUR(p.kaufpreis) : "—"}
                       </div>
                       <div
-                        className="text-[11px] tabular-nums mt-0.5"
+                        className="text-[12px] tabular-nums mt-0.5"
                         style={{ color: (c.cashflowMtl ?? 0) >= 0 ? "#2D6A4F" : "#B91C1C" }}
                       >
                         {c.cashflowMtl != null && isFinite(c.cashflowMtl) ? `${fmtEUR(c.cashflowMtl)}/Mo` : "—"}
@@ -289,7 +338,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
             })}
             <Link
               to="/analyze"
-              className="shrink-0 min-w-[160px] rounded-[10px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] font-medium text-ink-2 px-3 py-3 hover:border-[#2D6A4F] hover:text-[#2D6A4F] transition-colors"
+              className="shrink-0 min-w-[160px] rounded-[12px] border-[1.5px] border-dashed border-[#D4CFC8] bg-[#F5F3EE] grid place-items-center text-[12px] font-medium text-ink-2 px-3 py-3 hover:border-primary hover:text-primary transition-colors"
             >
               <span className="inline-flex items-center gap-1"><Plus className="size-3.5" aria-hidden /> Immobilie hinzufügen</span>
             </Link>
@@ -331,7 +380,7 @@ function ComparePageInner({ compareLimit }: { compareLimit: number }) {
                 setShowUnverifiedDialog(false);
                 if (first) navigate({ to: "/properties/$id", params: { id: first.id } });
               }}
-              className="h-9 rounded-lg bg-[#2D6A4F] text-white px-4 text-[13px] font-medium hover:bg-[#235740]"
+              className="h-9 rounded-lg bg-primary text-white px-4 text-[13px] font-medium hover:bg-[#235740]"
             >
               Daten prüfen
             </button>
@@ -461,22 +510,22 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
   return (
     <>
       <div className="rounded-[12px] border border-[#EAE6DF] bg-white mb-4" style={{ padding: "16px 20px" }}>
-        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Analyse</div>
+        <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Auswertung</div>
         <div
-          className="rounded-[10px] mb-3 flex items-start justify-between gap-4"
+          className="rounded-[12px] mb-3 flex items-start justify-between gap-4"
           style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "14px 18px" }}
         >
           <div className="flex items-start gap-3 min-w-0">
-            <CheckCircle2 className="size-5 text-[#2D6A4F] mt-0.5 shrink-0" />
+            <CheckCircle2 className="size-5 text-primary mt-0.5 shrink-0" />
             <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-[#2D6A4F]">{cfg.eyebrow}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">{cfg.eyebrow}</div>
               <div className="font-display font-bold text-[16px] text-[#1C1917] truncate mt-0.5">
                 {winner.p.title || "—"}
               </div>
               <div className="text-[12px] text-ink-2 mt-0.5">{cfg.sub}</div>
             </div>
           </div>
-          <div className="font-display font-extrabold text-[22px] text-[#2D6A4F] tabular-nums shrink-0">
+          <div className="font-display font-extrabold text-[22px] text-primary tabular-nums shrink-0">
             {cfg.value}
           </div>
         </div>
@@ -495,7 +544,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
             >
               <div className="text-[10px] font-semibold uppercase tracking-wide text-ink-3">{c.label}</div>
               <div className="text-[12px] font-medium text-[#1C1917] max-w-[140px] truncate">{c.name}</div>
-              <div className="font-display font-bold text-[13px] text-[#2D6A4F] tabular-nums">{c.val}</div>
+              <div className="font-display font-bold text-[13px] text-primary tabular-nums">{c.val}</div>
             </div>
           ))}
         </div>
@@ -515,7 +564,7 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
                 {computed.map((x) => (
                   <th key={x.p.id} className="text-right px-[14px] py-3 min-w-[140px] align-top">
                     <div className="font-display font-bold text-[13px] text-[#1C1917]">{x.p.title || "—"}</div>
-                    <div className="font-normal text-[11px] text-ink-3 tabular-nums mt-0.5">
+                    <div className="font-normal text-[12px] text-ink-3 tabular-nums mt-0.5">
                       {x.p.kaufpreis != null ? fmtEUR(x.p.kaufpreis) : "—"}
                     </div>
                   </th>
@@ -543,9 +592,9 @@ function Comparison({ items, a, projects, goal }: { items: Property[]; a: any; p
                         const cls = missing
                           ? "text-ink-3 font-normal"
                           : tone === "best"
-                            ? "text-[#2D6A4F] font-bold"
+                            ? "text-primary font-bold"
                             : tone === "worst"
-                              ? "text-[#DC2626]"
+                              ? "text-destructive"
                               : "text-[#1C1917]";
                         return (
                           <td key={i} className={`px-[14px] py-[10px] text-right font-display text-[13px] tabular-nums ${cls}`} style={{ fontWeight: tone === "best" ? 700 : 600 }}>

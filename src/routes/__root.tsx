@@ -32,7 +32,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "https://kaufma.eu/og-image.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "kaufma – Immobilien durchrechnen: Rendite, Cashflow, Kaufnebenkosten" },
+      { property: "og:image:alt", content: "kaufma – Immobilien durchrechnen" },
+      { name: "twitter:image:alt", content: "kaufma – Immobilien durchrechnen" },
       { name: "twitter:image", content: "https://kaufma.eu/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
@@ -168,9 +169,7 @@ function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, profile, loading } = useAuth();
   const isPublic = PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PREFIXES.some((p) => matchesPath(pathname, p));
-  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));
-
-  if (isPublic) return <Outlet />;
+  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));  if (isPublic) return <Outlet />;
   if (!needsAuth) return <Outlet />;
   if (loading) {
     return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Lade…</div>;

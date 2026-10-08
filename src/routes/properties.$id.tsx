@@ -25,9 +25,11 @@ import { isBought, isInPortfolio, legacyStatusPatch, portfolioAddPatch, promptAd
 import { ReminderButton, usePropertyReminders } from "@/components/crm/ReminderButton";
 import type { Reminder } from "@/lib/reminders";
 import { PropertyDocumentsPanel } from "@/components/PropertyDocumentsPanel";
+import { ZinshausSummary, ZinshausUnitsPanel } from "@/components/ZinshausUnitsPanel";
 import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
@@ -41,7 +43,7 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
+type TabKey = "uebersicht" | "einheiten" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "finanzierung", label: "Finanzierung" },
@@ -80,12 +82,16 @@ function Detail() {
   const country = countryOf(p.land);
   const regions = country ? regionsOf(country) : [];
 
-  const [tab, setTab] = useState<TabKey>("uebersicht");
-  const [dqBannerDismissed, setDqBannerDismissed] = useState(false);
+  const [tabState, setTab] = useState<TabKey>("uebersicht");
+  // Zinshaus: "Einheiten" als zweiter Tab. Wird der Typ geändert, fällt ein offener Einheiten-Tab auf die Übersicht zurück.
+  const isZinshaus = p.propertyType === "zinshaus";
+  const tabs = isZinshaus ? [TABS[0], { key: "einheiten" as TabKey, label: "Einheiten" }, ...TABS.slice(1)] : TABS;
+  const tab: TabKey = tabState === "einheiten" && !isZinshaus ? "uebersicht" : tabState;
   const [exportOpen, setExportOpen] = useState(false);
   const [exportUpgradeOpen, setExportUpgradeOpen] = useState(false);
   const plan = usePlan();
   const canExport = plan === "plus" || plan === "premium";
+  const propertyLimit = usePropertyLimit();
 
   const applyRegionDefaults = () => {
     const d = regionDefaultsForProperty(p);
@@ -113,6 +119,7 @@ function Detail() {
     }
   };
   const onDuplicate = () => {
+    if (!propertyLimit.guard()) return;
     const newId = duplicateProperty(p.id);
     if (newId) {
       suppressLeaveWarnRef.current = true;
@@ -121,18 +128,18 @@ function Detail() {
     }
   };
 
-  // Leave-warning: fire toast on unmount if required fields are missing
-  const dqRef = useRef(dq);
-  useEffect(() => { dqRef.current = dq; }, [dq]);
+  // Beim Verlassen erinnern – an dieselben Kernangaben wie der Banner unter dem Titel.
+  const missingLabels = REQUIRED_FIELDS.filter((f) => missingRequiredFields(p).includes(f.key)).map((f) => f.label);
+  const missingRef = useRef(missingLabels);
+  missingRef.current = missingLabels;
   useEffect(() => {
     const pid = p.id;
     return () => {
       if (suppressLeaveWarnRef.current) return;
-      const d = dqRef.current;
-      if (d.score < 70 && d.missing.length > 0) {
-        const more = d.missing.length > 3 ? ` und ${d.missing.length - 3} weitere` : "";
-        toast.warning("Einige Pflichtfelder fehlen noch", {
-          description: `Fehlend: ${d.missing.slice(0, 3).join(", ")}${more}`,
+      const missing = missingRef.current;
+      if (missing.length > 0) {
+        toast.warning("Für die Analyse fehlen noch Angaben", {
+          description: `Fehlend: ${missing.join(", ")}`,
           duration: 5000,
           action: {
             label: "Zurück",
@@ -164,15 +171,20 @@ function Detail() {
   // Pflichtfelder-Banner: Sprung zum Eingabefeld (Tab wechseln, Sektion öffnen, fokussieren, kurz hervorheben)
   const missingReq = missingRequiredFields(p);
   const goToRequiredField = (key: RequiredFieldKey) => {
+    // Zinshaus: Miete und Fläche kommen aus den Einheiten → dorthin springen.
+    const fromUnits = isZinshaus && (key === "miete" || key === "wohnflaeche");
     const target: { tab: TabKey; section: string } =
       key === "eigenkapital" || key === "zinssatz" ? { tab: "finanzierung", section: "sec-finanzierung" }
+      : fromUnits ? { tab: "einheiten", section: "sec-einheiten" }
       : key === "miete" ? { tab: "uebersicht", section: "sec-miete" }
       : { tab: "uebersicht", section: "sec-objektdaten" };
     setTab(target.tab);
     setTimeout(() => {
       const section = document.getElementById(target.section) as HTMLDetailsElement | null;
       if (section?.tagName === "DETAILS") section.open = true;
-      const field = document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
+      const field = fromUnits
+        ? document.getElementById("zinshaus-add-unit") ?? section
+        : document.getElementById(requiredFieldDomId(key)) ?? document.getElementById(REQUIRED_FINANCE_EMPTY_ID) ?? section;
       if (!field) return;
       field.scrollIntoView({ behavior: "smooth", block: "center" });
       const input = field.querySelector<HTMLElement>("input, select, button") ?? field;
@@ -181,16 +193,16 @@ function Detail() {
     }, 80);
   };
 
-  // Negative margins to break out of AppShell padding (p-6 md:p-10)
-  const breakout = "-mx-6 md:-mx-10";
+  // Negative Ränder, um aus dem AppShell-Innenabstand auszubrechen
+  const breakout = "-mx-5 md:-mx-10"; // passt zum AppShell-Rand (p-5 md:p-10)
 
 
 
   return (
     <AppShell>
       {/* ============ HEADER BAR ============ */}
-      <div className={`${breakout} -mt-6 md:-mt-10 bg-white border-b border-[#EAE6DF] px-6 md:px-10 py-4`}>
-        <Link to="/properties" className="inline-flex items-center gap-1 text-[13px] text-[#2D6A4F] hover:text-[#235740] mb-2">
+      <div className={`${breakout} -mt-5 md:-mt-10 bg-white border-b border-[#EAE6DF] px-5 md:px-10 py-4`}>
+        <Link to="/properties" className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-[#235740] mb-2">
           <ArrowLeft className="size-3.5" /> Zurück
         </Link>
         <h1
@@ -203,21 +215,22 @@ function Detail() {
           {[p.bezirk, p.platform, project?.name, `hinzugefügt ${new Date(p.createdAt).toLocaleDateString("de-AT")}`].filter(Boolean).join(" · ")}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
-            DQ {dq.score}% · {dq.level}
+          {/* Ab lg steht die Datenqualität in der Seitenleiste */}
+          <span className="lg:hidden inline-flex items-center rounded-full bg-[#E0F2FE] text-[#075985] px-3 py-1 text-[12px] font-medium">
+            Datenqualität {dq.score}%
           </span>
           {linkValid && (
-            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1">
+            <a href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-primary px-2 py-1">
               <ExternalLink className="size-3.5" /> Inserat öffnen
             </a>
           )}
           <button
             onClick={() => (canExport ? setExportOpen(true) : setExportUpgradeOpen(true))}
-            className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#2D6A4F] px-2 py-1"
+            className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-primary px-2 py-1"
           >
             {canExport ? <Download className="size-3.5" /> : <Lock className="size-3.5" />} Exportieren
           </button>
-          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-[#DC2626] px-2 py-1">
+          <button onClick={onDelete} className="inline-flex items-center gap-1 text-[12px] text-ink-2 hover:text-destructive px-2 py-1">
             <Trash2 className="size-3.5" /> Löschen
           </button>
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
@@ -227,8 +240,11 @@ function Detail() {
 
 
         {/* ============ TAB NAV ============ */}
-        <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto">
-          {TABS.map((t) => {
+        <div className="relative">
+        {/* Mobil laufen die Tabs seitlich weiter – Verlauf am Rand zeigt das an */}
+        <div aria-hidden className="pointer-events-none absolute right-0 top-4 -bottom-4 w-10 bg-gradient-to-l from-white to-transparent md:hidden z-10" />
+        <div className="mt-4 -mb-4 flex items-center gap-6 overflow-x-auto pr-8 md:pr-0">
+          {tabs.map((t) => {
             const active = tab === t.key;
             return (
               <button
@@ -237,19 +253,17 @@ function Detail() {
                 className={`relative pb-3 text-[13px] whitespace-nowrap transition-colors ${active ? "text-[#1C1917] font-medium" : "text-ink-2 hover:text-[#1C1917]"}`}
               >
                 {t.label}
-                {active && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#2D6A4F]" />}
+                {active && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-primary" />}
               </button>
             );
           })}
+        </div>
         </div>
       </div>
 
       {/* ============ TWO COLUMN LAYOUT ============ */}
       <div className={`${breakout} flex items-start`}>
-        <div className="flex-1 min-w-0 px-6 md:px-10 py-6 space-y-6">
-          {tab === "uebersicht" && (
-            <DataCheckBanner propertyId={p.id} dqScore={dq.score} onCheck={() => navTo("uebersicht", "sec-objektdaten")} />
-          )}
+        <div className="flex-1 min-w-0 px-5 md:px-10 py-6 space-y-6">
           {tab === "uebersicht" && (
             <OverviewTab
               p={p} c={c} dq={dq} mietrecht={mietrecht}
@@ -257,10 +271,13 @@ function Detail() {
               applyRegionDefaults={applyRegionDefaults} linkValid={linkValid}
               onGoMietrecht={() => navTo("mietrecht")}
               onGoCrm={() => navTo("crm")}
-              dqBannerDismissed={dqBannerDismissed}
-              setDqBannerDismissed={setDqBannerDismissed}
               navTo={navTo}
             />
+          )}
+          {tab === "einheiten" && (
+            <Section id="sec-einheiten" title="Einheiten" defaultOpen>
+              <ZinshausUnitsPanel p={p} u={u} />
+            </Section>
           )}
           {tab === "finanzierung" && (
             <Section id="sec-finanzierung" title="Finanzierung & Bank" defaultOpen>
@@ -285,7 +302,7 @@ function Detail() {
                     <T value={p.missingData.join(", ")} edit={true} on={(v) => u({ missingData: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
                   </F>
                 </div>
-                <p className="text-[11px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
+                <p className="text-[12px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Verbindliche Einstufung nur durch Fachperson / Anwalt.</p>
               </Section>
             </>
           )}
@@ -323,16 +340,9 @@ function Detail() {
             <div className="h-full rounded-[3px]" style={{ width: `${dq.score}%`, background: dq.ampel === "green" ? "#2D6A4F" : dq.ampel === "yellow" ? "#D97706" : "#DC2626" }} />
           </div>
           <div className="text-[12px] text-ink-2">{dq.filled} von {dq.total} Pflichtfeldern</div>
-
-          {mietrecht.risiko !== "niedrig" && (
-            <div className="mt-5 rounded-lg bg-[#FEF3C7] px-3 py-2.5">
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-[#92400E]">Mietrecht-Risiko</div>
-              <div className="text-[13px] font-semibold text-[#1C1917] mt-0.5">{mietrecht.kategorie}</div>
-              <div className="text-[11px] text-ink-2 mt-0.5">Risiko: {mietrecht.risiko}</div>
-            </div>
-          )}
         </aside>
       </div>
+      {propertyLimit.dialog}
       <ExportPdfDialog open={exportOpen} onClose={() => setExportOpen(false)} property={p} assumptions={assumptions} />
       <UpgradeDialog
         open={exportUpgradeOpen}
@@ -346,15 +356,13 @@ function Detail() {
 }
 
 // ============ OVERVIEW TAB ============
-function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, dqBannerDismissed, setDqBannerDismissed, navTo }: {
+function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDefaults, linkValid, onGoMietrecht, onGoCrm, navTo }: {
   p: Property; c: ReturnType<typeof calcProperty>; dq: ReturnType<typeof calcDataQuality>;
   mietrecht: ReturnType<typeof inferMietrecht>;
   u: (patch: Partial<Property>) => void;
   projects: { id: string; name: string }[]; regions: ReturnType<typeof regionsOf>;
   applyRegionDefaults: () => void; linkValid: boolean;
   onGoMietrecht: () => void; onGoCrm: () => void;
-  dqBannerDismissed: boolean;
-  setDqBannerDismissed: (v: boolean) => void;
   navTo: (target: TabKey, sectionId?: string) => void;
 }) {
   const missingReq = missingRequiredFields(p);
@@ -366,24 +374,18 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   if (mietrechtWarn) alerts.push({ text: "Mietrecht prüfen", tone: "red" });
   if (p.betriebskostenMtl == null) alerts.push({ text: "Betriebskosten fehlen", tone: "amber" });
   if (p.ruecklageFonds == null && p.ruecklageMtl == null) alerts.push({ text: "Rücklage fehlt", tone: "amber" });
-  if (dq.score < 70) alerts.push({ text: `Daten unvollständig (${dq.missing.slice(0, 2).join(", ")}${dq.missing.length > 2 ? "…" : ""})`, tone: "amber" });
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
   const [alertsExpanded, setAlertsExpanded] = useState(false);
   const visibleAlerts = alertsExpanded ? alerts : alerts.slice(0, 2);
   const hiddenAlertsCount = alerts.length - visibleAlerts.length;
 
-  const scrollToFirstMissing = () => {
-    const el = document.getElementById("sec-objektdaten") as HTMLDetailsElement | null;
-    if (el) {
-      if (el.tagName === "DETAILS") el.open = true;
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
+  // Vollständigkeit: Kernangaben im Banner unter dem Titel, Details in "Daten prüfen",
+  // Prozent in der Seitenleiste. Keine weiteren Hinweise hier, damit sich nichts widerspricht.
   return (
     <>
-      {!dqBannerDismissed && <DataQualityBanner dq={dq} onScroll={scrollToFirstMissing} onDismiss={() => setDqBannerDismissed(true)} />}
+      {/* Zinshaus: Einheiten-Kennzahlen über den normalen Rendite-/Cashflow-Kennzahlen */}
+      {p.propertyType === "zinshaus" && <ZinshausSummary p={p} onGoUnits={() => navTo("einheiten")} />}
 
       {/* === SECTION A: Kennzahlen === */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -434,10 +436,6 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         </div>
       )}
 
-      {!p.dataVerified && (
-        <SetupWalkthrough propertyId={p.id} navTo={navTo} p={p} dq={dq} />
-      )}
-
       <VerificationChecklist p={p} dq={dq} u={u} />
 
 
@@ -445,7 +443,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
 
       {/* === SECTION B: Objektdaten (editable, open) === */}
       <div>
-        <div className="flex items-center gap-1.5 mb-1.5 text-[11px]" style={{ color: "#D97706" }}>
+        <div className="flex items-center gap-1.5 mb-1.5 text-[12px]" style={{ color: "#D97706" }}>
           <AlertTriangle className="size-3" />
           <span>Bitte nach Import prüfen</span>
         </div>
@@ -454,7 +452,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Titel"><T value={p.title} edit on={(v) => u({ title: v })} /></F>
             <F label="Original-Link">
               <T value={p.link} edit on={(v) => u({ link: v })} />
-              {!linkValid && p.link && <div className="text-[10px] text-[#DC2626] mt-1">Ungültige URL</div>}
+              {!linkValid && p.link && <div className="text-[10px] text-destructive mt-1">Ungültige URL</div>}
             </F>
             <F label="Projekt">
               <Sel value={p.projectId} onChange={(e) => u({ projectId: e.target.value })}>
@@ -462,7 +460,11 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               </Sel>
             </F>
             <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
-            <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
+            {p.propertyType === "zinshaus" ? (
+              <F label="Wohnfläche m² (Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.wohnflaecheM2} edit={false} on={() => {}} /></F>
+            ) : (
+              <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
+            )}
             <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
             <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
             <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
@@ -591,7 +593,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-[#F5F3EE] last:border-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] text-ink-2">{item.label}</span>
-                    {item.pct && <span className="text-[11px] text-ink-3 bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
+                    {item.pct && <span className="text-[12px] text-ink-3 bg-[#F5F3EE] px-1.5 py-0.5 rounded">{item.pct}</span>}
                   </div>
                   <span
                     className="text-[13px] font-medium text-[#1C1917] tabular-nums"
@@ -606,8 +608,8 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
                 <span className="tabular-nums font-bold text-[#1C1917]" style={{ ...bricolage, fontSize: 16 }}>{fmtEUR(c.kaufNebenkosten)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-[#2D6A4F]">Gesamter Kapitalbedarf</span>
-                <span className="tabular-nums font-bold text-[#2D6A4F]" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
+                <span className="text-[13px] font-semibold text-primary">Gesamter Kapitalbedarf</span>
+                <span className="tabular-nums font-bold text-primary" style={{ ...bricolage, fontSize: 18 }}>{fmtEUR(c.gesamtkosten)}</span>
               </div>
             </div>
           );
@@ -657,10 +659,14 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
       {/* === SECTION E: Miete & Betriebskosten === */}
       <Section id="sec-miete" title="Miete & Betriebskosten">
         <div className="grid md:grid-cols-3 gap-3">
-          <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          {p.propertyType === "zinshaus" ? (
+            <F label="Miete €/Mt (effektiv, Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.nettomieteMtl} edit={false} on={() => {}} /></F>
+          ) : (
+            <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+          )}
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
-              <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-[#2D6A4F]" />
+              <input type="checkbox" checked={p.nettomieteGeschaetzt} onChange={(e) => u({ nettomieteGeschaetzt: e.target.checked })} className="accent-primary" />
               Schätzwert
             </label>
           </F>
@@ -670,9 +676,9 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
         </div>
         <div className="mt-4 pt-3 border-t border-[#EAE6DF] rounded-lg bg-[#E8F5EE] px-3 py-2.5">
-          <div className="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Break-even Miete</div>
+          <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Break-even Miete</div>
           <div className="mt-0.5 text-[18px] text-[#1C1917]" style={{ ...bricolage, fontWeight: 700 }}>{fmtEUR(c.breakEvenMiete)} / Monat</div>
-          <div className="text-[11px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
+          <div className="text-[12px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
         </div>
       </Section>
 
@@ -712,7 +718,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <AmpelBadge ampel={ampelColor}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
         </div>
         <p className="text-[13px] text-ink-2 mt-2">{mietrecht.erklaerung}</p>
-        <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-[#2D6A4F] hover:underline">Details im Mietrecht-Tab →</button>
+        <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-primary hover:underline">Details im Mietrecht-Tab →</button>
       </Section>
 
       {/* === SECTION H: Verkäufer & Makler === */}
@@ -723,7 +729,7 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <F label="Telefon"><T value={p.sellerPhone ?? ""} edit on={(v) => u({ sellerPhone: v })} /></F>
           <F label="E-Mail"><T value={p.sellerEmail ?? ""} edit on={(v) => u({ sellerEmail: v })} /></F>
         </div>
-        <button onClick={onGoCrm} className="mt-3 text-[12px] text-[#2D6A4F] hover:underline">Vollständiges CRM → CRM Tab</button>
+        <button onClick={onGoCrm} className="mt-3 text-[12px] text-primary hover:underline">Vollständiges CRM → CRM Tab</button>
       </Section>
 
       {p.status === "Gekauft" && (
@@ -767,7 +773,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
           <CfLine label="Instandhaltung (mtl.)" value={-instandh} />
           <div className="border-t border-[#EAE6DF] pt-1.5 mt-1.5 flex justify-between">
             <span className="font-semibold">= Cashflow / Monat<GlossaryTooltip termId="cashflow" /></span>
-            <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{fmtEUR(c.cashflowMtl)}</span>
+            <span className={`font-semibold tabular-nums ${c.cashflowMtl >= 0 ? "text-primary" : "text-destructive"}`}>{fmtEUR(c.cashflowMtl)}</span>
           </div>
           <div className="flex justify-between text-ink-2">
             <span>Cashflow p.a. (×12)</span>
@@ -787,7 +793,7 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
           <RendLine label="Eigenkapitalrendite" formula="Jahres-Cashflow / Eigenkapital" value={fmtPct(c.eigenkapitalrendite)} />
           <div className="pt-2 border-t border-[#EAE6DF] flex justify-between">
             <span>vs. Renditeziel ({fmtPct(a.zielBrutto ?? 0)})</span>
-            <span className={`tabular-nums font-medium ${renditeZielDelta >= 0 ? "text-[#2D6A4F]" : "text-[#DC2626]"}`}>{renditeZielDelta >= 0 ? "+" : ""}{fmtPct(renditeZielDelta)}</span>
+            <span className={`tabular-nums font-medium ${renditeZielDelta >= 0 ? "text-primary" : "text-destructive"}`}>{renditeZielDelta >= 0 ? "+" : ""}{fmtPct(renditeZielDelta)}</span>
           </div>
         </div>
       </AccordionCard>
@@ -832,13 +838,13 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
 
   const { steuersatz, afaSatz, gebaeudewertPct, kaufpreis, gebaeudewert, afaJahr, afaMtl, gewinnVorAfa, gewinnNachAfa, steuerBetrag, cashflowNachSteuer } = calcTaxEstimate(p, c);
 
-  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-[#2D6A4F] outline-none";
+  const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] focus:border-primary outline-none";
 
   return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">Persönlicher Steuersatz %</div>
+          <div className="text-[12px] text-ink-2 mb-1">Persönlicher Steuersatz %</div>
           <input
             type="number"
             value={(steuersatz * 100).toFixed(0)}
@@ -847,7 +853,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <div className="text-[12px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
           <input
             type="number"
             step="0.1"
@@ -857,7 +863,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[11px] text-ink-2 mb-1">Gebäudewert % vom Kaufpreis</div>
+          <div className="text-[12px] text-ink-2 mb-1">Gebäudewert % vom Kaufpreis</div>
           <input
             type="number"
             value={(gebaeudewertPct * 100).toFixed(0)}
@@ -867,7 +873,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
         </div>
       </div>
 
-      <div className="rounded-[10px] border border-[#EAE6DF] overflow-hidden">
+      <div className="rounded-[12px] border border-[#EAE6DF] overflow-hidden">
         <div className="bg-[#FAFAF8] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-ink-3">Berechnung</div>
         {[
           { label: "Gebäudewert", value: fmtEUR(gebaeudewert), sub: `${(gebaeudewertPct * 100).toFixed(0)}% von ${fmtEUR(kaufpreis)}` },
@@ -880,20 +886,20 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-[#EAE6DF] first:border-0">
             <div>
               <div className="text-[13px] text-ink-2">{row.label}</div>
-              <div className="text-[11px] text-ink-3">{row.sub}</div>
+              <div className="text-[12px] text-ink-3">{row.sub}</div>
             </div>
             <div className="text-[13px] font-medium text-[#1C1917] tabular-nums">{row.value}</div>
           </div>
         ))}
         <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[#EAE6DF] bg-[#E8F5EE]">
-          <span className="text-[13px] font-semibold text-[#2D6A4F]">Cashflow nach Steuer (p.a.)</span>
+          <span className="text-[13px] font-semibold text-primary">Cashflow nach Steuer (p.a.)</span>
           <span className="text-[16px] font-bold tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", color: cashflowNachSteuer >= 0 ? "#2D6A4F" : "#DC2626" }}>
             {fmtEUR(cashflowNachSteuer)}
           </span>
         </div>
       </div>
 
-      <p className="text-[11px] text-ink-3">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
+      <p className="text-[12px] text-ink-3">Hinweis: Vereinfachte Schätzung. Keine Steuerberatung. Individuelle Berechnung durch Steuerberater empfohlen.</p>
     </div>
   );
 }
@@ -903,7 +909,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
 function AnalyseStat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
   const color = tone === "good" ? "#2D6A4F" : tone === "bad" ? "#DC2626" : "#1C1917";
   return (
-    <div className="rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       <div className="mt-1 text-[22px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
     </div>
@@ -914,7 +920,7 @@ function CfLine({ label, value, sign }: { label: string; value: number; sign?: "
   return (
     <div className="flex justify-between">
       <span className="text-ink-2">{label}</span>
-      <span className={`tabular-nums ${positive ? "text-[#1C1917]" : "text-[#DC2626]"}`}>{sign === "+" && positive ? "+" : ""}{fmtEUR(value)}</span>
+      <span className={`tabular-nums ${positive ? "text-[#1C1917]" : "text-destructive"}`}>{sign === "+" && positive ? "+" : ""}{fmtEUR(value)}</span>
     </div>
   );
 }
@@ -923,7 +929,7 @@ function RendLine({ label, formula, value, termId }: { label: string; formula: s
     <div className="flex items-baseline justify-between gap-3">
       <div>
         <div className="text-[#1C1917]">{label}{termId && <GlossaryTooltip termId={termId} />}</div>
-        <div className="text-[11px] text-ink-3">{formula}</div>
+        <div className="text-[12px] text-ink-3">{formula}</div>
       </div>
       <span className="tabular-nums font-medium text-[#1C1917]">{value}</span>
     </div>
@@ -935,7 +941,7 @@ function MiniBox({ label, value, sub, tone }: { label: string; value: string; su
     <div className="rounded-lg border border-[#EAE6DF] bg-[#FAFAF8] px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold">{label}</div>
       <div className="mt-0.5 text-[15px] tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
-      {sub && <div className="text-[11px] text-ink-2 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[12px] text-ink-2 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -961,7 +967,7 @@ function BesichtigungTab({ p, viewings, setViewing }: {
                   return (
                     <div key={item.key} className="border-b border-[#EAE6DF] last:border-0 pb-2 last:pb-0">
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={v.done} onChange={(e) => setViewing(p.id, item.key, { done: e.target.checked })} className="accent-[#2D6A4F]" />
+                        <input type="checkbox" checked={v.done} onChange={(e) => setViewing(p.id, item.key, { done: e.target.checked })} className="accent-primary" />
                         {item.label}
                       </label>
                       <input
@@ -1034,7 +1040,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
             <button
               type="button"
               onClick={() => { u(portfolioAddPatch(p)); toast.success("Im Portfolio", { action: { label: "Öffnen", onClick: () => openPortfolio(p.id) } }); }}
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F5EE]"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-primary text-primary hover:bg-[#E8F5EE]"
             >
               Zum Portfolio hinzufügen
             </button>
@@ -1115,21 +1121,21 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
         </summary>
         <div className="mt-3 space-y-3">
           <div>
-            <div className="text-[11px] text-ink-2 mb-1">Beschreibung (aus Inserat)</div>
+            <div className="text-[12px] text-ink-2 mb-1">Beschreibung (aus Inserat)</div>
             <textarea
               value={p.beschreibung ?? ""}
               onChange={(e) => u({ beschreibung: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] italic p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-[#FAFAF8] italic p-3 text-[13px] text-[#1C1917] focus:border-primary outline-none"
             />
           </div>
           <div>
-            <div className="text-[11px] text-ink-2 mb-1">Eigene Notizen</div>
+            <div className="text-[12px] text-ink-2 mb-1">Eigene Notizen</div>
             <textarea
               value={p.notizen}
               onChange={(e) => u({ notizen: e.target.value })}
               rows={4}
-              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white p-3 text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none"
+              className="w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white p-3 text-[13px] text-[#1C1917] focus:border-primary outline-none"
             />
           </div>
         </div>
@@ -1150,7 +1156,7 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
 }
 
 // ---------- CRM helper subcomponents ----------
-const CRM_INPUT = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+const CRM_INPUT = "w-full rounded-lg border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 function activityIconFor(type?: string) {
   if (type === "Telefonat") return Phone;
@@ -1207,7 +1213,7 @@ function NextActionCard({ p, u, reminders, onRemindersChanged }: {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.nextAction || "Nächste Aktion"}</div>
-            <div className="text-[11px] text-ink-2">
+            <div className="text-[12px] text-ink-2">
               {p.nextActionDate && <>Fällig: {p.nextActionDate}</>}
               {p.nextActionDate && p.priority && " · "}
               {p.priority && <>Priorität: {p.priority}</>}
@@ -1231,7 +1237,7 @@ function NextActionCard({ p, u, reminders, onRemindersChanged }: {
       )}
 
       {!editing && hasAction && (
-        <button onClick={() => setEditing(true)} className="text-[12px] text-[#2D6A4F] hover:underline">+ Weitere Aktion</button>
+        <button onClick={() => setEditing(true)} className="text-[12px] text-primary hover:underline">+ Weitere Aktion</button>
       )}
 
       {editing && (
@@ -1287,7 +1293,7 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
       <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
         <Icon className="size-[14px] text-ink-2" />
       </div>
-      <div className="text-[11px] text-ink-3 w-20 shrink-0">{label}</div>
+      <div className="text-[12px] text-ink-3 w-20 shrink-0">{label}</div>
       {editing ? (
         <input
           type={type}
@@ -1299,7 +1305,7 @@ function ContactRow({ icon: Icon, label, value, onChange, type = "text" }: {
           className={CRM_INPUT + " flex-1"}
         />
       ) : (
-        <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-[#2D6A4F]">
+        <button onClick={() => setEditing(true)} className="flex-1 text-left text-[13px] text-[#1C1917] truncate hover:text-primary">
           {value || <span className="text-ink-3">—</span>}
         </button>
       )}
@@ -1326,7 +1332,7 @@ function ContactList({ p, u }: { p: Property; u: (patch: Partial<Property>) => v
         <div className="grid place-items-center shrink-0 rounded-full" style={{ width: 26, height: 26, background: "#F5F3EE" }}>
           <User className="size-[14px] text-ink-2" />
         </div>
-        <div className="text-[11px] text-ink-3 w-20 shrink-0">Typ</div>
+        <div className="text-[12px] text-ink-3 w-20 shrink-0">Typ</div>
         <select value={p.sellerType ?? "unklar"} onChange={(e) => u({ sellerType: e.target.value as Property["sellerType"] })} className={CRM_INPUT + " flex-1"}>
           {(["Privat", "Makler", "Bauträger", "Bank", "Sonstige", "unklar"] as const).map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -1439,8 +1445,8 @@ function OffersCard({ p, u, assumptions }: { p: Property; u: (patch: Partial<Pro
       )}
 
       {cPreview && previewPrice > 0 && (
-        <div className="mt-4 rounded-[10px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
-          <div className="text-[11px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
+        <div className="mt-4 rounded-[12px] p-4" style={{ background: "#F5F3EE", border: "1px solid #EAE6DF" }}>
+          <div className="text-[12px] text-ink-2 mb-2">Kalkulation bei {fmtEUR(previewPrice)}</div>
           <div className="grid grid-cols-3 gap-2">
             <PreviewStat label="Rendite" value={fmtPct(cPreview.bruttorendite)} />
             <PreviewStat label="Cashflow/Mo" value={fmtEUR(cPreview.cashflowMtl)} tone={cPreview.cashflowMtl >= 0 ? "good" : "bad"} />
@@ -1517,7 +1523,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   >
                     <span className="rounded-full px-2 py-0.5 mr-2 text-[10px] font-medium" style={{ background: color + "22", color }}>{a.type}</span>
                     <span className="text-[13px] font-medium text-[#1C1917]">{a.title}</span>
-                    <span className="text-[11px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
+                    <span className="text-[12px] text-ink-3 ml-2">{new Date(a.date).toLocaleDateString("de-AT")}</span>
                   </button>
                   <ReminderButton
                     propertyId={propertyId}
@@ -1532,7 +1538,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
                 {open && (
-                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[11px] text-[#DC2626] hover:underline ml-2">
+                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[12px] text-destructive hover:underline ml-2">
                     Löschen
                   </button>
                 )}
@@ -1563,8 +1569,8 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
 
 
 // ============ HELPER COMPONENTS ============
-const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
-const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-[#2D6A4F] focus:outline-none hover:border-[#1C1917]";
+const selectCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] pr-8 text-[13px] text-[#1C1917] appearance-none cursor-pointer focus:border-primary focus:outline-none hover:border-[#1C1917]";
+const inputCls = "w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-[9px] text-[13px] text-[#1C1917] focus:border-primary focus:outline-none hover:border-[#1C1917]";
 function Sel({ children, className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
@@ -1600,7 +1606,7 @@ function OverviewStat({ label, value, sub, tone, editable }: {
   };
 
   return (
-    <div className="group rounded-[10px] border border-[#EAE6DF] bg-white px-[14px] py-3">
+    <div className="group rounded-[12px] border border-[#EAE6DF] bg-white px-[14px] py-3">
       <div className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">{label}</div>
       {editable && editing ? (
         <input
@@ -1628,14 +1634,14 @@ function OverviewStat({ label, value, sub, tone, editable }: {
       ) : (
         <div className="mt-1 text-[20px] leading-tight tabular-nums" style={{ ...bricolage, fontWeight: 700, color }}>{value}</div>
       )}
-      {sub && <div className="text-[11px] text-ink-3 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[12px] text-ink-3 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 function AccordionCard({ title, children, defaultOpen = false, id }: { title: string; children: React.ReactNode; defaultOpen?: boolean; id?: string }) {
   return (
-    <details id={id} open={defaultOpen} className="group rounded-[10px] border border-[#EAE6DF] bg-white overflow-hidden">
+    <details id={id} open={defaultOpen} className="group rounded-[12px] border border-[#EAE6DF] bg-white overflow-hidden">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none hover:bg-[#FAFAF8] [&::-webkit-details-marker]:hidden">
         <span className="text-[13px] font-medium text-[#1C1917]">{title}</span>
         <ChevronRight className="size-4 text-ink-3 transition-transform group-open:rotate-90" />
@@ -1697,7 +1703,7 @@ function VerificationChecklist({ p, dq, u }: {
       <div className="flex items-center justify-between mb-3">
         <div className="text-[13px] font-semibold text-[#1C1917]">Daten prüfen vor Kalkulation</div>
 
-        <div className="text-[11px] text-ink-2">{dq.filled}/{dq.total} ausgefüllt</div>
+        <div className="text-[12px] text-ink-2">{dq.filled}/{dq.total} ausgefüllt</div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3 mb-4">
@@ -1707,7 +1713,7 @@ function VerificationChecklist({ p, dq, u }: {
           return (
             <div
               key={group.key}
-              className="rounded-[10px] border"
+              className="rounded-[12px] border"
               style={{
                 borderColor: allOk ? "#2D6A4F" : "#EAE6DF",
                 background: allOk ? "#F0FAF4" : "#FAFAF8",
@@ -1751,7 +1757,7 @@ function VerificationChecklist({ p, dq, u }: {
       </div>
 
       <label
-        className={`flex items-start gap-2 rounded-[10px] ${canVerify ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+        className={`flex items-start gap-2 rounded-[12px] ${canVerify ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
         style={{ background: "#FAFAF8", border: "1px solid #EAE6DF", padding: "10px 12px" }}
       >
         <input
@@ -1759,12 +1765,12 @@ function VerificationChecklist({ p, dq, u }: {
           disabled={!canVerify}
           checked={!!p.dataVerified}
           onChange={(e) => u({ dataVerified: e.target.checked })}
-          className="mt-0.5 accent-[#2D6A4F] size-4"
+          className="mt-0.5 accent-primary size-4"
         />
         <span className="text-[12px] text-[#1C1917]">
           Ich habe alle Daten geprüft und bestätigt – die Kalkulation kann beginnen.
           {!canVerify && (
-            <span className="block text-[11px] text-[#92400E] mt-0.5">
+            <span className="block text-[12px] text-[#92400E] mt-0.5">
               Bitte zuerst Basisdaten und Kaufnebenkosten vollständig ausfüllen.
             </span>
           )}
@@ -1784,59 +1790,12 @@ function F({ label, children, hint, id, required }: {
 }) {
   return (
     <label id={id} className="block scroll-mt-24">
-      <div className="text-[11px] text-ink-2 mb-1">{label}</div>
+      <div className="text-[12px] text-ink-2 mb-1">{label}</div>
       {children}
       {required ? <RequiredFieldHint /> : hint}
     </label>
   );
 }
-function DataQualityBanner({ dq, onScroll, onDismiss }: { dq: ReturnType<typeof calcDataQuality>; onScroll: () => void; onDismiss?: () => void }) {
-  if (dq.score === 100) return null;
-  if (dq.score >= 70) {
-    return (
-      <div
-        className="inline-flex items-center gap-1.5 rounded-full"
-        style={{ background: "#E8F5EE", border: "1px solid #2D6A4F", padding: "4px 12px" }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-        <span className="text-[12px]" style={{ color: "#2D6A4F" }}>{dq.score}% Datenqualität · {dq.level}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-[10px] flex items-start gap-2.5 relative" style={{ background: "#FEF3C7", border: "1px solid #FCD34D", padding: "10px 16px" }}>
-      <AlertTriangle className="size-4 shrink-0 mt-[2px]" style={{ color: "#D97706" }} />
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium" style={{ color: "#92400E" }}>
-          {dq.filled} von {dq.total} Pflichtfeldern ausgefüllt · {dq.score}% Datenqualität
-        </div>
-        {dq.missing.length > 0 && (
-          <div className="text-[11px] mt-0.5" style={{ color: "#92400E" }}>
-            Fehlend: {dq.missing.join(", ")}
-          </div>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onScroll}
-        className="text-[12px] font-medium shrink-0 hover:underline"
-        style={{ color: "#92400E" }}
-      >
-        Felder ausfüllen ↓
-      </button>
-      {onDismiss && (
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="absolute top-2 right-2 text-[#92400E] hover:text-[#1C1917]"
-        >
-          <X className="size-4" />
-        </button>
-      )}
-    </div>
-  );
-}
-
 /** Hinweis unter dem Titel, solange eine der fünf Kernangaben fehlt. Verschwindet von selbst. */
 function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
   const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key));
@@ -1868,7 +1827,7 @@ function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; 
 
 function RequiredHint({ text = "Pflichtfeld – wird für die Kalkulation benötigt" }: { text?: string }) {
   return (
-    <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#D97706" }}>
+    <div className="flex items-center gap-1 mt-1 text-[12px]" style={{ color: "#D97706" }}>
       <AlertTriangle style={{ width: 12, height: 12 }} />
       <span>{text}</span>
     </div>
@@ -1932,97 +1891,6 @@ function N({ value, on, edit, missing }: { value: number | null | undefined; on:
   );
 }
 
-// ============ DATA CHECK BANNER ============
-function DataCheckBanner({ propertyId, dqScore, onCheck }: { propertyId: string; dqScore: number; onCheck: () => void }) {
-  const key = `pwt:${propertyId}:bannerDismissed`;
-  const [dismissed, setDismissed] = useState(false);
-  useEffect(() => {
-    try { if (sessionStorage.getItem(key) === "1") setDismissed(true); } catch {}
-  }, [key]);
-  if (dismissed || dqScore >= 100) return null;
-  return (
-    <div className="flex items-start gap-3 rounded-[10px] px-4 py-3" style={{ background: "#FEF3C7", border: "1px solid #FCD34D" }}>
-      <AlertTriangle className="size-4 mt-0.5 shrink-0" style={{ color: "#D97706" }} />
-      <p className="text-[13px] flex-1" style={{ color: "#92400E" }}>
-        Bitte prüfe die importierten Daten bevor du kalkulierst – nicht alle Felder werden automatisch korrekt ausgelesen.
-      </p>
-      <div className="flex items-center gap-3 shrink-0">
-        <button onClick={onCheck} className="text-[13px] font-medium hover:underline" style={{ color: "#92400E" }}>Jetzt prüfen →</button>
-        <button
-          onClick={() => { try { sessionStorage.setItem(key, "1"); } catch {} setDismissed(true); }}
-          className="inline-flex items-center gap-1 text-[13px] hover:underline"
-          style={{ color: "#92400E" }}
-        >Ignorieren <X size={12} weight="bold" aria-hidden /></button>
-      </div>
-    </div>
-  );
-}
-
-// ============ SETUP WALKTHROUGH ============
-function SetupWalkthrough({ propertyId, navTo, p, dq }: {
-  propertyId: string;
-  navTo: (tab: TabKey, sectionId?: string) => void;
-  p: Property;
-  dq: ReturnType<typeof calcDataQuality>;
-}) {
-  const seenKey = `walkthrough_${propertyId}`;
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    try { if (localStorage.getItem(seenKey) === "1") setDismissed(true); } catch {}
-  }, [seenKey]);
-
-  const activeScenario = p.financeScenarios?.find((s) => s.id === p.activeFinanceId) ?? p.financeScenarios?.[0];
-
-  const steps = [
-    { label: "Kaufpreis & Fläche prüfen", go: () => navTo("uebersicht", "sec-objektdaten"), checked: (p.kaufpreis ?? 0) > 0 && (p.wohnflaecheM2 ?? 0) > 0 },
-    { label: "Erwartete Miete eingeben", go: () => navTo("uebersicht", "sec-kauf-nebenkosten"), checked: (p.nettomieteMtl ?? 0) > 0 },
-    { label: "Finanzierung eintragen", go: () => navTo("finanzierung", "sec-finanzierung"), checked: (activeScenario?.eigenkapital ?? 0) > 0 && (activeScenario?.zinssatz ?? 0) > 0 },
-    { label: "Score & Cashflow prüfen", go: () => navTo("uebersicht"), checked: dq.score >= 70 },
-  ];
-
-  const allDone = steps.every((s) => s.checked);
-
-  useEffect(() => {
-    if (!allDone || dismissed) return;
-    const t = setTimeout(() => {
-      setDismissed(true);
-      try { localStorage.setItem(seenKey, "1"); } catch {}
-    }, 2000);
-    return () => clearTimeout(t);
-  }, [allDone, dismissed, seenKey]);
-
-  if (dismissed) return null;
-
-  return (
-    <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-[16px_20px]">
-      <div className="text-[13px] font-semibold text-[#1C1917] mb-3">In 4 Schritten zur ersten Einschätzung</div>
-      <ol className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={i} className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={s.checked}
-              readOnly
-              className="size-4 rounded border-[#EAE6DF] accent-[#2D6A4F]"
-            />
-            <span className={`text-[13px] ${s.checked ? "text-[#2D6A4F] line-through" : "text-ink-2"}`}>
-              {s.label}
-            </span>
-          </li>
-        ))}
-      </ol>
-      <div className="flex justify-end mt-3">
-        <button
-          onClick={() => { try { localStorage.setItem(seenKey, "1"); } catch {} setDismissed(true); }}
-          className="text-[12px] text-ink-3 hover:text-ink-2"
-        >Walkthrough ausblenden</button>
-      </div>
-    </div>
-  );
-}
-
-
 // ============ MEINE BEWERTUNG ============
 function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
   const [open, setOpen] = useState(false);
@@ -2067,7 +1935,7 @@ function MeineBewertung({ p, u }: { p: Property; u: (patch: Partial<Property>) =
                   step={1}
                   value={val}
                   onChange={(e) => set(s.key, Number(e.target.value))}
-                  className="flex-1 accent-[#2D6A4F]"
+                  className="flex-1 accent-primary"
                 />
                 <span className="text-[14px] w-7 text-right tabular-nums" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, color: "#2D6A4F" }}>
                   {r[s.key] != null ? val : "—"}
@@ -2109,7 +1977,7 @@ function HeaderMoreMenu({ mapsUrl, onDuplicate }: { mapsUrl: string | null; onDu
         <MoreHorizontal className="size-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[10px] border border-[#EAE6DF] bg-white shadow-md py-1">
+        <div className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[12px] border border-[#EAE6DF] bg-white shadow-md py-1">
           {mapsUrl && (
             <a
               href={mapsUrl}

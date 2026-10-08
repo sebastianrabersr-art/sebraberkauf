@@ -5,8 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { detectPlatform } from "@/lib/extract.functions";
 import { isValidUrl } from "@/lib/calc";
-import { planLimits, useAuth } from "@/lib/auth";
-import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { track } from "@/lib/analytics";
 import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
 
@@ -19,9 +18,7 @@ function NewPropertyPage() {
   const navigate = useNavigate();
   const { addProperty, properties } = useStore();
   const project = useActiveProject();
-  const { subscription } = useAuth();
-  const limits = planLimits(subscription?.plan);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const propertyLimit = usePropertyLimit();
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [bezirk, setBezirk] = useState("");
@@ -37,15 +34,11 @@ function NewPropertyPage() {
   const isHouseSeparate = propertyType === "house_with_separate_land";
   const isHouse = propertyType === "house_with_land" || propertyType === "house_with_separate_land";
   const isLand = propertyType === "land_only";
+  // Zinshaus: Fläche und Miete kommen aus den Einheiten (Tab "Einheiten" im Objekt).
+  const isZinshaus = propertyType === "zinshaus";
   const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
-  const checkLimit = () => {
-    if (limits.properties != null && properties.length >= limits.properties) {
-      setUpgradeOpen(true);
-      return false;
-    }
-    return true;
-  };
+  const checkLimit = () => propertyLimit.guard();
 
   const submit = () => {
     if (!title.trim()) { toast.error("Bitte Titel angeben."); return; }
@@ -63,11 +56,12 @@ function NewPropertyPage() {
       landPurchasePrice: isHouseSeparate ? landPurchasePrice : null,
       totalPurchasePrice: isHouseSeparate && computedTotal ? computedTotal : null,
       landAreaSqm: (isHouse || isLand) ? landAreaSqm : null,
-      wohnflaecheM2: isLand ? null : m2,
+      wohnflaecheM2: isLand || isZinshaus ? null : m2,
       livingAreaSqm: isHouse ? m2 : null,
-      zimmer: isLand ? null : zimmer,
-      nettomieteMtl: miete,
-      nettomieteGeschaetzt: !!miete,
+      zimmer: isLand || isZinshaus ? null : zimmer,
+      nettomieteMtl: isZinshaus ? null : miete,
+      nettomieteGeschaetzt: !isZinshaus && !!miete,
+      ...(isZinshaus ? { units: [], objekttyp: "Zinshaus" } : {}),
     });
     const wasFirst = properties.filter((x) => !x.isDemo).length === 0;
     addProperty(p);
@@ -90,12 +84,12 @@ function NewPropertyPage() {
         title="Immobilie manuell hinzufügen"
         description={`Projekt: ${project.name}`}
         actions={
-          <button onClick={createForPdf} className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
+          <button onClick={createForPdf} className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-3 py-2 text-[13px] text-[#1C1917] hover:border-[#1C1917]">
             Leeres Objekt für PDF-Upload anlegen →
           </button>
         }
       />
-      <div className="rounded-xl border bg-card p-5 max-w-2xl space-y-3">
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-5 max-w-2xl space-y-3">
         <Row label="Titel *"><input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
         <Row label="Original-Link (URL)">
           <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
@@ -133,7 +127,12 @@ function NewPropertyPage() {
           {(isHouse || isLand) && (
             <Row label="Grundstücksfläche m²"><N value={landAreaSqm} on={setLandAreaSqm} /></Row>
           )}
-          {!isLand && (
+          {isZinshaus && (
+            <p className="col-span-2 text-xs text-muted-foreground">
+              Fläche und Miete ergeben sich aus den Einheiten – die legst du nach dem Erstellen im Tab „Einheiten“ an.
+            </p>
+          )}
+          {!isLand && !isZinshaus && (
             <>
               <Row label={isHouse ? "Wohnfläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
               <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
@@ -145,18 +144,12 @@ function NewPropertyPage() {
           )}
         </div>
         <div className="flex gap-2 pt-2">
-          <button onClick={submit} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm">Erstellen</button>
-          <button onClick={() => navigate({ to: "/properties" })} className="rounded-md border px-4 py-2 text-sm">Abbrechen</button>
+          <button onClick={submit} className="rounded-[8px] bg-primary text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740]">Erstellen</button>
+          <button onClick={() => navigate({ to: "/properties" })} className="rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white px-4 py-2.5 text-[14px] text-[#1C1917] hover:border-[#1C1917]">Abbrechen</button>
         </div>
         <p className="text-xs text-muted-foreground">Weitere Felder (Ausstattung, Energieklasse, Notizen, Mietrecht) kannst du anschließend auf der Detailseite ergänzen. Tipp: „Leeres Objekt für PDF-Upload" rechts oben legt dir direkt eine Hülle an, in die du anschließend das Makler-PDF einlesen kannst.</p>
       </div>
-      <UpgradeDialog
-        open={upgradeOpen}
-        onOpenChange={setUpgradeOpen}
-        title="Limit erreicht"
-        description={`Dein Plan erlaubt max. ${limits.properties} Immobilie${limits.properties === 1 ? "" : "n"}. Upgrade, um mehr anzulegen.`}
-        recommendPlan={subscription?.plan === "plus" ? "premium" : "plus"}
-      />
+      {propertyLimit.dialog}
     </AppShell>
   );
 }

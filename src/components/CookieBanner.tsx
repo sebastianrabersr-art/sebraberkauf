@@ -101,7 +101,7 @@ export function CookieBanner() {
       <div className="mx-auto max-w-6xl flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
         <p className="max-w-[600px] text-[13px] leading-relaxed text-ink-2" style={{ fontFamily: "Inter, sans-serif" }}>
           Wir verwenden Cookies für Analyse und Verbesserungen unserer Plattform. Mehr dazu in der{" "}
-          <a href="/datenschutz" className="underline text-[#1C1917] hover:text-[#2D6A4F]">Datenschutzerklärung</a>.
+          <a href="/datenschutz" className="underline text-[#1C1917] hover:text-primary">Datenschutzerklärung</a>.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row shrink-0">
           <button
@@ -114,7 +114,7 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => choose("accepted")}
-            className="rounded-[8px] bg-[#2D6A4F] px-4 py-2 text-[13px] font-medium text-white hover:bg-[#235740]"
+            className="rounded-[8px] bg-primary px-4 py-2 text-[13px] font-medium text-white hover:bg-[#235740]"
           >
             Alle akzeptieren
           </button>

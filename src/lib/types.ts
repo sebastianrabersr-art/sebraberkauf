@@ -121,7 +121,8 @@ export type PropertyType =
   | "house_with_land"            // Haus inkl. Grundstück (ein Kaufpreis)
   | "house_with_separate_land"   // Haus + Grundstück getrennt gekauft
   | "land_only"                  // reines Grundstück
-  | "commercial";                // Gewerbeimmobilie
+  | "commercial"                 // Gewerbeimmobilie
+  | "zinshaus";                  // Zinshaus: mehrere Einheiten, Miete/Fläche aus `units`
 
 export const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: "apartment", label: "Wohnung" },
@@ -129,7 +130,25 @@ export const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: "house_with_separate_land", label: "Haus + Grundstück (separat)" },
   { value: "land_only", label: "Grundstück" },
   { value: "commercial", label: "Gewerbeimmobilie" },
+  { value: "zinshaus", label: "Zinshaus" },
 ];
+
+/** Eine Wohn- bzw. Nutzeinheit eines Zinshauses. */
+export interface ZinshausUnit {
+  id: string;
+  /** z. B. "Top 1", "EG links" */
+  name: string;
+  /** m² */
+  flaeche: number;
+  /** Kaltmiete pro Monat (€) */
+  miete: number;
+  /** Leerstand als Dezimal (0.05 = 5 %) */
+  leerstand: number;
+  zustand: "vermietet" | "leer" | "eigennutzung";
+  mieter?: string;
+  /** ISO-Datum */
+  mietbeginn?: string;
+}
 
 export interface Assumptions {
   eigenkapital: number;
@@ -165,6 +184,11 @@ export interface Project {
   preferredDistricts: string;
   status: ProjectStatus;
   assumptions: Assumptions;
+  /**
+   * true, sobald die Person die Annahmen bestätigt hat (Onboarding oder Einstellungen → Annahmen).
+   * Dann bekommen neue Objekte Eigenkapital, Zins und Laufzeit als Finanzierung vorausgefüllt.
+   */
+  assumptionsConfirmed?: boolean;
   createdAt: string;
   updatedAt: string;
   isDemo?: boolean;
@@ -203,6 +227,8 @@ export interface Property {
   // Objekt-Kategorie & zusätzliche Flächen/Preise für Häuser & Grundstücke.
   // Alle optional – Bestandsdaten ohne propertyType werden als "apartment" behandelt.
   propertyType?: PropertyType;
+  /** Nur bei propertyType "zinshaus": Einheiten. Miete und Fläche werden daraus aggregiert. */
+  units?: ZinshausUnit[];
   /** Investmentstrategie: Buy & Hold (vermieten) oder Fix & Flip (kaufen, sanieren, verkaufen). */
   investmentStrategy?: "buy_and_hold" | "fix_and_flip";
   /** Persönlicher Steuersatz (z. B. 0.35 = 35 %). */

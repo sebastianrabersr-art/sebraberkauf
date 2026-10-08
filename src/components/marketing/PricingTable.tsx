@@ -6,60 +6,15 @@ import { useNavigate } from "@tanstack/react-router";
 import { isStripeConfigured } from "@/lib/stripe";
 import { toast } from "sonner";
 
+import { PLAN_FEATURES } from "@/lib/planFeatures";
+
 type Cycle = "monthly" | "yearly";
 type PaidPlan = "plus" | "premium";
-type Feature = { label: string; included: boolean };
-
-const yes = (label: string): Feature => ({ label, included: true });
-const no = (label: string): Feature => ({ label, included: false });
 
 const TIERS = [
-  {
-    id: "free" as const,
-    name: "Kostenlos",
-    cta: "Kostenlos starten",
-    highlight: false,
-    features: [
-      yes("1 Immobilie"),
-      yes("1 Projekt"),
-      yes("Volle Analyse für diese eine Immobilie"),
-      yes("Link-Import"),
-      yes("Finanzierung, Miete & Cashflow, Rendite"),
-      yes("Score"),
-      no("Vergleichsfunktion"),
-      no("Portfolio"),
-    ],
-  },
-  {
-    id: "plus" as const,
-    name: "Plus",
-    cta: "Plus starten",
-    highlight: true,
-    features: [
-      yes("Bis zu 5 Immobilien"),
-      yes("1 Projekt"),
-      yes("Alle Analysen"),
-      yes("Vergleichsfunktion"),
-      yes("Finanzierungsszenarien"),
-      yes("PDF-Upload"),
-      yes("Pipeline, Follow-ups, Besichtigungen"),
-      no("Portfolio"),
-    ],
-  },
-  {
-    id: "premium" as const,
-    name: "Premium",
-    cta: "Premium starten",
-    highlight: false,
-    features: [
-      yes("Unbegrenzt Immobilien"),
-      yes("Unbegrenzt Projekte"),
-      yes("Alle Funktionen"),
-      yes("Portfolio & Zahlungs-Tracking"),
-      yes("Export"),
-      yes("Advanced-Berechnungen"),
-    ],
-  },
+  { id: "free" as const, name: "Kostenlos", cta: "Kostenlos starten", highlight: false, features: PLAN_FEATURES.free },
+  { id: "plus" as const, name: "Plus", cta: "Plus starten", highlight: true, features: PLAN_FEATURES.plus },
+  { id: "premium" as const, name: "Premium", cta: "Premium starten", highlight: false, features: PLAN_FEATURES.premium },
 ];
 
 const eur = (n: number) =>
@@ -137,12 +92,12 @@ export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?
           return (
             <div
               key={t.id}
-              className={`rounded-[12px] border bg-white p-6 flex flex-col ${t.highlight ? "border-[#2D6A4F] ring-1 ring-[#2D6A4F]" : "border-[#EAE6DF]"}`}
+              className={`rounded-[12px] border bg-white p-6 flex flex-col ${t.highlight ? "border-primary ring-1 ring-primary" : "border-[#EAE6DF]"}`}
             >
               <TierHeading className="flex items-center gap-2 font-display text-[20px] font-extrabold text-[#1C1917]">
                 {t.name}
                 {t.highlight && (
-                  <span className="font-sans text-[11px] font-semibold tracking-normal rounded-full bg-[#E8F5EE] text-[#2D6A4F] px-2 py-0.5">
+                  <span className="font-sans text-[11px] font-semibold tracking-normal rounded-full bg-[#E8F5EE] text-primary px-2 py-0.5">
                     Empfohlen
                   </span>
                 )}
@@ -160,7 +115,7 @@ export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?
                 {t.features.map((f) =>
                   f.included ? (
                     <li key={f.label} className="flex gap-2 text-[#1C1917]">
-                      <Check weight="bold" className="size-4 text-[#2D6A4F] mt-0.5 shrink-0" aria-hidden />
+                      <Check weight="bold" className="size-4 text-primary mt-0.5 shrink-0" aria-hidden />
                       {f.label}
                     </li>
                   ) : (
@@ -180,7 +135,7 @@ export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?
                 disabled={!!isCurrent}
                 className={`mt-6 inline-flex items-center justify-center rounded-[8px] px-4 py-2.5 text-[14px] font-medium transition-colors disabled:opacity-60 ${
                   t.highlight
-                    ? "bg-[#2D6A4F] text-white hover:bg-[#235740]"
+                    ? "bg-primary text-white hover:bg-[#235740]"
                     : "bg-white text-[#1C1917] border-[1.5px] border-[#EAE6DF] hover:border-[#1C1917]"
                 }`}
               >

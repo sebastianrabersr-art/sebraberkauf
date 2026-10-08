@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { GLOSSARY, CATEGORY_LABELS, CATEGORY_COLORS, type GlossaryTerm } from "@/lib/glossary";
 import { MagnifyingGlass } from "@phosphor-icons/react";
+import { GlossaryArticleLink } from "@/components/marketing/RatgeberLinks";
 
 const CATEGORY_ORDER: GlossaryTerm["category"][] = [
   "rendite",
@@ -42,7 +43,7 @@ export function GlossarList() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Begriff suchen…"
-          className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white pl-9 pr-3 py-[9px] text-[13px] text-[#1C1917] outline-none focus:border-[#2D6A4F]"
+          className="w-full rounded-[8px] border-[1.5px] border-[#EAE6DF] bg-white pl-9 pr-3 py-[9px] text-[13px] text-[#1C1917] outline-none focus:border-primary"
         />
       </div>
 
@@ -93,6 +94,7 @@ export function GlossarList() {
                       >
                         {t.long}
                       </p>
+                      <GlossaryArticleLink termId={t.id} />
                     </article>
                   );
                 })}

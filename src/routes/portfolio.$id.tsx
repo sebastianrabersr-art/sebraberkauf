@@ -38,7 +38,7 @@ export const Route = createFileRoute("/portfolio/$id")({
 
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 const inputCls =
-  "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "w-full bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-3 py-[9px] text-[13px] outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 const labelCls = "text-[11px] uppercase tracking-wider text-ink-3 font-medium mb-1 block";
 
 type TabKey = "uebersicht" | "finanzen" | "dokumente" | "verwaltung";
@@ -67,9 +67,9 @@ function PortfolioDetail() {
   if (!p) {
     return (
       <AppShell>
-        <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+        <div className="bg-[#F5F3EE] min-h-full">
           <div className="text-[14px] text-ink-2">Objekt nicht gefunden.</div>
-          <Link to="/portfolio" className="text-[13px] text-[#2D6A4F] hover:underline">← Zum Portfolio</Link>
+          <Link to="/portfolio" className="text-[13px] text-primary hover:underline">← Zum Portfolio</Link>
         </div>
       </AppShell>
     );
@@ -81,7 +81,7 @@ function PortfolioDetail() {
 
   return (
     <AppShell>
-      <div className="bg-[#F5F3EE] min-h-full -m-6 p-6">
+      <div className="bg-[#F5F3EE] min-h-full">
         <button
           onClick={() => navigate({ to: "/portfolio" })}
           className="inline-flex items-center gap-1.5 text-[12px] text-ink-2 hover:text-[#1C1917] mb-3"
@@ -183,30 +183,30 @@ function UebersichtTab({ p }: { p: Property }) {
   const assumptions = (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
+        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
           Wertsteigerung % p.a.
           <input
             type="number"
             step={0.1}
             value={wertSteigPct}
             onChange={(e) => setWertSteigPct(Number(e.target.value) || 0)}
-            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-2 py-[3px] text-[12px] outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </label>
-        <label className="flex items-center gap-1.5 text-[11px] text-ink-2">
+        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
           Tilgungsanteil %
           <input
             type="number"
             step={1}
             value={tilgungAnteilPct}
             onChange={(e) => setTilgungAnteilPct(Number(e.target.value) || 0)}
-            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[6px] px-2 py-[3px] text-[12px] outline-none focus:border-[#2D6A4F] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-16 bg-white border-[1.5px] border-[#EAE6DF] rounded-[8px] px-2 py-[3px] text-[12px] outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </label>
       </div>
       <div className="w-full sm:w-80">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] text-ink-2">Zeitraum: <strong>{years} Jahre</strong></span>
+          <span className="text-[12px] text-ink-2">Zeitraum: <strong>{years} Jahre</strong></span>
         </div>
         <input
           type="range"
@@ -215,7 +215,7 @@ function UebersichtTab({ p }: { p: Property }) {
           step={1}
           value={years}
           onChange={(e) => setYears(Number(e.target.value))}
-          className="w-full accent-[#2D6A4F]"
+          className="w-full accent-primary"
         />
         <div className="flex justify-between text-[10px] text-ink-3">
           <span>5J</span><span>15J</span><span>30J</span>
@@ -503,11 +503,11 @@ function DokumenteTab({
               <FileText className="w-4 h-4 text-ink-3 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#1C1917] truncate">{d.name}</div>
-                <div className="text-[11px] text-ink-3">
+                <div className="text-[12px] text-ink-3">
                   {d.typ}{d.datum ? ` · ${d.datum}` : ""}{d.notiz ? ` · ${d.notiz}` : ""}
                 </div>
               </div>
-              <button onClick={() => removeDocument(d.id)} className="text-ink-3 hover:text-[#DC2626]">
+              <button onClick={() => removeDocument(d.id)} className="text-ink-3 hover:text-destructive">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -541,7 +541,7 @@ function DokumenteTab({
           />
           <button
             onClick={addDocument}
-            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235740]"
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-primary text-white text-[12px] font-medium hover:bg-[#235740]"
             aria-label="Dokument hinzufügen"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -558,19 +558,19 @@ function DokumenteTab({
               <div key={r.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{r.title}</div>
-                  <div className="text-[11px] text-ink-3">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
+                  <div className="text-[12px] text-ink-3">{r.datum} · {fmtEUR(r.kosten ?? 0)}</div>
                 </div>
                 <select
                   value={r.status}
                   onChange={(e) => updateRepair(r.id, { status: e.target.value as typeof r.status })}
-                  className="text-[11px] font-medium px-2 py-1 rounded-[6px] border-none outline-none"
+                  className="text-[12px] font-medium px-2 py-1 rounded-[8px] border-none outline-none"
                   style={{ background: st.bg, color: st.fg }}
                 >
                   <option>Offen</option>
                   <option>In Arbeit</option>
                   <option>Erledigt</option>
                 </select>
-                <button onClick={() => removeRepair(r.id)} className="text-ink-3 hover:text-[#DC2626]">
+                <button onClick={() => removeRepair(r.id)} className="text-ink-3 hover:text-destructive">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -593,7 +593,7 @@ function DokumenteTab({
           />
           <button
             onClick={addRepair}
-            className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-3 text-[12px] font-medium hover:bg-[#235740]"
+            className="inline-flex items-center gap-1.5 rounded-[8px] bg-primary text-white px-3 text-[12px] font-medium hover:bg-[#235740]"
           >
             <Plus className="w-3.5 h-3.5" /> Reparatur
           </button>
@@ -609,12 +609,12 @@ function DokumenteTab({
               <div key={pay.id} className="flex items-center gap-3 p-2 rounded-[8px] border border-[#EAE6DF]">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-[#1C1917] truncate">{pay.description || pay.category}</div>
-                  <div className="text-[11px] text-ink-3">{pay.date} · {pay.category}</div>
+                  <div className="text-[12px] text-ink-3">{pay.date} · {pay.category}</div>
                 </div>
                 <div className="text-[13px] tabular-nums font-semibold" style={{ color: isInc ? "#2D6A4F" : "#DC2626" }}>
                   {isInc ? "+" : "−"}{fmtEUR(pay.amount)}
                 </div>
-                <button onClick={() => deletePayment(pay.id)} className="text-ink-3 hover:text-[#DC2626]">
+                <button onClick={() => deletePayment(pay.id)} className="text-ink-3 hover:text-destructive">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -667,7 +667,7 @@ function DokumenteTab({
           />
           <button
             onClick={submitPayment}
-            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-[#2D6A4F] text-white text-[12px] font-medium hover:bg-[#235740]"
+            className="col-span-1 inline-flex items-center justify-center rounded-[8px] bg-primary text-white text-[12px] font-medium hover:bg-[#235740]"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>

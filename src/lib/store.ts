@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_ASSUMPTIONS } from "./calc";
+import { DEFAULT_ASSUMPTIONS, makeFinanceScenario } from "./calc";
 import type { Activity, ActivityType, Assumptions, Payment, Project, Property, PropertyDocument, ViewingNote } from "./types";
 import { migrateLegacyStatus } from "./types";
 
@@ -29,6 +29,24 @@ export const VIEWING_CHECKLIST: { key: string; label: string; group: string }[] 
 ];
 
 const now = () => new Date().toISOString();
+
+/**
+ * Neue Objekte ohne eigene Finanzierung übernehmen Eigenkapital, Zins und Laufzeit aus den
+ * bestätigten Projekt-Annahmen – damit stehen die Werte aus dem Onboarding sofort im Objekt
+ * und es wird nicht nach Angaben gefragt, die die Person schon gemacht hat.
+ * Die Rechnung selbst ändert sich dadurch nicht: ohne Szenario nutzt sie dieselben Annahmen.
+ */
+function withDefaultFinance(p: Property, project: Project | undefined): Property {
+  if (p.isDemo || (p.financeScenarios?.length ?? 0) > 0 || !project?.assumptionsConfirmed) return p;
+  const a = project.assumptions;
+  const scn = makeFinanceScenario({
+    name: "Standard-Finanzierung",
+    eigenkapital: a.eigenkapital,
+    zinssatz: a.zinssatz,
+    laufzeitJahre: a.laufzeit,
+  });
+  return { ...p, financeScenarios: [scn], activeFinanceId: scn.id };
+}
 
 function makeProject(partial: Partial<Project> = {}): Project {
   return {
@@ -138,7 +156,7 @@ export const useStore = create<State>()(
       updateProject: (id, patch) =>
         set((s) => ({ projects: s.projects.map((x) => (x.id === id ? { ...x, ...patch, updatedAt: now() } : x)) })),
       updateProjectAssumptions: (id, patch) =>
-        set((s) => ({ projects: s.projects.map((x) => x.id === id ? { ...x, assumptions: { ...x.assumptions, ...patch }, updatedAt: now() } : x) })),
+        set((s) => ({ projects: s.projects.map((x) => x.id === id ? { ...x, assumptions: { ...x.assumptions, ...patch }, assumptionsConfirmed: true, updatedAt: now() } : x) })),
       resetProjectAssumptions: (id) =>
         set((s) => ({ projects: s.projects.map((x) => x.id === id ? { ...x, assumptions: { ...DEFAULT_ASSUMPTIONS }, updatedAt: now() } : x) })),
       deleteProject: (id) =>
@@ -150,7 +168,10 @@ export const useStore = create<State>()(
           return { projects, activeProjectId, properties };
         }),
       setActiveProject: (id) => set({ activeProjectId: id }),
-      addProperty: (p) => set((s) => ({ properties: [{ ...p, projectId: p.projectId || s.activeProjectId }, ...s.properties] })),
+      addProperty: (p) => set((s) => {
+        const projectId = p.projectId || s.activeProjectId;
+        return { properties: [withDefaultFinance({ ...p, projectId }, s.projects.find((x) => x.id === projectId)), ...s.properties] };
+      }),
       updateProperty: (id, patch) =>
         set((s) => ({ properties: s.properties.map((x) => (x.id === id ? { ...x, ...patch, updatedAt: now() } : x)) })),
       deleteProperty: (id) =>

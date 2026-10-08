@@ -2,20 +2,76 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { RatgeberArticle } from "@/lib/ratgeber";
 import { ArrowRight } from "@phosphor-icons/react";
-import { RelatedArticles } from "./RatgeberLinks";
+import { RelatedArticles, SelfCalcCta } from "./RatgeberLinks";
 import { Breadcrumb } from "./Breadcrumb";
+
+/* Glossar-Verlinkung: erste Nennung von höchstens 3 Begriffen pro Artikel → /glossar#id. */
+const GLOSSARY_LINK_TERMS: Array<[string, string]> = [
+  ["Bruttorendite", "bruttorendite"],
+  ["Nettorendite", "nettorendite"],
+  ["Cashflow", "cashflow"],
+  ["Annuitätendarlehen", "annuitaetendarlehen"],
+  ["Zinsbindung", "zinsbindung"],
+  ["Leerstand", "leerstand"],
+  ["Effektivzins", "effektivzins"],
+  ["Sondertilgung", "sondertilgung"],
+  ["Grundbuch", "grundbuch"],
+  ["Hausgeld", "hausgeld"],
+  ["Energieausweis", "energieausweis"],
+  ["Indexmiete", "indexmiete"],
+  ["Mietspiegel", "mietspiegel"],
+  ["Mietpreisbremse", "mietpreisbremse"],
+  ["Beleihungswert", "beleihungswert"],
+  ["Vorfälligkeitsentschädigung", "vorfaelligkeitsentschaedigung"],
+  ["Spekulationssteuer", "spekulationssteuer"],
+];
+const GLOSSARY_MAX_LINKS = 3;
+const glossaryRe = new RegExp(
+  `(?<![\\p{L}\\d-])(${GLOSSARY_LINK_TERMS.map(([t]) => t).join("|")})(?![\\p{L}\\d-])`,
+  "gu",
+);
+
+/** Pro Render ein Zähler: welche Begriffe sind schon verlinkt (gleiche Reihenfolge auf Server und Client). */
+type GlossaryLinker = { used: Set<string> };
+
+function linkGlossary(text: string, linker: GlossaryLinker | undefined, keyBase: number): ReactNode[] {
+  if (!linker || linker.used.size >= GLOSSARY_MAX_LINKS) return [text];
+  const out: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  glossaryRe.lastIndex = 0;
+  while ((m = glossaryRe.exec(text)) && linker.used.size < GLOSSARY_MAX_LINKS) {
+    const id = GLOSSARY_LINK_TERMS.find(([t]) => t === m![1])![1];
+    if (linker.used.has(id)) continue;
+    linker.used.add(id);
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(
+      <Link
+        key={`g${keyBase}-${m.index}`}
+        to="/glossar"
+        hash={id}
+        className="text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+      >
+        {m[1]}
+      </Link>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
 
 /**
  * Inline-Markdown für Artikeltexte: **fett** und *kursiv*.
  * Alles andere bleibt Klartext – die Inhalte kommen aus Google Docs, nicht von Nutzern.
  */
-function renderInline(text: string): ReactNode {
+function renderInline(text: string, linker?: GlossaryLinker): ReactNode {
   const parts: ReactNode[] = [];
   const re = /\*\*(.+?)\*\*|\*(\S(?:[^*\n]*\S)?)\*/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m.index > last) parts.push(...linkGlossary(text.slice(last, m.index), linker, last));
     parts.push(
       m[1] !== undefined ? (
         <strong key={m.index} className="font-semibold text-[#1C1917]">{m[1]}</strong>
@@ -25,7 +81,7 @@ function renderInline(text: string): ReactNode {
     );
     last = m.index + m[0].length;
   }
-  if (last < text.length) parts.push(text.slice(last));
+  if (last < text.length) parts.push(...linkGlossary(text.slice(last), linker, last));
   return parts.map((p, i) => <Fragment key={i}>{p}</Fragment>);
 }
 
@@ -44,6 +100,7 @@ const bodyCls = "text-[16px] leading-[1.7] text-[#1C1917]/90 my-4";
 
 export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: string }) {
   const blocks = article.fullContent ? contentBlocks(article.fullContent) : [];
+  const linker: GlossaryLinker = { used: new Set() };
   const tocHeadings = blocks.filter((b) => b.startsWith("## ")).map((b) => b.slice(3));
   const toc = article.fullContent
     ? tocHeadings.map((t) => ({ id: slugId(t), label: t }))
@@ -68,15 +125,20 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
         </h1>
         <p className="text-ink-2 mt-4 text-[18px] leading-relaxed">{article.description}</p>
         <div className="text-[13px] text-ink-3 mt-5">
-          <span className="text-[#2D6A4F] font-medium">{article.category}</span>
-          {" · "}
-          {new Date(article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })}
+          <span className="text-primary font-medium">{article.category}</span>
           {" · "}
           {article.readingMinutes} min Lesezeit
         </div>
+        {/* Wer schreibt und wie aktuell – wichtig bei Finanzthemen */}
+        <div className="text-[13px] text-ink-2 mt-1.5">
+          Redaktion kaufma · {article.updatedAt && article.updatedAt !== article.publishedAt ? "aktualisiert am " : "veröffentlicht am "}
+          <time dateTime={article.updatedAt ?? article.publishedAt}>
+            {new Date(article.updatedAt ?? article.publishedAt).toLocaleDateString("de-AT", { day: "2-digit", month: "long", year: "numeric" })}
+          </time>
+        </div>
       </header>
 
-      <p className="text-[18px] leading-[1.65] text-[#1C1917] mb-10">{renderInline(article.intro)}</p>
+      <p className="text-[18px] leading-[1.65] text-[#1C1917] mb-10">{renderInline(article.intro, linker)}</p>
 
       {toc.length > 0 && (
         <aside className="border-y border-[#EAE6DF] py-5 mb-10">
@@ -84,11 +146,11 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           <ol className="space-y-1.5 text-[14px] list-decimal list-inside marker:text-ink-3">
             {toc.map((t, i) => (
               <li key={`${i}-${t.id}`}>
-                <a href={`#${t.id}`} className="text-[#2D6A4F] underline-offset-4 hover:underline">{t.label}</a>
+                <a href={`#${t.id}`} className="text-primary underline-offset-4 hover:underline">{t.label}</a>
               </li>
             ))}
             {article.faq && article.faq.length > 0 && (
-              <li><a href="#faq" className="text-[#2D6A4F] underline-offset-4 hover:underline">Häufige Fragen</a></li>
+              <li><a href="#faq" className="text-primary underline-offset-4 hover:underline">Häufige Fragen</a></li>
             )}
           </ol>
         </aside>
@@ -107,15 +169,15 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
             if (block.startsWith("- ")) {
               const items = block.split("\n").filter((l) => l.startsWith("- "));
               return (
-                <ul key={i} className="list-disc pl-5 space-y-1.5 my-4 text-[16px] leading-[1.6] text-[#1C1917]/90 marker:text-[#2D6A4F]">
-                  {items.map((item, j) => <li key={j}>{renderInline(item.slice(2))}</li>)}
+                <ul key={i} className="list-disc pl-5 space-y-1.5 my-4 text-[16px] leading-[1.6] text-[#1C1917]/90 marker:text-primary">
+                  {items.map((item, j) => <li key={j}>{renderInline(item.slice(2), linker)}</li>)}
                 </ul>
               );
             }
             if (block.startsWith("**") && block.endsWith("**") && !block.slice(2, -2).includes("**")) {
               return <p key={i} className="font-semibold text-[#1C1917] my-3">{block.slice(2, -2)}</p>;
             }
-            return <p key={i} className={bodyCls}>{renderInline(block.replace(/\n/g, " "))}</p>;
+            return <p key={i} className={bodyCls}>{renderInline(block.replace(/\n/g, " "), linker)}</p>;
           })}
         </div>
       ) : (
@@ -123,11 +185,13 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
           {article.sections.map((s) => (
             <section key={s.id} id={s.id} className="scroll-mt-24">
               <h2 className={h2Cls.replace("mt-12", "mt-0")}>{s.heading}</h2>
-              <p className={bodyCls}>{renderInline(s.body)}</p>
+              <p className={bodyCls}>{renderInline(s.body, linker)}</p>
             </section>
           ))}
         </div>
       )}
+
+      <SelfCalcCta article={article} />
 
       {/* CTA */}
       <div className="mt-14 rounded-[12px] bg-[#1C1917] text-white p-7">
@@ -137,9 +201,9 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
         </p>
         <Link
           to="/signup"
-          className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-[#2D6A4F] text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-[8px] bg-primary text-white px-4 py-2.5 text-[14px] font-medium hover:bg-[#235740] transition-colors"
         >
-          Kostenlos ausprobieren <ArrowRight className="size-4" />
+          Kostenlos starten <ArrowRight className="size-4" />
         </Link>
       </div>
 
@@ -161,15 +225,15 @@ export function ArticleLayout({ article }: { article: RatgeberArticle; origin?: 
 
       {/* Internal linking */}
       <section className="mt-14 grid sm:grid-cols-3 gap-3">
-        <Link to="/rechner" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/rechner" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Rechner öffnen</div>
           <div className="text-[13px] text-ink-2 mt-1">Rendite & Cashflow selbst durchrechnen</div>
         </Link>
-        <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/pricing" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Preise ansehen</div>
           <div className="text-[13px] text-ink-2 mt-1">Kostenlos, Plus, Premium</div>
         </Link>
-        <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-[#2D6A4F] transition-colors">
+        <Link to="/signup" className="rounded-[12px] border border-[#EAE6DF] bg-white p-4 hover:border-primary transition-colors">
           <div className="text-[14px] font-semibold text-[#1C1917]">Konto anlegen</div>
           <div className="text-[13px] text-ink-2 mt-1">Eine Immobilie gratis analysieren</div>
         </Link>
