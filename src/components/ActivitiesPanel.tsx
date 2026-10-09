@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { ACTIVITY_TYPES, type ActivityType } from "@/lib/types";
 import { makeActivity, useStore } from "@/lib/store";
 import { Check, Trash as Trash2 } from "@phosphor-icons/react";
 
 export function ActivitiesPanel({ propertyId }: { propertyId: string }) {
   const { activities, addActivity, updateActivity, deleteActivity } = useStore();
+  const { confirm } = useConfirmDialog();
   const items = activities
     .filter((a) => a.propertyId === propertyId)
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -54,7 +56,7 @@ export function ActivitiesPanel({ propertyId }: { propertyId: string }) {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button title={a.completed ? "Als offen markieren" : "Erledigt"} onClick={() => updateActivity(a.id, { completed: !a.completed })} className="rounded border p-1 hover:bg-accent"><Check className="size-3.5" /></button>
-                  <button title="Löschen" onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="rounded border p-1 hover:bg-destructive/10 text-destructive"><Trash2 className="size-3.5" /></button>
+                  <button title="Löschen" onClick={async () => { if (await confirm({ title: "Aktivität löschen", message: "Die Aktivität wird aus dem CRM-Verlauf dieser Immobilie entfernt.", confirmLabel: "Aktivität löschen", danger: true })) deleteActivity(a.id); }} className="rounded border p-1 hover:bg-destructive/10 text-destructive"><Trash2 className="size-3.5" /></button>
                 </div>
               </div>
             </div>

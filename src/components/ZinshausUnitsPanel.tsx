@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { Check, PencilSimple, Plus, Trash, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -47,6 +48,7 @@ const num = (v: string) => (v.trim() === "" ? 0 : Number(v.replace(",", ".")));
 export function ZinshausUnitsPanel({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }) {
   const units = p.units ?? [];
   const agg = calcZinshaus(units);
+  const { confirm } = useConfirmDialog();
   const [dialogUnit, setDialogUnit] = useState<ZinshausUnit | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [inlineId, setInlineId] = useState<string | null>(null);
@@ -56,8 +58,14 @@ export function ZinshausUnitsPanel({ p, u }: { p: Property; u: (patch: Partial<P
 
   const openNew = () => { setIsNew(true); setDialogUnit(emptyUnit(units.length + 1)); };
   const openEdit = (unit: ZinshausUnit) => { setIsNew(false); setDialogUnit({ ...unit }); setInlineId(null); };
-  const remove = (unit: ZinshausUnit) => {
-    if (!confirm(`Einheit „${unit.name}“ löschen?`)) return;
+  const remove = async (unit: ZinshausUnit) => {
+    const ok = await confirm({
+      title: "Einheit löschen",
+      message: `Diese Wohneinheit („${unit.name}“) wird aus dem Zinshaus entfernt.`,
+      confirmLabel: "Einheit löschen",
+      danger: true,
+    });
+    if (!ok) return;
     save(units.filter((x) => x.id !== unit.id));
     toast.success("Einheit gelöscht.");
   };

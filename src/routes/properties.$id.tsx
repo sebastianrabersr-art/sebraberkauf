@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { usePlan } from "@/lib/auth";
 import { ExportPdfDialog } from "@/components/ExportPdfDialog";
 import { usePropertyLimit } from "@/hooks/usePropertyLimit";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 
@@ -110,13 +111,19 @@ function Detail() {
   };
 
   const suppressLeaveWarnRef = useRef(false);
-  const onDelete = () => {
-    if (confirm("Diese Immobilie wirklich löschen?")) {
-      suppressLeaveWarnRef.current = true;
-      deleteProperty(p.id);
-      toast.success("Gelöscht.");
-      navigate({ to: "/properties" });
-    }
+  const { confirm } = useConfirmDialog();
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: "Immobilie löschen",
+      message: "Diese Immobilie und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirmLabel: "Endgültig löschen",
+      danger: true,
+    });
+    if (!ok) return;
+    suppressLeaveWarnRef.current = true;
+    deleteProperty(p.id);
+    toast.success("Gelöscht.");
+    navigate({ to: "/properties" });
   };
   const onDuplicate = () => {
     if (!propertyLimit.guard()) return;
@@ -1472,6 +1479,16 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
   propertyId: string; reminders: Reminder[]; onRemindersChanged: () => void;
 }) {
   const { activities, addActivity, deleteActivity } = useStore();
+  const { confirm } = useConfirmDialog();
+  const removeActivity = async (id: string) => {
+    const ok = await confirm({
+      title: "Aktivität löschen",
+      message: "Die Aktivität wird aus dem CRM-Verlauf dieser Immobilie entfernt.",
+      confirmLabel: "Aktivität löschen",
+      danger: true,
+    });
+    if (ok) deleteActivity(id);
+  };
   const items = activities.filter((a) => a.propertyId === propertyId)
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
@@ -1538,7 +1555,7 @@ function ActivityTimeline({ propertyId, reminders, onRemindersChanged }: {
                   <div className="mt-1.5 text-[12px] text-ink-2 whitespace-pre-wrap">{a.description}</div>
                 )}
                 {open && (
-                  <button onClick={() => { if (confirm("Aktivität löschen?")) deleteActivity(a.id); }} className="mt-1.5 text-[12px] text-destructive hover:underline ml-2">
+                  <button onClick={() => removeActivity(a.id)} className="mt-1.5 text-[12px] text-destructive hover:underline ml-2">
                     Löschen
                   </button>
                 )}

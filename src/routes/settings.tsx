@@ -12,14 +12,23 @@ import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment, isStripeConfigured } from "@/lib/stripe";
 import { AssumptionsPanel } from "@/components/settings/AssumptionsPanel";
 import { RemindersPanel } from "@/components/settings/RemindersPanel";
+import { NotificationsPanel } from "@/components/settings/NotificationsPanel";
+import { SecurityPanel } from "@/components/settings/SecurityPanel";
+import { InvoicesPanel } from "@/components/settings/InvoicesPanel";
+import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
+import { Toggle } from "@/components/settings/settingsUi";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 
-type SettingsTab = "profil" | "annahmen" | "erinnerungen";
+type SettingsTab = "profil" | "annahmen" | "erinnerungen" | "benachrichtigungen" | "sicherheit" | "rechnungen" | "datenschutz";
+const TAB_IDS: SettingsTab[] = ["profil", "annahmen", "erinnerungen", "benachrichtigungen", "sicherheit", "rechnungen", "datenschutz"];
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Einstellungen – kaufma" }] }),
   // "profil" ist der Default und taucht deshalb nicht in der URL auf.
   validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } =>
-    search.tab === "annahmen" || search.tab === "erinnerungen" ? { tab: search.tab } : {},
+    typeof search.tab === "string" && search.tab !== "profil" && (TAB_IDS as string[]).includes(search.tab)
+      ? { tab: search.tab as SettingsTab }
+      : {},
   component: SettingsPage,
 });
 
@@ -27,6 +36,10 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: "profil", label: "Profil & Konto" },
   { id: "annahmen", label: "Annahmen" },
   { id: "erinnerungen", label: "Erinnerungen" },
+  { id: "benachrichtigungen", label: "Benachrichtigungen" },
+  { id: "sicherheit", label: "Sicherheit" },
+  { id: "rechnungen", label: "Rechnungen" },
+  { id: "datenschutz", label: "Datenschutz" },
 ];
 
 type PriceKey = "plus_monthly" | "plus_yearly" | "premium_monthly" | "premium_yearly";
@@ -66,26 +79,6 @@ const btnSecondaryCls =
   "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-[#EAE6DF] px-[18px] py-[9px] text-[13px] text-[#1C1917] hover:border-[#1C1917] disabled:opacity-60";
 const btnDangerCls =
   "inline-flex items-center justify-center gap-2 rounded-[8px] bg-white border-[1.5px] border-destructive px-[18px] py-[9px] text-[13px] text-destructive hover:bg-[#FEF2F2] disabled:opacity-60";
-
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors"
-      // Aus-Zustand dunkel genug für 3:1 gegen Weiß (Bedienelement-Kontrast)
-      style={{ background: checked ? "#2D6A4F" : "#8A837D" }}
-    >
-      <span
-        className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
-        style={{ transform: checked ? "translateX(18px)" : "translateX(2px)" }}
-      />
-    </button>
-  );
-}
 
 function PlanBadge({ plan }: { plan: string }) {
   const styles: Record<string, { bg: string; fg: string; label: string }> = {
@@ -145,9 +138,9 @@ function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
   const [portalBusy, setPortalBusy] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { openCheckout, checkoutDialog } = useStripeCheckout();
+  const { confirm } = useConfirmDialog();
 
   useEffect(() => {
     setName(profile?.name ?? "");
@@ -212,6 +205,13 @@ function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     if (!user) return;
+    const ok = await confirm({
+      title: "Konto löschen",
+      message: "Dein Konto und alle gespeicherten Immobilien werden sofort und dauerhaft gelöscht. Wenn du deine Daten behalten willst, exportiere sie vorher unter Einstellungen → Datenschutz.",
+      confirmLabel: "Konto endgültig löschen",
+      danger: true,
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       // Löscht den Auth-User serverseitig; alle Nutzerdaten hängen per CASCADE daran.
@@ -230,6 +230,16 @@ function SettingsPage() {
     }
   };
 
+  // Auf schmalen Bildschirmen den aktiven Tab in die sichtbare Leiste holen.
+  useEffect(() => {
+    document.querySelector<HTMLElement>('[role="tablist"] [data-active]')?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [tab]);
+
+  const goToAccountDeletion = () => {
+    setTab("profil");
+    setTimeout(() => document.getElementById("konto-loeschen")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+  };
+
   const currentPlan = subscription?.plan ?? "free";
   const hasActiveSub =
     currentPlan !== "free" &&
@@ -239,9 +249,9 @@ function SettingsPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Einstellungen" description="Profil, Abo und Annahmen" />
+      <PageHeader title="Einstellungen" description="Profil, Abo, Sicherheit und Datenschutz" />
 
-      <div role="tablist" className="mb-6 flex gap-1 border-b border-[#EAE6DF]">
+      <div role="tablist" aria-label="Einstellungen" className="mb-6 flex gap-1 border-b border-[#EAE6DF] overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -249,8 +259,9 @@ function SettingsPage() {
               key={t.id}
               role="tab"
               aria-selected={active}
+              data-active={active || undefined}
               onClick={() => setTab(t.id)}
-              className="-mb-px px-4 py-2.5 text-[13px] transition-colors border-b-2"
+              className="-mb-px shrink-0 whitespace-nowrap px-4 py-2.5 text-[13px] transition-colors border-b-2"
               style={{
                 fontFamily: "Inter, sans-serif",
                 fontWeight: active ? 600 : 500,
@@ -386,28 +397,14 @@ function SettingsPage() {
         <PromoCodeCard />
 
         {/* Konto / Danger zone */}
-        <section className={cardCls} style={cardStyle}>
+        <section id="konto-loeschen" className={cardCls + " scroll-mt-6"} style={cardStyle}>
           <h2 style={sectionTitleStyle}>Konto</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             <button className={btnSecondaryCls} onClick={handleSignOut}>Abmelden</button>
-            {!deleteConfirm ? (
-              <button className={btnDangerCls} onClick={() => setDeleteConfirm(true)}>Konto löschen</button>
-            ) : (
-              <>
-                <button className={btnDangerCls} onClick={handleDeleteAccount} disabled={deleting}>
-                  {deleting && <Loader2 className="size-3.5 animate-spin" />}Wirklich löschen
-                </button>
-                <button className={btnSecondaryCls} onClick={() => setDeleteConfirm(false)} disabled={deleting}>
-                  Abbrechen
-                </button>
-              </>
-            )}
+            <button className={btnDangerCls} onClick={handleDeleteAccount} disabled={deleting}>
+              {deleting && <Loader2 className="size-3.5 animate-spin" />}Konto löschen
+            </button>
           </div>
-          {deleteConfirm && (
-            <p style={{ ...descStyle, color: "#DC2626", marginTop: 10 }}>
-              Damit löschst du dein Konto samt allen Immobilien, Projekten und Notizen endgültig. Das lässt sich nicht rückgängig machen.
-            </p>
-          )}
         </section>
       </div>
       )}
@@ -419,6 +416,10 @@ function SettingsPage() {
       )}
 
       {tab === "erinnerungen" && <RemindersPanel />}
+      {tab === "benachrichtigungen" && <NotificationsPanel />}
+      {tab === "sicherheit" && <SecurityPanel />}
+      {tab === "rechnungen" && <InvoicesPanel />}
+      {tab === "datenschutz" && <PrivacyPanel onDeleteAccount={goToAccountDeletion} />}
       {checkoutDialog}
     </AppShell>
   );

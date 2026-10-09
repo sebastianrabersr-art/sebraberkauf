@@ -10,6 +10,8 @@ import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { MfaGate } from "@/components/settings/MfaGate";
 import { NotFoundPage } from "@/components/marketing/NotFoundPage";
 import { IconContext, type IconProps } from "@phosphor-icons/react";
 
@@ -156,9 +158,11 @@ function RootComponent() {
           Tailwind-Größenklassen (size-4 …) überschreiben das wie gehabt. */}
       <IconContext.Provider value={ICON_DEFAULTS}>
         <AuthProvider>
-          <GatedOutlet />
-          <Toaster position="top-right" richColors />
-          <CookieBanner />
+          <ConfirmDialogProvider>
+            <GatedOutlet />
+            <Toaster position="top-right" richColors />
+            <CookieBanner />
+          </ConfirmDialogProvider>
         </AuthProvider>
       </IconContext.Provider>
     </QueryClientProvider>
@@ -186,5 +190,10 @@ function GatedOutlet() {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
-  return <Outlet />;
+  // Mit aktiver 2FA: erst nach dem Code (AAL2) in die App.
+  return (
+    <MfaGate>
+      <Outlet />
+    </MfaGate>
+  );
 }

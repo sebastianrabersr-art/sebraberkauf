@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
@@ -81,6 +82,7 @@ const COL_NUMERIC = "py-3 px-4 text-right whitespace-nowrap text-[13px] text-[#1
 function PropertiesList() {
   const navigate = useNavigate();
   const { properties, projects, deleteProperty, deleteDemoData } = useStore();
+  const { confirm } = useConfirmDialog();
   const activeProject = useActiveProject();
   const assumptions = useActiveAssumptions();
   const [statusFilter, setStatusFilter] = useState("all");
@@ -170,7 +172,17 @@ function PropertiesList() {
           </button>
           {hasDemo && (
             <button
-              onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Demo-Daten löschen",
+                  message: "Das Beispielprojekt und die Beispiel-Immobilien werden entfernt. Deine eigenen Objekte bleiben erhalten.",
+                  confirmLabel: "Demo-Daten löschen",
+                  danger: true,
+                });
+                if (!ok) return;
+                deleteDemoData();
+                toast.success("Demo-Daten entfernt.");
+              }}
               className="rounded-lg border border-[#EAE6DF] px-3 py-2 text-[12px] text-destructive hover:bg-[#FEE2E2]/40"
             >
               Demo-Daten löschen

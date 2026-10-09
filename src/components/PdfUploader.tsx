@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useServerFn } from "@tanstack/react-start";
 import { extractFromPdf, type PdfExtracted } from "@/lib/extract.functions";
 import { useStore } from "@/lib/store";
@@ -75,6 +76,7 @@ export function PdfUploader({ propertyId, onAfterApply, onApplyPatch }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const extract = useServerFn(extractFromPdf);
   const { documents, addDocument, deleteDocument, updateDocument, updateProperty, properties } = useStore();
+  const { confirm } = useConfirmDialog();
   const property = properties.find((p) => p.id === propertyId);
   const docs = documents.filter((d) => d.propertyId === propertyId);
   const [busy, setBusy] = useState(false);
@@ -190,7 +192,7 @@ export function PdfUploader({ propertyId, onAfterApply, onApplyPatch }: Props) {
               <a href={d.fileDataUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded border hover:bg-accent inline-flex items-center gap-1">
                 <ExternalLink className="size-3" /> Öffnen
               </a>
-              <button onClick={() => { if (confirm(`PDF "${d.fileName}" löschen?`)) deleteDocument(d.id); }} className="text-muted-foreground hover:text-destructive">
+              <button onClick={async () => { if (await confirm({ title: "PDF löschen", message: `„${d.fileName}“ wird aus den Dokumenten dieser Immobilie entfernt.`, confirmLabel: "PDF löschen", danger: true })) deleteDocument(d.id); }} className="text-muted-foreground hover:text-destructive">
                 <Trash2 className="size-4" />
               </button>
             </div>

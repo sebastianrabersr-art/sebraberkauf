@@ -110,6 +110,9 @@ export function createStripeClient(env: StripeEnv) {
     subscriptions: {
       retrieve: (id: string) => call(env, "GET", `/v1/subscriptions/${id}`),
     },
+    invoices: {
+      list: (p: { customer: string; limit?: number }) => call(env, "GET", "/v1/invoices", p),
+    },
   };
 }
 

@@ -91,11 +91,13 @@ test.describe("Sidebar (eingeloggt)", () => {
     }
   });
 
-  test("Name/Avatar unten in der Sidebar öffnet die Einstellungen", async ({ page }) => {
+  test("Einstellungen und Abmelden stehen fest unten in der Sidebar", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
     await waitForApp(page);
-    await page.locator("aside").getByRole("link").filter({ has: page.locator("svg") }).last().click();
+    const aside = page.locator("aside");
+    await expect(aside.getByRole("button", { name: "Abmelden" })).toBeInViewport();
+    await aside.getByRole("link", { name: "Einstellungen", exact: true }).click();
     await expect(page).toHaveURL(/\/settings/);
     await expectNotErrorPage(page);
   });

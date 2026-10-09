@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { CircleNotch, DownloadSimple, FileText, Trash, UploadSimple } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import {
@@ -9,6 +10,7 @@ import {
 /** Dokumente-Tab: PDFs hochladen (Drag & Drop oder Klick), herunterladen, löschen. */
 export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { confirm } = useConfirmDialog();
   const [docs, setDocs] = useState<StoredDocument[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [uploading, setUploading] = useState(0);
@@ -69,7 +71,13 @@ export function PropertyDocumentsPanel({ propertyId }: { propertyId: string }) {
   };
 
   const remove = async (doc: StoredDocument) => {
-    if (!confirm(`„${doc.filename}“ endgültig löschen?`)) return;
+    const ok = await confirm({
+      title: "Dokument löschen",
+      message: `„${doc.filename}“ wird dauerhaft gelöscht und lässt sich nicht wiederherstellen.`,
+      confirmLabel: "Dokument löschen",
+      danger: true,
+    });
+    if (!ok) return;
     setBusyId(doc.id);
     try {
       await deleteDocument(doc);

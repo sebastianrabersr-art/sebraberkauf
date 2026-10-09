@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import type { Project, ProjectStatus } from "@/lib/types";
 import { fmtEUR } from "@/lib/calc";
 import { Check, Plus, Trash as Trash2 } from "@phosphor-icons/react";
@@ -18,6 +19,7 @@ const STATUSES: ProjectStatus[] = ["Aktiv", "Pausiert", "Abgeschlossen"];
 
 function ProjectsPage() {
   const { projects, activeProjectId, addProject, updateProject, deleteProject, setActiveProject } = useStore();
+  const { confirm } = useConfirmDialog();
   const [editingId, setEditingId] = useState<string | null>(null);
   const { subscription } = useAuth();
   const limits = planLimits(subscription?.plan);
@@ -57,11 +59,16 @@ function ProjectsPage() {
             onSave={(patch) => { updateProject(p.id, patch); setEditingId(null); toast.success("Gespeichert."); }}
             onEdit={() => setEditingId(p.id)}
             onCancel={() => setEditingId(null)}
-            onDelete={() => {
-              if (confirm(`Projekt „${p.name}" wirklich löschen? Alle Immobilien dieses Projekts werden ebenfalls gelöscht.`)) {
-                deleteProject(p.id);
-                toast.success("Projekt gelöscht.");
-              }
+            onDelete={async () => {
+              const ok = await confirm({
+                title: "Projekt löschen",
+                message: `„${p.name}“ und alle Immobilien in diesem Projekt werden dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.`,
+                confirmLabel: "Projekt löschen",
+                danger: true,
+              });
+              if (!ok) return;
+              deleteProject(p.id);
+              toast.success("Projekt gelöscht.");
             }}
           />
         ))}
