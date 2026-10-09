@@ -5,16 +5,16 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useNavigate } from "@tanstack/react-router";
 import { isStripeConfigured } from "@/lib/stripe";
 import { toast } from "sonner";
-
-import { PLAN_FEATURES } from "@/lib/planFeatures";
+import { PLAN_CARDS, type PlanId } from "@/lib/planFeatures";
 
 type Cycle = "monthly" | "yearly";
-type PaidPlan = "plus" | "premium";
+type PaidPlan = Exclude<PlanId, "free">;
 
-const TIERS = [
-  { id: "free" as const, name: "Kostenlos", cta: "Kostenlos starten", highlight: false, features: PLAN_FEATURES.free },
-  { id: "plus" as const, name: "Plus", cta: "Plus starten", highlight: true, features: PLAN_FEATURES.plus },
-  { id: "premium" as const, name: "Premium", cta: "Premium starten", highlight: false, features: PLAN_FEATURES.premium },
+/** Optik pro Plan: Plus ist die klare Empfehlung, Premium leise abgesetzt, Free neutral. */
+const TIERS: { id: PlanId; cta: string; tone: "neutral" | "primary" | "subtle" }[] = [
+  { id: "free", cta: "Kostenlos starten", tone: "neutral" },
+  { id: "plus", cta: "Plus starten", tone: "primary" },
+  { id: "premium", cta: "Premium starten", tone: "subtle" },
 ];
 
 const eur = (n: number) =>
@@ -30,7 +30,7 @@ function yearlySavings(id: PaidPlan) {
 // Gleich für Plus und Premium (2 Monate) – für den Umschalter genügt ein Wert.
 const FREE_MONTHS = yearlySavings("plus").freeMonths;
 
-function priceFor(id: "free" | PaidPlan, cycle: Cycle) {
+function priceFor(id: PlanId, cycle: Cycle) {
   if (id === "free") return { amount: "0 €", period: "für immer" };
   const p = PLAN_PRICING[id];
   if (cycle === "yearly") return { amount: eur(p.yearly), period: "pro Jahr" };
@@ -44,7 +44,7 @@ export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?
   const navigate = useNavigate();
   const { openCheckout, checkoutDialog } = useStripeCheckout();
 
-  const handleCta = (id: "free" | PaidPlan) => {
+  const handleCta = (id: PlanId) => {
     if (id === "free") {
       navigate({ to: user ? "/dashboard" : "/signup" });
       return;
@@ -64,77 +64,102 @@ export function PricingTable({ tierHeading: TierHeading = "h3" }: { tierHeading?
     });
   };
 
-  const cycleBtn = (c: Cycle, label: string) => (
+  const segment = (c: Cycle, children: React.ReactNode) => (
     <button
       type="button"
       onClick={() => setCycle(c)}
       aria-pressed={cycle === c}
-      className={`px-4 py-1.5 rounded-full text-[13px] border transition-colors ${
-        cycle === c ? "bg-[#1C1917] text-white border-[#1C1917]" : "bg-white text-[#1C1917] border-[#EAE6DF] hover:border-[#1C1917]"
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        cycle === c ? "bg-[#1C1917] text-white" : "text-[#1C1917] hover:bg-[#F5F3EE]"
       }`}
     >
-      {label}
+      {children}
     </button>
   );
 
   return (
     <div>
-      <div className="flex items-center justify-center gap-2 mb-8">
-        {cycleBtn("monthly", "Monatlich")}
-        {cycleBtn("yearly", `Jährlich · ${FREE_MONTHS} Monate gratis`)}
+      {/* Abrechnung: ein Schalter, die Ersparnis steht direkt daneben */}
+      <div className="flex justify-center mb-12">
+        <div role="group" aria-label="Abrechnungszeitraum" className="inline-flex items-center gap-1 rounded-full border border-[#EAE6DF] bg-white p-1">
+          {segment("monthly", "Monatlich")}
+          {segment(
+            "yearly",
+            <>
+              Jährlich
+              <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${cycle === "yearly" ? "bg-white/15 text-white" : "bg-[#E8F5EE] text-primary"}`}>
+                {FREE_MONTHS} Monate gratis
+              </span>
+            </>,
+          )}
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5 md:items-stretch">
         {TIERS.map((t) => {
+          const card = PLAN_CARDS[t.id];
           const price = priceFor(t.id, cycle);
-          const isCurrent = user && subscription?.plan === t.id;
+          const isCurrent = !!user && subscription?.plan === t.id;
           const savings = t.id !== "free" ? yearlySavings(t.id) : null;
+          const primary = t.tone === "primary";
           return (
             <div
               key={t.id}
-              className={`rounded-[12px] border bg-white p-6 flex flex-col ${t.highlight ? "border-primary ring-1 ring-primary" : "border-[#EAE6DF]"}`}
+              className={`relative flex flex-col rounded-[16px] bg-white p-6 sm:p-7 ${
+                primary
+                  ? "border-2 border-primary shadow-[0_18px_40px_-24px_rgba(45,106,79,0.45)] md:-my-3 md:py-10"
+                  : t.tone === "subtle"
+                    ? "border-[1.5px] border-primary/30"
+                    : "border border-[#EAE6DF]"
+              }`}
             >
-              <TierHeading className="flex items-center gap-2 font-display text-[20px] font-extrabold text-[#1C1917]">
-                {t.name}
-                {t.highlight && (
-                  <span className="font-sans text-[11px] font-semibold tracking-normal rounded-full bg-[#E8F5EE] text-primary px-2 py-0.5">
-                    Empfohlen
-                  </span>
-                )}
-              </TierHeading>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="font-display text-[30px] font-extrabold tabular-nums text-[#1C1917]">{price.amount}</span>
-                <span className="text-[13px] text-ink-2">{price.period}</span>
-              </div>
-              {cycle === "yearly" && savings && (
-                <div className="text-[12px] text-ink-2 mt-1">
-                  {eur(savings.perMonth)} pro Monat · du sparst {eur(savings.saved)}
-                </div>
+              {primary && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[12px] font-semibold text-white">
+                  Unsere Empfehlung
+                </span>
               )}
-              <ul className="mt-5 space-y-2 text-[14px] flex-1">
-                {t.features.map((f) =>
+
+              <TierHeading className="font-display text-[22px] font-extrabold tracking-[-0.02em] text-[#1C1917]">
+                {card.name}
+              </TierHeading>
+              <p className="mt-1 text-[14px] text-ink-2">{card.sub}</p>
+
+              <div className="mt-5 flex items-baseline gap-1.5">
+                <span className="font-display text-[40px] leading-none font-extrabold tracking-[-0.03em] tabular-nums text-[#1C1917]">
+                  {price.amount}
+                </span>
+                <span className="text-[14px] text-ink-2">{price.period}</span>
+              </div>
+              {/* Feste Höhe, damit die Karten beim Umschalten nicht springen */}
+              <p className="mt-2 min-h-[20px] text-[13px] text-ink-2">
+                {cycle === "yearly" && savings ? <>entspricht {eur(savings.perMonth)} pro Monat, du sparst {eur(savings.saved)}</> : null}
+              </p>
+
+              <ul className="mt-6 space-y-3 text-[14px] leading-snug flex-1">
+                {card.features.map((f) =>
                   f.included ? (
-                    <li key={f.label} className="flex gap-2 text-[#1C1917]">
+                    <li key={f.label} className="flex gap-2.5 text-[#1C1917]">
                       <Check weight="bold" className="size-4 text-primary mt-0.5 shrink-0" aria-hidden />
                       {f.label}
                     </li>
                   ) : (
-                    <li key={f.label} className="flex gap-2 text-ink-3">
+                    <li key={f.label} className="flex gap-2.5 text-ink-3">
                       <Minus weight="bold" className="size-4 mt-0.5 shrink-0" aria-hidden />
                       <span>
                         <span className="sr-only">Nicht enthalten: </span>
-                        <span className="line-through decoration-[#D4CFC8]">{f.label}</span>
+                        {f.label}
                       </span>
                     </li>
                   ),
                 )}
               </ul>
+
               <button
                 type="button"
                 onClick={() => handleCta(t.id)}
-                disabled={!!isCurrent}
-                className={`mt-6 inline-flex items-center justify-center rounded-[8px] px-4 py-2.5 text-[14px] font-medium transition-colors disabled:opacity-60 ${
-                  t.highlight
+                disabled={isCurrent}
+                className={`mt-8 inline-flex w-full items-center justify-center rounded-[8px] px-4 py-3 text-[14px] font-semibold transition-[background-color,border-color,transform] active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  primary
                     ? "bg-primary text-white hover:bg-[#235740]"
                     : "bg-white text-[#1C1917] border-[1.5px] border-[#EAE6DF] hover:border-[#1C1917]"
                 }`}
