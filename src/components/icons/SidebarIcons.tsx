@@ -83,3 +83,11 @@ export const IconEinstellungen = ({ size = 18, color = "currentColor" }: IconPro
     <circle cx="12" cy="12" r="2.5" stroke={color} strokeWidth="1.5" />
   </svg>
 );
+
+export const IconAbmelden = ({ size = 18, color = "currentColor" }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
+    <path d="M7 3H3C2.45 3 2 3.45 2 4V14C2 14.55 2.45 15 3 15H7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M12 6L16 9L12 12" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="16" y1="9" x2="7" y2="9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);

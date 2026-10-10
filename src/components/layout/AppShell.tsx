@@ -1,14 +1,14 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { UserCircle, Sparkle, SignOut, DotsThreeOutline, X } from "@phosphor-icons/react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { DotsThreeOutline, X } from "@phosphor-icons/react";
 import {
   IconDashboard, IconKaufkandidaten, IconVergleichen, IconRechner,
-  IconPipeline, IconPortfolio, IconProjekte, IconGlossar, IconEinstellungen,
+  IconPipeline, IconPortfolio, IconProjekte, IconGlossar, IconEinstellungen, IconAbmelden,
 } from "@/components/icons/SidebarIcons";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { useStore } from "@/lib/store";
-import { planLabel, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 
 type NavItem = { to: string; label: string; short?: string; icon: React.ComponentType<{ size?: number; color?: string }> };
 
@@ -25,9 +25,13 @@ const NAV_PRIMARY: NavItem[] = [
 
 const NAV_SECONDARY: NavItem[] = [
   { to: "/pipeline", label: "Pipeline", icon: IconPipeline },
-  { to: "/portfolio", label: "Portfolio", icon: IconPortfolio },
+  { to: "/portfolio", label: "Meine Objekte", icon: IconPortfolio },
   { to: "/projects", label: "Projekte", icon: IconProjekte },
   { to: "/glossar", label: "Glossar", icon: IconGlossar },
+];
+
+/** Fest unten in der Sidebar (scrollt nicht mit der Navigation). */
+const NAV_FOOTER: NavItem[] = [
   { to: "/settings", label: "Einstellungen", icon: IconEinstellungen },
 ];
 
@@ -87,7 +91,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="min-h-screen flex bg-[#F5F3EE]">
-      <aside className="hidden md:flex w-64 flex-col bg-[#F5F3EE] text-ink-2 border-r border-[#EAE6DF]">
+      {/* Sidebar bleibt beim Scrollen stehen: Navigation scrollt in sich, Einstellungen/Abmelden immer unten sichtbar */}
+      <aside className="hidden md:flex sticky top-0 h-[100dvh] w-64 shrink-0 flex-col bg-[#F5F3EE] text-ink-2 border-r border-[#EAE6DF]">
         <div className="px-5 py-5">
           <Logo size={32} textSize={16} />
         </div>
@@ -101,7 +106,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavSection items={NAV_PRIMARY} pathname={pathname} />
           <NavSection items={NAV_SECONDARY} pathname={pathname} label="Weitere" />
         </nav>
-        <AccountBox />
+        {/* Immer sichtbar: Einstellungen und Abmelden */}
+        <div className="px-2 py-3 border-t border-[#EAE6DF] space-y-0.5">
+          <NavSection items={NAV_FOOTER} pathname={pathname} />
+          <SignOutButton />
+        </div>
       </aside>
       <main className="flex-1 min-w-0">
         {/* Handy: oben nur Logo + Projekt, Navigation unten im Daumenbereich */}
@@ -122,7 +131,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 function MobileTabBar({ pathname }: { pathname: string }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const panelId = useId();
-  const moreActive = NAV_SECONDARY.some((n) => isActive(pathname, n.to));
+  const moreItems = [...NAV_SECONDARY, ...NAV_FOOTER];
+  const moreActive = moreItems.some((n) => isActive(pathname, n.to));
 
   useEffect(() => setMoreOpen(false), [pathname]);
   useEffect(() => {
@@ -163,7 +173,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
         </div>
         <nav aria-label="Weitere Bereiche">
           <ul>
-            {NAV_SECONDARY.map((n) => {
+            {moreItems.map((n) => {
               const active = isActive(pathname, n.to);
               return (
                 <li key={n.to}>
@@ -178,11 +188,11 @@ function MobileTabBar({ pathname }: { pathname: string }) {
                 </li>
               );
             })}
+            <li>
+              <SignOutButton mobile />
+            </li>
           </ul>
         </nav>
-        <div className="mt-2 -mx-1">
-          <AccountBox />
-        </div>
       </div>
 
       <nav
@@ -225,24 +235,35 @@ export function PageHeader({ title, description, actions }: { title: string; des
   );
 }
 
-function AccountBox() {
-  const { profile, subscription, signOut } = useAuth();
+/**
+ * Abmelden – ohne Rückfrage, danach zur Startseite.
+ * Inaktiv Stein (#78716C), beim Hover Rot als Hinweis, dass man die App verlässt.
+ */
+function SignOutButton({ mobile = false }: { mobile?: boolean }) {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const onClick = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await signOut();
+    } finally {
+      navigate({ to: "/" });
+    }
+  };
   return (
-    <div className="p-3 border-t border-[#EAE6DF] space-y-1">
-      <Link to="/settings" search={{}} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#EAE6DF] text-sm text-[#1C1917]">
-        <div className="size-8 rounded-full bg-[#E8F5EE] text-primary grid place-items-center">
-          <UserCircle weight="duotone" size={18} aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-medium text-sm text-[#1C1917]">{profile?.name || profile?.email || "Konto"}</div>
-          <div className="text-[11px] text-ink-3 flex items-center gap-1">
-            <Sparkle weight="duotone" size={13} aria-hidden /> {planLabel(subscription?.plan)}
-          </div>
-        </div>
-      </Link>
-      <button onClick={() => signOut()} className="w-full flex items-center gap-2 px-2 min-h-[40px] rounded-lg hover:bg-[#EAE6DF] text-[13px] text-ink-2">
-        <SignOut weight="duotone" size={16} aria-hidden /> Abmelden
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className={cn(
+        "group w-full flex items-center gap-3 text-[#78716C] transition-colors hover:text-[#DC2626] disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#DC2626]",
+        mobile ? "min-h-[48px] text-[15px]" : "px-3 py-2 text-[13px] rounded-lg hover:bg-[#FEF2F2]",
+      )}
+    >
+      <span className="shrink-0 inline-flex"><IconAbmelden size={mobile ? 20 : 18} /></span>
+      <span className="truncate">{busy ? "Abmelden …" : "Abmelden"}</span>
+    </button>
   );
 }

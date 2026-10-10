@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useStore } from "@/lib/store";
 import { fmtEUR, summarizePayments } from "@/lib/calc";
@@ -7,9 +7,11 @@ import { Buildings as Building2, Plus } from "@phosphor-icons/react";
 import { planLimits, useAuth } from "@/lib/auth";
 import { FeatureLocked } from "@/components/FeatureLocked";
 import { isInPortfolio } from "@/lib/statusSync";
+import { holdingRow } from "@/lib/portfolioAnalytics";
+import { PortfolioAnalysen } from "@/components/portfolio/PortfolioAnalysen";
 
 export const Route = createFileRoute("/portfolio/")({
-  head: () => ({ meta: [{ title: "Portfolio – Bestand" }] }),
+  head: () => ({ meta: [{ title: "Meine Objekte – kaufma" }] }),
   component: Portfolio,
 });
 
@@ -30,17 +32,19 @@ function Portfolio() {
         return { p, sum, crmCount };
       });
   }, [properties, payments, activities]);
+  const holdings = useMemo(() => rows.map((r) => holdingRow(r.p)), [rows]);
+  const [view, setView] = useState<"uebersicht" | "analysen">("uebersicht");
 
   if (!planLimits(subscription?.plan).portfolio) {
     return (
       <AppShell>
         <div className="bg-[#F5F3EE] min-h-full">
           <div className="mb-5">
-            <h1 className="heading-page-sm">Portfolio</h1>
+            <h1 className="heading-page-sm">Meine Objekte</h1>
             <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien.</p>
           </div>
           <FeatureLocked
-            title="Portfolio ist in Premium enthalten"
+            title="Meine Objekte ist in Premium enthalten"
             description="Mit Premium verwaltest du deinen Bestand, trackst Zahlungen und siehst den realen Cashflow nach dem Kauf."
             recommendPlan="premium"
           />
@@ -63,13 +67,42 @@ function Portfolio() {
       <div className="bg-[#F5F3EE] min-h-full">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h1 className="heading-page-sm">Portfolio</h1>
+            <h1 className="heading-page-sm">Meine Objekte</h1>
             <p className="text-[13px] text-ink-2 mt-1">Bestand: bereits gekaufte Immobilien. Hier verfolgst du den Cashflow nach dem Kauf.</p>
           </div>
           {rows.length > 0 && addBtn}
         </div>
 
-        {rows.length === 0 ? (
+        {rows.length > 0 && (
+          <div role="tablist" aria-label="Ansicht" className="flex gap-1 mb-5 border-b border-[#EAE6DF]">
+            {([
+              ["uebersicht", "Übersicht"],
+              ["analysen", "Analysen"],
+            ] as const).map(([k, label]) => {
+              const active = view === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setView(k)}
+                  className="px-4 py-2 text-[13px] font-medium transition-colors -mb-px focus-visible:outline-2 focus-visible:outline-primary"
+                  style={{
+                    color: active ? "#1C1917" : "var(--ink-2)",
+                    borderBottom: active ? "2px solid #2D6A4F" : "2px solid transparent",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {rows.length > 0 && view === "analysen" ? (
+          <PortfolioAnalysen rows={holdings} />
+        ) : rows.length === 0 ? (
           <div className="rounded-[12px] border border-[#EAE6DF] bg-white p-10 text-center text-ink-2">
             <Building2 className="w-8 h-8 mx-auto mb-3 opacity-50" aria-hidden />
             <div className="font-medium text-[#1C1917]">Noch keine gekauften Immobilien.</div>

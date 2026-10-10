@@ -7,6 +7,7 @@ import { calcAmortizationSchedule, calcBalanceSeries, calcTotalInterestPaid, fmt
 import { REQUIRED_BORDER, REQUIRED_FINANCE_EMPTY_ID, requiredFieldDomId } from "@/lib/requiredFields";
 import { RequiredFieldHint } from "@/components/RequiredFieldHint";
 import { useActiveAssumptions, useStore } from "@/lib/store";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
 import { CHART_STYLE } from "@/components/ChartCard";
 import { CHART_COLORS, CHART_CONTAINER_CLS, CHART_MARGIN, ChartTooltip, GRID_PROPS, LEGEND_PROPS, LINE_PROPS, X_AXIS_CATEGORY, X_AXIS_TIME, yAxisProps } from "@/components/charts/chartKit";
@@ -22,6 +23,7 @@ const STATUS_OPTIONS: FinanceStatus[] = ["Anfrage", "Angebot erhalten", "Favorit
 
 export function FinancePanel({ p }: { p: Property }) {
   const { updateProperty } = useStore();
+  const { confirm } = useConfirmDialog();
   const scenarios = p.financeScenarios ?? [];
   // Wie getActiveFinance: verweist activeFinanceId ins Leere, gilt das erste Szenario.
   const activeId = getActiveFinance(p)?.id;
@@ -44,8 +46,14 @@ export function FinancePanel({ p }: { p: Property }) {
   const updateScn = (id: string, patch: Partial<FinanceScenario>) => {
     setScenarios(scenarios.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
-  const removeScn = (id: string) => {
-    if (!confirm("Szenario löschen?")) return;
+  const removeScn = async (id: string) => {
+    const ok = await confirm({
+      title: "Szenario löschen",
+      message: "Dieses Finanzierungsszenario wird entfernt. Die übrigen Szenarien bleiben erhalten.",
+      confirmLabel: "Szenario löschen",
+      danger: true,
+    });
+    if (!ok) return;
     const next = scenarios.filter((s) => s.id !== id);
     const newActive = p.activeFinanceId === id ? next[0]?.id : p.activeFinanceId;
     setScenarios(next, newActive);

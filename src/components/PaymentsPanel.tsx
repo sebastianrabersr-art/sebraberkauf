@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
@@ -12,6 +13,7 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export function PaymentsPanel({ p }: { p: Property }) {
   const { payments, addPayment, updatePayment, deletePayment } = useStore();
+  const { confirm } = useConfirmDialog();
   const list = useMemo(
     () => payments.filter((x) => x.propertyId === p.id).sort((a, b) => (a.date < b.date ? 1 : -1)),
     [payments, p.id],
@@ -117,7 +119,7 @@ export function PaymentsPanel({ p }: { p: Property }) {
                     </select>
                   </td>
                   <td className="py-1.5 text-right">
-                    <button onClick={() => { if (confirm("Zahlung löschen?")) deletePayment(x.id); }} className="text-destructive p-1"><Trash2 className="size-3.5" /></button>
+                    <button onClick={async () => { if (await confirm({ title: "Zahlung löschen", message: "Die Zahlung wird aus dem Zahlungs-Tracking entfernt und fließt nicht mehr in den Cashflow ein.", confirmLabel: "Zahlung löschen", danger: true })) deletePayment(x.id); }} className="text-destructive p-1"><Trash2 className="size-3.5" /></button>
                   </td>
                 </tr>
               ))}

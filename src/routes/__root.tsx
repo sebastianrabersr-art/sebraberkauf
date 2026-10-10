@@ -10,6 +10,8 @@ import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { MfaGate } from "@/components/settings/MfaGate";
 import { NotFoundPage } from "@/components/marketing/NotFoundPage";
 import { IconContext, type IconProps } from "@phosphor-icons/react";
 
@@ -156,9 +158,11 @@ function RootComponent() {
           Tailwind-Größenklassen (size-4 …) überschreiben das wie gehabt. */}
       <IconContext.Provider value={ICON_DEFAULTS}>
         <AuthProvider>
-          <GatedOutlet />
-          <Toaster position="top-right" richColors />
-          <CookieBanner />
+          <ConfirmDialogProvider>
+            <GatedOutlet />
+            <Toaster position="top-right" richColors />
+            <CookieBanner />
+          </ConfirmDialogProvider>
         </AuthProvider>
       </IconContext.Provider>
     </QueryClientProvider>
@@ -169,7 +173,8 @@ function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, profile, loading } = useAuth();
   const isPublic = PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PREFIXES.some((p) => matchesPath(pathname, p));
-  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));  if (isPublic) return <Outlet />;
+  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));
+  if (isPublic) return <Outlet />;
   if (!needsAuth) return <Outlet />;
   if (loading) {
     return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Lade…</div>;
@@ -186,5 +191,10 @@ function GatedOutlet() {
     if (typeof window !== "undefined") window.location.href = "/onboarding";
     return null;
   }
-  return <Outlet />;
+  // Mit aktiver 2FA: erst nach dem Code (AAL2) in die App.
+  return (
+    <MfaGate>
+      <Outlet />
+    </MfaGate>
+  );
 }

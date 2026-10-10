@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
 import { calcProperty, fmtEUR } from "@/lib/calc";
-import { migrateLegacyStatus, userRatingAvg, type Bewertung, type ProzessStatus, type Property } from "@/lib/types";
+import { migrateLegacyStatus, type ProzessStatus, type Property } from "@/lib/types";
 import { isBought, promptAddToPortfolio, prozessStatusPatch } from "@/lib/statusSync";
-import { DotsThree as MoreHorizontal, Calendar, DotsSixVertical as GripVertical, Plus, CheckCircle as CheckCircle2, XCircle, X, MagnifyingGlass as Search } from "@phosphor-icons/react";
+import { PipelineCardMenu } from "@/components/pipeline/PipelineCardMenu";
+import { ReminderButton } from "@/components/crm/ReminderButton";
+import { Calendar, DotsSixVertical as GripVertical, Plus, CheckCircle as CheckCircle2, XCircle, X, MagnifyingGlass as Search } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/pipeline")({
   head: () => ({ meta: [{ title: "Pipeline – kaufma CRM" }] }),
@@ -16,38 +18,21 @@ const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
 // "Gekauft" / "Abgelehnt" are exit lanes, not kanban columns.
 const COLUMNS: ProzessStatus[] = ["Kontaktiert", "Besichtigung", "Finanzierung", "Angebot & Verhandlung"];
-const BEWERTUNG_FILTERS: ("Alle" | Bewertung)[] = ["Alle", "Interessant", "Prüfen", "Neu", "Nicht interessant"];
-
-function getBewertung(p: Property): Bewertung {
-  return p.bewertung ?? migrateLegacyStatus(p.status).bewertung;
-}
 function getProzess(p: Property): ProzessStatus {
   return (p.prozessStatus ?? migrateLegacyStatus(p.status).prozessStatus) as ProzessStatus;
 }
-
-const BEWERTUNG_STYLE: Record<Bewertung, { bg: string; fg: string }> = {
-  "Interessant": { bg: "#E8F5EE", fg: "#2D6A4F" },
-  "Prüfen": { bg: "#FEF3C7", fg: "#92400E" },
-  "Neu": { bg: "#F5F3EE", fg: "#78716C" },
-  "Nicht interessant": { bg: "#FEE2E2", fg: "#991B1B" },
-};
 
 function Pipeline() {
   const navigate = useNavigate();
   const { properties, updateProperty } = useStore();
   const project = useActiveProject();
   const a = useActiveAssumptions();
-  const [filter, setFilter] = useState<"Alle" | Bewertung>("Interessant");
   const [dragOverCol, setDragOverCol] = useState<ProzessStatus | null>(null);
-  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [reminderFor, setReminderFor] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState("");
 
   const inProj = useMemo(() => project ? properties.filter((p) => p.projectId === project.id) : [], [properties, project?.id]);
-  const filtered = useMemo(
-    () => (filter === "Alle" ? inProj : inProj.filter((p) => getBewertung(p) === filter)),
-    [inProj, filter]
-  );
   const boughtCount = inProj.filter((p) => getProzess(p) === "Gekauft" || p.status === "Gekauft").length;
   const rejectedCount = inProj.filter((p) => getProzess(p) === "Abgelehnt").length;
 
@@ -62,7 +47,6 @@ function Pipeline() {
     [inProj, addSearch]
   );
 
-  const setBewertung = (id: string, b: Bewertung) => updateProperty(id, { bewertung: b });
   // Gleicher Status-Abgleich wie im CRM-Tab (src/lib/statusSync.ts).
   const setProzess = (id: string, ps: ProzessStatus) => {
     const p = properties.find((x) => x.id === id);
@@ -87,17 +71,6 @@ function Pipeline() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showAddModal]);
-  useEffect(() => {
-    if (!menuFor) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-stop]")) {
-        setMenuFor(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuFor]);
 
   const exitLane = (col: ProzessStatus, label: string, isOver: boolean) => (
     <div
@@ -134,7 +107,7 @@ function Pipeline() {
             onClick={() => navigate({ to: "/portfolio" })}
             className="text-[12px] text-primary hover:underline"
           >
-            Portfolio öffnen →
+            Meine Objekte öffnen →
           </button>
         )}
       </div>
@@ -158,34 +131,10 @@ function Pipeline() {
           </button>
         </div>
 
-        {/* Bewertung filter */}
-        <div className="flex items-center gap-2 flex-wrap mb-4">
-          <span className="text-[12px] text-ink-2 mr-1">Bewertung:</span>
-          {BEWERTUNG_FILTERS.map((b) => {
-            const active = filter === b;
-            const count = b === "Alle" ? inProj.length : inProj.filter((p) => getBewertung(p) === b).length;
-            return (
-              <button
-                key={b}
-                onClick={() => setFilter(b)}
-                className="rounded-full px-3 py-[5px] text-[12px] transition-colors"
-                style={{
-                  background: active ? "#2D6A4F" : "#F5F3EE",
-                  color: active ? "#FFFFFF" : "var(--ink-2)",
-                  border: active ? "1px solid #2D6A4F" : "1px solid #EAE6DF",
-                  fontWeight: active ? 600 : 500,
-                }}
-              >
-                {b} <span className="opacity-70">({count})</span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Kanban */}
         <div className="flex gap-3 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
-            const items = filtered.filter((p) => getProzess(p) === col);
+            const items = inProj.filter((p) => getProzess(p) === col);
             const isOver = dragOverCol === col;
             return (
               <div
@@ -218,8 +167,6 @@ function Pipeline() {
                   )}
                   {items.map((p) => {
                     const c = calcProperty(p, a);
-                    const bw = getBewertung(p);
-                    const st = BEWERTUNG_STYLE[bw];
                     const cashColor = c.cashflowMtl >= 0 ? "#2D6A4F" : "#DC2626";
                     const cashBg = c.cashflowMtl >= 0 ? "#E8F5EE" : "#FEE2E2";
 
@@ -243,27 +190,28 @@ function Pipeline() {
                       >
                         <GripVertical className="absolute left-0.5 top-3 w-3 h-3 text-[#D4CFC8] opacity-0 group-hover:opacity-100" />
                         <div className="flex items-start justify-between gap-2">
-                          <button
-                            data-stop
-                            onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === p.id ? null : p.id); }}
-                            className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-[#1C1917]"
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ background: st.bg, color: st.fg }}>{bw}</span>
-                        </div>
-                        {menuFor === p.id && (
-                          <div data-stop className="absolute z-20 left-2 top-7 bg-white border border-[#EAE6DF] rounded-[8px] py-1 text-[12px] min-w-[180px]" onClick={(e) => e.stopPropagation()}>
-                            {(["Interessant", "Prüfen", "Nicht interessant"] as Bewertung[]).map((b) => (
-                              <button key={b} onClick={() => { setBewertung(p.id, b); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Als {b} markieren</button>
-                            ))}
-                            <div className="border-t border-[#EAE6DF] my-1" />
-                            <button onClick={() => { updateProperty(p.id, prozessStatusPatch(p, "")); setMenuFor(null); }} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8] text-destructive">Aus Pipeline entfernen</button>
-                            <div className="border-t border-[#EAE6DF] my-1" />
-                            <button onClick={() => navigate({ to: "/properties/$id", params: { id: p.id } })} className="block w-full text-left px-3 py-1.5 hover:bg-[#FAFAF8]">Detail öffnen</button>
+                          <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 min-w-0">{p.title || "—"}</div>
+                          <div className="relative shrink-0 -mr-1 -mt-0.5">
+                            <PipelineCardMenu
+                              title={p.title || "Objekt"}
+                              status={col}
+                              onOpen={() => navigate({ to: "/properties/$id", params: { id: p.id } })}
+                              onStatus={(ps) => setProzess(p.id, ps)}
+                              onReminder={() => setReminderFor(p.id)}
+                              onRemove={() => updateProperty(p.id, prozessStatusPatch(p, ""))}
+                            />
+                            {reminderFor === p.id && (
+                              <ReminderButton
+                                propertyId={p.id}
+                                suggestedNote={p.nextAction || undefined}
+                                suggestedDate={p.nextActionDate || undefined}
+                                anchorOnly
+                                open
+                                onOpenChange={(o) => { if (!o) setReminderFor(null); }}
+                              />
+                            )}
                           </div>
-                        )}
-                        <div className="text-[13px] font-semibold text-[#1C1917] line-clamp-2 mt-1">{p.title || "—"}</div>
+                        </div>
                         <div className="text-[12px] text-ink-3 mt-1">{p.bezirk || "—"} · {fmtEUR(p.kaufpreis)}</div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-[12px] px-1.5 py-0.5 rounded-[8px]" style={{ background: cashBg, color: cashColor }}>{fmtEUR(c.cashflowMtl)}/M</span>
@@ -311,16 +259,12 @@ function Pipeline() {
                   <div className="text-[12px] text-ink-3 p-6 text-center">Keine Kandidaten gefunden.</div>
                 )}
                 {candidates.map((p) => {
-                  const avg = userRatingAvg(p.userRating ?? {});
-                  const scoreDisplay = avg != null ? avg.toFixed(1) : "—";
-                  const scoreColor = avg == null ? "#A8A29E" : avg >= 7 ? "#2D6A4F" : avg >= 4 ? "#D97706" : "#DC2626";
                   return (
                     <div key={p.id} className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-[#FAFAF8]">
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold text-[#1C1917] truncate">{p.title || "—"}</div>
                         <div className="text-[12px] text-ink-3">{p.bezirk || "—"}</div>
                       </div>
-                      <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[8px]" style={{ background: "#F5F3EE", color: scoreColor }}>{scoreDisplay}</span>
                       <button
                         onClick={() => addToPipeline(p.id)}
                         className="text-[12px] font-medium px-3 py-1.5 rounded-[8px] bg-primary text-white hover:bg-[#235740]"

@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { PropertyTypeBadge } from "@/components/PropertyTypeBadge";
 import { AppShell } from "@/components/layout/AppShell";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { calcDataQuality, calcProperty, calcScore, fmtEUR, fmtPct, googleMapsUrl, inferMietrecht, isValidUrl } from "@/lib/calc";
 import { AmpelBadge } from "@/components/AmpelBadge";
 import { userRatingAvg } from "@/lib/types";
@@ -81,6 +83,7 @@ const COL_NUMERIC = "py-3 px-4 text-right whitespace-nowrap text-[13px] text-[#1
 function PropertiesList() {
   const navigate = useNavigate();
   const { properties, projects, deleteProperty, deleteDemoData } = useStore();
+  const { confirm } = useConfirmDialog();
   const activeProject = useActiveProject();
   const assumptions = useActiveAssumptions();
   const [statusFilter, setStatusFilter] = useState("all");
@@ -170,7 +173,17 @@ function PropertiesList() {
           </button>
           {hasDemo && (
             <button
-              onClick={() => { if (confirm("Alle Demo-Daten (Beispielprojekt + Seed-Immobilien) löschen?")) { deleteDemoData(); toast.success("Demo-Daten entfernt."); }}}
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Demo-Daten löschen",
+                  message: "Das Beispielprojekt und die Beispiel-Immobilien werden entfernt. Deine eigenen Objekte bleiben erhalten.",
+                  confirmLabel: "Demo-Daten löschen",
+                  danger: true,
+                });
+                if (!ok) return;
+                deleteDemoData();
+                toast.success("Demo-Daten entfernt.");
+              }}
               className="rounded-lg border border-[#EAE6DF] px-3 py-2 text-[12px] text-destructive hover:bg-[#FEE2E2]/40"
             >
               Demo-Daten löschen
@@ -274,6 +287,7 @@ function PropertiesList() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
+                    <PropertyTypeBadge p={p} className="mb-1" />
                     <div className="text-[14px] font-medium text-[#1C1917] line-clamp-2">{p.title || "Ohne Titel"}</div>
                     <div className="text-[12px] text-ink-2 truncate mt-0.5">
                       {[p.bezirk, p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : null, p.status].filter(Boolean).join(" · ")}
@@ -369,7 +383,10 @@ function PropertiesList() {
                       >
                         {p.title || "—"}
                       </div>
-                      <div className="text-[12px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                      <div className="mt-1 flex items-center gap-2 min-w-0">
+                        <PropertyTypeBadge p={p} />
+                        <span className="text-[12px] text-ink-3 truncate">{projectName} · {p.platform || "—"}</span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>

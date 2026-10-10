@@ -46,7 +46,10 @@ export const Route = createFileRoute("/api/public/reminders/dispatch")({
 
         let sent = 0;
         let failed = 0;
+        let skipped = 0;
         const emailCache = new Map<string, string | null>();
+        // Einstellungen → Benachrichtigungen: "Erinnerungen per E-Mail" (Standard: an).
+        const wantsEmail = new Map<string, boolean>();
 
         for (const r of due ?? []) {
           // Beanspruchen: nur wer sent von false auf true setzt, verschickt (schützt vor Doppelversand).
@@ -59,6 +62,20 @@ export const Route = createFileRoute("/api/public/reminders/dispatch")({
           if (!claimed?.length) continue;
 
           try {
+            if (!wantsEmail.has(r.user_id)) {
+              const { data: us } = await supabaseAdmin
+                .from("user_settings")
+                .select("notification_preferences")
+                .eq("user_id", r.user_id)
+                .maybeSingle();
+              const prefs = ((us as any)?.notification_preferences ?? {}) as { reminder_emails?: boolean };
+              wantsEmail.set(r.user_id, prefs.reminder_emails !== false);
+            }
+            if (!wantsEmail.get(r.user_id)) {
+              // Abgeschaltet: als erledigt markiert lassen, keine E-Mail.
+              skipped++;
+              continue;
+            }
             if (!emailCache.has(r.user_id)) {
               const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
               emailCache.set(r.user_id, u?.user?.email ?? null);
@@ -93,7 +110,7 @@ export const Route = createFileRoute("/api/public/reminders/dispatch")({
           }
         }
 
-        return Response.json({ due: due?.length ?? 0, sent, failed });
+        return Response.json({ due: due?.length ?? 0, sent, failed, skipped });
       },
     },
   },

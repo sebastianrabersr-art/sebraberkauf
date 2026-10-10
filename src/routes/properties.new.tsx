@@ -7,7 +7,9 @@ import { detectPlatform } from "@/lib/extract.functions";
 import { isValidUrl } from "@/lib/calc";
 import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { track } from "@/lib/analytics";
-import { PROPERTY_TYPES, type PropertyType } from "@/lib/types";
+import type { PropertyType } from "@/lib/types";
+import { PropertyTypePicker } from "@/components/PropertyTypePicker";
+import { CATEGORY_LABEL, propertyCategory } from "@/lib/propertyKinds";
 
 export const Route = createFileRoute("/properties/new")({
   head: () => ({ meta: [{ title: "Neue Immobilie – kaufma" }] }),
@@ -30,12 +32,16 @@ function NewPropertyPage() {
   const [m2, setM2] = useState<number | null>(null);
   const [zimmer, setZimmer] = useState<number | null>(null);
   const [miete, setMiete] = useState<number | null>(null);
+  const [stellplaetze, setStellplaetze] = useState<number | null>(1);
 
   const isHouseSeparate = propertyType === "house_with_separate_land";
   const isHouse = propertyType === "house_with_land" || propertyType === "house_with_separate_land";
   const isLand = propertyType === "land_only";
   // Zinshaus: Fläche und Miete kommen aus den Einheiten (Tab "Einheiten" im Objekt).
   const isZinshaus = propertyType === "zinshaus";
+  const cat = propertyCategory(propertyType);
+  const isGarage = cat === "garage";
+  const isGewerbe = cat === "buero" || cat === "lager";
   const computedTotal = isHouseSeparate ? (housePurchasePrice ?? 0) + (landPurchasePrice ?? 0) : null;
 
   const checkLimit = () => propertyLimit.guard();
@@ -56,12 +62,15 @@ function NewPropertyPage() {
       landPurchasePrice: isHouseSeparate ? landPurchasePrice : null,
       totalPurchasePrice: isHouseSeparate && computedTotal ? computedTotal : null,
       landAreaSqm: (isHouse || isLand) ? landAreaSqm : null,
-      wohnflaecheM2: isLand || isZinshaus ? null : m2,
+      wohnflaecheM2: isLand || isZinshaus || isGarage ? null : m2,
       livingAreaSqm: isHouse ? m2 : null,
-      zimmer: isLand || isZinshaus ? null : zimmer,
-      nettomieteMtl: isZinshaus ? null : miete,
-      nettomieteGeschaetzt: !isZinshaus && !!miete,
-      ...(isZinshaus ? { units: [], objekttyp: "Zinshaus" } : {}),
+      zimmer: isLand || isZinshaus || isGarage || isGewerbe ? null : zimmer,
+      // Garage: Miete pro Stellplatz × Anzahl; Grundstück: keine Miete.
+      nettomieteMtl: isZinshaus || isLand ? null : isGarage ? (miete != null ? miete * (stellplaetze ?? 1) : null) : miete,
+      nettomieteGeschaetzt: !isZinshaus && !isLand && !!miete,
+      objekttyp: CATEGORY_LABEL[cat],
+      ...(isZinshaus ? { units: [] } : {}),
+      ...(isGarage ? { anzahlStellplaetze: stellplaetze ?? 1, mieteProStellplatz: miete } : {}),
     });
     const wasFirst = properties.filter((x) => !x.isDemo).length === 0;
     addProperty(p);
@@ -95,15 +104,21 @@ function NewPropertyPage() {
           <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
           {link && !isValidUrl(link) && <p className="text-xs text-destructive mt-1">Ungültige URL.</p>}
         </Row>
-        <Row label="Objektart">
-          <select
-            value={propertyType}
-            onChange={(e) => setPropertyType(e.target.value as PropertyType)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-          >
-            {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </Row>
+        <div>
+          <div className="text-xs text-muted-foreground mb-2">Objektart</div>
+          <PropertyTypePicker value={propertyType} onChange={setPropertyType} />
+          {isHouse && (
+            <label className="mt-3 flex items-center gap-2 text-[13px] text-[#1C1917]">
+              <input
+                type="checkbox"
+                checked={isHouseSeparate}
+                onChange={(e) => setPropertyType(e.target.checked ? "house_with_separate_land" : "house_with_land")}
+                className="accent-primary"
+              />
+              Haus und Grundstück zu getrennten Preisen gekauft
+            </label>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <Row label="Bezirk"><input value={bezirk} onChange={(e) => setBezirk(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></Row>
           {isHouseSeparate ? (
@@ -132,15 +147,23 @@ function NewPropertyPage() {
               Fläche und Miete ergeben sich aus den Einheiten – die legst du nach dem Erstellen im Tab „Einheiten“ an.
             </p>
           )}
-          {!isLand && !isZinshaus && (
+          {isGarage && (
             <>
-              <Row label={isHouse ? "Wohnfläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
-              <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>
-              <Row label="Geschätzte Miete €/Mt"><N value={miete} on={setMiete} /></Row>
+              <Row label="Anzahl Stellplätze"><N value={stellplaetze} on={setStellplaetze} /></Row>
+              <Row label="Miete pro Stellplatz €/Mt"><N value={miete} on={setMiete} /></Row>
+            </>
+          )}
+          {!isLand && !isZinshaus && !isGarage && (
+            <>
+              <Row label={isGewerbe ? "Bürofläche m²" : "Wohnfläche m²"}><N value={m2} on={setM2} /></Row>
+              {!isGewerbe && <Row label="Zimmer"><N value={zimmer} on={setZimmer} /></Row>}
+              <Row label={cat === "buero" ? "Gewerbemiete netto €/Mt" : cat === "lager" ? "Nettomiete Lager €/Mt" : "Geschätzte Miete €/Mt"}><N value={miete} on={setMiete} /></Row>
             </>
           )}
           {isLand && (
-            <Row label="Erwartete Miete €/Mt (optional)"><N value={miete} on={setMiete} /></Row>
+            <p className="col-span-2 text-xs text-muted-foreground">
+              Grundstücke rechnen wir ohne Miete und ohne Finanzierung: Ertrag allein aus der Wertsteigerung. Widmung und Erschließung ergänzt du im Objekt.
+            </p>
           )}
         </div>
         <div className="flex gap-2 pt-2">
