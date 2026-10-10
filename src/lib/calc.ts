@@ -1,4 +1,5 @@
 import type { Assumptions, FinanceScenario, Mietrecht, Property, ZinshausUnit } from "./types";
+import { type PropertyCategory, categoryOf, defaultAfaSatz, garageRent, GARAGE_RECHT_TEXT, GEWERBERECHT_TEXT, isGewerbeMiete, landAppreciation, leerstandGewerbe } from "./propertyKinds";
 import {
   computePurchaseCostBreakdown,
   resolvePurchaseCostRules,
@@ -101,6 +102,23 @@ export interface Calc {
   investorModel?: InvestorModel;
   /** Itemisierte Kaufnebenkosten (ohne Makler), wie sie in kaufNebenkosten eingehen. */
   nebenkostenBreakdown?: PurchaseCostBreakdown;
+  /** Nur Grundstück: Ertrag allein aus Wertsteigerung (keine Miete, Kauf aus Eigenkapital). */
+  grundstueck?: LandAppreciation;
+}
+
+export interface LandAppreciation {
+  /** Wertsteigerung p.a. als Anteil (0.02 = 2 %). */
+  wertsteigerungPct: number;
+  /** Wertzuwachs im ersten Jahr (Kaufpreis × Satz). */
+  wertsteigerungJahr: number;
+  /** Grundstückswert nach 10 Jahren. */
+  wert10J: number;
+  /** Gewinn nach 10 Jahren: Wert − Gesamtkapital (inkl. Kaufnebenkosten). */
+  gewinn10J: number;
+  /** Rendite auf das eingesetzte Eigenkapital nach 10 Jahren, gesamt. */
+  eigenkapitalrendite10J: number;
+  /** Dieselbe Rendite pro Jahr (geometrisch). */
+  renditePa: number;
 }
 
 
@@ -619,6 +637,19 @@ export function calcZinshaus(units: ZinshausUnit[] | undefined): ZinshausAggrega
   };
 }
 
+/**
+ * Grundstück: Ertrag nur aus Wertsteigerung. Gesamtkapital (Kaufpreis + Nebenkosten) gilt als
+ * Eigenkapital, da ohne Finanzierung gerechnet wird.
+ */
+export function calcLandAppreciation(p: Property, kaufpreis: number, gesamtkosten: number): LandAppreciation {
+  const pct = landAppreciation(p);
+  const wert10J = kaufpreis * Math.pow(1 + pct, 10);
+  const gewinn10J = wert10J - gesamtkosten;
+  const eigenkapitalrendite10J = gesamtkosten > 0 ? gewinn10J / gesamtkosten : 0;
+  const renditePa = gesamtkosten > 0 && wert10J > 0 ? Math.pow(wert10J / gesamtkosten, 1 / 10) - 1 : 0;
+  return { wertsteigerungPct: pct, wertsteigerungJahr: kaufpreis * pct, wert10J, gewinn10J, eigenkapitalrendite10J, renditePa };
+}
+
 /** Zinshaus mit mindestens einer Einheit: Miete/Fläche kommen aus den Einheiten. */
 export const isZinshausWithUnits = (p: Property) => p.propertyType === "zinshaus" && (p.units?.length ?? 0) > 0;
 
@@ -634,20 +665,33 @@ export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCas
   const effectiveKaufpreis = resolveTotalPurchasePrice(p);
   // Zinshaus: Leerstand steckt schon pro Einheit in der Miete → allgemeinen Puffer nicht doppelt abziehen.
   const zinshaus = isZinshausWithUnits(p) ? calcZinshaus(p.units) : null;
-  const pn: Property = zinshaus
+  const cat = categoryOf(p);
+  const isLand = cat === "grundstueck";
+  const isGarage = cat === "garage";
+  let pn: Property = zinshaus
     ? { ...p, kaufpreis: effectiveKaufpreis, leerstandPufferPct: 0 }
     : { ...p, kaufpreis: effectiveKaufpreis };
+  // Büro/Lager: Gewerbe-Leerstandsrisiko statt Wohn-Leerstandspuffer.
+  if (isGewerbeMiete(p.propertyType)) pn = { ...pn, leerstandPufferPct: leerstandGewerbe(p) };
+  // Garage: Betriebs- und Verwaltungskosten trägt der Eigentümer (Stellplatzmiete ist meist pauschal).
+  if (isGarage && p.bkNichtUmlagefaehig == null) {
+    pn = { ...pn, bkNichtUmlagefaehig: (p.betriebskostenMtl ?? 0) + (p.verwaltungskostenMtl ?? 0) };
+  }
+  // Grundstück: ohne Finanzierungs-Tab → Kauf aus Eigenkapital, keine Miete, keine laufenden Kosten.
+  if (isLand) pn = { ...pn, financeScenarios: [], activeFinanceId: undefined, bkNichtUmlagefaehig: 0, ruecklageMtl: 0 };
+  const aEff: Assumptions = isLand ? { ...a, eigenkapital: Number.MAX_SAFE_INTEGER } : a;
 
   // Wohnfläche: bei Häusern/Gewerbe nehmen wir alternativ livingAreaSqm
   // bzw. usableAreaSqm, damit Preis/m² und Rücklagen-Pauschale sinnvoll bleiben.
   // Zinshaus: Gesamtfläche und effektive Gesamtmiete aller Einheiten.
-  const m2 = zinshaus ? zinshaus.totalFlaeche : p.wohnflaecheM2 ?? p.livingAreaSqm ?? p.usableAreaSqm ?? 0;
-  const miete = zinshaus ? zinshaus.totalMiete : p.nettomieteMtl ?? 0;
+  // Garage/Grundstück: keine Wohnfläche (keine m²-Pauschalen für Rücklage und Kosten).
+  const m2 = zinshaus ? zinshaus.totalFlaeche : isLand || isGarage ? 0 : p.wohnflaecheM2 ?? p.livingAreaSqm ?? p.usableAreaSqm ?? 0;
+  const miete = zinshaus ? zinshaus.totalMiete : isLand ? 0 : isGarage ? garageRent(p) : p.nettomieteMtl ?? 0;
 
-  const purchase = calcPurchaseCosts(pn, a);
-  const financing = calcFinancing(pn, a, purchase.gesamtkosten);
-  const rental = calcRentalCosts(pn, a, miete, m2);
-  const kpis = calcInvestmentKpis(pn, a, {
+  const purchase = calcPurchaseCosts(pn, aEff);
+  const financing = calcFinancing(pn, aEff, purchase.gesamtkosten);
+  const rental = calcRentalCosts(pn, aEff, miete, m2);
+  const kpisRaw = calcInvestmentKpis(pn, aEff, {
     kaufpreis: effectiveKaufpreis, m2, miete,
     gesamtkosten: purchase.gesamtkosten,
     eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
@@ -658,6 +702,18 @@ export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCas
     leerstandMtl: rental.leerstandMtl,
     leerstandPct: rental.leerstandPct,
   });
+
+  // Grundstück: keine Mieterträge – Cashflow und Mietrenditen sind 0, Ertrag nur aus Wertsteigerung.
+  const grundstueck = isLand ? calcLandAppreciation(p, effectiveKaufpreis, purchase.gesamtkosten) : undefined;
+  const kpis = grundstueck
+    ? {
+        ...kpisRaw,
+        cashflowMtl: 0, cashflowJahr: 0, bruttorendite: 0, nettorendite: 0,
+        eigenkapitalrendite: grundstueck.renditePa,
+        dscr: 0, breakEvenMiete: 0, requiredBreakEvenRent: 0, requiredBreakEvenRentPerM2: 0,
+        cashflowStressZins: 0, cashflowStressLeerstand: 0, cashflowStressReparatur: 0, stressedCashflowMtl: 0, stressedDscr: 0,
+      }
+    : kpisRaw;
 
   // Deal-Score aus den KPIs ableiten.
   const deal = calcDealScore(pn, a, {
@@ -708,7 +764,8 @@ export function calcProperty(p: Property, a: Assumptions, _opts?: { portfolioCas
     dealRating: deal.dealRating,
     dealSummaryShort: deal.dealSummaryShort,
     nebenkostenBreakdown: purchase.breakdown,
-    investorModel: calcInvestorModel(pn, a, {
+    grundstueck,
+    investorModel: calcInvestorModel(pn, aEff, {
       kaufpreis: effectiveKaufpreis,
       gesamtkosten: purchase.gesamtkosten,
       eigenkapitalEinsatz: financing.eigenkapitalEinsatz,
@@ -762,49 +819,73 @@ export interface DataQuality {
   total: number;
 }
 
-const REQUIRED_FIELDS: { key: string; label: string; check: (p: Property) => boolean; group: "basis" | "kosten" | "finanzierung" | "bewertung" }[] = [
+/**
+ * Pflichtfelder der Datenqualität. `only` schränkt ein Feld auf Objektkategorien ein
+ * (fehlt es, gilt das Feld für Wohnung, Haus und Zinshaus wie bisher sowie für die übrigen,
+ * sofern nicht `skip` sie ausnimmt).
+ */
+type DqField = {
+  key: string; label: string; check: (p: Property) => boolean;
+  group: "basis" | "kosten" | "finanzierung" | "bewertung";
+  only?: PropertyCategory[]; skip?: PropertyCategory[];
+};
+const NO_RENT: PropertyCategory[] = ["grundstueck"];
+const REQUIRED_FIELDS: DqField[] = [
   // BASIS
   { key: "kaufpreis",       label: "Kaufpreis",          group: "basis",        check: (p) => !!p.kaufpreis && p.kaufpreis > 0 },
-  { key: "wohnflaecheM2",   label: "Wohnfläche m²",      group: "basis",        check: (p) => !!p.wohnflaecheM2 && p.wohnflaecheM2 > 0 },
-  { key: "nettomieteMtl",   label: "Erwartete Miete",    group: "basis",        check: (p) => !!p.nettomieteMtl && p.nettomieteMtl > 0 },
-  { key: "zimmer",          label: "Zimmer",             group: "basis",        check: (p) => !!p.zimmer && p.zimmer > 0 },
+  { key: "wohnflaecheM2",   label: "Wohnfläche m²",      group: "basis",        check: (p) => !!p.wohnflaecheM2 && p.wohnflaecheM2 > 0, skip: ["garage", "grundstueck"] },
+  { key: "landAreaSqm",     label: "Grundstücksfläche",  group: "basis",        check: (p) => !!p.landAreaSqm && p.landAreaSqm > 0, only: ["grundstueck"] },
+  { key: "widmung",         label: "Widmung",            group: "basis",        check: (p) => !!p.widmung, only: ["grundstueck"] },
+  { key: "nettomieteMtl",   label: "Erwartete Miete",    group: "basis",        check: (p) => garageRent(p) > 0 || (!!p.nettomieteMtl && p.nettomieteMtl > 0), skip: NO_RENT },
+  { key: "anzahlStellplaetze", label: "Anzahl Stellplätze", group: "basis",    check: (p) => (p.anzahlStellplaetze ?? 0) > 0, only: ["garage"] },
+  { key: "zimmer",          label: "Zimmer",             group: "basis",        check: (p) => !!p.zimmer && p.zimmer > 0, only: ["wohnung", "haus", "zinshaus"] },
   { key: "bezirk",          label: "Bezirk / PLZ",       group: "basis",        check: (p) => !!p.bezirk?.trim() || !!p.city?.trim() },
   // KOSTEN
   { key: "makler",            label: "Makler Ja/Nein",      group: "kosten",     check: (p) => p.makler === "Ja" || p.makler === "Nein" },
-  { key: "betriebskostenMtl", label: "Betriebskosten",      group: "kosten",     check: (p) => p.betriebskostenMtl != null && p.betriebskostenMtl >= 0 },
-  // FINANZIERUNG
-  { key: "eigenkapital", label: "Eigenkapital", group: "finanzierung", check: (p) => {
+  { key: "betriebskostenMtl", label: "Betriebskosten",      group: "kosten",     check: (p) => p.betriebskostenMtl != null && p.betriebskostenMtl >= 0, skip: NO_RENT },
+  // FINANZIERUNG (Grundstück wird ohne Finanzierung gerechnet)
+  { key: "eigenkapital", label: "Eigenkapital", group: "finanzierung", skip: NO_RENT, check: (p) => {
     const fin = getActiveFinance(p);
     return fin != null ? (fin.eigenkapital ?? 0) > 0 : false;
   } },
-  { key: "zinssatz", label: "Zinssatz", group: "finanzierung", check: (p) => {
+  { key: "zinssatz", label: "Zinssatz", group: "finanzierung", skip: NO_RENT, check: (p) => {
     const fin = getActiveFinance(p);
     return fin != null ? (fin.zinssatz ?? 0) > 0 : false;
   } },
   // BEWERTUNG
-  { key: "baujahr",     label: "Baujahr",      group: "bewertung", check: (p) => !!p.baujahr && p.baujahr > 1800 },
-  { key: "zustand",     label: "Zustand",      group: "bewertung", check: (p) => !!p.zustand?.trim() },
-  { key: "mietrecht",   label: "Mietrecht",    group: "bewertung", check: (p) => !!p.mietrecht && p.mietrecht !== "unklar – rechtlich prüfen" },
-  { key: "energyClass", label: "Energieklasse", group: "bewertung", check: (p) => !!p.energyClass?.trim() },
+  { key: "baujahr",     label: "Baujahr",      group: "bewertung", check: (p) => !!p.baujahr && p.baujahr > 1800, skip: NO_RENT },
+  { key: "zustand",     label: "Zustand",      group: "bewertung", check: (p) => !!p.zustand?.trim(), skip: NO_RENT },
+  // Mietrecht nur im Wohnrecht – Gewerbe, Garage und Grundstück haben keine MRG-Einstufung.
+  { key: "mietrecht",   label: "Mietrecht",    group: "bewertung", check: (p) => !!p.mietrecht && p.mietrecht !== "unklar – rechtlich prüfen", only: ["wohnung", "haus", "zinshaus"] },
+  { key: "energyClass", label: "Energieklasse", group: "bewertung", check: (p) => !!p.energyClass?.trim(), skip: ["garage", "grundstueck"] },
 ];
+
+const appliesTo = (f: DqField, p: Property) => {
+  const c = categoryOf(p);
+  if (f.only) return f.only.includes(c);
+  return !(f.skip?.includes(c));
+};
+const fieldsFor = (p: Property) => REQUIRED_FIELDS.filter((f) => appliesTo(f, p));
 
 export function getRequiredFieldGroups() {
   return ["basis", "kosten", "finanzierung", "bewertung"] as const;
 }
-export function getFieldsByGroup(group: string) {
-  return REQUIRED_FIELDS.filter((f) => f.group === group);
+/** Pflichtfelder einer Gruppe; mit Objekt nur die, die für dessen Kategorie gelten. */
+export function getFieldsByGroup(group: string, p?: Property) {
+  return (p ? fieldsFor(p) : REQUIRED_FIELDS).filter((f) => f.group === group);
 }
 
 export function calcDataQuality(p: Property): DataQuality {
-  const missing = REQUIRED_FIELDS.filter((f) => !f.check(p)).map((f) => f.label);
-  const filled = REQUIRED_FIELDS.length - missing.length;
-  const score = Math.round((filled / REQUIRED_FIELDS.length) * 100);
+  const fields = fieldsFor(p);
+  const missing = fields.filter((f) => !f.check(p)).map((f) => f.label);
+  const filled = fields.length - missing.length;
+  const score = fields.length ? Math.round((filled / fields.length) * 100) : 100;
   let level: DataQuality["level"] = "Manuelle Prüfung nötig";
   let ampel: DataQuality["ampel"] = "red";
   if (score >= 90) { level = "Sehr gut"; ampel = "green"; }
   else if (score >= 70) { level = "Gut"; ampel = "green"; }
   else if (score >= 50) { level = "Unvollständig"; ampel = "yellow"; }
-  return { score, level, ampel, missing, filled, total: REQUIRED_FIELDS.length };
+  return { score, level, ampel, missing, filled, total: fields.length };
 }
 
 export const fmtEUR = (n: number | null | undefined, digits = 0) =>
@@ -890,6 +971,25 @@ export interface MietrechtInference {
 }
 
 export function inferMietrecht(p: Property): MietrechtInference {
+  const kat = categoryOf(p);
+  if (kat === "buero" || kat === "lager") return {
+    kategorie: "Gewerbliche Nutzung relevant",
+    erklaerung: GEWERBERECHT_TEXT,
+    risiko: "niedrig",
+    pruefen: ["Laufzeit des Mietvertrags", "Indexierung (VPI)", "Kündigungsfristen", "Umsatzsteuer-Option"],
+  };
+  if (kat === "garage") return {
+    kategorie: "freie Mietzinsbildung wahrscheinlich",
+    erklaerung: GARAGE_RECHT_TEXT,
+    risiko: "niedrig",
+    pruefen: ["Mietvertrag", "Nutzungsrecht in der Eigentümergemeinschaft"],
+  };
+  if (kat === "grundstueck") return {
+    kategorie: "nicht geeignet",
+    erklaerung: "Unbebautes Grundstück: keine Vermietung, kein Mietrecht. Wichtig sind Widmung, Erschließung und Bebaubarkeit.",
+    risiko: "niedrig",
+    pruefen: ["Flächenwidmung", "Erschließung", "Bebauungsplan / Bebaubarkeit"],
+  };
   const y = p.baujahr ?? 0;
   const text = `${p.beschreibung ?? ""} ${p.objekttyp ?? ""} ${p.zustand ?? ""}`.toLowerCase();
   const isAirbnb = /airbnb|kurzzeit|tourist|ferienwohnung/.test(text);
@@ -1148,7 +1248,8 @@ export function calcAfa(p: Property): AfaResult {
   // normalize
   if (grundPct + gebPct === 0) { grundPct = 20; gebPct = 80; }
   const gebaeudewert = basis * (gebPct / 100);
-  const defaultSatz = land === "DE" ? 2 : 1.5;
+  const kat = categoryOf(p);
+  const defaultSatz = kat === "garage" || kat === "grundstueck" ? 0 : land === "DE" ? 2 : defaultAfaSatz(p.propertyType) * 100;
   const satzPct = a.satzPct ?? defaultSatz;
   const jahresAfa = methode === "manuell" && a.jahresBetrag != null
     ? a.jahresBetrag
@@ -1180,7 +1281,7 @@ export interface TaxEstimate {
  */
 export function calcTaxEstimate(p: Property, c: Calc): TaxEstimate {
   const steuersatz = p.persSteuersatz ?? 0.35;
-  const afaSatz = p.afaSatz ?? 0.015;
+  const afaSatz = p.afaSatz ?? defaultAfaSatz(p.propertyType);
   const gebaeudewertPct = p.gebaeudewertPct ?? 0.7;
 
   const kaufpreis = p.kaufpreis ?? 0;
@@ -1217,9 +1318,13 @@ export function calcLongTermProjection(p: Property, a: Assumptions, c: Calc): Pr
   const wSteig = (proj.wertsteigerungPct ?? 1.5) / 100;
   const zinshaus = isZinshausWithUnits(p) ? calcZinshaus(p.units) : null;
   // Zinshaus: Leerstand ist pro Einheit bereits in der effektiven Miete enthalten.
-  const leer = zinshaus ? 0 : (proj.leerstandPct ?? (p.leerstandPufferPct != null ? p.leerstandPufferPct * 100 : a.leerstandPuffer * 100)) / 100;
+  const pcat = categoryOf(p);
+  const leer = zinshaus ? 0 : isGewerbeMiete(p.propertyType) && proj.leerstandPct == null
+    ? leerstandGewerbe(p)
+    : (proj.leerstandPct ?? (p.leerstandPufferPct != null ? p.leerstandPufferPct * 100 : a.leerstandPuffer * 100)) / 100;
   const instand = proj.instandhaltungProJahr ?? 0;
-  const baseMiete = (zinshaus ? zinshaus.totalMiete : p.nettomieteMtl ?? 0) * 12 * (1 - leer);
+  const mieteBasis = zinshaus ? zinshaus.totalMiete : pcat === "grundstueck" ? 0 : pcat === "garage" ? garageRent(p) : p.nettomieteMtl ?? 0;
+  const baseMiete = mieteBasis * 12 * (1 - leer);
   const baseBK = (c.nichtUmlMtl + c.ruecklageMtl) * 12;
   const baseWert = p.kaufpreis ?? 0;
   const rateAnnual = c.kreditRateMtl * 12;

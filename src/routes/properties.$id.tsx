@@ -19,7 +19,7 @@ import { countryOf, regionDefaultsForProperty, regionsOf } from "@/lib/regions";
 import { resolvePurchaseCostRules } from "@/lib/purchaseCostRules";
 import { Warning as AlertTriangle, ArrowLeft, Buildings as Building2, Calendar, CalendarPlus, CaretDown as ChevronDown, CaretRight as ChevronRight, Copy, DownloadSimple as Download, ArrowSquareOut as ExternalLink, Globe, Lock, Envelope as Mail, MapPin, DotsThree as MoreHorizontal, PencilSimple as Pencil, Phone, Trash as Trash2, User, MagicWand as Wand2, X, Check, ExclamationMark } from "@phosphor-icons/react";
 import { Fragment, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
-import { REQUIRED_BORDER, REQUIRED_FIELDS, REQUIRED_FINANCE_EMPTY_ID, flashRequiredField, missingRequiredFields, requiredFieldDomId, type RequiredFieldKey } from "@/lib/requiredFields";
+import { REQUIRED_BORDER, REQUIRED_FIELDS, REQUIRED_FINANCE_EMPTY_ID, flashRequiredField, missingRequiredFields, requiredFieldDomId, requiredFieldLabel, type RequiredFieldKey } from "@/lib/requiredFields";
 import { RequiredFieldHint } from "@/components/RequiredFieldHint";
 import { isBought, isInPortfolio, legacyStatusPatch, portfolioAddPatch, promptAddToPortfolio, prozessStatusPatch } from "@/lib/statusSync";
 import { ReminderButton, usePropertyReminders } from "@/components/crm/ReminderButton";
@@ -33,6 +33,10 @@ import { usePropertyLimit } from "@/hooks/usePropertyLimit";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { GlossaryTooltip } from "@/components/GlossaryTooltip";
+import {
+  categoryOf, defaultLeerstandGewerbe, garageRent, isGewerbeMiete, isWohnrecht, landAppreciation,
+  GARAGE_RECHT_TEXT, GEWERBERECHT_TEXT, TAB_LABEL, TABS_BY_CATEGORY, type DetailTab,
+} from "@/lib/propertyKinds";
 
 export const Route = createFileRoute("/properties/$id")({
   head: () => ({ meta: [{ title: `Objekt – kaufma` }] }),
@@ -44,16 +48,7 @@ const STATUSES: PropertyStatus[] = ALL_STATUSES;
 const MIETRECHTE: Mietrecht[] = ALL_MIETRECHTE;
 const bricolage = { fontFamily: "'Bricolage Grotesque', sans-serif" } as const;
 
-type TabKey = "uebersicht" | "einheiten" | "finanzierung" | "analysen" | "mietrecht" | "besichtigung" | "crm" | "dokumente";
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "uebersicht", label: "Übersicht" },
-  { key: "finanzierung", label: "Finanzierung" },
-  { key: "analysen", label: "Analysen" },
-  { key: "mietrecht", label: "Mietrecht" },
-  { key: "besichtigung", label: "Besichtigung" },
-  { key: "crm", label: "CRM" },
-  { key: "dokumente", label: "Dokumente" },
-];
+type TabKey = DetailTab;
 
 function Detail() {
   const { id } = Route.useParams();
@@ -84,10 +79,12 @@ function Detail() {
   const regions = country ? regionsOf(country) : [];
 
   const [tabState, setTab] = useState<TabKey>("uebersicht");
-  // Zinshaus: "Einheiten" als zweiter Tab. Wird der Typ geändert, fällt ein offener Einheiten-Tab auf die Übersicht zurück.
-  const isZinshaus = p.propertyType === "zinshaus";
-  const tabs = isZinshaus ? [TABS[0], { key: "einheiten" as TabKey, label: "Einheiten" }, ...TABS.slice(1)] : TABS;
-  const tab: TabKey = tabState === "einheiten" && !isZinshaus ? "uebersicht" : tabState;
+  // Tabs hängen vom Objekttyp ab (z. B. Einheiten nur beim Zinshaus, Gewerberecht bei Büro/Lager).
+  // Wird der Typ geändert und der offene Tab gibt es nicht mehr, gilt die Übersicht.
+  const cat = categoryOf(p);
+  const isZinshaus = cat === "zinshaus";
+  const tabs = TABS_BY_CATEGORY[cat].map((key) => ({ key, label: TAB_LABEL[key] }));
+  const tab: TabKey = TABS_BY_CATEGORY[cat].includes(tabState) ? tabState : "uebersicht";
   const [exportOpen, setExportOpen] = useState(false);
   const [exportUpgradeOpen, setExportUpgradeOpen] = useState(false);
   const plan = usePlan();
@@ -136,7 +133,7 @@ function Detail() {
   };
 
   // Beim Verlassen erinnern – an dieselben Kernangaben wie der Banner unter dem Titel.
-  const missingLabels = REQUIRED_FIELDS.filter((f) => missingRequiredFields(p).includes(f.key)).map((f) => f.label);
+  const missingLabels = REQUIRED_FIELDS.filter((f) => missingRequiredFields(p).includes(f.key)).map((f) => requiredFieldLabel(f.key, p));
   const missingRef = useRef(missingLabels);
   missingRef.current = missingLabels;
   useEffect(() => {
@@ -243,7 +240,7 @@ function Detail() {
           <HeaderMoreMenu mapsUrl={mapsUrl} onDuplicate={onDuplicate} />
         </div>
 
-        {missingReq.length > 0 && <RequiredFieldsBanner missing={missingReq} onGo={goToRequiredField} />}
+        {missingReq.length > 0 && <RequiredFieldsBanner p={p} missing={missingReq} onGo={goToRequiredField} />}
 
 
         {/* ============ TAB NAV ============ */}
@@ -276,7 +273,7 @@ function Detail() {
               p={p} c={c} dq={dq} mietrecht={mietrecht}
               u={u} projects={projects} regions={regions}
               applyRegionDefaults={applyRegionDefaults} linkValid={linkValid}
-              onGoMietrecht={() => navTo("mietrecht")}
+              onGoMietrecht={() => navTo(isGewerbeMiete(p.propertyType) ? "gewerberecht" : "mietrecht")}
               onGoCrm={() => navTo("crm")}
               navTo={navTo}
             />
@@ -313,6 +310,7 @@ function Detail() {
               </Section>
             </>
           )}
+          {tab === "gewerberecht" && <GewerberechtTab p={p} onGoMiete={() => navTo("uebersicht", "sec-miete")} />}
           {tab === "analysen" && (
             <AnalysenTab p={p} c={c} />
           )}
@@ -375,12 +373,17 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   const missingReq = missingRequiredFields(p);
   const navigate = useNavigate();
   const { updateProperty } = useStore();
-  const mietrechtWarn = p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich";
+  const cat = categoryOf(p);
+  const wohnrecht = isWohnrecht(p.propertyType);
+  const gewerbe = isGewerbeMiete(p.propertyType);
+  const isLand = cat === "grundstueck";
+  const isGarage = cat === "garage";
+  const mietrechtWarn = wohnrecht && (p.mietrecht === "unklar – rechtlich prüfen" || p.mietrecht === "Altbau / Richtwert möglich");
   const alerts: { text: string; tone: "red" | "amber" }[] = [];
-  if (c.cashflowMtl < 0) alerts.push({ text: "Cashflow negativ", tone: "red" });
+  if (!isLand && c.cashflowMtl < 0) alerts.push({ text: "Cashflow negativ", tone: "red" });
   if (mietrechtWarn) alerts.push({ text: "Mietrecht prüfen", tone: "red" });
-  if (p.betriebskostenMtl == null) alerts.push({ text: "Betriebskosten fehlen", tone: "amber" });
-  if (p.ruecklageFonds == null && p.ruecklageMtl == null) alerts.push({ text: "Rücklage fehlt", tone: "amber" });
+  if (!isLand && p.betriebskostenMtl == null) alerts.push({ text: gewerbe ? "Nebenkosten fehlen" : "Betriebskosten fehlen", tone: "amber" });
+  if (wohnrecht && p.ruecklageFonds == null && p.ruecklageMtl == null) alerts.push({ text: "Rücklage fehlt", tone: "amber" });
 
   const ampelColor = mietrecht.risiko === "niedrig" ? "green" as const : mietrecht.risiko === "mittel" ? "yellow" as const : "red" as const;
   const [alertsExpanded, setAlertsExpanded] = useState(false);
@@ -407,9 +410,19 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         />
         <OverviewStat label="Kaufnebenkosten" value={fmtEUR(c.kaufNebenkosten)} />
         <OverviewStat label="Gesamtkapital" value={fmtEUR(c.gesamtkosten)} />
-        <OverviewStat label="Monatl. Rate" value={fmtEUR(c.kreditRateMtl)} />
-        <OverviewStat label="Cashflow/Mo" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} sub={`${fmtEUR(c.cashflowJahr)}/Jahr`} />
-        <OverviewStat label="Bruttorendite" value={fmtPct(c.bruttorendite)} sub={p.wohnflaecheM2 && p.kaufpreis ? `${fmtEUR(c.preisProM2)}/m²` : undefined} />
+        {c.grundstueck ? (
+          <>
+            <OverviewStat label="Wertsteigerung p.a." value={fmtPct(c.grundstueck.wertsteigerungPct)} sub={`${fmtEUR(c.grundstueck.wertsteigerungJahr)} im 1. Jahr`} />
+            <OverviewStat label="Wert in 10 Jahren" value={fmtEUR(c.grundstueck.wert10J)} sub={`Gewinn ${fmtEUR(c.grundstueck.gewinn10J)}`} tone={c.grundstueck.gewinn10J >= 0 ? "good" : "bad"} />
+            <OverviewStat label="Eigenkapitalrendite" value={fmtPct(c.grundstueck.renditePa)} sub={`p.a. · ${fmtPct(c.grundstueck.eigenkapitalrendite10J)} in 10 J.`} />
+          </>
+        ) : (
+          <>
+            <OverviewStat label="Monatl. Rate" value={fmtEUR(c.kreditRateMtl)} />
+            <OverviewStat label="Cashflow/Mo" value={fmtEUR(c.cashflowMtl)} tone={c.cashflowMtl >= 0 ? "good" : "bad"} sub={`${fmtEUR(c.cashflowJahr)}/Jahr`} />
+            <OverviewStat label="Bruttorendite" value={fmtPct(c.bruttorendite)} sub={p.wohnflaecheM2 && p.kaufpreis && !isGarage ? `${fmtEUR(c.preisProM2)}/m²` : undefined} />
+          </>
+        )}
       </div>
 
       {alerts.length > 0 && (
@@ -469,26 +482,66 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             <F label="Kaufpreis €" id={requiredFieldDomId("kaufpreis")} required={missingReq.includes("kaufpreis")}><N value={p.kaufpreis} edit missing={missingReq.includes("kaufpreis")} on={(v) => u({ kaufpreis: v })} /></F>
             {p.propertyType === "zinshaus" ? (
               <F label="Wohnfläche m² (Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.wohnflaecheM2} edit={false} on={() => {}} /></F>
-            ) : (
-              <F label="Wohnfläche m²" id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
+            ) : isLand ? (
+              <>
+                <F label="Grundstücksfläche m²" hint={!p.landAreaSqm ? <RequiredHint /> : undefined}><N value={p.landAreaSqm ?? null} edit on={(v) => u({ landAreaSqm: v })} /></F>
+                <F label="Widmung" hint={!p.widmung ? <RequiredHint /> : undefined}>
+                  <Sel value={p.widmung ?? ""} onChange={(e) => u({ widmung: (e.target.value || null) as Property["widmung"] })}>
+                    <option value="">—</option>
+                    {["Bauland", "Grünland", "Gewerbegebiet", "Landwirtschaft"].map((o) => <option key={o} value={o}>{o}</option>)}
+                  </Sel>
+                </F>
+                <F label="Erschlossen">
+                  <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
+                    <input type="checkbox" checked={!!p.erschlossen} onChange={(e) => u({ erschlossen: e.target.checked })} className="accent-primary" />
+                    Strom, Wasser, Kanal, Zufahrt vorhanden
+                  </label>
+                </F>
+                <F label="Bebaubarkeit"><T value={p.bebaubarkeit ?? ""} edit on={(v) => u({ bebaubarkeit: v || null })} /></F>
+                <F label="Wertsteigerung p.a. %">
+                  <N value={Math.round(landAppreciation(p) * 1000) / 10} edit on={(v) => u({ projections: { ...(p.projections ?? {}), wertsteigerungPct: v } })} />
+                </F>
+              </>
+            ) : isGarage ? null : (
+              <F label={gewerbe ? "Bürofläche m²" : "Wohnfläche m²"} id={requiredFieldDomId("wohnflaeche")} required={missingReq.includes("wohnflaeche")}><N value={p.wohnflaecheM2} edit missing={missingReq.includes("wohnflaeche")} on={(v) => u({ wohnflaecheM2: v })} /></F>
             )}
-            <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
-            <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
-            <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
-              <Sel value={p.zustand ?? ""} onChange={(e) => u({ zustand: e.target.value })}>
-                <option value="">—</option>
-                {["Erstbezug","Neuwertig","Sehr gut","Gut","Sanierungsbedürftig","Abrissreif"].map((o) => <option key={o} value={o}>{o}</option>)}
-              </Sel>
-            </F>
-            <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
-            <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}>
-              <Sel value={p.energyClass ?? ""} onChange={(e) => u({ energyClass: e.target.value })}>
-                <option value="">—</option>
-                {["A++","A+","A","B","C","D","E","F","G","Unbekannt"].map((o) => <option key={o} value={o}>{o}</option>)}
-              </Sel>
-            </F>
-
-            <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
+            {cat === "lager" && (
+              <>
+                <F label="Lagerfläche m²"><N value={p.lagerflaecheM2 ?? null} edit on={(v) => u({ lagerflaecheM2: v })} /></F>
+                <F label="Rampe / Tore">
+                  <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
+                    <input type="checkbox" checked={!!p.rampeTore} onChange={(e) => u({ rampeTore: e.target.checked })} className="accent-primary" />
+                    Laderampe oder Rolltore vorhanden
+                  </label>
+                </F>
+              </>
+            )}
+            {(cat === "wohnung" || cat === "haus" || cat === "zinshaus") && (
+              <F label="Zimmer" hint={!p.zimmer ? <RequiredHint /> : undefined}><N value={p.zimmer} edit on={(v) => u({ zimmer: v })} /></F>
+            )}
+            {!isLand && (
+              <>
+                <F label="Baujahr" hint={!p.baujahr ? <RequiredHint /> : undefined}><N value={p.baujahr} edit on={(v) => u({ baujahr: v })} /></F>
+                <F label="Zustand" hint={!p.zustand?.trim() ? <RequiredHint /> : undefined}>
+                  <Sel value={p.zustand ?? ""} onChange={(e) => u({ zustand: e.target.value })}>
+                    <option value="">—</option>
+                    {["Erstbezug","Neuwertig","Sehr gut","Gut","Sanierungsbedürftig","Abrissreif"].map((o) => <option key={o} value={o}>{o}</option>)}
+                  </Sel>
+                </F>
+                <F label="Stockwerk"><T value={p.stockwerk ?? ""} edit on={(v) => u({ stockwerk: v })} /></F>
+              </>
+            )}
+            {!isLand && !isGarage && (
+              <>
+                <F label="Energieklasse" hint={!p.energyClass?.trim() ? <RequiredHint /> : undefined}>
+                  <Sel value={p.energyClass ?? ""} onChange={(e) => u({ energyClass: e.target.value })}>
+                    <option value="">—</option>
+                    {["A++","A+","A","B","C","D","E","F","G","Unbekannt"].map((o) => <option key={o} value={o}>{o}</option>)}
+                  </Sel>
+                </F>
+                <F label="HWB"><N value={p.hwb ?? null} edit on={(v) => u({ hwb: v })} /></F>
+              </>
+            )}
             <F label="Verfügbarkeit"><T value={p.verfuegbarkeit ?? ""} edit on={(v) => u({ verfuegbarkeit: v })} /></F>
             <F label="Land">
               <Sel value={p.land ?? ""} onChange={(e) => u({ land: e.target.value, bundesland: "" })}>
@@ -564,11 +617,17 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
             </F>
           )}
           <F label="Sanierung €"><N value={p.sanierung} edit on={(v) => u({ sanierung: v ?? 0 })} /></F>
-          <F label="Einrichtung €"><N value={p.einrichtung} edit on={(v) => u({ einrichtung: v ?? 0 })} /></F>
+          {!isLand && !isGarage && <F label="Einrichtung €"><N value={p.einrichtung} edit on={(v) => u({ einrichtung: v ?? 0 })} /></F>}
           <F label="Reserve €"><N value={p.reserve} edit on={(v) => u({ reserve: v ?? 0 })} /></F>
-          <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
-          <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
-          <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
+          {!isLand && (
+            <F label={gewerbe ? "Nebenkosten (NK) €/Mt" : "Betriebskosten €/Mt"} hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+          )}
+          {!isLand && !isGarage && (
+            <>
+              <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
+              <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
+            </>
+          )}
 
 
         </div>
@@ -663,13 +722,14 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
         <div className="mt-3"><PurchaseCostsDetails p={p} c={c} u={u} /></div>
       </Section>
 
-      {/* === SECTION E: Miete & Betriebskosten === */}
-      <Section id="sec-miete" title="Miete & Betriebskosten">
+      {/* === SECTION E: Miete & Betriebskosten (Wohnen, Büro, Lager) === */}
+      {!isLand && !isGarage && (
+      <Section id="sec-miete" title={gewerbe ? "Gewerbemiete & Nebenkosten" : "Miete & Betriebskosten"}>
         <div className="grid md:grid-cols-3 gap-3">
           {p.propertyType === "zinshaus" ? (
             <F label="Miete €/Mt (effektiv, Summe der Einheiten)" hint={<button type="button" onClick={() => navTo("einheiten")} className="mt-1 text-[12px] font-medium text-primary hover:underline">In Einheiten bearbeiten →</button>}><N value={p.nettomieteMtl} edit={false} on={() => {}} /></F>
           ) : (
-            <F label="Erwartete Miete €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
+            <F label={cat === "buero" ? "Gewerbemiete netto €/Mt" : cat === "lager" ? "Nettomiete Lager €/Mt" : "Erwartete Miete €/Mt"} id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}><N value={p.nettomieteMtl} edit missing={missingReq.includes("miete")} on={(v) => u({ nettomieteMtl: v, nettomieteGeschaetzt: false })} /></F>
           )}
           <F label="Miete geschätzt?">
             <label className="flex items-center gap-2 px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-[13px]">
@@ -677,7 +737,18 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
               Schätzwert
             </label>
           </F>
-          <F label="Betriebskosten €/Mt" hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+          <F label={gewerbe ? "Nebenkosten (NK) €/Mt" : "Betriebskosten €/Mt"} hint={p.betriebskostenMtl == null ? <RequiredHint /> : undefined}><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+          {gewerbe && (
+            <>
+              <F label="Mietvertrag Laufzeit (Jahre)"><N value={p.mietvertragLaufzeitJahre ?? null} edit on={(v) => u({ mietvertragLaufzeitJahre: v })} /></F>
+              <F label="Indexierung % p.a." hint={<div className="mt-1 text-[12px] text-ink-3">Leer lassen = an den VPI gekoppelt</div>}>
+                <N value={p.indexierungPct != null ? Math.round(p.indexierungPct * 1000) / 10 : null} edit on={(v) => u({ indexierungPct: v == null ? null : v / 100 })} />
+              </F>
+              <F label="Leerstandsrisiko Gewerbe %" hint={<div className="mt-1 text-[12px] text-ink-3">Wird von der Miete abgezogen (Standard {fmtPct(defaultLeerstandGewerbe(p.propertyType))})</div>}>
+                <N value={Math.round((p.leerstandsrisikoGewerbe ?? defaultLeerstandGewerbe(p.propertyType)) * 1000) / 10} edit on={(v) => u({ leerstandsrisikoGewerbe: v == null ? null : v / 100 })} />
+              </F>
+            </>
+          )}
 
           <F label="Heizkosten €/Mt"><N value={p.heizkostenMtl ?? null} edit on={(v) => u({ heizkostenMtl: v })} /></F>
           <F label="Rücklage Fonds €/Mt"><N value={p.ruecklageFonds ?? null} edit on={(v) => u({ ruecklageFonds: v })} /></F>
@@ -688,8 +759,32 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <div className="text-[12px] text-ink-2 mt-0.5">Ab dieser Miete ist der Cashflow ausgeglichen.</div>
         </div>
       </Section>
+      )}
+
+      {/* === Garage / Stellplatz: Miete aus Stellplätzen === */}
+      {isGarage && (
+        <Section id="sec-miete" title="Stellplätze & Kosten" defaultOpen>
+          <div className="grid md:grid-cols-3 gap-3">
+            <F label="Anzahl Stellplätze"><N value={p.anzahlStellplaetze ?? 1} edit on={(v) => {
+              const anzahl = v ?? 1;
+              u({ anzahlStellplaetze: anzahl, nettomieteMtl: p.mieteProStellplatz != null ? anzahl * p.mieteProStellplatz : p.nettomieteMtl });
+            }} /></F>
+            <F label="Miete pro Stellplatz €/Mt" id={requiredFieldDomId("miete")} required={missingReq.includes("miete")}>
+              <N value={p.mieteProStellplatz ?? null} edit missing={missingReq.includes("miete")} on={(v) => {
+                // Gesamtmiete mitführen, damit Score, Liste und Projektion dieselbe Zahl sehen.
+                u({ mieteProStellplatz: v, nettomieteMtl: v == null ? null : (p.anzahlStellplaetze ?? 1) * v, nettomieteGeschaetzt: false });
+              }} />
+            </F>
+            <F label="Gesamtmiete €/Mt"><Ro>{fmtEUR(garageRent(p))}</Ro></F>
+            <F label="Betriebskosten €/Mt"><N value={p.betriebskostenMtl ?? null} edit on={(v) => u({ betriebskostenMtl: v })} /></F>
+            <F label="Verwaltungskosten €/Mt"><N value={p.verwaltungskostenMtl ?? null} edit on={(v) => u({ verwaltungskostenMtl: v })} /></F>
+          </div>
+          <p className="mt-3 text-[12px] text-ink-2">{GARAGE_RECHT_TEXT}</p>
+        </Section>
+      )}
 
       {/* === SECTION F: Ausstattung (chips) === */}
+      {!isLand && !isGarage && (
       <Section title="Ausstattung">
         <div className="flex flex-wrap gap-2">
           {([
@@ -718,15 +813,24 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           })}
         </div>
       </Section>
+      )}
 
-      {/* === SECTION G: Mietrecht Kurzinfo === */}
-      <Section title="Mietrecht – Kurzinfo">
-        <div className="flex items-center gap-2 flex-wrap">
-          <AmpelBadge ampel={ampelColor}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
-        </div>
-        <p className="text-[13px] text-ink-2 mt-2">{mietrecht.erklaerung}</p>
-        <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-primary hover:underline">Details im Mietrecht-Tab →</button>
-      </Section>
+      {/* === SECTION G: Rechtsrahmen – Kurzinfo (Wohnrecht bzw. Gewerberecht) === */}
+      {wohnrecht && (
+        <Section title="Mietrecht – Kurzinfo">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AmpelBadge ampel={ampelColor}>{mietrecht.kategorie} · Risiko {mietrecht.risiko}</AmpelBadge>
+          </div>
+          <p className="text-[13px] text-ink-2 mt-2">{mietrecht.erklaerung}</p>
+          <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-primary hover:underline">Details im Mietrecht-Tab →</button>
+        </Section>
+      )}
+      {gewerbe && (
+        <Section title="Gewerberecht – Kurzinfo">
+          <p className="text-[13px] text-ink-2">{GEWERBERECHT_TEXT}</p>
+          <button onClick={onGoMietrecht} className="mt-3 text-[12px] text-primary hover:underline">Details im Gewerberecht-Tab →</button>
+        </Section>
+      )}
 
       {/* === SECTION H: Verkäufer & Makler === */}
       <Section title="Verkäufer & Makler">
@@ -751,9 +855,40 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
   );
 }
 
+// ============ GEWERBERECHT TAB (Büro / Lager) ============
+function GewerberechtTab({ p, onGoMiete }: { p: Property; onGoMiete: () => void }) {
+  const checks = ["Laufzeit des Mietvertrags und Kündigungsverzicht", "Indexierung (z. B. VPI) und Schwellenwert", "Kündigungsfristen beider Seiten", "Umsatzsteuer-Option auf die Miete", "Betriebskosten-Abrechnung (NK) im Vertrag geregelt"];
+  return (
+    <>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-5 py-4">
+        <div className="flex items-center gap-2">
+          <AmpelBadge ampel="green">Freies Mietrecht</AmpelBadge>
+        </div>
+        <p className="mt-3 text-[14px] leading-relaxed text-[#1C1917]">{GEWERBERECHT_TEXT}</p>
+      </div>
+      <div className="rounded-[12px] border border-[#EAE6DF] bg-white px-5 py-4 text-[13px] text-ink-2">
+        Laufzeit {p.mietvertragLaufzeitJahre != null ? `${p.mietvertragLaufzeitJahre} Jahre` : "nicht erfasst"} · Indexierung {p.indexierungPct != null ? fmtPct(p.indexierungPct) : "VPI"} · Leerstandsrisiko {fmtPct(p.leerstandsrisikoGewerbe ?? defaultLeerstandGewerbe(p.propertyType))}
+        <button type="button" onClick={onGoMiete} className="ml-2 font-medium text-primary hover:underline">Bearbeiten →</button>
+      </div>
+      <Section title="Vor Vertragsabschluss prüfen" defaultOpen>
+        <ul className="space-y-2">
+          {checks.map((c) => (
+            <li key={c} className="flex items-start gap-2 text-[13px] text-[#1C1917]">
+              <Check weight="bold" className="size-4 shrink-0 text-primary mt-0.5" aria-hidden /> {c}
+            </li>
+          ))}
+        </ul>
+        <p className="text-[12px] text-ink-3 border-t border-[#EAE6DF] pt-2 mt-3">Hinweis: Keine Rechtsberatung. Gewerbemietverträge vor Abschluss von einer Fachperson prüfen lassen.</p>
+      </Section>
+    </>
+  );
+}
+
 // ============ ANALYSEN TAB ============
 function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> }) {
   const a = useActiveAssumptions();
+  if (c.grundstueck) return <LandAnalysis p={p} c={c} />;
+  const showTax = categoryOf(p) !== "garage";
   const miete = p.nettomieteMtl ?? 0;
   const rate = c.kreditRateMtl;
   const bk = p.betriebskostenMtl ?? 0;
@@ -805,9 +940,12 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
         </div>
       </AccordionCard>
 
-      <AccordionCard title="Steuer & AfA">
-        <TaxPanel p={p} c={c} />
-      </AccordionCard>
+      {/* Garagen: keine AfA-Schätzung (meist vereinfachte steuerliche Behandlung) */}
+      {showTax && (
+        <AccordionCard title="Steuer & AfA">
+          <TaxPanel p={p} c={c} />
+        </AccordionCard>
+      )}
 
       <AccordionCard title="Break-even & Leistbarkeit">
         <div className="grid md:grid-cols-2 gap-3 text-[13px]">
@@ -839,6 +977,42 @@ function AnalysenTab({ p, c }: { p: Property; c: ReturnType<typeof calcProperty>
   );
 }
 
+// ============ GRUNDSTÜCK: Wertentwicklung statt Miete ============
+function LandAnalysis({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> }) {
+  const g = c.grundstueck!;
+  const kaufpreis = p.kaufpreis ?? 0;
+  const years = [1, 2, 3, 5, 10];
+  return (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <AnalyseStat label="Wertsteigerung p.a." value={fmtPct(g.wertsteigerungPct)} />
+        <AnalyseStat label="Wert in 10 Jahren" value={fmtEUR(g.wert10J)} />
+        <AnalyseStat label="Gewinn nach 10 Jahren" value={fmtEUR(g.gewinn10J)} tone={g.gewinn10J >= 0 ? "good" : "bad"} />
+        <AnalyseStat label="Eigenkapitalrendite p.a." value={fmtPct(g.renditePa)} tone={g.renditePa >= 0 ? "good" : "bad"} />
+      </div>
+
+      <AccordionCard title="Wertentwicklung" defaultOpen>
+        <div className="space-y-1.5 text-[13px]">
+          <div className="flex justify-between text-ink-2"><span>Gesamtkapital (Kaufpreis + Nebenkosten)</span><span className="tabular-nums">{fmtEUR(c.gesamtkosten)}</span></div>
+          {years.map((y) => {
+            const wert = kaufpreis * Math.pow(1 + g.wertsteigerungPct, y);
+            return (
+              <div key={y} className="flex justify-between border-t border-[#F5F3EE] pt-1.5">
+                <span>Wert nach {y} {y === 1 ? "Jahr" : "Jahren"}</span>
+                <span className="tabular-nums font-medium">{fmtEUR(wert)}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[12px] text-ink-3">
+          Gerechnet ohne Finanzierung und ohne Mieteinnahmen: Der Ertrag kommt allein aus der angenommenen Wertsteigerung von {fmtPct(g.wertsteigerungPct)} pro Jahr.
+          Grundsteuer und Pflegekosten sind nicht berücksichtigt. Die Wertsteigerung änderst du in der Übersicht unter Objektdaten.
+        </p>
+      </AccordionCard>
+    </>
+  );
+}
+
 function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> }) {
   const { updateProperty } = useStore();
   const u = (patch: Partial<Property>) => updateProperty(p.id, patch);
@@ -860,7 +1034,7 @@ function TaxPanel({ p, c }: { p: Property; c: ReturnType<typeof calcProperty> })
           />
         </div>
         <div>
-          <div className="text-[12px] text-ink-2 mb-1">AfA-Satz % (AT: 1,5 % / DE: 2 %)</div>
+          <div className="text-[12px] text-ink-2 mb-1">AfA-Satz % ({isGewerbeMiete(p.propertyType) ? "Standard Gewerbe: 2 %" : "AT: 1,5 % / DE: 2 %"})</div>
           <input
             type="number"
             step="0.1"
@@ -1814,8 +1988,8 @@ function F({ label, children, hint, id, required }: {
   );
 }
 /** Hinweis unter dem Titel, solange eine der fünf Kernangaben fehlt. Verschwindet von selbst. */
-function RequiredFieldsBanner({ missing, onGo }: { missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
-  const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key));
+function RequiredFieldsBanner({ p, missing, onGo }: { p: Property; missing: RequiredFieldKey[]; onGo: (key: RequiredFieldKey) => void }) {
+  const fields = REQUIRED_FIELDS.filter((f) => missing.includes(f.key)).map((f) => ({ ...f, label: requiredFieldLabel(f.key, p) }));
   return (
     <div
       role="status"

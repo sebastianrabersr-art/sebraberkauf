@@ -121,16 +121,21 @@ export type PropertyType =
   | "house_with_land"            // Haus inkl. Grundstück (ein Kaufpreis)
   | "house_with_separate_land"   // Haus + Grundstück getrennt gekauft
   | "land_only"                  // reines Grundstück
-  | "commercial"                 // Gewerbeimmobilie
-  | "zinshaus";                  // Zinshaus: mehrere Einheiten, Miete/Fläche aus `units`
+  | "commercial"                 // Büro / Gewerbefläche (gespeicherter Wert bleibt "commercial")
+  | "zinshaus"                   // Zinshaus: mehrere Einheiten, Miete/Fläche aus `units`
+  | "lager"                      // Lager / Logistik
+  | "garage";                    // Garage, Tiefgarage, Stellplatz
+// Kategorien (Wohnung, Haus, Büro …), Rechtsrahmen und Regeln je Typ: src/lib/propertyKinds.ts
 
 export const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: "apartment", label: "Wohnung" },
   { value: "house_with_land", label: "Haus inkl. Grundstück" },
   { value: "house_with_separate_land", label: "Haus + Grundstück (separat)" },
   { value: "land_only", label: "Grundstück" },
-  { value: "commercial", label: "Gewerbeimmobilie" },
+  { value: "commercial", label: "Büro / Gewerbe" },
   { value: "zinshaus", label: "Zinshaus" },
+  { value: "lager", label: "Lager / Logistik" },
+  { value: "garage", label: "Garage / Stellplatz" },
 ];
 
 /** Eine Wohn- bzw. Nutzeinheit eines Zinshauses. */
@@ -240,6 +245,27 @@ export interface Property {
   landAreaSqm?: number | null;        // Grundstücksfläche m²
   livingAreaSqm?: number | null;      // Wohnfläche m² (parallel zu wohnflaecheM2 für Haus/Gewerbe)
   usableAreaSqm?: number | null;      // Nutzfläche m² (Keller, Lager, Gewerbe …)
+
+  // ── Grundstück ──
+  widmung?: "Bauland" | "Grünland" | "Gewerbegebiet" | "Landwirtschaft" | null;
+  erschlossen?: boolean | null;
+  bebaubarkeit?: string | null;
+
+  // ── Büro / Lager (Gewerbemiete, freies Mietrecht) ──
+  mietvertragLaufzeitJahre?: number | null;
+  /** Indexierung p.a. als Anteil (0.025 = 2,5 %). null = an VPI gekoppelt. */
+  indexierungPct?: number | null;
+  /** Kalkulatorischer Leerstand Gewerbe (Anteil). Default Büro 0.10, Lager 0.12. */
+  leerstandsrisikoGewerbe?: number | null;
+  /** Lager: reine Lagerfläche m² (Bürofläche steht in wohnflaecheM2). */
+  lagerflaecheM2?: number | null;
+  /** Lager: Laderampe / Rolltore vorhanden. */
+  rampeTore?: boolean | null;
+
+  // ── Garage / Stellplatz ──
+  anzahlStellplaetze?: number | null;
+  mieteProStellplatz?: number | null;
+  verwaltungskostenMtl?: number | null;
   housePurchasePrice?: number | null; // Kaufpreis Haus (bei separat gekauftem Grundstück)
   landPurchasePrice?: number | null;  // Kaufpreis Grundstück (bei separat gekauftem Grundstück)
   totalPurchasePrice?: number | null; // Optionaler explizit gesetzter Gesamtkaufpreis

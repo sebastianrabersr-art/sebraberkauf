@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { PropertyTypeBadge } from "@/components/PropertyTypeBadge";
 import { AppShell } from "@/components/layout/AppShell";
 import { ImportTabsCard } from "@/components/ImportTabsCard";
 import { useActiveAssumptions, useActiveProject, useStore } from "@/lib/store";
@@ -286,6 +287,7 @@ function PropertiesList() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
+                    <PropertyTypeBadge p={p} className="mb-1" />
                     <div className="text-[14px] font-medium text-[#1C1917] line-clamp-2">{p.title || "Ohne Titel"}</div>
                     <div className="text-[12px] text-ink-2 truncate mt-0.5">
                       {[p.bezirk, p.wohnflaecheM2 ? `${p.wohnflaecheM2} m²` : null, p.status].filter(Boolean).join(" · ")}
@@ -381,7 +383,10 @@ function PropertiesList() {
                       >
                         {p.title || "—"}
                       </div>
-                      <div className="text-[12px] text-ink-3 truncate mt-0.5">{projectName} · {p.platform || "—"}</div>
+                      <div className="mt-1 flex items-center gap-2 min-w-0">
+                        <PropertyTypeBadge p={p} />
+                        <span className="text-[12px] text-ink-3 truncate">{projectName} · {p.platform || "—"}</span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 align-middle text-[13px] text-[#1C1917]">{p.bezirk || <span className="text-ink-3">—</span>}</td>
                     <td className={COL_NUMERIC} style={bricolage}>{num(p.kaufpreis)}</td>

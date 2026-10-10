@@ -6,7 +6,9 @@ import { detectCountry, detectPlatform, extractProperty } from "@/lib/extract.fu
 import { makeEmptyProperty, useActiveProject, useStore } from "@/lib/store";
 import type { Mietrecht, Property, FinanceScenario } from "@/lib/types";
 import { calcDataQuality, isValidUrl } from "@/lib/calc";
-import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer, Buildings } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CheckCircle as CheckCircle2, House as Home, Hammer } from "@phosphor-icons/react";
+import { PropertyTypePicker } from "@/components/PropertyTypePicker";
+import { CATEGORY_LABEL, propertyCategory } from "@/lib/propertyKinds";
 import { LinkSimple, ClipboardText, Table as TableIcon, PencilSimple, DownloadSimple } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
 import { usePropertyLimit } from "@/hooks/usePropertyLimit";
@@ -108,10 +110,10 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   const [manualTitle, setManualTitle] = useState("");
   // "zinshaus" ist keine eigene Strategie, sondern ein Objekttyp mit Einheiten (vermietet = Buy & Hold).
   // Vorauswahl aus dem Onboarding-Ziel ("Fix & Flip" → Fix & Flip, sonst Vermieten).
-  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip" | "zinshaus">(() => {
+  const [strategy, setStrategy] = useState<"buy_and_hold" | "fix_and_flip">(() => {
     try { return localStorage.getItem("kaufma_goal") === "fixflip" ? "fix_and_flip" : "buy_and_hold"; } catch { return "buy_and_hold"; }
   });
-  const [propertyType, setPropertyType] = useState<"apartment" | "house" | "multi_family" | "land">("apartment");
+  const [propertyType, setPropertyType] = useState<NonNullable<Property["propertyType"]>>("apartment");
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState(0);
   const [autoSwitchNotice, setAutoSwitchNotice] = useState(false);
@@ -168,8 +170,20 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
     return findByLink(l, project.id) ?? properties.find((p) => p.link.trim() === l);
   };
 
+  const mapPropertyType = (s: string): Property["propertyType"] => {
+    const v = (s || "").toLowerCase();
+    if (/garage|stellplatz|parkplatz/.test(v)) return "garage";
+    if (/lager|logistik|halle/.test(v)) return "lager";
+    if (/büro|buero|gewerb|geschäftslokal|praxis/.test(v)) return "commercial";
+    if (/grundstück|grundstueck|bauland|baugrund/.test(v)) return "land_only";
+    if (/haus|villa|reihen/.test(v) && !/zins|mehrfamilien/.test(v)) return "house_with_land";
+    return "apartment";
+  };
+
   const mapObjektart = (s: string): string => {
     const v = (s || "").toLowerCase();
+    if (/garage|stellplatz|parkplatz/.test(v)) return "Garage";
+    if (/lager|logistik/.test(v)) return "Lager";
     if (v.includes("wohn")) return "Wohnung";
     if (v.includes("haus") || v.includes("villa") || v.includes("reihen")) return "Haus";
     if (v.includes("grund")) return "Grundstück";
@@ -189,7 +203,7 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
       bundesland: d.region || "", title: d.title || "Ohne Titel",
       bezirk: d.district, adresse: adresseFull,
       city: d.city || (detectCountry(linkUrl) === "Österreich" ? "Wien" : ""),
-      objekttyp: objektart, baujahr: d.year_built, mietrecht,
+      objekttyp: objektart, propertyType: mapPropertyType(d.property_type), baujahr: d.year_built, mietrecht,
       zustand: d.condition, wohnflaecheM2: d.living_area_m2,
       grundstuecksflaecheM2: d.plot_area_m2, aussenflaecheM2: d.outdoor_area_m2,
       zimmer: d.rooms, kaufpreis: d.purchase_price,
@@ -311,20 +325,17 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
   const createManual = () => {
     if (!propertyLimit.guard()) return;
     const title = manualTitle.trim() || "Neue Immobilie";
-    const mappedType: Property["propertyType"] =
-      propertyType === "house" || propertyType === "multi_family"
-        ? "house_with_land"
-        : propertyType === "land"
-        ? "land_only"
-        : "apartment";
-    const isZinshaus = strategy === "zinshaus";
+    const cat = propertyCategory(propertyType);
     const p = makeEmptyProperty({
       projectId: project.id,
       title,
       extractionStatus: "manuell",
-      investmentStrategy: isZinshaus ? "buy_and_hold" : strategy,
-      propertyType: isZinshaus ? "zinshaus" : mappedType,
-      ...(isZinshaus ? { units: [], objekttyp: "Zinshaus" } : {}),
+      // Grundstück und Garage: keine Fix-&-Flip-Rechnung, immer halten.
+      investmentStrategy: cat === "grundstueck" || cat === "garage" ? "buy_and_hold" : strategy,
+      propertyType,
+      objekttyp: CATEGORY_LABEL[cat],
+      ...(cat === "zinshaus" ? { units: [] } : {}),
+      ...(cat === "garage" ? { anzahlStellplaetze: 1 } : {}),
     });
     addProperty(p);
     navigate({ to: "/properties/$id", params: { id: p.id } });
@@ -464,69 +475,46 @@ export function ImportTabsCard({ initialUrl = "" }: { initialUrl?: string }) {
             <p className="text-[13px] text-ink-2 mb-4">Immobilie ohne Link manuell erfassen. Alle weiteren Felder kannst du direkt in der Immobilie ausfüllen.</p>
 
             <div className="mb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Investmentstrategie</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                {([
-                  { key: "buy_and_hold" as const, label: "Buy & Hold", sub: "Kaufen & vermieten" },
-                  { key: "fix_and_flip" as const, label: "Fix & Flip", sub: "Kaufen, sanieren, verkaufen" },
-                  { key: "zinshaus" as const, label: "Zinshaus", sub: "Mehrere Wohneinheiten, aggregierte Rendite" },
-                ]).map((s) => {
-                  const active = strategy === s.key;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => setStrategy(s.key)}
-                      className="flex items-center gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-all"
-                      style={{ borderColor: active ? "#2D6A4F" : "#EAE6DF", background: active ? "#E8F5EE" : "white" }}
-                    >
-                      <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
-                        style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
-                        {s.key === "buy_and_hold"
-                          ? <Home className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
-                          : s.key === "fix_and_flip"
-                          ? <Hammer className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />
-                          : <Buildings className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} />}
-                      </div>
-                      <div>
-                        <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{s.label}</div>
-                        <div className="text-[12px] text-ink-3">{s.sub}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              {strategy === "zinshaus" ? (
-                <p className="text-[12px] text-ink-2">Die Einheiten (Tops, Geschäftslokale) legst du danach im Tab „Einheiten“ an.</p>
-              ) : (
-              <>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3 mb-2">Objektart</div>
-              <div className="flex flex-wrap gap-2">
-                {([
-                  { key: "apartment" as const, label: "Wohnung" },
-                  { key: "house" as const, label: "Haus" },
-                  { key: "multi_family" as const, label: "Mehrfamilienhaus" },
-                  { key: "land" as const, label: "Grundstück" },
-                ]).map((t) => {
-                  const active = propertyType === t.key;
-                  return (
-                    <button
-                      key={t.key}
-                      type="button"
-                      onClick={() => setPropertyType(t.key)}
-                      className="rounded-full px-4 py-2 text-[13px] font-medium transition-all border-[1.5px]"
-                      style={{
-                        borderColor: active ? "#1C1917" : "#EAE6DF",
-                        background: active ? "#1C1917" : "#F5F3EE",
-                        color: active ? "white" : "var(--ink-2)",
-                      }}
-                    >
-                      {t.label}
-                    </button>
-                  );
-                })}
-              </div>
-              </>
+              <div className="text-[13px] font-medium text-[#1C1917] mb-2">Objektart</div>
+              <PropertyTypePicker value={propertyType} onChange={setPropertyType} />
+              {propertyCategory(propertyType) === "zinshaus" && (
+                <p className="mt-2 text-[12px] text-ink-2">Die Einheiten (Tops, Geschäftslokale) legst du danach im Tab „Einheiten“ an.</p>
+              )}
+
+              {propertyCategory(propertyType) !== "grundstueck" && propertyCategory(propertyType) !== "garage" && (
+                <>
+                  <div className="mt-5 text-[13px] font-medium text-[#1C1917] mb-2">Investmentstrategie</div>
+                  <div role="radiogroup" aria-label="Investmentstrategie" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {([
+                      { key: "buy_and_hold" as const, label: "Buy & Hold", sub: "Kaufen & vermieten" },
+                      { key: "fix_and_flip" as const, label: "Fix & Flip", sub: "Kaufen, sanieren, verkaufen" },
+                    ]).map((st) => {
+                      const active = strategy === st.key;
+                      return (
+                        <button
+                          key={st.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setStrategy(st.key)}
+                          className="flex items-center gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-colors"
+                          style={{ borderColor: active ? "#2D6A4F" : "#EAE6DF", background: active ? "#E8F5EE" : "white" }}
+                        >
+                          <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
+                            style={{ background: active ? "#2D6A4F" : "#F5F3EE" }}>
+                            {st.key === "buy_and_hold"
+                              ? <Home className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} aria-hidden />
+                              : <Hammer className="size-4" style={{ color: active ? "white" : "var(--ink-2)" }} aria-hidden />}
+                          </div>
+                          <div>
+                            <div className="text-[13px] font-semibold" style={{ color: active ? "#2D6A4F" : "#1C1917" }}>{st.label}</div>
+                            <div className="text-[12px] text-ink-3">{st.sub}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
 

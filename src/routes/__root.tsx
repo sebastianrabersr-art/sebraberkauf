@@ -173,7 +173,8 @@ function GatedOutlet() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, profile, loading } = useAuth();
   const isPublic = PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PREFIXES.some((p) => matchesPath(pathname, p));
-  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));  if (isPublic) return <Outlet />;
+  const needsAuth = APP_PREFIXES.some((p) => matchesPath(pathname, p));
+  if (isPublic) return <Outlet />;
   if (!needsAuth) return <Outlet />;
   if (loading) {
     return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Lade…</div>;
