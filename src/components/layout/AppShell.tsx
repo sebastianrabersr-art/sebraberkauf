@@ -25,7 +25,7 @@ const NAV_PRIMARY: NavItem[] = [
 
 const NAV_SECONDARY: NavItem[] = [
   { to: "/pipeline", label: "Pipeline", icon: IconPipeline },
-  { to: "/portfolio", label: "Portfolio", icon: IconPortfolio },
+  { to: "/portfolio", label: "Meine Objekte", icon: IconPortfolio },
   { to: "/projects", label: "Projekte", icon: IconProjekte },
   { to: "/glossar", label: "Glossar", icon: IconGlossar },
 ];

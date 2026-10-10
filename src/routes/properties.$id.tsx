@@ -849,8 +849,6 @@ function OverviewTab({ p, c, dq, mietrecht, u, projects, regions, applyRegionDef
           <Section title="Zahlungen & Cashflow"><PaymentsPanel p={p} /></Section>
         </>
       )}
-
-      <MeineBewertung p={p} u={u} />
     </>
   );
 }
@@ -1272,6 +1270,11 @@ function CrmTab({ p, u }: { p: Property; u: (patch: Partial<Property>) => void }
             );
           })}
         </div>
+      </div>
+
+      {/* Persönliche Bewertung – nur hier im CRM sichtbar, nicht in der Pipeline */}
+      <div style={{ marginBottom: 12 }}>
+        <MeineBewertung p={p} u={u} />
       </div>
 
       {/* SECTION B — NÄCHSTE AKTION */}

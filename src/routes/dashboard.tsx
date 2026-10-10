@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { calcProperty, calcScore, fmtEUR, fmtPct } from "@/lib/calc";
 import { CaretRight as ChevronRight, GridFour, Rows, ArrowRight } from "@phosphor-icons/react";
 import type { Property } from "@/lib/types";
+import { listOpenReminders } from "@/lib/reminders";
+import { plannedRent } from "@/lib/portfolioAnalytics";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -180,19 +182,89 @@ function CandidateListRow({ r, onOpen }: { r: Row; onOpen: () => void }) {
   );
 }
 
-/** Kennzahl: große Zahl, kleines Label – keine Karte, kein Icon, nur Weißraum. */
-function Metric({ value, label, tone }: { value: React.ReactNode; label: string; tone?: "bad" }) {
+/* ───────── Kennzahlen ───────── */
+
+const POS = "#2D6A4F";
+const NEG = "#DC2626";
+const MUTED = "#A8A29E";
+
+/** Eine Kennzahl: Wert groß, Label klein darunter. Ohne Daten "—". */
+function KpiCard({ value, label, color }: { value: React.ReactNode; label: string; color?: string }) {
   return (
-    // dt vor dd im DOM (Semantik), optisch steht die Zahl oben
-    <div className="flex flex-col-reverse">
-      <dt className="mt-2 text-[13px] text-ink-2">{label}</dt>
+    <div className="flex h-full flex-col-reverse justify-end rounded-[12px] border border-[#EAE6DF] bg-white px-5 py-4">
+      <dt className="mt-1.5 text-[11px] leading-snug text-[#A8A29E]">{label}</dt>
       <dd
-        className="font-display font-extrabold tabular-nums text-[36px] leading-none tracking-[-0.03em]"
-        style={{ color: tone === "bad" ? "#B91C1C" : "#1C1917" }}
+        className="font-display font-extrabold text-[24px] leading-none tabular-nums tracking-[-0.02em] truncate"
+        style={{ color: color ?? "#1C1917" }}
       >
         {value}
       </dd>
     </div>
+  );
+}
+
+const WOCHENTAG = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const MONAT = ["Jän", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+/** "Mo, 14. Okt · 09:00" */
+function fmtReminderShort(iso: string) {
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${WOCHENTAG[d.getDay()]}, ${d.getDate()}. ${MONAT[d.getMonth()]} · ${hh}:${mm}`;
+}
+
+/** Nächste offene Erinnerung (in der Zukunft). undefined = lädt noch, null = keine. */
+function useNextReminder() {
+  const [next, setNext] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    listOpenReminders()
+      .then((list) => {
+        const now = Date.now();
+        const upcoming = list.find((r) => new Date(r.remind_at).getTime() >= now);
+        if (alive) setNext(upcoming?.remind_at ?? null);
+      })
+      .catch(() => alive && setNext(null));
+    return () => { alive = false; };
+  }, []);
+  return next;
+}
+
+/** Sechs Kennzahlen über die Objekte des Projekts (ohne abgelehnte). */
+function MetricsRow({ properties, rows }: { properties: Property[]; rows: Row[] }) {
+  const nextReminder = useNextReminder();
+  const active = properties.filter((p) => p.status !== "Abgelehnt" && p.prozessStatus !== "Abgelehnt");
+  const portfolioWert = active.reduce((s, p) => s + (p.kaufpreis ?? 0), 0);
+  const miete = active.reduce((s, p) => s + plannedRent(p), 0);
+  // Rendite und Cashflow nur dort, wo Kaufpreis und Miete erfasst sind – sonst sind die Werte nicht aussagekräftig.
+  const rated = rows.filter((r) => (r.p.kaufpreis ?? 0) > 0 && plannedRent(r.p) > 0);
+  const bestRendite = rated.length ? Math.max(...rated.map((r) => r.c.bruttorendite)) : null;
+  const bestCashflow = rated.length ? Math.max(...rated.map((r) => r.c.cashflowMtl)) : null;
+  const pipeline = properties.filter(
+    (p) => !["Gekauft", "Abgelehnt"].includes(p.status) && !["Gekauft", "Abgelehnt"].includes(p.prozessStatus ?? ""),
+  ).length;
+  const sign = (v: number | null) => (v == null ? undefined : v >= 0 ? POS : NEG);
+
+  return (
+    <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3" aria-label="Kennzahlen">
+      <KpiCard label="Portfoliowert" value={portfolioWert > 0 ? fmtEUR(portfolioWert) : "—"} />
+      <KpiCard label="Mieteinnahmen / Mo" value={miete > 0 ? fmtEUR(miete) : "—"} />
+      <KpiCard label="Beste Rendite" value={bestRendite == null ? "—" : fmtPct(bestRendite)} color={sign(bestRendite)} />
+      <KpiCard label="Bester Cashflow" value={bestCashflow == null ? "—" : fmtEUR(bestCashflow)} color={sign(bestCashflow)} />
+      <KpiCard label="In der Pipeline" value={pipeline} />
+      <Link
+        to="/settings"
+        search={{ tab: "erinnerungen" }}
+        className="block rounded-[12px] transition-colors [&>div]:hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        aria-label={nextReminder ? `Nächste Erinnerung: ${fmtReminderShort(nextReminder)} – alle Erinnerungen ansehen` : "Erinnerungen ansehen"}
+      >
+        <KpiCard
+          label="Nächste Erinnerung"
+          value={nextReminder === undefined ? "…" : nextReminder ? <span className="text-[18px] tracking-[-0.01em]">{fmtReminderShort(nextReminder)}</span> : "Keine"}
+          color={nextReminder ? undefined : MUTED}
+        />
+      </Link>
+    </dl>
   );
 }
 
@@ -224,9 +296,7 @@ function Dashboard() {
     return { p, c, s };
   });
   const total = rows.length;
-  const kritisch = rows.filter((r) => r.s.ampel === "red" || r.c.cashflowMtl < 0).length;
-  const bestRendite = rows.slice().sort((a, b) => b.c.bruttorendite - a.c.bruttorendite)[0];
-  const interessant = rows.filter((r) => r.s.ampel === "green").length;
+  const projectProps = properties.filter((p) => p.projectId === project.id);
 
   const topRanked = rows.slice().sort((a, b) => b.s.total - a.s.total);
   const topVisible = topRanked.slice(0, MAX_CANDIDATES);
@@ -256,28 +326,16 @@ function Dashboard() {
   return (
     <AppShell>
       <div className="space-y-12 sm:space-y-16">
-        {/* Kopf: leise Begrüßung, die eine Hauptaktion */}
-        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-          <Greeting />
-          <PrimaryAction />
-        </header>
+        <div className="space-y-6">
+          {/* Kopf: leise Begrüßung, die eine Hauptaktion */}
+          <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+            <Greeting />
+            <PrimaryAction />
+          </header>
 
-        {/* Drei Kennzahlen, nur Weißraum */}
-        <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-8 max-w-4xl">
-          <Metric
-            value={<>{interessant}<span className="text-[20px] font-sans font-normal text-ink-3 tracking-normal"> von {total}</span></>}
-            label="interessant (Score ab 70)"
-          />
-          <Metric
-            value={bestRendite ? fmtPct(bestRendite.c.bruttorendite) : "–"}
-            label={bestRendite?.p.title ? `beste Bruttorendite · ${bestRendite.p.title.slice(0, 28)}` : "beste Bruttorendite"}
-          />
-          <Metric
-            value={kritisch}
-            label={kritisch === 1 ? "Objekt mit Warnsignal" : "Objekte mit Warnsignal"}
-            tone={kritisch > 0 ? "bad" : undefined}
-          />
-        </dl>
+          {/* Kennzahlen direkt unter der Begrüßung */}
+          <MetricsRow properties={projectProps} rows={rows} />
+        </div>
 
         {/* Kaufkandidaten */}
         <section aria-labelledby="kandidaten-title">

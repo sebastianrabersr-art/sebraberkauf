@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bell, BellRinging, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { createReminder, deleteReminder, fmtReminderDate, listOpenReminders, type Reminder } from "@/lib/reminders";
 
 /** Offene Erinnerungen einer Immobilie (für Glocken-Status in der CRM-Ansicht). */
@@ -39,7 +39,7 @@ export const reminderActionId = (id: string | undefined | null) => (id && UUID_R
  * 🔔 neben einer CRM-Aktion: Popover "Erinnerung setzen" (Datum, Uhrzeit, Notiz).
  * Mit gesetzter Erinnerung: grüne Glocke, im Popover Termin + Löschen.
  */
-export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedNote, existing, onChanged }: {
+export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedNote, existing, onChanged, open: openProp, onOpenChange, anchorOnly }: {
   propertyId: string;
   actionId?: string | null;
   /** YYYY-MM-DD; liegt es nicht in der Zukunft, wird morgen vorgeschlagen. */
@@ -47,8 +47,18 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
   suggestedNote?: string;
   existing?: Reminder;
   onChanged?: () => void;
+  /** Von außen gesteuert öffnen (z. B. aus einem Menü heraus). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Keine eigene Glocke – das Popover hängt an der Position des Elternelements. */
+  anchorOnly?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => {
+    onOpenChange?.(v);
+    if (openProp === undefined) setOpenState(v);
+  };
   const [date, setDate] = useState("");
   const [time, setTime] = useState("09:00");
   const [note, setNote] = useState("");
@@ -100,6 +110,11 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
+      {anchorOnly ? (
+        <PopoverAnchor asChild>
+          <span className="absolute right-0 top-0 size-0" aria-hidden />
+        </PopoverAnchor>
+      ) : (
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -112,6 +127,7 @@ export function ReminderButton({ propertyId, actionId, suggestedDate, suggestedN
           {existing ? <BellRinging weight="fill" size={15} aria-hidden /> : <Bell size={15} aria-hidden />}
         </button>
       </PopoverTrigger>
+      )}
       <PopoverContent align="end" className="w-72 p-4 bg-white border-[#EAE6DF] rounded-[12px]" onClick={(e) => e.stopPropagation()}>
         <div className="text-[13px] font-semibold text-[#1C1917] mb-3">Erinnerung setzen</div>
         {existing && (
